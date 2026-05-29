@@ -1,0 +1,30 @@
+================================================================
+TRECHO DE FORMATAÇÃO — REALCE DE CHAMADOS PARADOS
+================================================================
+Onde usar: nas visões de trabalho (ex.: "Todos os chamados",
+"Pendentes com a GOP"). Realça em ÂMBAR quem está sem
+movimentação há mais de 7 dias e em VERMELHO há mais de 15 dias.
+
+Como aplicar:
+1. Abra a visão desejada.
+2. Clique no nome da visão (canto superior direito) >
+   "Formatar exibição atual".
+3. Clique em "Modo avançado".
+4. Apague o conteúdo e cole EXATAMENTE o código abaixo.
+5. Clique em "Salvar".
+
+(Use estes mesmos caracteres. Não substitua as aspas retas " por
+aspas curvas, senão o código não funciona.)
+
+----------------------------------------------------------------
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/view-formatting.schema.json",
+  "additionalRowClass": "=if(toString([$Modified]) == '', '', if([$Modified] <= @now - 1296000000, 'sp-field-severity--severeWarning', if([$Modified] <= @now - 604800000, 'sp-field-severity--warning', '')))"
+}
+----------------------------------------------------------------
+
+Observação técnica:
+- 604800000 milissegundos = 7 dias; 1296000000 = 15 dias.
+- [$Modified] é a data de "Modificado em" (nativa do Lists).
+- Aplique nas visões que NÃO mostram concluídos/encerrados,
+  assim só os chamados realmente ativos é que acendem o alerta.
