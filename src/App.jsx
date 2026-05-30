@@ -1,10 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
+import {
+  formatDateBrazilian as fmtDateBR,
+  inactivityDays as calcInactivityDays,
+  slaLevel,
+  ageLevel,
+  computeMetrics,
+  stuckRanking,
+  filterBySector,
+  sectorSummary,
+  suggestedActionColor,
+  compileEmailTemplate,
+  searchSchools,
+  SECTORS,
+} from './lib/logic.js';
 
-// Local Date helper: set to the current local date context (late May 2026)
-const CURRENT_DATE_STR = "2026-05-29";
-const CURRENT_DATE = new Date("2026-05-29T17:00:00");
+// Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
+// e antiguidade são derivados em ./lib/logic.js a partir desta referência.
+const todayRef = () => new Date();
 
 // Premium, Minimalist SVG Icon Components (Lucide-inspired)
 const IconDashboard = () => (
@@ -194,12 +208,7 @@ export default function App() {
       const templateText = emailTemplates[selectedTemplateIndex]?.template || '';
       
       if (ticket) {
-        let compiled = templateText
-          .replace(/{ID_CHAMADO}/g, ticket.id_chamado)
-          .replace(/{UNIDADE}/g, ticket.unidade_escolar)
-          .replace(/{DATA}/g, formatDateBrazilian(ticket.modificado_em || CURRENT_DATE_STR));
-        
-        setCustomEmailBody(compiled);
+        setCustomEmailBody(compileEmailTemplate(templateText, ticket, todayRef()));
       } else {
         setCustomEmailBody(templateText);
       }
@@ -336,43 +345,23 @@ export default function App() {
     }, 3000);
   };
 
-  // Date Formatting Helpers
-  const formatDateBrazilian = (isoStr) => {
-    if (!isoStr) return "";
-    try {
-      const date = new Date(isoStr);
-      if (isNaN(date.getTime())) return isoStr;
-      return date.toLocaleDateString('pt-BR');
-    } catch {
-      return isoStr;
-    }
-  };
+  // Date Formatting Helpers — delega ao módulo de lógica (fonte única da verdade)
+  const formatDateBrazilian = (isoStr) => fmtDateBR(isoStr);
 
-  const getInactivityDays = (isoStr) => {
-    if (!isoStr) return 0;
-    try {
-      const modDate = new Date(isoStr);
-      if (isNaN(modDate.getTime())) return 0;
-      const diffTime = Math.abs(CURRENT_DATE - modDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays;
-    } catch {
-      return 0;
-    }
-  };
+  // Dias sem movimentação, calculados em relação à data real de hoje.
+  const getInactivityDays = (isoStr) =>
+    calcInactivityDays({ modificado_em: isoStr }, todayRef());
 
-  // Lists formatting rule: Amber for >7 days, Red for >15 days inactive
+  // Lists formatting rule: âmbar/vermelho por inatividade (SLA); roxo por antiguidade.
+  // A linha recebe a classe do alerta mais grave aplicável.
   const getTicketInactivityClass = (ticket) => {
-    const closedStatuses = ['10 - Concluído', '11 - Encerrado', 'Suspenso / pendente'];
-    if (closedStatuses.includes(ticket.status_atual)) {
-      return '';
-    }
-    const days = getInactivityDays(ticket.modificado_em);
-    if (days >= 15) {
-      return 'lists-row-severe';
-    } else if (days >= 7) {
-      return 'lists-row-warning';
-    }
+    const sla = slaLevel(ticket, todayRef());
+    if (sla === 'severe') return 'lists-row-severe';
+    if (sla === 'warning') return 'lists-row-warning';
+    // Sem alerta de inércia: ainda assim sinaliza antiguidade (tempo em aberto).
+    const age = ageLevel(ticket, todayRef());
+    if (age === 'severe') return 'lists-row-age-severe';
+    if (age === 'warning') return 'lists-row-age-warning';
     return '';
   };
 
@@ -395,26 +384,14 @@ export default function App() {
     };
   };
 
-  // Metric Computations
-  const totalTickets = tickets.length;
-  
-  const openTickets = tickets.filter(t => 
-    t.status_atual !== '10 - Concluído' && 
-    t.status_atual !== '11 - Encerrado' &&
-    t.status_atual !== 'Suspenso / pendente'
-  ).length;
-
-  const inactivePlus7 = tickets.filter(t => {
-    const closed = ['10 - Concluído', '11 - Encerrado', 'Suspenso / pendente'];
-    if (closed.includes(t.status_atual)) return false;
-    return getInactivityDays(t.modificado_em) >= 7;
-  }).length;
-
-  const inactivePlus15 = tickets.filter(t => {
-    const closed = ['10 - Concluído', '11 - Encerrado', 'Suspenso / pendente'];
-    if (closed.includes(t.status_atual)) return false;
-    return getInactivityDays(t.modificado_em) >= 15;
-  }).length;
+  // Metric Computations — centralizadas no módulo de lógica (data dinâmica)
+  const metrics = computeMetrics(tickets, todayRef());
+  const totalTickets = metrics.total;
+  const openTickets = metrics.open;
+  const inactivePlus7 = metrics.inactivePlus7;   // SLA âmbar ou pior
+  const inactivePlus15 = metrics.inactivePlus15; // SLA vermelho
+  const agePlus30 = metrics.agePlus30;           // antiguidade roxo claro ou pior
+  const agePlus60 = metrics.agePlus60;           // antiguidade roxo intenso
 
   // Tickets views filters
   const getFilteredTickets = () => {
@@ -422,19 +399,15 @@ export default function App() {
     
     // Apply tab views
     if (activeListsView === 'gop') {
-      result = result.filter(t => t.setor_responsavel === 'GOP');
+      result = filterBySector(result, 'GOP');
     } else if (activeListsView === 'cps') {
-      result = result.filter(t => t.setor_responsavel.includes('CPS'));
+      result = filterBySector(result, 'CPS');
     } else if (activeListsView === 'gin') {
-      result = result.filter(t => t.setor_responsavel.includes('GIN'));
+      result = filterBySector(result, 'GIN');
     } else if (activeListsView === 'cto') {
-      result = result.filter(t => t.setor_responsavel.includes('CTO'));
+      result = filterBySector(result, 'CTO');
     } else if (activeListsView === 'stuck') {
-      result = result.filter(t => {
-        const closed = ['10 - Concluído', '11 - Encerrado', 'Suspenso / pendente'];
-        if (closed.includes(t.status_atual)) return false;
-        return getInactivityDays(t.modificado_em) >= 7;
-      });
+      result = result.filter(t => slaLevel(t, todayRef()) !== 'ok');
     } else if (activeListsView === 'closed') {
       result = result.filter(t => t.status_atual === '10 - Concluído' || t.status_atual === '11 - Encerrado');
     }
@@ -454,20 +427,8 @@ export default function App() {
     return result;
   };
 
-  // Sort active tickets by inactivity descending for dashboard
-  const getDashboardStuckRanking = () => {
-    return [...tickets]
-      .filter(t => {
-        const closed = ['10 - Concluído', '11 - Encerrado', 'Suspenso / pendente'];
-        return !closed.includes(t.status_atual);
-      })
-      .map(t => ({
-        ...t,
-        inactivityDays: getInactivityDays(t.modificado_em)
-      }))
-      .sort((a, b) => b.inactivityDays - a.inactivityDays)
-      .slice(0, 5);
-  };
+  // Ranking dos chamados ativos mais parados (delegado ao módulo de lógica)
+  const getDashboardStuckRanking = () => stuckRanking(tickets, todayRef(), 5);
 
   // Stage distribution calculations
   const getStatusDistribution = () => {
@@ -950,6 +911,24 @@ export default function App() {
                 <div className="stat-number" style={{ color: 'var(--color-red)' }}>{inactivePlus15}</div>
                 <div className="stat-description">Sem movimentação (Alerta Vermelho)</div>
               </div>
+
+              <div className="stat-card" style={{ '--card-accent': 'var(--color-age-warn)' }}>
+                <div className="stat-header">
+                  <span>Em Aberto +30 Dias</span>
+                  <div className="stat-icon"><IconClock /></div>
+                </div>
+                <div className="stat-number" style={{ color: 'var(--color-age-warn)' }}>{agePlus30}</div>
+                <div className="stat-description">Tempo total em aberto (Antiguidade)</div>
+              </div>
+
+              <div className="stat-card" style={{ '--card-accent': 'var(--color-age-severe)' }}>
+                <div className="stat-header">
+                  <span>Em Aberto +60 Dias</span>
+                  <div className="stat-icon"><IconCalendar /></div>
+                </div>
+                <div className="stat-number" style={{ color: 'var(--color-age-severe)' }}>{agePlus60}</div>
+                <div className="stat-description">Antiguidade crítica (revisar caso)</div>
+              </div>
             </div>
 
             {/* Layout Grid */}
@@ -1029,7 +1008,7 @@ export default function App() {
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {getDashboardStuckRanking().map((t, idx) => {
+                  {getDashboardStuckRanking().map((t) => {
                     const isSevere = t.inactivityDays >= 15;
                     return (
                       <div 
@@ -1071,6 +1050,11 @@ export default function App() {
                             </span>
                           </div>
                           <div style={{ fontSize: '10px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' }}>sem alteração</div>
+                          {typeof t.ageDays === 'number' && t.ageDays > 0 && (
+                            <div style={{ fontSize: '10px', color: 'var(--color-age-severe)', fontWeight: '700', marginTop: '3px' }}>
+                              {t.ageDays} dias em aberto
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1139,6 +1123,37 @@ export default function App() {
                 Concluídos/Encerrados
               </button>
             </div>
+
+            {/* Bloco C — Indicadores da visão de setor (quando uma aba de setor está ativa) */}
+            {SECTORS.map(s => s.toLowerCase()).includes(activeListsView) && (() => {
+              const sec = activeListsView.toUpperCase();
+              const sm = sectorSummary(tickets, sec, todayRef());
+              return (
+                <div className="sector-summary-bar">
+                  <div className="sector-summary-title">
+                    <IconBuilding /> Visão do setor: <strong>{sec}</strong>
+                  </div>
+                  <div className="sector-summary-metrics">
+                    <div className="sector-metric">
+                      <span className="sector-metric-num">{sm.total}</span>
+                      <span className="sector-metric-label">Envolvimentos</span>
+                    </div>
+                    <div className="sector-metric">
+                      <span className="sector-metric-num" style={{ color: 'var(--color-blue)' }}>{sm.open}</span>
+                      <span className="sector-metric-label">Em aberto</span>
+                    </div>
+                    <div className="sector-metric">
+                      <span className="sector-metric-num" style={{ color: 'var(--color-amber)' }}>{sm.stuck}</span>
+                      <span className="sector-metric-label">Parados (SLA)</span>
+                    </div>
+                    <div className="sector-metric">
+                      <span className="sector-metric-num" style={{ color: 'var(--color-green)' }}>{sm.closed}</span>
+                      <span className="sector-metric-label">Concluídos</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Lists grid table */}
             <div className="lists-table-wrapper">
@@ -1243,7 +1258,7 @@ export default function App() {
                 
                 {showLookupSuggestions && lookupSchoolQuery && (
                   <div className="suggestion-box">
-                    {filterLookupSchools(lookupSchoolQuery).map(s => (
+                    {searchSchools(schools, lookupSchoolQuery).map(s => (
                       <div 
                         key={s.designacao}
                         className="suggestion-item"
@@ -1256,7 +1271,7 @@ export default function App() {
                         🏢 {s.unidade_escolar} ({s.designacao})
                       </div>
                     ))}
-                    {filterLookupSchools(lookupSchoolQuery).length === 0 && (
+                    {searchSchools(schools, lookupSchoolQuery).length === 0 && (
                       <div style={{ padding: '10px 14px', color: 'var(--text-light)', fontSize: '12px', fontWeight: '600' }}>
                         Nenhuma escola correspondente
                       </div>
@@ -1334,18 +1349,27 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div style={{
-                    marginTop: '20px',
-                    padding: '16px',
-                    borderRadius: 'var(--radius-xs)',
-                    backgroundColor: 'var(--bg-app)',
-                    border: '1px dashed var(--border-color)'
-                  }}>
-                    <strong style={{ fontSize: '12px', display: 'block', marginBottom: '4px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px' }}>🎯 Ação Sugerida pelo POP:</strong>
-                    <span style={{ fontSize: '13px', fontWeight: '750', color: 'var(--primary)' }}>
-                      {selectedSchool.acao_sugerida}
-                    </span>
-                  </div>
+                  {(() => {
+                    const acColor = suggestedActionColor(selectedSchool);
+                    const acVar = acColor === 'red' ? 'var(--color-red)'
+                                : acColor === 'amber' ? 'var(--color-amber)'
+                                : 'var(--color-green)';
+                    return (
+                      <div style={{
+                        marginTop: '20px',
+                        padding: '16px',
+                        borderRadius: 'var(--radius-xs)',
+                        backgroundColor: 'var(--bg-app)',
+                        border: '1px dashed var(--border-color)',
+                        borderLeft: `4px solid ${acVar}`
+                      }}>
+                        <strong style={{ fontSize: '12px', display: 'block', marginBottom: '4px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px' }}>🎯 Ação Sugerida pelo POP:</strong>
+                        <span style={{ fontSize: '13px', fontWeight: '750', color: acVar }}>
+                          {selectedSchool.acao_sugerida}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1509,7 +1533,7 @@ export default function App() {
                     
                     {showFormSuggestions && formSearchQuery && (
                       <div className="suggestion-box">
-                        {filterLookupSchools(formSearchQuery).map(s => (
+                        {searchSchools(schools, formSearchQuery).map(s => (
                           <div 
                             key={s.designacao}
                             className="suggestion-item"

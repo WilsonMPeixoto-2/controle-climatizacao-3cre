@@ -42,6 +42,12 @@
   --color-purple: hsl(262, 80%, 50%);
   --color-gray: hsl(215, 12%, 48%);
 
+  /* Alerta de Antiguidade (tempo total em aberto) — tons de roxo */
+  --color-age-warn: hsl(280, 60%, 55%);
+  --color-age-severe: hsl(270, 70%, 42%);
+  --color-age-warn-tint: hsla(280, 60%, 55%, 0.10);
+  --color-age-severe-tint: hsla(270, 70%, 42%, 0.12);
+
   --color-green-tint: hsla(142, 72%, 36%, 0.08);
   --color-amber-tint: hsla(38, 92%, 44%, 0.08);
   --color-orange-tint: hsla(20, 90%, 48%, 0.08);
@@ -702,6 +708,66 @@ body::after {
 
 .lists-row-severe td:first-child {
   padding-left: 12px;
+}
+
+/* Condicionais de Antiguidade (tempo total em aberto) — tons de roxo */
+.lists-row-age-warning {
+  background-color: var(--color-age-warn-tint) !important;
+  border-left: 4px solid var(--color-age-warn) !important;
+}
+.lists-row-age-warning td:first-child { padding-left: 12px; }
+
+.lists-row-age-severe {
+  background-color: var(--color-age-severe-tint) !important;
+  border-left: 4px solid var(--color-age-severe) !important;
+}
+.lists-row-age-severe td:first-child { padding-left: 12px; }
+
+/* Bloco C — Barra de indicadores da visão de setor */
+.sector-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 20px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 10px);
+  background-color: var(--bg-card, var(--bg-app));
+}
+.sector-summary-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.sector-summary-title svg { width: 16px; height: 16px; color: var(--primary); }
+.sector-summary-metrics {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.sector-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 64px;
+}
+.sector-metric-num {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-main);
+}
+.sector-metric-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-light);
 }
 
 /* Modern Pill Badges */
