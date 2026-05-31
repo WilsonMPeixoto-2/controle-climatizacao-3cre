@@ -22,14 +22,14 @@
   --accent-blue: hsl(210, 95%, 52%);
 
   /* Neutral Slate Palette for high-end professional UI */
-  --bg-app: hsl(210, 20%, 98%);
-  --bg-card: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(148, 163, 184, 0.16);
-  --border-hover: rgba(148, 163, 184, 0.28);
+  --bg-app: hsl(210, 32%, 97%);
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --border-color: rgba(100, 116, 139, 0.22);
+  --border-hover: rgba(14, 116, 144, 0.34);
   
-  --text-main: hsl(215, 30%, 12%);
-  --text-muted: hsl(215, 16%, 40%);
-  --text-light: hsl(215, 12%, 56%);
+  --text-main: hsl(217, 33%, 15%);
+  --text-muted: hsl(215, 21%, 34%);
+  --text-light: hsl(215, 14%, 46%);
   --text-on-primary: hsl(0, 0%, 100%);
   
   /* Status Colors */
@@ -46,11 +46,11 @@
   --color-age-warn-tint: hsla(250, 70%, 64%, 0.10);
   --color-age-severe-tint: hsla(255, 75%, 56%, 0.12);
 
-  --color-green-tint: hsla(142, 72%, 36%, 0.08);
-  --color-amber-tint: hsla(38, 92%, 44%, 0.08);
-  --color-orange-tint: hsla(20, 90%, 48%, 0.08);
-  --color-red-tint: hsla(350, 85%, 48%, 0.08);
-  --color-blue-tint: hsla(214, 90%, 48%, 0.08);
+  --color-green-tint: hsla(142, 72%, 36%, 0.12);
+  --color-amber-tint: hsla(38, 92%, 44%, 0.14);
+  --color-orange-tint: hsla(20, 90%, 48%, 0.13);
+  --color-red-tint: hsla(350, 85%, 48%, 0.12);
+  --color-blue-tint: hsla(214, 90%, 48%, 0.12);
 
   /* Layout border radius & transitions */
   --radius-xs: 8px;
@@ -58,9 +58,9 @@
   --radius-md: 20px;
   --radius-lg: 28px;
   
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.02), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 20px 40px -10px rgba(15, 23, 42, 0.08), 0 12px 16px -8px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 14px 28px -18px rgba(15, 23, 42, 0.22), 0 8px 14px -12px rgba(15, 23, 42, 0.16);
+  --shadow-lg: 0 24px 44px -24px rgba(15, 23, 42, 0.28), 0 18px 26px -22px rgba(15, 23, 42, 0.22);
   
   --font-sans: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -147,6 +147,15 @@ body::after {
   background: radial-gradient(circle, hsla(175, 80%, 35%, 0.05) 0%, transparent 70%);
   z-index: -1;
   pointer-events: none;
+}
+
+html:not(.dark-theme) body {
+  background: linear-gradient(180deg, hsl(210, 36%, 98%) 0%, hsl(210, 28%, 95%) 100%);
+}
+
+html:not(.dark-theme) body::before,
+html:not(.dark-theme) body::after {
+  opacity: 0;
 }
 
 /* Scrollbar Customization */
@@ -393,6 +402,15 @@ body::after {
 .header-actions {
   display: flex;
   gap: 12px;
+}
+
+.screen-intro {
+  max-width: 760px;
+  margin: -18px 0 24px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 /* Reusable Button Styling */
@@ -1431,6 +1449,111 @@ body::after {
 .op-legend .ld { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
 .op-legend b { color: var(--text-main); font-weight: 800; margin-left: 2px; }
 .op-foot { font-size: 10.5px; color: var(--text-light); margin-top: 12px; line-height: 1.5; font-weight: 500; }
+
+/* Tema claro: acabamento institucional sem alterar a estrutura das telas */
+html:not(.dark-theme) .sidebar {
+  background-color: rgba(248, 250, 252, 0.98);
+  border-right-color: rgba(100, 116, 139, 0.24);
+  box-shadow: 10px 0 26px -28px rgba(15, 23, 42, 0.45);
+  backdrop-filter: none;
+}
+
+html:not(.dark-theme) .sidebar-user {
+  background-color: hsl(210, 28%, 94%);
+  border: 1px solid rgba(100, 116, 139, 0.18);
+}
+
+html:not(.dark-theme) .main-header {
+  border-bottom-color: rgba(100, 116, 139, 0.22);
+}
+
+html:not(.dark-theme) .dashboard-section,
+html:not(.dark-theme) .stat-card,
+html:not(.dark-theme) .lists-table-wrapper,
+html:not(.dark-theme) .modal-container,
+html:not(.dark-theme) .suggestion-box,
+html:not(.dark-theme) .template-item,
+html:not(.dark-theme) .btn-secondary {
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: none;
+}
+
+html:not(.dark-theme) .dashboard-section,
+html:not(.dark-theme) .stat-card,
+html:not(.dark-theme) .lists-table-wrapper,
+html:not(.dark-theme) .modal-container,
+html:not(.dark-theme) .school-details-card {
+  border-color: rgba(100, 116, 139, 0.22);
+}
+
+html:not(.dark-theme) .dashboard-section:hover {
+  box-shadow: var(--shadow-md);
+}
+
+html:not(.dark-theme) .form-control,
+html:not(.dark-theme) .email-preview-body {
+  background-color: hsl(0, 0%, 100%);
+  border-color: rgba(100, 116, 139, 0.26);
+}
+
+html:not(.dark-theme) .form-control:disabled {
+  background-color: hsl(210, 28%, 94%);
+  color: hsl(215, 14%, 44%);
+}
+
+html:not(.dark-theme) .lists-table th {
+  background-color: hsl(210, 28%, 94%);
+  color: hsl(215, 22%, 32%);
+}
+
+html:not(.dark-theme) .lists-table tr:hover {
+  background-color: hsl(201, 89%, 94%);
+}
+
+html:not(.dark-theme) .badge {
+  border: 1px solid rgba(100, 116, 139, 0.16);
+}
+
+html:not(.dark-theme) .modal-overlay {
+  background-color: rgba(15, 23, 42, 0.28);
+}
+
+html:not(.dark-theme) .modal-footer,
+html:not(.dark-theme) .email-preview-actions,
+html:not(.dark-theme) .email-preview-panel,
+html:not(.dark-theme) .timeline-event-card,
+html:not(.dark-theme) .circle-progress-wrapper {
+  background-color: hsl(210, 32%, 97%);
+}
+
+html:not(.dark-theme) .email-preview-header,
+html:not(.dark-theme) .sector-summary-bar,
+html:not(.dark-theme) .sync-panel {
+  background-color: hsl(210, 30%, 96%);
+}
+
+html:not(.dark-theme) .op-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
+}
+
+html:not(.dark-theme) .op-map {
+  border-color: rgba(14, 116, 144, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), var(--shadow-sm);
+}
+
+html:not(.dark-theme) .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.82) !important;
+  color: hsl(215, 14%, 42%) !important;
+}
+
+html:not(.dark-theme) .leaflet-control-attribution a {
+  color: hsl(201, 89%, 34%) !important;
+}
+
+html:not(.dark-theme) .leaflet-bar a {
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: hsl(215, 33%, 15%) !important;
+}
 
 /* botão de tema visível no cabeçalho (acesso rápido ao Modo Claro) */
 .theme-toggle-header svg { width: 15px; height: 15px; }

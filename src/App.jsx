@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
 import { Analytics } from '@vercel/analytics/react';
@@ -17,11 +17,24 @@ import {
   stageGroupCounts,
   SECTORS,
 } from './lib/logic.js';
+import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
 
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
 // e antiguidade são derivados em ./lib/logic.js a partir desta referência.
 const todayRef = () => new Date();
+
+const initialTickets = dbData?.chamados || [];
+const initialSchools = dbData?.escolas || [];
+const initialHistory = dbData?.historico || [];
+const initialEmailTemplates = dbData?.modelos_email || [];
+const initialSelectedSchool = initialSchools[0] || null;
+
+const buildEmailDraft = (templates, ticketList, ticketId, templateIndex) => {
+  const ticket = ticketList.find(t => t.id_chamado === ticketId) || ticketList[0];
+  const templateText = templates[templateIndex]?.template || '';
+  return ticket ? compileEmailTemplate(templateText, ticket, todayRef()) : templateText;
+};
 
 // Premium, Minimalist SVG Icon Components (Lucide-inspired)
 const IconDashboard = () => (
@@ -42,10 +55,6 @@ const IconForm = () => (
 
 const IconMail = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-);
-
-const IconExport = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 );
 
 const IconSun = () => (
@@ -76,20 +85,12 @@ const IconSiren = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
 );
 
-const IconMapPin = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-);
-
 const IconBuilding = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="16"/><line x1="15" y1="22" x2="15" y2="16"/><line x1="9" y1="16" x2="15" y2="16"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/><path d="M12 14h.01"/></svg>
 );
 
 const IconClock = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-);
-
-const IconUser = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
 );
 
 const IconCalendar = () => (
@@ -116,34 +117,35 @@ const IconFileText = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
 );
 
-const IconShield = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-);
-
 const IconCloud = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-.08A7 7 0 0 0 4.75 8.75a6 6 0 0 0-1.56 11.23A5 5 0 0 0 8 20h10a5 5 0 0 0 0-10z"/></svg>
 );
 
 export default function App() {
+  const [initialCloudConfig] = useState(() => ({
+    url: import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_url') || '',
+    key: import.meta.env.VITE_SUPABASE_KEY || localStorage.getItem('supabase_key') || ''
+  }));
+
   // App states
   const [currentTab, setCurrentTab] = useState('dashboard');
-  const [tickets, setTickets] = useState([]);
-  const [schools, setSchools] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [emailTemplates, setEmailTemplates] = useState([]);
+  const [tickets, setTickets] = useState(initialTickets);
+  const [schools, setSchools] = useState(initialSchools);
+  const [history, setHistory] = useState(initialHistory);
+  const [emailTemplates, setEmailTemplates] = useState(initialEmailTemplates);
   const [theme, setTheme] = useState('dark'); // 'dark' or 'light'
 
   // Cloud (Supabase) integration states
-  const [supabaseUrl, setSupabaseUrl] = useState('');
-  const [supabaseKey, setSupabaseKey] = useState('');
+  const [supabaseUrl, setSupabaseUrl] = useState(initialCloudConfig.url);
+  const [supabaseKey, setSupabaseKey] = useState(initialCloudConfig.key);
   const [cloudConnected, setCloudConnected] = useState(false);
   const [syncStatusText, setSyncStatusText] = useState('Local (db.json)');
   const [cloudLoading, setCloudLoading] = useState(false);
   const [supabaseClient, setSupabaseClient] = useState(null);
 
   // Lookup tab states
-  const [lookupSchoolQuery, setLookupSchoolQuery] = useState('');
-  const [selectedSchool, setSelectedSchool] = useState(null);
+  const [lookupSchoolQuery, setLookupSchoolQuery] = useState(initialSelectedSchool?.unidade_escolar || '');
+  const [selectedSchool, setSelectedSchool] = useState(initialSelectedSchool);
   const [showLookupSuggestions, setShowLookupSuggestions] = useState(false);
 
   // Tickets tab states
@@ -176,49 +178,23 @@ export default function App() {
   // Email tab states
   const [selectedEmailTicketId, setSelectedEmailTicketId] = useState('');
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState(0);
-  const [customEmailBody, setCustomEmailBody] = useState('');
+  const [customEmailBody, setCustomEmailBody] = useState(() => buildEmailDraft(initialEmailTemplates, initialTickets, '', 0));
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // 'success' | 'error' | 'info'
 
-  // 1. Initial Load of Local Data & Cloud Configuration
-  useEffect(() => {
-    // Load local db.json fallback
-    if (dbData) {
-      setTickets(dbData.chamados || []);
-      setSchools(dbData.escolas || []);
-      setHistory(dbData.historico || []);
-      setEmailTemplates(dbData.modelos_email || []);
-      if (dbData.escolas && dbData.escolas.length > 0) {
-        setSelectedSchool(dbData.escolas[0]);
-        setLookupSchoolQuery(dbData.escolas[0].unidade_escolar);
-      }
-    }
-
-    // Check environment variables first, then fallback to localStorage
-    const envUrl = import.meta.env.VITE_SUPABASE_URL;
-    const envKey = import.meta.env.VITE_SUPABASE_KEY;
-    const savedUrl = envUrl || localStorage.getItem('supabase_url');
-    const savedKey = envKey || localStorage.getItem('supabase_key');
-    if (savedUrl && savedKey) {
-      setSupabaseUrl(savedUrl);
-      setSupabaseKey(savedKey);
-      initializeSupabase(savedUrl, savedKey);
-    }
+  // Display floating toast
+  const triggerToast = useCallback((msg, type) => {
+    const kind = type || (/(erro|falha|inv[áa]lid|preencha|primeiro)/i.test(msg) ? 'error' : 'success');
+    setToastMessage(msg);
+    setToastType(kind);
+    setTimeout(() => {
+      setToastMessage('');
+    }, 3000);
   }, []);
 
-  // Update selected email draft when ticket or template changes
-  useEffect(() => {
-    if (emailTemplates.length > 0) {
-      const ticket = tickets.find(t => t.id_chamado === selectedEmailTicketId) || tickets[0];
-      const templateText = emailTemplates[selectedTemplateIndex]?.template || '';
-      
-      if (ticket) {
-        setCustomEmailBody(compileEmailTemplate(templateText, ticket, todayRef()));
-      } else {
-        setCustomEmailBody(templateText);
-      }
-    }
-  }, [selectedEmailTicketId, selectedTemplateIndex, tickets, emailTemplates]);
+  const refreshEmailDraft = (ticketId = selectedEmailTicketId, templateIndex = selectedTemplateIndex) => {
+    setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, ticketId, templateIndex));
+  };
 
   // Handle dark/light theme classes on body
   useEffect(() => {
@@ -241,7 +217,7 @@ export default function App() {
   }, [showEditModal]);
 
   // 2. Initialize Supabase Connection
-  const initializeSupabase = async (url, key) => {
+  const initializeSupabase = useCallback(async (url, key) => {
     setCloudLoading(true);
     setSyncStatusText('Conectando à nuvem...');
     try {
@@ -286,7 +262,10 @@ export default function App() {
           .order('id', { ascending: true });
 
         if (emailTemplatesError) throw emailTemplatesError;
-        if (emailTemplatesData) setEmailTemplates(emailTemplatesData);
+        if (emailTemplatesData) {
+          setEmailTemplates(emailTemplatesData);
+          setCustomEmailBody(buildEmailDraft(emailTemplatesData, ticketsData || initialTickets, '', 0));
+        }
       } else {
         setSyncStatusText('Conectado (Tabelas vazias)');
       }
@@ -299,7 +278,17 @@ export default function App() {
     } finally {
       setCloudLoading(false);
     }
-  };
+  }, [triggerToast]);
+
+  // 1. Initial cloud configuration. Local db.json is loaded by lazy state above.
+  useEffect(() => {
+    if (initialCloudConfig.url && initialCloudConfig.key) {
+      const timer = window.setTimeout(() => {
+        initializeSupabase(initialCloudConfig.url, initialCloudConfig.key);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [initialCloudConfig, initializeSupabase]);
 
   const handleConnectCloud = (e) => {
     e.preventDefault();
@@ -359,16 +348,6 @@ export default function App() {
     } finally {
       setCloudLoading(false);
     }
-  };
-
-  // Display floating toast
-  const triggerToast = (msg, type) => {
-    const kind = type || (/(erro|falha|inv[áa]lid|preencha|primeiro)/i.test(msg) ? 'error' : 'success');
-    setToastMessage(msg);
-    setToastType(kind);
-    setTimeout(() => {
-      setToastMessage('');
-    }, 3000);
   };
 
   // Date Formatting Helpers — delega ao módulo de lógica (fonte única da verdade)
@@ -464,7 +443,18 @@ export default function App() {
   };
 
   const saveEditedTicket = async () => {
+    const validation = editTicketSchema.safeParse(editingTicket);
+    if (!validation.success) {
+      triggerToast(firstValidationMessage(validation), 'info');
+      return;
+    }
+
     const oldTicket = tickets.find(t => t.id_chamado === editingTicket.id_chamado);
+    if (!oldTicket) {
+      triggerToast('Não foi possível localizar o chamado original. Recarregue a página e tente novamente.', 'error');
+      return;
+    }
+
     const hasStatusChanged = oldTicket.status_atual !== editingTicket.status_atual;
     const hasSectorChanged = oldTicket.setor_responsavel !== editingTicket.setor_responsavel;
     const hasNextStepChanged = oldTicket.proxima_providencia !== editingTicket.proxima_providencia;
@@ -541,10 +531,23 @@ export default function App() {
   const handleRegisterNewTicket = async (e) => {
     e.preventDefault();
     if (submitting) return;
-    if (!formSelectedSchool) {
-      triggerToast("Escolha a escola na lista que aparece abaixo do campo para o sistema completar os dados.", 'info');
+
+    const validation = createTicketSchema.safeParse({
+      school: formSelectedSchool,
+      ...newTicket
+    });
+
+    if (!validation.success) {
+      const message = firstValidationMessage(validation);
+      triggerToast(
+        message === 'Selecione uma unidade escolar.'
+          ? 'Selecione uma unidade escolar na lista para o sistema completar os dados.'
+          : message,
+        'info'
+      );
       return;
     }
+
     setSubmitting(true);
     let cloudOk = true;
     try {
@@ -858,8 +861,8 @@ export default function App() {
                 className={`sidebar-item ${currentTab === 'cloud' ? 'active' : ''}`}
                 onClick={() => setCurrentTab('cloud')}
               >
-                <IconCloud />
-                <span>Dados online</span>
+                <IconSettings />
+                <span>Configurações</span>
               </button>
             </li>
           </ul>
@@ -894,6 +897,10 @@ export default function App() {
         {/* Dashboard Tab */}
         {currentTab === 'dashboard' && (
           <div>
+            <p className="screen-intro">
+              Veja a situação geral dos chamados, os alertas de prazo e os casos que precisam de atenção da GOP.
+            </p>
+
             {/* Stat row */}
             <div className="card-grid">
               <div className="stat-card" style={{ '--card-accent': 'var(--primary)' }}>
@@ -1051,10 +1058,10 @@ export default function App() {
                 <div className="sync-panel" style={{ cursor: 'pointer' }} onClick={() => setCurrentTab('cloud')}>
                   <div className="sync-status">
                     <span className="sync-dot" style={{ backgroundColor: cloudConnected ? 'var(--color-green)' : 'var(--color-red)', boxShadow: cloudConnected ? '0 0 8px var(--color-green)' : '0 0 8px var(--color-red)' }} />
-                    <span>{syncStatusText}</span>
-                  </div>
-                  <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--text-light)' }}>
-                    {cloudConnected ? 'Dados online ativos' : 'Configurar dados online'}
+                  <span>{syncStatusText}</span>
+                </div>
+                <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--text-light)' }}>
+                    {cloudConnected ? 'Base online ativa' : 'Configurar base online'}
                   </span>
                 </div>
               </div>
@@ -1069,7 +1076,7 @@ export default function App() {
               <div>
                 <h3><IconList /> Lista de chamados</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Acompanhe os chamados ativos, filtre por setor e clique em uma linha para consultar ou atualizar o andamento.
+                  Use esta tela para localizar chamados, filtrar por setor e abrir uma linha para atualizar o andamento.
                 </p>
               </div>
 
@@ -1228,7 +1235,7 @@ export default function App() {
                 <h3><IconBuilding /> Cadastro Vivo 3ª CRE — Consulta Rápida</h3>
               </div>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
-                Pesquise e selecione qualquer uma das 134 unidades escolares para visualizar sua ficha cadastral técnica completa e histórico de demandas de climatização.
+                Pesquise uma escola pelo nome, designação, SICI ou bairro para consultar a ficha da unidade e seus chamados vinculados.
               </p>
 
               {/* Autocomplete Input */}
@@ -1456,7 +1463,7 @@ export default function App() {
               <div>
                 <h3><IconForm /> Registrar chamado</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Registre uma nova demanda de climatização com busca automática da unidade escolar.
+                  Selecione a unidade escolar, informe o local da demanda e registre a próxima providência inicial.
                 </p>
               </div>
             </div>
@@ -1473,6 +1480,7 @@ export default function App() {
                     className="btn btn-primary"
                     onClick={() => {
                       setSelectedEmailTicketId(newTicketSuccess);
+                      setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, newTicketSuccess, selectedTemplateIndex));
                       setCurrentTab('email');
                     }}
                   >
@@ -1500,7 +1508,7 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleRegisterNewTicket}>
+              <form noValidate onSubmit={handleRegisterNewTicket}>
                 {/* 1. SEÇÃO DE IDENTIFICAÇÃO */}
                 <div className="form-section-title">
                   <IconBuilding />
@@ -1746,7 +1754,7 @@ export default function App() {
               <div>
                 <h3><IconMail /> Comunicações</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Selecione o chamado de trabalho e o modelo de comunicação. O sistema substituirá as variáveis automaticamente e gerará o texto final.
+                  Escolha um chamado e um modelo para gerar uma minuta de e-mail com os dados já preenchidos.
                 </p>
               </div>
             </div>
@@ -1760,7 +1768,11 @@ export default function App() {
                   <select 
                     className="form-control"
                     value={selectedEmailTicketId}
-                    onChange={(e) => setSelectedEmailTicketId(e.target.value)}
+                    onChange={(e) => {
+                      const ticketId = e.target.value;
+                      setSelectedEmailTicketId(ticketId);
+                      refreshEmailDraft(ticketId, selectedTemplateIndex);
+                    }}
                   >
                     <option value="">-- Escolha um Chamado --</option>
                     {tickets.map(t => (
@@ -1779,7 +1791,10 @@ export default function App() {
                       <div 
                         key={idx}
                         className={`template-item ${selectedTemplateIndex === idx ? 'active' : ''}`}
-                        onClick={() => setSelectedTemplateIndex(idx)}
+                        onClick={() => {
+                          setSelectedTemplateIndex(idx);
+                          refreshEmailDraft(selectedEmailTicketId, idx);
+                        }}
                       >
                         <div className="template-item-title">📧 {tp.tipo}</div>
                         <div className="template-item-meta">Etapa POP: {tp.etapa}</div>
@@ -1836,14 +1851,14 @@ export default function App() {
           </div>
         )}
 
-        {/* Nuvem & Sincronização Tab */}
+        {/* Configuração da base online */}
         {currentTab === 'cloud' && (
           <div className="dashboard-section" style={{ maxWidth: '750px', margin: '0 auto' }}>
             <div className="section-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
               <div>
-                <h3>☁️ Dados online</h3>
+                <h3><IconSettings /> Administração dos Dados</h3>
                 <p style={{ fontSize: '12.5px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Consulte o status da base online usada para manter chamados, alterações e históricos disponíveis no site.
+                  Área de configuração da base online. Use apenas para conferir conexão ou administrar a sincronização dos dados.
                 </p>
               </div>
             </div>
@@ -1862,7 +1877,7 @@ export default function App() {
               }}>
                 <div>
                   <strong style={{ fontSize: '14px', color: cloudConnected ? 'var(--color-green)' : 'var(--color-red)', display: 'block' }}>
-                    {cloudConnected ? '✓ DADOS ONLINE ATIVOS' : '✗ DADOS ONLINE INATIVOS'}
+                    {cloudConnected ? 'Base online ativa' : 'Base online inativa'}
                   </strong>
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '500' }}>
                     Status Atual: {syncStatusText}
@@ -1870,7 +1885,7 @@ export default function App() {
                 </div>
                 {cloudConnected && (
                   <button className="btn btn-secondary" onClick={handleDisconnectCloud} style={{ padding: '8px 16px', fontSize: '12px' }}>
-                    Desconectar dados online
+                    Desconectar base online
                   </button>
                 )}
               </div>
@@ -1904,7 +1919,7 @@ export default function App() {
 
                     <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '8px' }} disabled={cloudLoading}>
                       {cloudLoading ? <IconRefresh /> : <IconCloud />}
-                      <span>{cloudLoading ? 'Conectando...' : 'Conectar dados online'}</span>
+                      <span>{cloudLoading ? 'Conectando...' : 'Conectar base online'}</span>
                     </button>
                   </form>
 
@@ -1916,7 +1931,7 @@ export default function App() {
                     border: '1px solid var(--border-color)'
                   }}>
                     <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-                      📋 Passo a passo para configurar os dados online:
+                      Passo a passo para configurar a base online:
                     </h4>
                     <ol style={{ fontSize: '13px', color: 'var(--text-muted)', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px', fontWeight: '500', lineHeight: '1.5' }}>
                       <li>Acesse <strong><a href="https://supabase.com" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>supabase.com</a></strong> e crie uma conta gratuita (leva 1 minuto).</li>
@@ -1995,7 +2010,7 @@ CREATE TABLE IF NOT EXISTS historico (
                   <div style={{ fontSize: '48px', color: 'var(--color-green)', marginBottom: '16px' }}>
                     <IconCloud />
                   </div>
-                  <h4 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '8px' }}>Dados online ativos</h4>
+                  <h4 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '8px' }}>Base online ativa</h4>
                   <p style={{ color: 'var(--text-muted)', fontSize: '13px', maxWidth: '500px', margin: '0 auto 24px auto', fontWeight: '500', lineHeight: '1.5' }}>
                     O site está lendo e gravando chamados, alterações e históricos na base online.
                   </p>
@@ -2003,7 +2018,7 @@ CREATE TABLE IF NOT EXISTS historico (
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                     <button className="btn btn-primary" onClick={handleSyncLocalToCloud} disabled={cloudLoading}>
                       <IconRefresh />
-                      <span>{cloudLoading ? 'Processando...' : 'Enviar base local para os dados online'}</span>
+                      <span>{cloudLoading ? 'Processando...' : 'Enviar base local para a base online'}</span>
                     </button>
                     <button className="btn btn-secondary" onClick={() => setCurrentTab('tickets')}>
                       <IconList />
@@ -2226,6 +2241,7 @@ CREATE TABLE IF NOT EXISTS historico (
                 className="btn btn-secondary" 
                 onClick={() => {
                   setSelectedEmailTicketId(editingTicket.id_chamado);
+                  setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, editingTicket.id_chamado, selectedTemplateIndex));
                   setCurrentTab('email');
                   setShowEditModal(false);
                 }}
