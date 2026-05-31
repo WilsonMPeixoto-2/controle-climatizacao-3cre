@@ -16,6 +16,7 @@ import {
   slaLevel, ageLevel, computeMetrics, stuckRanking, stageGroup, stageGroupCounts,
   filterBySector, sectorSummary, ticketInSector,
   suggestedActionColor, isTruthyFlag, compileEmailTemplate, searchSchools,
+  normalizeString, aggregateBairroStats,
   CLOSED_STATUSES, SLA_WARN_DAYS, SLA_SEVERE_DAYS,
   AGE_WARN_DAYS, AGE_SEVERE_DAYS, SECTORS,
 } from '../src/lib/logic.js';
@@ -286,6 +287,33 @@ test('classifica etapas abertas pela faixa do número', () => {
 test('stageGroupCounts tolera entrada inválida (não-array)', () => {
   const z = stageGroupCounts(null);
   assert.equal(z.triagem + z.orcamento + z.execucao + z.concluido, 0);
+});
+
+// ===========================================================================
+section('Agregação e Normalização por Bairro (aggregateBairroStats)');
+
+test('normalizeString limpa acentos e padroniza texto', () => {
+  assert.equal(normalizeString('Inhaúma'), 'inhauma');
+  assert.equal(normalizeString('ENG. DE DENTRO'), 'eng. de dentro');
+  assert.equal(normalizeString('  bairro   com   espacos  '), 'bairro com espacos');
+});
+
+test('aggregateBairroStats agrupa escolas e chamados por bairro com dados reais', () => {
+  const stats = aggregateBairroStats(db.chamados, db.escolas, REF);
+  
+  // O bairro de 'inhauma' deve estar presente
+  assert.ok(stats.inhauma);
+  assert.ok(stats.inhauma.escolas_cadastradas > 0);
+  assert.ok(typeof stats.inhauma.chamados_ativos === 'number');
+  assert.ok(Array.isArray(stats.inhauma.chamados_lista));
+});
+
+test('aggregateBairroStats trata chamados sem escola correspondente com fallback seguro', () => {
+  const orfao = { id_chamado: 'ORF-0001', status_atual: '1 - Recebido — em triagem', unidade_escolar: 'Escola Inexistente' };
+  const stats = aggregateBairroStats([orfao], db.escolas, REF);
+  assert.ok(stats.desconhecido);
+  assert.equal(stats.desconhecido.chamados_ativos, 1);
+  assert.equal(stats.desconhecido.criticos, 0);
 });
 
 // ===========================================================================

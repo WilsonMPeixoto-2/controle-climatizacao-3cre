@@ -281,3 +281,123 @@ export function compileEmailTemplate(templateText, ticket, dateRef = new Date())
     .replace(/{UNIDADE}/g, ticket.unidade_escolar ?? '')
     .replace(/{DATA}/g, dataStr);
 }
+
+// ---------------------------------------------------------------------------
+// Normalização e Agregação por Bairro
+// ---------------------------------------------------------------------------
+
+/**
+ * Normaliza strings para cruzamento estável de bairros/escolas usando regex Unicode seguro.
+ * Remove acentos, espaços extras duplicados e padroniza para caixa baixa.
+ */
+export function normalizeString(str) {
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Cruza chamados e escolas de forma dinâmica e gera estatísticas consolidadas por bairro.
+ * Possui fallbacks por unidade escolar e órfãos seguros (bairro_desconhecido).
+ */
+export function aggregateBairroStats(tickets, schools, ref = new Date()) {
+  const tks = Array.isArray(tickets) ? tickets : [];
+  const schs = Array.isArray(schools) ? schools : [];
+
+  const schoolByDesignacao = new Map();
+  const schoolByNameNormalized = new Map();
+
+  for (const s of schs) {
+    if (s.designacao) {
+      schoolByDesignacao.set(normalizeString(s.designacao), s);
+    }
+    if (s.unidade_escolar) {
+      schoolByNameNormalized.set(normalizeString(s.unidade_escolar), s);
+    }
+  }
+
+  const statsByBairro = new Map();
+
+  // Inicializa todos os bairros das escolas cadastradas para garantir contagem de escolas (mesmo com 0 chamados)
+  for (const s of schs) {
+    const bairro = s.bairro || 'Desconhecido';
+    const normalized = normalizeString(bairro);
+    if (!statsByBairro.has(normalized)) {
+      statsByBairro.set(normalized, {
+        nome_exibicao: bairro,
+        escolas_cadastradas: 0,
+        chamados_ativos: 0,
+        criticos: 0,
+        atencao: 0,
+        chamados_lista: []
+      });
+    }
+    statsByBairro.get(normalized).escolas_cadastradas++;
+  }
+
+  // Agrega chamados ativos nos bairros
+  for (const t of tks) {
+    // Cruza chamado com escola correspondente (Regra -> Fallback)
+    let matchedSchool = null;
+    if (t.designacao) {
+      matchedSchool = schoolByDesignacao.get(normalizeString(t.designacao));
+    }
+    if (!matchedSchool && t.unidade_escolar) {
+      matchedSchool = schoolByNameNormalized.get(normalizeString(t.unidade_escolar));
+    }
+
+    const bairro = matchedSchool?.bairro || 'Desconhecido';
+    const normalized = normalizeString(bairro);
+
+    if (!statsByBairro.has(normalized)) {
+      statsByBairro.set(normalized, {
+        nome_exibicao: bairro,
+        escolas_cadastradas: 0,
+        chamados_ativos: 0,
+        criticos: 0,
+        atencao: 0,
+        chamados_lista: []
+      });
+    }
+
+    const bairroStats = statsByBairro.get(normalized);
+
+    if (!isClosed(t)) {
+      bairroStats.chamados_ativos++;
+
+      const sla = slaLevel(t, ref);
+      const age = ageLevel(t, ref);
+
+      const isSevere = sla === 'severe' || age === 'severe';
+      const isWarning = sla === 'warning' || age === 'warning';
+
+      if (isSevere) {
+        bairroStats.criticos++;
+      } else if (isWarning) {
+        bairroStats.atencao++;
+      }
+
+      bairroStats.chamados_lista.push({
+        id_chamado: t.id_chamado,
+        unidade_escolar: t.unidade_escolar,
+        status_atual: t.status_atual,
+        setor_responsavel: t.setor_responsavel,
+        prioridade: t.prioridade,
+        inactivityDays: inactivityDays(t, ref),
+        ageDays: ageDays(t, ref),
+        isCritical: isSevere,
+        isWarning: isWarning
+      });
+    }
+  }
+
+  const result = {};
+  for (const [key, value] of statsByBairro.entries()) {
+    result[key] = value;
+  }
+  return result;
+}
+

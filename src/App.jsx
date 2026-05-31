@@ -16,6 +16,7 @@ import {
   searchSchools,
   stageGroupCounts,
   SECTORS,
+  aggregateBairroStats,
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
@@ -134,6 +135,7 @@ export default function App() {
   const [history, setHistory] = useState(initialHistory);
   const [emailTemplates, setEmailTemplates] = useState(initialEmailTemplates);
   const [theme, setTheme] = useState('dark'); // 'dark' or 'light'
+  const [selectedBairroNormalized, setSelectedBairroNormalized] = useState(null);
 
   // Cloud (Supabase) integration states
   const [supabaseUrl, setSupabaseUrl] = useState(initialCloudConfig.url);
@@ -964,7 +966,75 @@ export default function App() {
                 <h3><IconBuilding /> Mapa Operacional</h3>
                 <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Área de atuação da 3ª CRE · Zona Norte</span>
               </div>
-              <OperationalMap />
+              
+              <div className="map-and-details-container">
+                <OperationalMap 
+                  tickets={tickets} 
+                  schools={schools} 
+                  selectedSchool={selectedSchool} 
+                  theme={theme} 
+                  onSelectBairro={setSelectedBairroNormalized} 
+                />
+                
+                {selectedBairroNormalized && (() => {
+                  const stats = aggregateBairroStats(tickets, schools);
+                  const bData = stats[selectedBairroNormalized];
+                  if (!bData) return null;
+                  return (
+                    <div className="bairro-details-card animate-slide-in">
+                      <div className="bairro-card-header">
+                        <h4>📍 {bData.nome_exibicao}</h4>
+                        <button className="btn-close-small" onClick={() => setSelectedBairroNormalized(null)} title="Fechar detalhes do bairro">
+                          <IconClose />
+                        </button>
+                      </div>
+                      <div className="bairro-card-body">
+                        <div className="bairro-stat-row">
+                          <span>Escolas Cadastradas:</span>
+                          <strong>{bData.escolas_cadastradas}</strong>
+                        </div>
+                        <div className="bairro-stat-row">
+                          <span>Chamados Ativos:</span>
+                          <strong>{bData.chamados_ativos}</strong>
+                        </div>
+                        <div className="bairro-stat-row" style={{ color: 'var(--color-red)' }}>
+                          <span>Críticos:</span>
+                          <strong>{bData.criticos}</strong>
+                        </div>
+                        <div className="bairro-stat-row" style={{ color: 'var(--color-amber)' }}>
+                          <span>Em Atenção:</span>
+                          <strong>{bData.atencao}</strong>
+                        </div>
+                        
+                        <div className="bairro-tickets-section">
+                          <h5>Chamados Ativos no Bairro ({bData.chamados_lista.length}):</h5>
+                          <div className="bairro-tickets-list">
+                            {bData.chamados_lista.map(tk => (
+                              <div 
+                                key={tk.id_chamado} 
+                                className="bairro-ticket-item" 
+                                onClick={() => openTicketEdit(tk)}
+                                title={`Abrir chamado ${tk.id_chamado}`}
+                              >
+                                <div className="bairro-ticket-meta">
+                                  <span className="bairro-ticket-code">{tk.id_chamado}</span>
+                                  <span className={`badge badge-priority-${tk.prioridade.toLowerCase()}`} style={{ fontSize: '8px', padding: '0px 4px' }}>{tk.prioridade}</span>
+                                </div>
+                                <div className="bairro-ticket-school">{tk.unidade_escolar}</div>
+                                <div className="bairro-ticket-status">{tk.status_atual}</div>
+                              </div>
+                            ))}
+                            {bData.chamados_lista.length === 0 && (
+                              <p className="bairro-no-tickets">Nenhum chamado ativo neste bairro.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
               <div className="op-legend">
                 <span className="lg"><span className="ld" style={{ background: 'var(--secondary)', color: 'var(--secondary)' }} />Triagem / Vistoria <b>{stageCounts.triagem}</b></span>
                 <span className="lg"><span className="ld" style={{ background: 'var(--color-amber)', color: 'var(--color-amber)' }} />Orçamento <b>{stageCounts.orcamento}</b></span>

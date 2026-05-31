@@ -1791,3 +1791,262 @@ html:not(.dark-theme) .leaflet-bar a {
 
 /* realce sutil no hover das linhas de alerta — mantém a cor de gravidade E devolve o "estou aqui" */
 .lists-row-warning:hover, .lists-row-severe:hover, .lists-row-age-warning:hover, .lists-row-age-severe:hover { box-shadow: inset 0 0 0 9999px hsla(0, 0%, 100%, 0.04); }
+
+/* ===========================================================================
+   Visualização Territorial por Bairro (Mapa Operacional Evoluído)
+   =========================================================================== */
+
+.map-and-details-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .map-and-details-container {
+    grid-template-columns: 1.45fr 1fr;
+  }
+}
+
+/* Card flutuante/lateral de detalhes do bairro selecionado */
+.bairro-details-card {
+  background-color: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-md);
+  max-height: 440px;
+  overflow-y: auto;
+  transition: var(--transition);
+}
+
+.bairro-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.bairro-card-header h4 {
+  font-size: 15px;
+  font-weight: 850;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.btn-close-small {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.btn-close-small:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.btn-close-small svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+}
+
+.bairro-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bairro-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+  padding-bottom: 6px;
+}
+
+.bairro-stat-row strong {
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bairro-tickets-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.bairro-tickets-section h5 {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--text-light);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.bairro-tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.bairro-ticket-item {
+  padding: 10px 12px;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: var(--transition);
+}
+
+.bairro-ticket-item:hover {
+  border-color: var(--primary);
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+.bairro-ticket-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bairro-ticket-code {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.bairro-ticket-school {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bairro-ticket-status {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.bairro-no-tickets {
+  font-size: 11.5px;
+  color: var(--text-light);
+  font-weight: 600;
+  text-align: center;
+  padding: 12px;
+}
+
+/* Tooltip cartográfico dinâmico */
+.cre-tooltip-custom {
+  background: hsla(216, 40%, 8%, 0.88) !important;
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-xs) !important;
+  box-shadow: var(--shadow-md) !important;
+  color: var(--text-main) !important;
+  padding: 10px 14px !important;
+  pointer-events: none;
+}
+
+.cre-tooltip-custom::before {
+  border-right-color: hsla(216, 40%, 8%, 0.88) !important;
+}
+
+.map-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.map-tooltip-title {
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.map-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.map-tooltip-row span {
+  color: var(--text-light);
+}
+
+/* Transição de entrada (Wow factor sutil e coerente) */
+.animate-slide-in {
+  animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Sobrescritas para o Tema Claro */
+html:not(.dark-theme) .cre-tooltip-custom {
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: hsl(215, 33%, 15%) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-color: rgba(100, 116, 139, 0.22) !important;
+}
+
+html:not(.dark-theme) .cre-tooltip-custom::before {
+  border-right-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+html:not(.dark-theme) .leaflet-container {
+  background: hsl(210, 30%, 96%) !important;
+}
+
+html:not(.dark-theme) .op-map {
+  background: hsl(210, 30%, 96%) !important;
+  border-color: rgba(100, 116, 139, 0.22) !important;
+}
+
+html:not(.dark-theme) .bairro-details-card {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(100, 116, 139, 0.22) !important;
+}
+
