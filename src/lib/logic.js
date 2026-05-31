@@ -145,6 +145,35 @@ export function stuckRanking(tickets, ref = new Date(), n = 5) {
 }
 
 // ---------------------------------------------------------------------------
+// Agrupamento por etapa do fluxo (legenda do Mapa Operacional)
+// ---------------------------------------------------------------------------
+
+/**
+ * Mapeia um chamado a um dos 4 grupos do fluxo POP, a partir do número da etapa
+ * em `status_atual` ("4 - Aguardando orçamento" → 4). Independe de data (ao
+ * contrário do SLA), então a leitura por etapa é estável mesmo com dados antigos.
+ *   triagem   → etapas 1–3 (recebido / vistoria)
+ *   orcamento → etapas 4–5 (orçamento)
+ *   execucao  → etapas 6–9 (adequação / execução)
+ *   concluido → etapa 10/11 e "Suspenso / pendente" (ciclo encerrado)
+ */
+export function stageGroup(ticket) {
+  if (isClosed(ticket)) return 'concluido';
+  const m = String(ticket?.status_atual || '').match(/^\s*(\d+)/);
+  const s = m ? parseInt(m[1], 10) : 0;
+  if (s >= 6) return 'execucao';
+  if (s >= 4) return 'orcamento';
+  return 'triagem';
+}
+
+/** Contagem de chamados por grupo de etapa. A soma é sempre tickets.length. */
+export function stageGroupCounts(tickets) {
+  const g = { triagem: 0, orcamento: 0, execucao: 0, concluido: 0 };
+  for (const t of (Array.isArray(tickets) ? tickets : [])) g[stageGroup(t)]++;
+  return g;
+}
+
+// ---------------------------------------------------------------------------
 // Visões por setor (Bloco C)
 // ---------------------------------------------------------------------------
 

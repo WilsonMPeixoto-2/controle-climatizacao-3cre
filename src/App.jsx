@@ -13,8 +13,10 @@ import {
   suggestedActionColor,
   compileEmailTemplate,
   searchSchools,
+  stageGroupCounts,
   SECTORS,
 } from './lib/logic.js';
+import OperationalMap from './components/OperationalMap.jsx';
 
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
 // e antiguidade são derivados em ./lib/logic.js a partir desta referência.
@@ -395,6 +397,7 @@ export default function App() {
 
   // Metric Computations — centralizadas no módulo de lógica (data dinâmica)
   const metrics = computeMetrics(tickets, todayRef());
+  const stageCounts = stageGroupCounts(tickets);
   const totalTickets = metrics.total;
   const openTickets = metrics.open;
   const inactivePlus7 = metrics.inactivePlus7;   // SLA âmbar ou pior
@@ -438,27 +441,6 @@ export default function App() {
 
   // Ranking dos chamados ativos mais parados (delegado ao módulo de lógica)
   const getDashboardStuckRanking = () => stuckRanking(tickets, todayRef(), 5);
-
-  // Stage distribution calculations
-  const getStatusDistribution = () => {
-    const dist = {};
-    tickets.forEach(t => {
-      dist[t.status_atual] = (dist[t.status_atual] || 0) + 1;
-    });
-    return dist;
-  };
-
-  // Sector workloads involvements
-  const getSectorInvolvements = () => {
-    const counts = {};
-    tickets.forEach(t => {
-      const sectors = t.setor_responsavel.split('/').map(s => s.trim());
-      sectors.forEach(sec => {
-        counts[sec] = (counts[sec] || 0) + 1;
-      });
-    });
-    return counts;
-  };
 
   // Edit ticket action
   const openTicketEdit = (ticket) => {
@@ -870,6 +852,10 @@ export default function App() {
             <p>Gerência de Operações · Coordenadoria Regional de Educação (GOP/3ª CRE) · Data de Referência: {formatDateBrazilian(todayRef().toISOString())}</p>
           </div>
           <div className="header-actions">
+            <button className="btn btn-secondary theme-toggle-header" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} title="Alternar entre modo escuro e claro">
+              {theme === 'dark' ? <IconSun /> : <IconMoon />}
+              <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
+            </button>
             <button className="btn btn-primary" onClick={() => {
               setNewTicketSuccess(null);
               setCurrentTab('form');
@@ -940,6 +926,22 @@ export default function App() {
               </div>
             </div>
 
+            {/* Mapa Operacional — área de atuação da 3ª CRE (substitui os cards de Etapas e Setor) */}
+            <div className="dashboard-section op-panel">
+              <div className="section-header">
+                <h3><IconBuilding /> Mapa Operacional</h3>
+                <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Área de atuação da 3ª CRE · Zona Norte</span>
+              </div>
+              <OperationalMap />
+              <div className="op-legend">
+                <span className="lg"><span className="ld" style={{ background: 'var(--secondary)', color: 'var(--secondary)' }} />Triagem / Vistoria <b>{stageCounts.triagem}</b></span>
+                <span className="lg"><span className="ld" style={{ background: 'var(--color-amber)', color: 'var(--color-amber)' }} />Orçamento <b>{stageCounts.orcamento}</b></span>
+                <span className="lg"><span className="ld" style={{ background: 'var(--primary)', color: 'var(--primary)' }} />Em execução <b>{stageCounts.execucao}</b></span>
+                <span className="lg"><span className="ld" style={{ background: 'var(--color-green)', color: 'var(--color-green)' }} />Concluído <b>{stageCounts.concluido}</b></span>
+              </div>
+              <p className="op-foot">Mapa-base real (© OpenStreetMap · CARTO) com os 26 bairros da 3ª CRE destacados. As contagens por etapa refletem os chamados do sistema. Mapa de contexto da área de atuação — não localiza unidades individualmente.</p>
+            </div>
+
             {/* Layout Grid */}
             <div className="dashboard-layout">
               {/* Left section: Charts */}
@@ -952,59 +954,9 @@ export default function App() {
                   {renderDashboardDonutChart()}
                 </div>
 
-                <div className="dashboard-section">
-                  <div className="section-header">
-                    <h3><IconList /> Distribuição pelas 12 Etapas POP</h3>
-                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Status dos chamados</span>
-                  </div>
+{/* (removido) "Distribuição pelas 12 Etapas POP" — substituído pelo Mapa Operacional; a leitura por etapa agora aparece na legenda do mapa */}
 
-                  <div className="chart-container">
-                    {Object.entries(getStatusDistribution())
-                      .sort((a, b) => a[0].localeCompare(b[0]))
-                      .map(([status, count]) => {
-                        const pct = ((count / totalTickets) * 100).toFixed(0);
-                        return (
-                          <div key={status} className="bar-row">
-                            <div className="bar-label" title={status}>{status}</div>
-                            <div className="bar-track">
-                              <div 
-                                className="bar-fill" 
-                                style={{ 
-                                  width: `${pct}%`,
-                                  background: `linear-gradient(90deg, ${getStatusStyle(status)['--status-color']}, var(--secondary))`
-                                }}
-                              />
-                            </div>
-                            <div className="bar-value">{count} <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>({pct}%)</span></div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-
-                <div className="dashboard-section">
-                  <div className="section-header">
-                    <h3><IconSettings /> Envolvimento e Demandas por Setor</h3>
-                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Soma de responsabilidades ativas</span>
-                  </div>
-
-                  <div className="chart-container">
-                    {Object.entries(getSectorInvolvements())
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([sector, count]) => {
-                        const pct = ((count / openTickets) * 100).toFixed(0);
-                        return (
-                          <div key={sector} className="bar-row">
-                            <div className="bar-label" style={{ fontWeight: 'bold' }}>{sector}</div>
-                            <div className="bar-track">
-                              <div className="bar-fill" style={{ width: `${pct}%`, background: 'var(--secondary)' }} />
-                            </div>
-                            <div className="bar-value">{count}</div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
+{/* (removido) "Envolvimento e Demandas por Setor" — a visão por setor permanece na barra de setor da Lista de chamados (Bloco C) */}
               </div>
 
               {/* Right Section: Inactivity Ranking */}
