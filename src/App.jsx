@@ -243,7 +243,7 @@ export default function App() {
 
       // If schools table exists, load cloud datasets
       setCloudConnected(true);
-      setSyncStatusText('Conectado em Nuvem');
+      setSyncStatusText('Dados online ativos');
       
       if (schoolsData && schoolsData.length > 0) {
         setSchools(schoolsData);
@@ -263,15 +263,24 @@ export default function App() {
           .order('data', { ascending: false });
           
         if (historyData) setHistory(historyData);
+
+        // Load e-mail templates from Supabase so the app uses the curated online models.
+        const { data: emailTemplatesData, error: emailTemplatesError } = await client
+          .from('modelos_email')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (emailTemplatesError) throw emailTemplatesError;
+        if (emailTemplatesData) setEmailTemplates(emailTemplatesData);
       } else {
         setSyncStatusText('Conectado (Tabelas vazias)');
       }
-      triggerToast("Nuvem Supabase carregada com sucesso!");
+      triggerToast("Dados online carregados com sucesso!");
     } catch (err) {
       console.error("Supabase Error:", err);
       setCloudConnected(false);
       setSyncStatusText('Erro de conexão - Modo Local');
-      triggerToast("Erro ao conectar à nuvem. Usando base local.");
+      triggerToast("Erro ao carregar dados online. Usando base local.");
     } finally {
       setCloudLoading(false);
     }
@@ -327,7 +336,7 @@ export default function App() {
       const { error: histErr } = await supabaseClient.from('historico').upsert(history);
       if (histErr) throw histErr;
 
-      setSyncStatusText('Conectado em Nuvem');
+      setSyncStatusText('Dados online ativos');
       triggerToast("Banco de dados local sincronizado e salvo na nuvem!");
     } catch (err) {
       console.error(err);
@@ -551,7 +560,7 @@ export default function App() {
       status_atual: newTicket.status_atual,
       setor_responsavel: newTicket.setor_responsavel,
       proxima_providencia: newTicket.proxima_providencia,
-      ultima_movimentacao: "Chamado registrado no sistema via Roteiro Forms.",
+      ultima_movimentacao: "Chamado registrado no sistema.",
       informacao_validada: newTicket.informacao_validada,
       prioridade: newTicket.prioridade,
       comunicacao_cto: "Não",
@@ -799,7 +808,7 @@ export default function App() {
                 onClick={() => setCurrentTab('tickets')}
               >
                 <IconList />
-                <span>Controle de Chamados</span>
+                <span>Lista de chamados</span>
               </button>
             </li>
             <li>
@@ -817,7 +826,7 @@ export default function App() {
                 onClick={() => setCurrentTab('form')}
               >
                 <IconForm />
-                <span>Simulador de Entrada</span>
+                <span>Registrar chamado</span>
               </button>
             </li>
             <li>
@@ -826,7 +835,7 @@ export default function App() {
                 onClick={() => setCurrentTab('email')}
               >
                 <IconMail />
-                <span>Gerador de E-mails</span>
+                <span>Comunicações</span>
               </button>
             </li>
             <li>
@@ -835,7 +844,7 @@ export default function App() {
                 onClick={() => setCurrentTab('cloud')}
               >
                 <IconCloud />
-                <span>Nuvem & Sinc</span>
+                <span>Dados online</span>
               </button>
             </li>
           </ul>
@@ -858,7 +867,7 @@ export default function App() {
         <header className="main-header">
           <div className="header-title">
             <h1>Controle Vivo de Climatização</h1>
-            <p>Gerência de Operações · Coordenadoria Regional de Educação (GOP/3ª CRE) · Data de Referência: 29/05/2026</p>
+            <p>Gerência de Operações · Coordenadoria Regional de Educação (GOP/3ª CRE) · Data de Referência: {formatDateBrazilian(todayRef().toISOString())}</p>
           </div>
           <div className="header-actions">
             <button className="btn btn-primary" onClick={() => {
@@ -866,7 +875,7 @@ export default function App() {
               setCurrentTab('form');
             }}>
               <IconPlus />
-              <span>Registrar Demanda</span>
+              <span>Registrar chamado</span>
             </button>
           </div>
         </header>
@@ -946,7 +955,7 @@ export default function App() {
                 <div className="dashboard-section">
                   <div className="section-header">
                     <h3><IconList /> Distribuição pelas 12 Etapas POP</h3>
-                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Status Simplificados do Lists</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Status dos chamados</span>
                   </div>
 
                   <div className="chart-container">
@@ -1004,7 +1013,7 @@ export default function App() {
                   <h3><IconWarning /> Ranking de Inatividade (Gargalos)</h3>
                 </div>
                 <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
-                  Chamados ativos parados há mais tempo sem movimentação no ambiente do Lists.
+                  Chamados ativos parados há mais tempo sem movimentação no sistema.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1068,7 +1077,7 @@ export default function App() {
                     <span>{syncStatusText}</span>
                   </div>
                   <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--text-light)' }}>
-                    {cloudConnected ? 'Nuvem Ativa' : 'Clique para Configurar'}
+                    {cloudConnected ? 'Dados online ativos' : 'Configurar dados online'}
                   </span>
                 </div>
               </div>
@@ -1081,9 +1090,9 @@ export default function App() {
           <div className="dashboard-section" style={{ padding: '24px' }}>
             <div className="section-header" style={{ marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <h3><IconList /> Chamados de Climatização (Espelho do Lists)</h3>
+                <h3><IconList /> Lista de chamados</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Visualização da lista ativa integrada com formatação de inatividade condicional. Clique em uma linha para abrir a Ficha Técnica e Editar.
+                  Acompanhe os chamados ativos, filtre por setor e clique em uma linha para consultar ou atualizar o andamento.
                 </p>
               </div>
 
@@ -1462,9 +1471,9 @@ export default function App() {
           <div className="dashboard-section" style={{ maxWidth: '750px', margin: '0 auto' }}>
             <div className="section-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
               <div>
-                <h3><IconForm /> Simulador de Entrada de Unidade (Roteiro Forms)</h3>
+                <h3><IconForm /> Registrar chamado</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Simule o recebimento de uma demanda baseado nas perguntas oficiais do Roteiro Forms, com autocompletar integrado ao cadastro de escolas.
+                  Registre uma nova demanda de climatização com busca automática da unidade escolar.
                 </p>
               </div>
             </div>
@@ -1752,7 +1761,7 @@ export default function App() {
           <div className="dashboard-section">
             <div className="section-header" style={{ marginBottom: '24px' }}>
               <div>
-                <h3><IconMail /> Gerador de Comunicações por Etapa POP</h3>
+                <h3><IconMail /> Comunicações</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
                   Selecione o chamado de trabalho e o modelo de comunicação. O sistema substituirá as variáveis automaticamente e gerará o texto final.
                 </p>
@@ -1849,9 +1858,9 @@ export default function App() {
           <div className="dashboard-section" style={{ maxWidth: '750px', margin: '0 auto' }}>
             <div className="section-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
               <div>
-                <h3>☁️ Integração e Sincronização na Nuvem (Supabase)</h3>
+                <h3>☁️ Dados online</h3>
                 <p style={{ fontSize: '12.5px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Conecte o seu Web App a um banco de dados real na nuvem do Supabase. Todos os chamados, alterações e históricos serão mantidos online, permanentes e sincronizados em tempo real!
+                  Consulte o status da base online usada para manter chamados, alterações e históricos disponíveis no site.
                 </p>
               </div>
             </div>
@@ -1870,7 +1879,7 @@ export default function App() {
               }}>
                 <div>
                   <strong style={{ fontSize: '14px', color: cloudConnected ? 'var(--color-green)' : 'var(--color-red)', display: 'block' }}>
-                    {cloudConnected ? '✓ BANCO DE DADOS EM NUVEM ATIVO' : '✗ BANCO DE DADOS EM NUVEM INATIVO'}
+                    {cloudConnected ? '✓ DADOS ONLINE ATIVOS' : '✗ DADOS ONLINE INATIVOS'}
                   </strong>
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '500' }}>
                     Status Atual: {syncStatusText}
@@ -1878,7 +1887,7 @@ export default function App() {
                 </div>
                 {cloudConnected && (
                   <button className="btn btn-secondary" onClick={handleDisconnectCloud} style={{ padding: '8px 16px', fontSize: '12px' }}>
-                    Desconectar Nuvem
+                    Desconectar dados online
                   </button>
                 )}
               </div>
@@ -1912,7 +1921,7 @@ export default function App() {
 
                     <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '8px' }} disabled={cloudLoading}>
                       {cloudLoading ? <IconRefresh /> : <IconCloud />}
-                      <span>{cloudLoading ? 'Conectando...' : 'Conectar e Carregar Nuvem'}</span>
+                      <span>{cloudLoading ? 'Conectando...' : 'Conectar dados online'}</span>
                     </button>
                   </form>
 
@@ -1924,7 +1933,7 @@ export default function App() {
                     border: '1px solid var(--border-color)'
                   }}>
                     <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-                      📋 Passo a Passo para Configurar sua Nuvem Supabase Grátis:
+                      📋 Passo a passo para configurar os dados online:
                     </h4>
                     <ol style={{ fontSize: '13px', color: 'var(--text-muted)', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px', fontWeight: '500', lineHeight: '1.5' }}>
                       <li>Acesse <strong><a href="https://supabase.com" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>supabase.com</a></strong> e crie uma conta gratuita (leva 1 minuto).</li>
@@ -2003,15 +2012,15 @@ CREATE TABLE IF NOT EXISTS historico (
                   <div style={{ fontSize: '48px', color: 'var(--color-green)', marginBottom: '16px' }}>
                     <IconCloud />
                   </div>
-                  <h4 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '8px' }}>Seu Banco de Dados na Nuvem está Ativo!</h4>
+                  <h4 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '8px' }}>Dados online ativos</h4>
                   <p style={{ color: 'var(--text-muted)', fontSize: '13px', maxWidth: '500px', margin: '0 auto 24px auto', fontWeight: '500', lineHeight: '1.5' }}>
-                    Toda a sua equipe agora pode abrir esse site, ler e editar os chamados de forma colaborativa e segura. As informações nunca mais serão perdidas!
+                    O site está lendo e gravando chamados, alterações e históricos na base online.
                   </p>
 
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                     <button className="btn btn-primary" onClick={handleSyncLocalToCloud} disabled={cloudLoading}>
                       <IconRefresh />
-                      <span>{cloudLoading ? 'Processando...' : 'Sincronizar Dados Iniciais (db.json → Nuvem)'}</span>
+                      <span>{cloudLoading ? 'Processando...' : 'Enviar base local para os dados online'}</span>
                     </button>
                     <button className="btn btn-secondary" onClick={() => setCurrentTab('tickets')}>
                       <IconList />
@@ -2194,7 +2203,7 @@ CREATE TABLE IF NOT EXISTS historico (
                     <div><strong>Última Alteração:</strong> {formatDateBrazilian(editingTicket.modificado_em)}</div>
                     <div style={{ color: 'var(--color-orange)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <IconClock />
-                      <span>Inativo há {getInactivityDays(editingTicket.modificado_em)} dias no Lists.</span>
+                      <span>Sem movimentação há {getInactivityDays(editingTicket.modificado_em)} dias.</span>
                     </div>
                   </div>
 
