@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
+import { Analytics } from '@vercel/analytics/react';
 import {
   formatDateBrazilian as fmtDateBR,
   inactivityDays as calcInactivityDays,
@@ -2262,6 +2263,7 @@ CREATE TABLE IF NOT EXISTS historico (
           </div>
         </div>
       )}
+      <Analytics />
     </div>
   );
 }
