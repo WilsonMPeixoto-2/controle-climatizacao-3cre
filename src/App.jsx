@@ -171,12 +171,14 @@ export default function App() {
     resultado_aptidao: 'Pendente'
   });
   const [newTicketSuccess, setNewTicketSuccess] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Email tab states
   const [selectedEmailTicketId, setSelectedEmailTicketId] = useState('');
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState(0);
   const [customEmailBody, setCustomEmailBody] = useState('');
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success'); // 'success' | 'error' | 'info'
 
   // 1. Initial Load of Local Data & Cloud Configuration
   useEffect(() => {
@@ -227,6 +229,15 @@ export default function App() {
       root.classList.remove('dark-theme');
     }
   }, [theme]);
+
+  // Fecha o modal de edição com Esc e trava o scroll do fundo enquanto aberto
+  useEffect(() => {
+    if (!showEditModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') setShowEditModal(false); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [showEditModal]);
 
   // 2. Initialize Supabase Connection
   const initializeSupabase = async (url, key) => {
@@ -350,8 +361,10 @@ export default function App() {
   };
 
   // Display floating toast
-  const triggerToast = (msg) => {
+  const triggerToast = (msg, type) => {
+    const kind = type || (/(erro|falha|inv[áa]lid|preencha|primeiro)/i.test(msg) ? 'error' : 'success');
     setToastMessage(msg);
+    setToastType(kind);
     setTimeout(() => {
       setToastMessage('');
     }, 3000);
@@ -520,10 +533,12 @@ export default function App() {
   // Submit a new ticket simulator
   const handleRegisterNewTicket = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (!formSelectedSchool) {
-      triggerToast("Erro: Selecione uma unidade escolar válida!");
+      triggerToast("Escolha a escola na lista que aparece abaixo do campo para o sistema completar os dados.");
       return;
     }
+    setSubmitting(true);
 
     const nextIdNum = tickets.reduce((max, t) => {
       const num = parseInt(t.id_chamado.split('-').pop(), 10);
@@ -604,6 +619,7 @@ export default function App() {
     });
     setFormSelectedSchool(null);
     setFormSearchQuery('');
+    setSubmitting(false);
   };
 
   // Interactive SVG circular metrics computations for school detail
@@ -737,12 +753,12 @@ export default function App() {
     <div className="app-container">
       {/* Toast Notification */}
       {toastMessage && (
-        <div style={{
+        <div role="status" aria-live="polite" style={{
           position: 'fixed',
           bottom: '24px',
           right: '24px',
-          backgroundColor: 'var(--secondary)',
-          color: 'white',
+          backgroundColor: toastType === 'error' ? 'hsl(350, 72%, 44%)' : toastType === 'info' ? 'var(--primary-hover)' : 'hsl(150, 55%, 30%)',
+          color: '#fff',
           padding: '12px 20px',
           borderRadius: 'var(--radius-xs)',
           boxShadow: 'var(--shadow-lg)',
@@ -751,9 +767,10 @@ export default function App() {
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
+          maxWidth: '400px',
           animation: 'modalSlide 0.2s ease-out'
         }}>
-          <IconCheck />
+          {toastType === 'error' ? <IconWarning /> : <IconCheck />}
           <span>{toastMessage}</span>
         </div>
       )}
@@ -833,15 +850,7 @@ export default function App() {
           </ul>
         </nav>
 
-        <div className="sidebar-footer">
-          <button 
-            className="theme-toggle-btn"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? <IconSun /> : <IconMoon />}
-            <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
-          </button>
-        </div>
+        {/* Toggle de tema unificado no cabeçalho (Modo Claro/Escuro) — evita controle duplicado */}
       </aside>
 
       {/* Main Container */}
@@ -1051,13 +1060,16 @@ export default function App() {
 
               {/* Text Search */}
               <div style={{ display: 'flex', gap: '12px', flex: 1, justifySelf: 'flex-end', maxWidth: '350px' }}>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  placeholder="🔎 Buscar chamado..."
-                  value={ticketSearch}
-                  onChange={(e) => setTicketSearch(e.target.value)}
-                />
+                <div className="input-search" style={{ flex: 1 }}>
+                  <IconSearch />
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Buscar chamado..."
+                    value={ticketSearch}
+                    onChange={(e) => setTicketSearch(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
@@ -1206,17 +1218,20 @@ export default function App() {
 
               {/* Autocomplete Input */}
               <div className="suggestion-container" style={{ marginBottom: '24px' }}>
-                <input 
-                  type="text" 
-                  className="form-control"
-                  placeholder="🔎 Digite o nome da escola ou designação..."
-                  value={lookupSchoolQuery}
-                  onChange={(e) => {
-                    setLookupSchoolQuery(e.target.value);
-                    setShowLookupSuggestions(true);
-                  }}
-                  onFocus={() => setShowLookupSuggestions(true)}
-                />
+                <div className="input-search">
+                  <IconSearch />
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Digite o nome da escola ou designação..."
+                    value={lookupSchoolQuery}
+                    onChange={(e) => {
+                      setLookupSchoolQuery(e.target.value);
+                      setShowLookupSuggestions(true);
+                    }}
+                    onFocus={() => setShowLookupSuggestions(true)}
+                  />
+                </div>
                 
                 {showLookupSuggestions && lookupSchoolQuery && (
                   <div className="suggestion-box">
@@ -1699,9 +1714,9 @@ export default function App() {
                   <button type="button" className="btn btn-secondary" onClick={() => setCurrentTab('dashboard')}>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary">
-                    <IconPlus />
-                    <span>Registrar Demanda</span>
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? <IconRefresh /> : <IconPlus />}
+                    <span>{submitting ? 'Registrando…' : 'Registrar Demanda'}</span>
                   </button>
                 </div>
               </form>
