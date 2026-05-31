@@ -6,9 +6,9 @@
 
 :root {
   /* Color Palette - Vivo Corporate Theme (Purple/Teal/Navy) */
-  --primary-h: 265;
-  --primary-s: 90%;
-  --primary-l: 48%;
+  --primary-h: 201;
+  --primary-s: 89%;
+  --primary-l: 52%;
   --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
   --primary-hover: hsl(var(--primary-h), var(--primary-s), 40%);
   --primary-light: hsl(var(--primary-h), var(--primary-s), 96%);
@@ -1354,3 +1354,66 @@ body::after {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===========================================================================
+   Mapa Operacional (Leaflet + CARTO dark) — painel do Painel Executivo
+   =========================================================================== */
+.op-map {
+  height: 440px;
+  width: 100%;
+  margin-top: 4px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  background: hsl(216, 33%, 8%);
+}
+.leaflet-container { background: hsl(216, 33%, 8%); font-family: var(--font-sans); }
+/* leve halo na região destacada (só a camada de overlay tem paths) */
+.leaflet-overlay-pane svg path { filter: drop-shadow(0 0 3px hsla(199, 90%, 60%, 0.35)); }
+.cre-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: hsla(200, 30%, 92%, 0.92);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px #000, 0 0 6px #000;
+}
+.cre-label::before { display: none; }
+.leaflet-control-attribution {
+  background: hsla(216, 40%, 8%, 0.72) !important;
+  color: var(--text-light) !important;
+  font-size: 9px;
+}
+.leaflet-control-attribution a { color: var(--text-muted) !important; }
+.leaflet-bar a {
+  background: hsla(216, 30%, 14%, 0.92) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-color) !important;
+}
+.leaflet-bar a:hover { background: var(--primary) !important; color: #fff !important; }
+
+.op-legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+.op-legend .lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.op-legend .ld { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
+.op-legend b { color: var(--text-main); font-weight: 800; margin-left: 2px; }
+.op-foot { font-size: 10.5px; color: var(--text-light); margin-top: 12px; line-height: 1.5; font-weight: 500; }
+
+/* botão de tema visível no cabeçalho (acesso rápido ao Modo Claro) */
+.theme-toggle-header svg { width: 15px; height: 15px; }

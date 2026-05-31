@@ -13,7 +13,7 @@ import { dirname, join } from 'node:path';
 
 import {
   diffDays, formatDateBrazilian, isClosed, inactivityDays, ageDays,
-  slaLevel, ageLevel, computeMetrics, stuckRanking,
+  slaLevel, ageLevel, computeMetrics, stuckRanking, stageGroup, stageGroupCounts,
   filterBySector, sectorSummary, ticketInSector,
   suggestedActionColor, isTruthyFlag, compileEmailTemplate, searchSchools,
   CLOSED_STATUSES, SLA_WARN_DAYS, SLA_SEVERE_DAYS,
@@ -258,6 +258,34 @@ test('termo sem correspondência devolve lista vazia', () => {
 test('entrada inválida (não-array) não quebra', () => {
   assert.deepEqual(searchSchools(null, 'x'), []);
   assert.deepEqual(searchSchools(undefined, ''), []);
+});
+
+// ===========================================================================
+section('Grupos de etapa (stageGroupCounts) — legenda do Mapa Operacional');
+
+const sg = stageGroupCounts(db.chamados);
+test('soma dos grupos = total de chamados', () => {
+  assert.equal(sg.triagem + sg.orcamento + sg.execucao + sg.concluido, db.chamados.length);
+});
+test('contagens reais batem com os dados (3/10/4/11)', () => {
+  assert.equal(sg.triagem, 3);
+  assert.equal(sg.orcamento, 10);
+  assert.equal(sg.execucao, 4);
+  assert.equal(sg.concluido, 11);
+});
+test('concluído inclui encerrados e suspensos (independe de data)', () => {
+  assert.equal(stageGroup({ status_atual: '10 - Concluído' }), 'concluido');
+  assert.equal(stageGroup({ status_atual: '11 - Encerrado' }), 'concluido');
+  assert.equal(stageGroup({ status_atual: 'Suspenso / pendente' }), 'concluido');
+});
+test('classifica etapas abertas pela faixa do número', () => {
+  assert.equal(stageGroup({ status_atual: '1 - Recebido — em triagem' }), 'triagem');
+  assert.equal(stageGroup({ status_atual: '4 - Aguardando orçamento' }), 'orcamento');
+  assert.equal(stageGroup({ status_atual: '7 - Adequação em execução' }), 'execucao');
+});
+test('stageGroupCounts tolera entrada inválida (não-array)', () => {
+  const z = stageGroupCounts(null);
+  assert.equal(z.triagem + z.orcamento + z.execucao + z.concluido, 0);
 });
 
 // ===========================================================================
