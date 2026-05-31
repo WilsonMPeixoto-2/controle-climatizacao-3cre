@@ -1561,7 +1561,7 @@ export default function App() {
 
         {/* Simulador de Novo Chamado Tab */}
         {currentTab === 'form' && (
-          <div className="dashboard-section" style={{ maxWidth: '750px', margin: '0 auto' }}>
+          <div className="dashboard-section" style={{ maxWidth: '950px', margin: '0 auto' }}>
             <div className="section-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
               <div>
                 <h3><IconForm /> Registrar chamado</h3>
@@ -1618,7 +1618,7 @@ export default function App() {
                   <span>Seção 1: Identificação da Unidade e Demanda</span>
                 </div>
                 
-                <div className="form-grid">
+                <div className="form-grid form-grid-3-cols">
                   <div className="form-group suggestion-container">
                     <label className="form-label">Buscar Escola por Nome / Designação *</label>
                     <input 
