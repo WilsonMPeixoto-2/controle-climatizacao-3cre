@@ -1012,7 +1012,7 @@ html:not(.dark-theme) body::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 9999 !important; /* Elevado para garantir que fique acima das camadas do Leaflet */
   transition: var(--transition);
 }
 
@@ -1567,6 +1567,8 @@ html:not(.dark-theme) body::after {
   border: 1px solid var(--border-color);
   overflow: hidden;
   background: hsl(212, 32%, 8%);
+  position: relative; /* Ativa empilhamento local */
+  z-index: 1; /* Cria stacking context local para evitar sobreposição de elementos GPU com modais no modo claro */
 }
 .leaflet-container { background: hsl(212, 32%, 8%); font-family: var(--font-sans); }
 /* halo ciano da região da 3ª CRE — escopado à classe cre-glow (não pega futuros overlays) */
@@ -1600,12 +1602,43 @@ html:not(.dark-theme) .cre-label {
   font-size: 9px;
 }
 .leaflet-control-attribution a { color: var(--text-muted) !important; }
-.leaflet-bar a {
-  background: hsla(216, 30%, 14%, 0.92) !important;
-  color: var(--text-main) !important;
-  border-color: var(--border-color) !important;
+.leaflet-bar {
+  border: 1px solid rgba(148, 163, 184, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  border-radius: var(--radius-xs) !important;
+  overflow: hidden;
 }
-.leaflet-bar a:hover { background: var(--primary) !important; color: #fff !important; }
+.leaflet-bar a {
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f8fafc !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.leaflet-bar a:last-child { border-bottom: none !important; }
+.leaflet-bar a:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+  transform: scale(1.05);
+}
+
+/* Glassmorphism dos controles para o modo claro */
+html:not(.dark-theme) .leaflet-bar {
+  border: 1px solid rgba(100, 116, 139, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+html:not(.dark-theme) .leaflet-bar a {
+  background: rgba(255, 255, 255, 0.75) !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.1) !important;
+}
+html:not(.dark-theme) .leaflet-bar a:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
 
 .op-legend {
   display: flex;
@@ -1849,11 +1882,44 @@ html:not(.dark-theme) .leaflet-bar a {
   padding-bottom: 10px;
 }
 
+.bairro-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .bairro-card-header h4 {
   font-size: 15px;
   font-weight: 850;
   color: var(--text-main);
   margin: 0;
+}
+
+.btn-focus-bairro-small {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.btn-focus-bairro-small:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  transform: scale(1.08);
+}
+
+.btn-focus-bairro-small svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
 }
 
 .btn-close-small {
@@ -1899,17 +1965,84 @@ html:not(.dark-theme) .leaflet-bar a {
   padding-bottom: 6px;
 }
 
-.bairro-stat-row strong {
-  color: var(--text-main);
-  font-size: 14px;
+.bairro-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
   font-weight: 800;
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-light);
+  transition: var(--transition);
+}
+
+.bairro-stat-badge-active {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+.bairro-stat-badge-critical {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.1);
+}
+
+.bairro-stat-badge-warning {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+/* Modo claro para as badges */
+html:not(.dark-theme) .bairro-stat-badge {
+  background: rgba(100, 116, 139, 0.08) !important;
+  color: #475569 !important;
+  border: none !important;
+}
+html:not(.dark-theme) .bairro-stat-badge-active {
+  background: rgba(14, 116, 144, 0.1) !important;
+  color: #0e7490 !important;
+  border: 1px solid rgba(14, 116, 144, 0.15) !important;
+}
+html:not(.dark-theme) .bairro-stat-badge-critical {
+  background: rgba(185, 28, 28, 0.1) !important;
+  color: #b91c1c !important;
+  border: 1px solid rgba(185, 28, 28, 0.15) !important;
+}
+html:not(.dark-theme) .bairro-stat-badge-warning {
+  background: rgba(180, 83, 9, 0.1) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(180, 83, 9, 0.15) !important;
+}
+
+.bairro-header-pin-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  animation: pulse-sutil 2.5s infinite ease-in-out;
+}
+.bairro-header-pin-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
+}
+@keyframes pulse-sutil {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.88; filter: drop-shadow(0 0 3px var(--primary)); }
 }
 
 .bairro-tickets-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 6px;
+  gap: 12px;
+  margin-top: 18px; /* Aumentado para mais respiro vertical */
 }
 
 .bairro-tickets-section h5 {
@@ -1924,14 +2057,14 @@ html:not(.dark-theme) .leaflet-bar a {
 .bairro-tickets-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 180px;
+  gap: 12px; /* Aumentado de 8px para 12px para mais respeito e espaço */
+  max-height: 200px; /* Expandido para acomodar o respiro das ocorrências */
   overflow-y: auto;
   padding-right: 4px;
 }
 
 .bairro-ticket-item {
-  padding: 10px 12px;
+  padding: 10px 12px 10px 14px;
   background-color: var(--bg-app);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xs);
@@ -1939,13 +2072,38 @@ html:not(.dark-theme) .leaflet-bar a {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bairro-ticket-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: transparent;
   transition: var(--transition);
 }
 
+/* Cores das barras laterais conforme a criticidade */
+.bairro-ticket-item.accent-red::before {
+  background-color: #ef4444; /* Vermelho crítico */
+}
+.bairro-ticket-item.accent-amber::before {
+  background-color: #f59e0b; /* Âmbar atenção */
+}
+.bairro-ticket-item.accent-blue::before {
+  background-color: #0ea5e9; /* Ciano normal */
+}
+
 .bairro-ticket-item:hover {
-  border-color: var(--primary);
-  background-color: var(--primary-light);
-  transform: translateY(-1px);
+  border-color: var(--border-hover);
+  background-color: var(--bg-card);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .bairro-ticket-meta {
@@ -2063,5 +2221,20 @@ html:not(.dark-theme) .op-map {
 html:not(.dark-theme) .bairro-details-card {
   background-color: rgba(255, 255, 255, 0.96) !important;
   border-color: rgba(100, 116, 139, 0.22) !important;
+}
+
+/* Correção de distorção de ícones SVG no modal (Ficha do Chamado) */
+.modal-title-group svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: var(--primary) !important;
+  flex-shrink: 0;
+}
+
+.inactivity-warning-row svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--color-orange) !important;
+  flex-shrink: 0;
 }
 

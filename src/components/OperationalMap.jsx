@@ -43,28 +43,28 @@ function getBairroStyle(feature, theme, stats) {
       }
     }
   } else {
-    // Tema Claro: cores densas, contornos definidos e opacidades superiores para visibilidade no fundo branco/cinza
-    color = 'rgba(100, 116, 139, 0.4)';
-    fillColor = 'rgba(148, 163, 184, 0.15)';
-    fillOpacity = 0.12;
-    weight = 1.0;
+    // Tema Claro: Paleta Premium Sólida de Alto Contraste (Baseada em Tailwind UI/Apple)
+    color = 'rgba(100, 116, 139, 0.45)'; // Slate 400
+    fillColor = '#f1f5f9'; // Cinza gelo suave (bairros limpos delimitados no mapa)
+    fillOpacity = 0.85;
+    weight = 1.2;
 
     if (bairroData && bairroData.chamados_ativos > 0) {
       if (bairroData.criticos > 0) {
-        color = 'hsl(350, 75%, 38%)'; // Vermelho profundo
-        fillColor = 'hsl(350, 70%, 45%)';
-        fillOpacity = 0.32;
-        weight = 1.6;
+        color = '#dc2626'; // Red 600
+        fillColor = '#fee2e2'; // Red 100
+        fillOpacity = 0.85;
+        weight = 1.8;
       } else if (bairroData.atencao > 0) {
-        color = 'hsl(28, 85%, 38%)'; // Âmbar/marrom escuro
-        fillColor = 'hsl(32, 80%, 45%)';
-        fillOpacity = 0.28;
-        weight = 1.5;
+        color = '#d97706'; // Amber 600
+        fillColor = '#fef3c7'; // Amber 100
+        fillOpacity = 0.8;
+        weight = 1.6;
       } else {
-        color = 'hsl(201, 85%, 36%)'; // Azul escuro
-        fillColor = 'hsl(201, 75%, 42%)';
-        fillOpacity = 0.24;
-        weight = 1.4;
+        color = '#0284c7'; // Sky 600
+        fillColor = '#bae6fd'; // Sky 200
+        fillOpacity = 0.75;
+        weight = 1.5;
       }
     }
   }
@@ -78,7 +78,7 @@ function getBairroStyle(feature, theme, stats) {
   };
 }
 
-export default function OperationalMap({ tickets, schools, selectedSchool, theme, onSelectBairro }) {
+export default function OperationalMap({ tickets, schools, selectedSchool, theme, onSelectBairro, focusedBairro }) {
   const elRef = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -96,7 +96,10 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       center: [-22.88, -43.28], // Zona Norte fallback
       zoom: 12,
       zoomControl: true,
-      scrollWheelZoom: false, // Não sequestra o scroll da página
+      scrollWheelZoom: true, // Habilitado para zoom fluido com a roda do mouse
+      doubleClickZoom: true, // Habilitado para zoom com duplo clique
+      boxZoom: true,
+      dragging: true,
       attributionControl: true,
     });
     mapRef.current = map;
@@ -176,7 +179,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
     geoJsonRef.current = geoJson;
 
     map.fitBounds(geoJson.getBounds(), { padding: [22, 22] });
-    map.setMaxBounds(geoJson.getBounds().pad(0.8));
+    map.setMaxBounds(geoJson.getBounds().pad(2.5)); // Limites expandidos para permitir navegação livre e sem travamentos rígidos
 
     // Corrige renderizações tardias do container CSS
     const t = setTimeout(() => map.invalidateSize(), 80);
@@ -235,6 +238,31 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       mapRef.current.fitBounds(layer.getBounds(), { padding: [40, 40] });
     }
   }, [selectedSchool]);
+
+  // 5. Efeito de Foco Territorial por Clique no Card Lateral de Detalhes
+  useEffect(() => {
+    if (!mapRef.current || !geoJsonRef.current || !focusedBairro) return;
+
+    const normalized = focusedBairro.name;
+    const layer = layersRef.current[normalized];
+
+    if (layer) {
+      // Reseta os estilos anteriores de todas as camadas
+      geoJsonRef.current.eachLayer((lyr) => {
+        geoJsonRef.current.resetStyle(lyr);
+      });
+
+      // Aplica realce estrito no polígono do bairro
+      layer.setStyle({
+        weight: 3.5,
+        color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
+        fillOpacity: 0.35,
+      });
+
+      // Dá zoom e centraliza nos limites do polígono geográfico de forma suave (flyToBounds)
+      mapRef.current.flyToBounds(layer.getBounds(), { padding: [40, 40], duration: 1.2 });
+    }
+  }, [focusedBairro]);
 
   return (
     <div 

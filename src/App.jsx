@@ -106,6 +106,14 @@ const IconClose = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 );
 
+const IconFocus = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+);
+
+const IconPin = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+
 const IconCopy = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
 );
@@ -136,6 +144,7 @@ export default function App() {
   const [emailTemplates, setEmailTemplates] = useState(initialEmailTemplates);
   const [theme, setTheme] = useState('dark'); // 'dark' or 'light'
   const [selectedBairroNormalized, setSelectedBairroNormalized] = useState(null);
+  const [focusedBairro, setFocusedBairro] = useState(null);
 
   // Cloud (Supabase) integration states
   const [supabaseUrl, setSupabaseUrl] = useState(initialCloudConfig.url);
@@ -974,6 +983,7 @@ export default function App() {
                   selectedSchool={selectedSchool} 
                   theme={theme} 
                   onSelectBairro={setSelectedBairroNormalized} 
+                  focusedBairro={focusedBairro}
                 />
                 
                 {selectedBairroNormalized && (() => {
@@ -983,7 +993,17 @@ export default function App() {
                   return (
                     <div className="bairro-details-card animate-slide-in">
                       <div className="bairro-card-header">
-                        <h4>📍 {bData.nome_exibicao}</h4>
+                        <div className="bairro-card-title-group">
+                          <span className="bairro-header-pin-icon"><IconPin /></span>
+                          <h4>{bData.nome_exibicao}</h4>
+                          <button 
+                            className="btn-focus-bairro-small" 
+                            onClick={() => setFocusedBairro({ name: selectedBairroNormalized, timestamp: Date.now() })} 
+                            title="Recentralizar e focar este bairro no mapa"
+                          >
+                            <IconFocus />
+                          </button>
+                        </div>
                         <button className="btn-close-small" onClick={() => setSelectedBairroNormalized(null)} title="Fechar detalhes do bairro">
                           <IconClose />
                         </button>
@@ -991,39 +1011,52 @@ export default function App() {
                       <div className="bairro-card-body">
                         <div className="bairro-stat-row">
                           <span>Escolas Cadastradas:</span>
-                          <strong>{bData.escolas_cadastradas}</strong>
+                          <span className="bairro-stat-badge">{bData.escolas_cadastradas}</span>
                         </div>
                         <div className="bairro-stat-row">
                           <span>Chamados Ativos:</span>
-                          <strong>{bData.chamados_ativos}</strong>
+                          <span className={`bairro-stat-badge ${bData.chamados_ativos > 0 ? 'bairro-stat-badge-active' : ''}`}>{bData.chamados_ativos}</span>
                         </div>
-                        <div className="bairro-stat-row" style={{ color: 'var(--color-red)' }}>
+                        <div className="bairro-stat-row">
                           <span>Críticos:</span>
-                          <strong>{bData.criticos}</strong>
+                          <span className={`bairro-stat-badge ${bData.criticos > 0 ? 'bairro-stat-badge-critical' : ''}`}>{bData.criticos}</span>
                         </div>
-                        <div className="bairro-stat-row" style={{ color: 'var(--color-amber)' }}>
+                        <div className="bairro-stat-row">
                           <span>Em Atenção:</span>
-                          <strong>{bData.atencao}</strong>
+                          <span className={`bairro-stat-badge ${bData.atencao > 0 ? 'bairro-stat-badge-warning' : ''}`}>{bData.atencao}</span>
                         </div>
                         
                         <div className="bairro-tickets-section">
                           <h5>Chamados Ativos no Bairro ({bData.chamados_lista.length}):</h5>
                           <div className="bairro-tickets-list">
-                            {bData.chamados_lista.map(tk => (
-                              <div 
-                                key={tk.id_chamado} 
-                                className="bairro-ticket-item" 
-                                onClick={() => openTicketEdit(tk)}
-                                title={`Abrir chamado ${tk.id_chamado}`}
-                              >
-                                <div className="bairro-ticket-meta">
-                                  <span className="bairro-ticket-code">{tk.id_chamado}</span>
-                                  <span className={`badge badge-priority-${tk.prioridade.toLowerCase()}`} style={{ fontSize: '8px', padding: '0px 4px' }}>{tk.prioridade}</span>
+                            {bData.chamados_lista.map(tk => {
+                              const statusNorm = tk.status_atual || '';
+                              const isCritical = statusNorm.startsWith('2') || statusNorm.startsWith('3') || statusNorm.startsWith('4');
+                              const isWarning = statusNorm.startsWith('1') && tk.prioridade === 'Crítica';
+                              
+                              let accentClass = 'accent-blue';
+                              if (isCritical) {
+                                accentClass = 'accent-red';
+                              } else if (isWarning) {
+                                accentClass = 'accent-amber';
+                              }
+
+                              return (
+                                <div 
+                                  key={tk.id_chamado} 
+                                  className={`bairro-ticket-item ${accentClass}`} 
+                                  onClick={() => openTicketEdit(tk)}
+                                  title={`Editar chamado ${tk.id_chamado}`}
+                                >
+                                  <div className="bairro-ticket-meta">
+                                    <span className="bairro-ticket-code">{tk.id_chamado}</span>
+                                    <span className={`badge badge-priority-${tk.prioridade.toLowerCase()}`} style={{ fontSize: '8px', padding: '0px 4px' }}>{tk.prioridade}</span>
+                                  </div>
+                                  <div className="bairro-ticket-school">{tk.unidade_escolar}</div>
+                                  <div className="bairro-ticket-status">{tk.status_atual}</div>
                                 </div>
-                                <div className="bairro-ticket-school">{tk.unidade_escolar}</div>
-                                <div className="bairro-ticket-status">{tk.status_atual}</div>
-                              </div>
-                            ))}
+                              );
+                            })}
                             {bData.chamados_lista.length === 0 && (
                               <p className="bairro-no-tickets">Nenhum chamado ativo neste bairro.</p>
                             )}
@@ -2093,7 +2126,7 @@ CREATE TABLE IF NOT EXISTS historico (
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
-                <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h2 className="modal-title-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <IconList />
                   <span>Ficha do Chamado {editingTicket.id_chamado}</span>
                 </h2>
@@ -2248,13 +2281,13 @@ CREATE TABLE IF NOT EXISTS historico (
                     marginBottom: '20px',
                     fontWeight: '600'
                   }}>
-                    <div><strong>Local exato:</strong> {editingTicket.local_demanda}</div>
-                    <div><strong>Tipo de solicitação:</strong> {editingTicket.tipo_demanda}</div>
+                    <div><strong>Local exato:</strong> {editingTicket.local_demanda || 'Não especificado'}</div>
+                    <div><strong>Tipo de solicitação:</strong> {editingTicket.tipo_demanda || 'Climatização Geral'}</div>
                     <div><strong>Aparelho atual:</strong> {editingTicket.tipo_aparelho || 'Não informado'}</div>
-                    <div><strong>Aptidão técnica:</strong> {editingTicket.resultado_aptidao}</div>
-                    <div><strong>Abertura:</strong> {formatDateBrazilian(editingTicket.criado_em)}</div>
-                    <div><strong>Última Alteração:</strong> {formatDateBrazilian(editingTicket.modificado_em)}</div>
-                    <div style={{ color: 'var(--color-orange)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div><strong>Aptidão técnica:</strong> {editingTicket.resultado_aptidao || 'Pendente de vistoria'}</div>
+                    <div><strong>Abertura:</strong> {formatDateBrazilian(editingTicket.criado_em) || 'Data não disponível'}</div>
+                    <div><strong>Última Alteração:</strong> {formatDateBrazilian(editingTicket.modificado_em) || 'Sem movimentações'}</div>
+                    <div className="inactivity-warning-row" style={{ color: 'var(--color-orange)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                       <IconClock />
                       <span>Sem movimentação há {getInactivityDays(editingTicket.modificado_em)} dias.</span>
                     </div>
