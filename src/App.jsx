@@ -967,7 +967,7 @@ export default function App() {
                 <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Área de atuação da 3ª CRE · Zona Norte</span>
               </div>
               
-              <div className="map-and-details-container">
+              <div className={`map-and-details-container ${selectedBairroNormalized ? 'has-details' : ''}`}>
                 <OperationalMap 
                   tickets={tickets} 
                   schools={schools} 

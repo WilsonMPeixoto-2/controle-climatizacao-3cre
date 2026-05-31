@@ -6,6 +6,78 @@ import { normalizeString, aggregateBairroStats } from '../lib/logic.js';
 
 const TOP6 = ['inhauma', 'engenho de dentro', 'lins de vasconcelos', 'piedade', 'engenho novo', 'bonsucesso'];
 
+// Função pura de estilo coroplético baseada no tema e nas estatísticas
+function getBairroStyle(feature, theme, stats) {
+  const nm = feature.properties?.NOME || '';
+  const normalized = normalizeString(nm);
+  const bairroData = stats[normalized];
+  const isDark = theme === 'dark';
+
+  let color;
+  let fillColor;
+  let fillOpacity;
+  let weight;
+
+  if (isDark) {
+    color = 'rgba(148, 163, 184, 0.4)';
+    fillColor = 'hsl(215, 12%, 40%)';
+    fillOpacity = 0.08;
+    weight = 1.2;
+
+    if (bairroData && bairroData.chamados_ativos > 0) {
+      if (bairroData.criticos > 0) {
+        color = 'hsl(350, 80%, 55%)';
+        fillColor = 'hsl(350, 75%, 48%)';
+        fillOpacity = 0.26;
+        weight = 1.6;
+      } else if (bairroData.atencao > 0) {
+        color = 'hsl(38, 95%, 52%)';
+        fillColor = 'hsl(38, 92%, 48%)';
+        fillOpacity = 0.22;
+        weight = 1.5;
+      } else {
+        color = 'hsl(201, 85%, 55%)';
+        fillColor = 'hsl(201, 80%, 48%)';
+        fillOpacity = 0.18;
+        weight = 1.4;
+      }
+    }
+  } else {
+    // Tema Claro: cores densas, contornos definidos e opacidades superiores para visibilidade no fundo branco/cinza
+    color = 'rgba(100, 116, 139, 0.4)';
+    fillColor = 'rgba(148, 163, 184, 0.15)';
+    fillOpacity = 0.12;
+    weight = 1.0;
+
+    if (bairroData && bairroData.chamados_ativos > 0) {
+      if (bairroData.criticos > 0) {
+        color = 'hsl(350, 75%, 38%)'; // Vermelho profundo
+        fillColor = 'hsl(350, 70%, 45%)';
+        fillOpacity = 0.32;
+        weight = 1.6;
+      } else if (bairroData.atencao > 0) {
+        color = 'hsl(28, 85%, 38%)'; // Âmbar/marrom escuro
+        fillColor = 'hsl(32, 80%, 45%)';
+        fillOpacity = 0.28;
+        weight = 1.5;
+      } else {
+        color = 'hsl(201, 85%, 36%)'; // Azul escuro
+        fillColor = 'hsl(201, 75%, 42%)';
+        fillOpacity = 0.24;
+        weight = 1.4;
+      }
+    }
+  }
+
+  return {
+    color: color,
+    weight: weight,
+    opacity: 0.95,
+    fillColor: fillColor,
+    fillOpacity: fillOpacity,
+  };
+}
+
 export default function OperationalMap({ tickets, schools, selectedSchool, theme, onSelectBairro }) {
   const elRef = useRef(null);
   const mapRef = useRef(null);
@@ -42,41 +114,10 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
-    // Função de estilo dinâmico coroplético (Situação do Bairro)
-    function getBairroStyle(feature) {
-      const nm = feature.properties?.NOME || '';
-      const normalized = normalizeString(nm);
-      const bairroData = stats[normalized];
-
-      let color = 'hsl(215, 12%, 52%)'; // Cinza discreto default (sem chamados ativos)
-      let fillOpacity = 0.08;
-
-      if (bairroData && bairroData.chamados_ativos > 0) {
-        if (bairroData.criticos > 0) {
-          color = 'hsl(350, 72%, 48%)'; // Vermelho discreto para críticos
-          fillOpacity = 0.22;
-        } else if (bairroData.atencao > 0) {
-          color = 'hsl(38, 92%, 50%)'; // Âmbar discreto para atenção
-          fillOpacity = 0.18;
-        } else {
-          color = 'hsl(201, 80%, 52%)'; // Ciano discreto para ativos sem alerta
-          fillOpacity = 0.14;
-        }
-      }
-
-      return {
-        color: color,
-        weight: 1.4,
-        opacity: 0.95,
-        fillColor: color,
-        fillOpacity: fillOpacity,
-      };
-    }
-
     // Instancia camada GeoJSON
     const geoJson = L.geoJSON(creBairros, {
       className: 'cre-glow',
-      style: getBairroStyle,
+      style: (f) => getBairroStyle(f, theme, stats),
       onEachFeature: (f, l) => {
         const nm = f.properties?.NOME || '';
         const normalized = normalizeString(nm);
@@ -96,20 +137,31 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
           </div>
         `;
         
-        // TOP 6 bairros mantêm rótulo permanente minimalista, outros têm hover dinâmico
+        // Todos os bairros mostram o tooltip dinâmico no hover com estatísticas
+        l.bindTooltip(tooltipHtml, { sticky: true, direction: 'auto', className: 'cre-tooltip-custom' });
+
+        // Para os TOP 6 bairros, cria um marcador invisível não-interativo no centro do polígono para exibir o nome permanentemente
         if (TOP6.includes(normalized)) {
-          l.bindTooltip(nm, { permanent: true, direction: 'center', className: 'cre-label' });
-        } else {
-          l.bindTooltip(tooltipHtml, { sticky: true, direction: 'auto', className: 'cre-tooltip-custom' });
+          const center = l.getBounds().getCenter();
+          const labelMarker = L.marker(center, {
+            icon: L.divIcon({
+              className: 'cre-marker-hidden',
+              html: '',
+              iconSize: [0, 0]
+            }),
+            interactive: false // Não intercepta cliques ou hovers, permitindo que a camada GeoJSON embaixo funcione normalmente
+          });
+          labelMarker.bindTooltip(nm, { permanent: true, direction: 'center', className: 'cre-label' });
+          labelMarker.addTo(map);
         }
 
         // Interação hover local (alteração visual)
         l.on('mouseover', () => {
-          const currentStyle = getBairroStyle(f);
+          const currentStyle = getBairroStyle(f, theme, stats);
           l.setStyle({ fillOpacity: currentStyle.fillOpacity + 0.12 });
         });
         l.on('mouseout', () => {
-          const currentStyle = getBairroStyle(f);
+          const currentStyle = getBairroStyle(f, theme, stats);
           l.setStyle({ fillOpacity: currentStyle.fillOpacity });
         });
 
@@ -138,9 +190,9 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       layersRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tickets, schools]); // Recria o mapa se a listagem mudar (ex: novas inclusões)
+  }, [tickets, schools, theme]); // Recria o mapa se a listagem ou tema inicial mudar
 
-  // 3. Efeito Reativo de Troca de Tema (Atualiza tiles sem destruir o mapa)
+  // 3. Efeito Reativo de Troca de Tema (Atualiza tiles e estilos dos polígonos de forma dinâmica)
   useEffect(() => {
     if (!mapRef.current || !tileLayerRef.current) return;
 
@@ -150,7 +202,11 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
 
     tileLayerRef.current.setUrl(tileUrl);
-  }, [theme]);
+
+    if (geoJsonRef.current) {
+      geoJsonRef.current.setStyle((f) => getBairroStyle(f, theme, stats));
+    }
+  }, [theme, stats]);
 
   // 4. Efeito de Realce e Foco por Polígono da Escola Selecionada (Consulta Rápida)
   useEffect(() => {
