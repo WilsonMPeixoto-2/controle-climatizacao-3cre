@@ -234,7 +234,7 @@ export default function App() {
 
       // If schools table exists, load cloud datasets
       setCloudConnected(true);
-      setSyncStatusText('Dados online ativos');
+      setSyncStatusText('Base online ativa');
       
       if (schoolsData && schoolsData.length > 0) {
         setSchools(schoolsData);
@@ -269,7 +269,7 @@ export default function App() {
       } else {
         setSyncStatusText('Conectado (Tabelas vazias)');
       }
-      triggerToast("Dados online carregados com sucesso!");
+      triggerToast("Base online carregada com sucesso!");
     } catch (err) {
       console.error("Supabase Error:", err);
       setCloudConnected(false);
@@ -340,7 +340,7 @@ export default function App() {
       const { error: histErr } = await supabaseClient.from('historico').upsert(history);
       if (histErr) throw histErr;
 
-      setSyncStatusText('Dados online ativos');
+      setSyncStatusText('Base online ativa');
       triggerToast("Banco de dados local sincronizado e salvo na nuvem!");
     } catch (err) {
       console.error(err);
@@ -1858,100 +1858,79 @@ export default function App() {
               <div>
                 <h3><IconSettings /> Administração dos Dados</h3>
                 <p style={{ fontSize: '12.5px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
-                  Área de configuração da base online. Use apenas para conferir conexão ou administrar a sincronização dos dados.
+                  Acompanhe a situação da base usada pelo sistema. As ações técnicas ficam separadas para evitar uso acidental.
                 </p>
               </div>
             </div>
 
             <div style={{ marginTop: '24px' }}>
-              {/* Connection Status Header */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '16px 20px',
-                borderRadius: 'var(--radius-xs)',
-                backgroundColor: cloudConnected ? 'var(--color-green-tint)' : 'var(--color-red-tint)',
-                borderLeft: `5px solid ${cloudConnected ? 'var(--color-green)' : 'var(--color-red)'}`,
-                marginBottom: '24px'
-              }}>
-                <div>
-                  <strong style={{ fontSize: '14px', color: cloudConnected ? 'var(--color-green)' : 'var(--color-red)', display: 'block' }}>
-                    {cloudConnected ? 'Base online ativa' : 'Base online inativa'}
-                  </strong>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '500' }}>
-                    Status Atual: {syncStatusText}
-                  </span>
+              <div className={`admin-status-card ${cloudConnected ? 'admin-status-ok' : 'admin-status-off'}`}>
+                <div className="admin-status-icon">
+                  {cloudConnected ? <IconCloud /> : <IconWarning />}
                 </div>
-                {cloudConnected && (
-                  <button className="btn btn-secondary" onClick={handleDisconnectCloud} style={{ padding: '8px 16px', fontSize: '12px' }}>
-                    Desconectar base online
-                  </button>
-                )}
+                <div>
+                  <strong>{cloudConnected ? 'Base online ativa' : 'Base online não conectada'}</strong>
+                  <p>
+                    {cloudConnected
+                      ? 'Chamados, alterações e históricos estão usando a base online configurada para o site.'
+                      : 'O sistema está usando a base local carregada junto com a aplicação neste navegador.'}
+                  </p>
+                  <span>Status: {syncStatusText}</span>
+                </div>
               </div>
 
               {!cloudConnected ? (
                 <div>
-                  <form onSubmit={handleConnectCloud} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div className="form-group">
-                      <label className="form-label">Supabase Project URL *</label>
-                      <input 
-                        type="text"
-                        className="form-control"
-                        placeholder="Ex: https://xxxxxxxxx.supabase.co"
-                        required
-                        value={supabaseUrl}
-                        onChange={(e) => setSupabaseUrl(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label className="form-label">Supabase Project API Key (Anon / Public) *</label>
-                      <input 
-                        type="password"
-                        className="form-control"
-                        placeholder="Digite a chave anon do seu projeto Supabase..."
-                        required
-                        value={supabaseKey}
-                        onChange={(e) => setSupabaseKey(e.target.value)}
-                      />
-                    </div>
+                  <button className="btn btn-secondary" onClick={() => setCurrentTab('tickets')}>
+                    <IconList />
+                    <span>Ver Lista de Chamados</span>
+                  </button>
 
-                    <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '8px' }} disabled={cloudLoading}>
-                      {cloudLoading ? <IconRefresh /> : <IconCloud />}
-                      <span>{cloudLoading ? 'Conectando...' : 'Conectar base online'}</span>
-                    </button>
-                  </form>
+                  <details className="admin-advanced">
+                    <summary>Configuração técnica da base online</summary>
+                    <p className="admin-warning">
+                      Use esta área somente durante implantação ou manutenção. Usuários da rotina diária não precisam preencher URL, chave ou SQL.
+                    </p>
 
-                  <div style={{
-                    marginTop: '32px',
-                    padding: '20px',
-                    borderRadius: 'var(--radius-xs)',
-                    backgroundColor: 'var(--bg-app)',
-                    border: '1px solid var(--border-color)'
-                  }}>
-                    <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-                      Passo a passo para configurar a base online:
-                    </h4>
-                    <ol style={{ fontSize: '13px', color: 'var(--text-muted)', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px', fontWeight: '500', lineHeight: '1.5' }}>
-                      <li>Acesse <strong><a href="https://supabase.com" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>supabase.com</a></strong> e crie uma conta gratuita (leva 1 minuto).</li>
-                      <li>Crie um novo projeto (ex: "Vivo Climatização 3CRE"). Defina uma senha para o banco de dados.</li>
-                      <li>Copie a <strong>Project URL</strong> e a <strong>Anon Key</strong> na página inicial do projeto e cole nos campos acima.</li>
-                      <li>Vá no painel lateral do Supabase, abra o <strong>SQL Editor</strong>, clique em <strong>"New Query"</strong>, cole o código abaixo e clique em <strong>"Run"</strong> para criar as tabelas estruturadas:</li>
-                    </ol>
+                    <form onSubmit={handleConnectCloud} className="admin-technical-form">
+                      <div className="form-group">
+                        <label className="form-label">Supabase Project URL *</label>
+                        <input 
+                          type="text"
+                          className="form-control"
+                          placeholder="Ex: https://xxxxxxxxx.supabase.co"
+                          required
+                          value={supabaseUrl}
+                          onChange={(e) => setSupabaseUrl(e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label className="form-label">Supabase Project API Key (Anon / Public) *</label>
+                        <input 
+                          type="password"
+                          className="form-control"
+                          placeholder="Digite a chave anon do projeto Supabase..."
+                          required
+                          value={supabaseKey}
+                          onChange={(e) => setSupabaseKey(e.target.value)}
+                        />
+                      </div>
 
-                    <pre style={{
-                      backgroundColor: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
-                      padding: '16px',
-                      borderRadius: 'var(--radius-xs)',
-                      fontSize: '11px',
-                      fontFamily: 'Consolas, monospace',
-                      overflowX: 'auto',
-                      marginTop: '16px',
-                      color: 'var(--text-main)',
-                      maxHeight: '200px'
-                    }}>
+                      <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '8px' }} disabled={cloudLoading}>
+                        {cloudLoading ? <IconRefresh /> : <IconCloud />}
+                        <span>{cloudLoading ? 'Conectando...' : 'Conectar base online'}</span>
+                      </button>
+                    </form>
+
+                    <details className="admin-sql-details">
+                      <summary>Ver instruções SQL de configuração</summary>
+                      <ol>
+                        <li>Use o SQL Editor do Supabase apenas na configuração inicial ou em manutenção controlada.</li>
+                        <li>Confirme o projeto correto antes de executar qualquer comando.</li>
+                        <li>Não cole chaves privadas ou service role no front-end.</li>
+                      </ol>
+                      <pre>
 {`-- 1. Tabela de Escolas
 CREATE TABLE IF NOT EXISTS escolas (
   designacao TEXT PRIMARY KEY,
@@ -2002,29 +1981,35 @@ CREATE TABLE IF NOT EXISTS historico (
   responsavel_registro TEXT,
   observacao TEXT
 );`}
-                    </pre>
-                  </div>
+                      </pre>
+                    </details>
+                  </details>
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '24px' }}>
-                  <div style={{ fontSize: '48px', color: 'var(--color-green)', marginBottom: '16px' }}>
-                    <IconCloud />
-                  </div>
-                  <h4 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '8px' }}>Base online ativa</h4>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '13px', maxWidth: '500px', margin: '0 auto 24px auto', fontWeight: '500', lineHeight: '1.5' }}>
-                    O site está lendo e gravando chamados, alterações e históricos na base online.
-                  </p>
-
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <button className="btn btn-primary" onClick={handleSyncLocalToCloud} disabled={cloudLoading}>
-                      <IconRefresh />
-                      <span>{cloudLoading ? 'Processando...' : 'Enviar base local para a base online'}</span>
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => setCurrentTab('tickets')}>
+                <div>
+                  <div className="admin-primary-actions">
+                    <button className="btn btn-primary" onClick={() => setCurrentTab('tickets')}>
                       <IconList />
                       <span>Ver Lista de Chamados</span>
                     </button>
                   </div>
+
+                  <details className="admin-advanced">
+                    <summary>Ações técnicas avançadas</summary>
+                    <p className="admin-warning">
+                      Estas ações podem afetar a base usada pelo site. Use apenas em manutenção controlada, quando houver certeza sobre a base correta.
+                    </p>
+                    <div className="admin-advanced-actions">
+                      <button className="btn btn-secondary" onClick={handleSyncLocalToCloud} disabled={cloudLoading}>
+                        <IconRefresh />
+                        <span>{cloudLoading ? 'Processando...' : 'Enviar base local para a base online'}</span>
+                      </button>
+                      <button className="btn btn-secondary btn-danger" onClick={handleDisconnectCloud}>
+                        <IconClose />
+                        <span>Desconectar base online</span>
+                      </button>
+                    </div>
+                  </details>
                 </div>
               )}
             </div>
