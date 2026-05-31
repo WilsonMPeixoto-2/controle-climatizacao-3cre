@@ -234,9 +234,10 @@ export default function App() {
   useEffect(() => {
     if (!showEditModal) return;
     const onKey = (e) => { if (e.key === 'Escape') setShowEditModal(false); };
+    const prevOverflow = document.body.style.overflow;
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
   }, [showEditModal]);
 
   // 2. Initialize Supabase Connection
@@ -507,6 +508,7 @@ export default function App() {
     }
 
     // Save to Cloud in real-time if connected!
+    let cloudOk = true;
     if (supabaseClient) {
       try {
         const { error: tkErr } = await supabaseClient
@@ -521,13 +523,18 @@ export default function App() {
           if (evErr) throw evErr;
         }
       } catch (err) {
+        cloudOk = false;
         console.error("Cloud save failed:", err);
-        triggerToast("Falha ao salvar na nuvem! Dados atualizados apenas localmente.");
       }
     }
 
     setShowEditModal(false);
-    triggerToast("Chamado atualizado com sucesso!");
+    triggerToast(
+      cloudOk
+        ? "Chamado atualizado com sucesso!"
+        : "Alteração salva localmente, mas a gravação na nuvem falhou.",
+      cloudOk ? 'success' : 'error'
+    );
   };
 
   // Submit a new ticket simulator
@@ -539,7 +546,8 @@ export default function App() {
       return;
     }
     setSubmitting(true);
-
+    let cloudOk = true;
+    try {
     const nextIdNum = tickets.reduce((max, t) => {
       const num = parseInt(t.id_chamado.split('-').pop(), 10);
       return num > max ? num : max;
@@ -593,14 +601,19 @@ export default function App() {
         const { error: evErr } = await supabaseClient.from('historico').insert(initialEvent);
         if (evErr) throw evErr;
       } catch (err) {
+        cloudOk = false;
         console.error("Cloud insert failed:", err);
-        triggerToast("Falha ao salvar na nuvem! Salvo apenas localmente.");
       }
     }
 
     // Show success panel
     setNewTicketSuccess(generatedId);
-    triggerToast("Chamado criado com sucesso!");
+    triggerToast(
+      cloudOk
+        ? "Chamado criado com sucesso!"
+        : "Chamado criado, mas a gravação na nuvem falhou — salvo só neste dispositivo.",
+      cloudOk ? 'success' : 'error'
+    );
 
     // Clean inputs
     setNewTicket({
@@ -619,7 +632,9 @@ export default function App() {
     });
     setFormSelectedSchool(null);
     setFormSearchQuery('');
-    setSubmitting(false);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Interactive SVG circular metrics computations for school detail
@@ -770,7 +785,7 @@ export default function App() {
           maxWidth: '400px',
           animation: 'modalSlide 0.2s ease-out'
         }}>
-          {toastType === 'error' ? <IconWarning /> : <IconCheck />}
+          {toastType === 'error' ? <IconWarning /> : toastType === 'info' ? <IconSearch /> : <IconCheck />}
           <span>{toastMessage}</span>
         </div>
       )}
@@ -1715,7 +1730,7 @@ export default function App() {
                     Cancelar
                   </button>
                   <button type="submit" className="btn btn-primary" disabled={submitting}>
-                    {submitting ? <IconRefresh /> : <IconPlus />}
+                    {submitting ? <span className="spin" style={{ display: 'inline-flex' }}><IconRefresh /></span> : <IconPlus />}
                     <span>{submitting ? 'Registrando…' : 'Registrar Demanda'}</span>
                   </button>
                 </div>
