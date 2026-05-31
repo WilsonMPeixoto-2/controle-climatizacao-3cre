@@ -535,7 +535,7 @@ export default function App() {
     e.preventDefault();
     if (submitting) return;
     if (!formSelectedSchool) {
-      triggerToast("Escolha a escola na lista que aparece abaixo do campo para o sistema completar os dados.");
+      triggerToast("Escolha a escola na lista que aparece abaixo do campo para o sistema completar os dados.", 'info');
       return;
     }
     setSubmitting(true);
