@@ -767,10 +767,10 @@ export default function App() {
 
         {/* Professional user slot */}
         <div className="sidebar-user">
-          <div className="sidebar-user-avatar">GP</div>
+          <div className="sidebar-user-avatar">3ª</div>
           <div className="sidebar-user-info">
-            <span className="sidebar-user-name">GOP / 3ª CRE Admin</span>
-            <span className="sidebar-user-role">Coordenadoria de Educação</span>
+            <span className="sidebar-user-name">GOP · 3ª CRE</span>
+            <span className="sidebar-user-role">{openTickets} chamado{openTickets === 1 ? '' : 's'} ativo{openTickets === 1 ? '' : 's'}</span>
           </div>
         </div>
 

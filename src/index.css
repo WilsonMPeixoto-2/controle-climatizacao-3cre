@@ -1,11 +1,10 @@
-/* 
-  Vivo Climatização 3ª CRE GOP - Ultra-Premium Design System
-  Implements cutting-edge dark/light glassmorphism, glowing accents, 
-  radial gradients, interactive micro-animations, and elevated typography scales.
+/*
+  Controle Vivo de Climatização — 3ª CRE / GOP (SME-RJ)
+  Sistema de design: tema escuro institucional, acento azul-ciano (h201) + teal de apoio.
 */
 
 :root {
-  /* Color Palette - Vivo Corporate Theme (Purple/Teal/Navy) */
+  /* Paleta institucional — azul-ciano (h201) + teal de apoio */
   --primary-h: 201;
   --primary-s: 89%;
   --primary-l: 52%;
@@ -39,21 +38,19 @@
   --color-orange: hsl(20, 90%, 48%);
   --color-red: hsl(350, 85%, 48%);
   --color-blue: hsl(214, 90%, 48%);
-  --color-purple: hsl(262, 80%, 50%);
   --color-gray: hsl(215, 12%, 48%);
 
-  /* Alerta de Antiguidade (tempo total em aberto) — tons de roxo */
-  --color-age-warn: hsl(280, 60%, 55%);
-  --color-age-severe: hsl(270, 70%, 42%);
-  --color-age-warn-tint: hsla(280, 60%, 55%, 0.10);
-  --color-age-severe-tint: hsla(270, 70%, 42%, 0.12);
+  /* Alerta de Antiguidade (tempo total em aberto) — tons de índigo (família fria, distinta do SLA) */
+  --color-age-warn: hsl(250, 70%, 64%);
+  --color-age-severe: hsl(255, 75%, 56%);
+  --color-age-warn-tint: hsla(250, 70%, 64%, 0.10);
+  --color-age-severe-tint: hsla(255, 75%, 56%, 0.12);
 
   --color-green-tint: hsla(142, 72%, 36%, 0.08);
   --color-amber-tint: hsla(38, 92%, 44%, 0.08);
   --color-orange-tint: hsla(20, 90%, 48%, 0.08);
   --color-red-tint: hsla(350, 85%, 48%, 0.08);
   --color-blue-tint: hsla(214, 90%, 48%, 0.08);
-  --color-purple-tint: hsla(262, 80%, 50%, 0.08);
 
   /* Layout border radius & transitions */
   --radius-xs: 8px;
@@ -70,20 +67,38 @@
   --scroll-size: 6px;
 }
 
-/* Dark Theme Overrides (High-Fidelity Cyberpunk Slate) */
+/* Tema escuro institucional (padrão do app) — navy alinhado ao acento ciano */
 .dark-theme {
-  --bg-app: hsl(222, 28%, 6%);
-  --bg-card: rgba(15, 23, 42, 0.65);
-  --border-color: rgba(255, 255, 255, 0.07);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  
+  --bg-app: hsl(212, 32%, 7%);
+  --bg-card: rgba(17, 24, 39, 0.80);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(120, 190, 235, 0.22);
+
   --text-main: hsl(210, 20%, 96%);
-  --text-muted: hsl(215, 16%, 76%);
-  --text-light: hsl(215, 12%, 58%);
-  
-  --primary-light: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.12);
-  --secondary-light: hsla(175, 80%, 35%, 0.12);
-  
+  --text-muted: hsl(214, 14%, 78%);
+  --text-light: hsl(214, 14%, 70%);
+
+  --primary-light: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.14);
+  --secondary-light: hsla(175, 80%, 35%, 0.14);
+
+  /* Cores usadas como TEXTO: clareadas para passar WCAG AA sobre o navy */
+  --color-red: hsl(350, 82%, 64%);
+  --color-blue: hsl(214, 90%, 64%);
+  --color-green: hsl(142, 58%, 55%);
+  --color-amber: hsl(38, 88%, 55%);
+  --color-orange: hsl(20, 90%, 60%);
+  --color-age-warn: hsl(250, 70%, 73%);
+  --color-age-severe: hsl(255, 72%, 70%);
+
+  /* Tints de status mais sólidos (alpha 0.08 some sobre o escuro) */
+  --color-green-tint: hsla(142, 58%, 50%, 0.16);
+  --color-amber-tint: hsla(38, 92%, 55%, 0.18);
+  --color-orange-tint: hsla(20, 90%, 55%, 0.18);
+  --color-red-tint: hsla(350, 85%, 58%, 0.18);
+  --color-blue-tint: hsla(214, 90%, 60%, 0.18);
+  --color-age-warn-tint: hsla(250, 70%, 73%, 0.16);
+  --color-age-severe-tint: hsla(255, 72%, 70%, 0.18);
+
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.55);
@@ -98,11 +113,14 @@
 
 body {
   font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
   background-color: var(--bg-app);
   color: var(--text-main);
-  transition: var(--transition);
+  transition: background-color 0.25s ease, color 0.25s ease;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   position: relative;
 }
 
@@ -358,12 +376,11 @@ body::after {
 }
 
 .header-title h1 {
-  font-size: 32px;
+  font-size: clamp(24px, 3.4vw, 32px);
   font-weight: 800;
-  letter-spacing: -1px;
-  background: linear-gradient(135deg, var(--text-main), var(--primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: var(--text-main);
 }
 
 .header-title p {
@@ -470,10 +487,10 @@ body::after {
   justify-content: space-between;
   align-items: center;
   color: var(--text-muted);
-  font-weight: 800;
-  font-size: 11px;
+  font-weight: 700;
+  font-size: 11.5px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.6px;
   margin-bottom: 12px;
 }
 
@@ -538,9 +555,9 @@ body::after {
 }
 
 .section-header h3 {
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -665,13 +682,13 @@ body::after {
 .lists-table th {
   background-color: var(--bg-app);
   padding: 14px 16px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
   user-select: none;
-  font-size: 11px;
+  font-size: 11.5px;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
 }
 
 .lists-table td {
@@ -679,7 +696,7 @@ body::after {
   border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
   color: var(--text-main);
-  font-weight: 600;
+  font-weight: 400;
   transition: var(--transition);
 }
 
@@ -778,7 +795,7 @@ body::after {
   padding: 4px 10px;
   border-radius: 99px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .badge-priority-critica { background-color: var(--color-red-tint); color: var(--color-red); }
@@ -867,11 +884,11 @@ body::after {
 }
 
 .form-label {
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--text-light);
-  letter-spacing: 0.8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  color: var(--text-muted);
+  letter-spacing: 0;
 }
 
 .form-control {
@@ -1365,11 +1382,11 @@ body::after {
   border-radius: var(--radius-xs);
   border: 1px solid var(--border-color);
   overflow: hidden;
-  background: hsl(216, 33%, 8%);
+  background: hsl(212, 32%, 8%);
 }
-.leaflet-container { background: hsl(216, 33%, 8%); font-family: var(--font-sans); }
-/* leve halo na região destacada (só a camada de overlay tem paths) */
-.leaflet-overlay-pane svg path { filter: drop-shadow(0 0 3px hsla(199, 90%, 60%, 0.35)); }
+.leaflet-container { background: hsl(212, 32%, 8%); font-family: var(--font-sans); }
+/* halo ciano da região da 3ª CRE — escopado à classe cre-glow (não pega futuros overlays) */
+.leaflet-overlay-pane svg path.cre-glow { filter: drop-shadow(0 0 2px hsla(201, 90%, 62%, 0.55)) drop-shadow(0 0 8px hsla(201, 90%, 55%, 0.30)); }
 .cre-label {
   background: transparent !important;
   border: none !important;
@@ -1417,3 +1434,37 @@ body::after {
 
 /* botão de tema visível no cabeçalho (acesso rápido ao Modo Claro) */
 .theme-toggle-header svg { width: 15px; height: 15px; }
+
+/* ===========================================================================
+   Acessibilidade e refino tipográfico (Rodada 1)
+   =========================================================================== */
+
+/* Foco de teclado visível (e-MAG/WCAG) — o .btn zera outline; reativamos no :focus-visible */
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+.btn:focus-visible,
+.sidebar-item:focus-visible,
+.view-tab:focus-visible,
+.theme-toggle-btn:focus-visible,
+.theme-toggle-header:focus-visible,
+.modal-close-btn:focus-visible,
+.template-item:focus-visible,
+.suggestion-item:focus-visible,
+.form-control:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+/* Algarismos tabulares — números não "dançam" nem desalinham */
+.stat-number,
+.sector-metric-num,
+.bar-value,
+.lists-table td,
+.donut-chart-svg text { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+
+/* Movimento reduzido — desliga pulsos e transições para quem pede menos animação */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .sla-pulse-amber, .sla-pulse-red { animation: none; box-shadow: none; }
+}

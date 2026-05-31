@@ -23,24 +23,29 @@ export default function OperationalMap() {
     if (mapRef.current || !elRef.current) return;
 
     const map = L.map(elRef.current, {
+      center: [-22.88, -43.28], // Zona Norte — fallback antes do fitBounds (evita flash no oceano)
+      zoom: 12,
       zoomControl: true,
       scrollWheelZoom: false, // não sequestra o scroll da página
       attributionControl: true,
     });
     mapRef.current = map;
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // dark_nolabels: mantém ruas/quadras reais mas SEM a toponímia do CARTO,
+    // para não competir com os nossos rótulos de bairro.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 19,
       attribution: '© OpenStreetMap · © CARTO',
     }).addTo(map);
 
     const layer = L.geoJSON(creBairros, {
+      className: 'cre-glow', // alvo do halo ciano (escopado, não afeta outros overlays)
       style: {
-        color: 'hsl(199 90% 64%)',
+        color: 'hsl(201 90% 66%)',
         weight: 1.4,
-        opacity: 0.9,
-        fillColor: 'hsl(195 90% 55%)',
+        opacity: 0.95,
+        fillColor: 'hsl(201 80% 52%)',
         fillOpacity: 0.14,
       },
       onEachFeature: (f, l) => {
