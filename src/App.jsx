@@ -143,6 +143,10 @@ export default function App() {
   const [history, setHistory] = useState(initialHistory);
   const [emailTemplates, setEmailTemplates] = useState(initialEmailTemplates);
   const [theme, setTheme] = useState('dark'); // 'dark' or 'light'
+  const [sortField, setSortField] = useState('id_chamado');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [filterPriority, setFilterPriority] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [selectedBairroNormalized, setSelectedBairroNormalized] = useState(null);
   const [focusedBairro, setFocusedBairro] = useState(null);
 
@@ -429,6 +433,16 @@ export default function App() {
       result = result.filter(t => t.status_atual === '10 - Concluído' || t.status_atual === '11 - Encerrado');
     }
 
+    // Filtro rápido de prioridade
+    if (filterPriority) {
+      result = result.filter(t => t.prioridade === filterPriority);
+    }
+
+    // Filtro rápido de status
+    if (filterStatus) {
+      result = result.filter(t => t.status_atual === filterStatus);
+    }
+
     // Apply text search
     if (ticketSearch.trim()) {
       const q = ticketSearch.toLowerCase();
@@ -439,6 +453,40 @@ export default function App() {
         t.proxima_providencia.toLowerCase().includes(q) ||
         t.status_atual.toLowerCase().includes(q)
       );
+    }
+
+    // Apply dynamic sorting
+    if (sortField) {
+      result.sort((a, b) => {
+        let valA = a[sortField] || '';
+        let valB = b[sortField] || '';
+
+        if (sortField === 'prioridade') {
+          const getPriorityWeight = (p) => {
+            const val = String(p).trim().toLowerCase();
+            if (val === 'crítica' || val === 'critica') return 4;
+            if (val === 'alta') return 3;
+            if (val === 'média' || val === 'media') return 2;
+            if (val === 'baixa') return 1;
+            return 0;
+          };
+          valA = getPriorityWeight(valA);
+          valB = getPriorityWeight(valB);
+        }
+
+        if (sortField === 'modificado_em') {
+          valA = new Date(valA || 0).getTime();
+          valB = new Date(valB || 0).getTime();
+        }
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortDirection === 'asc' 
+            ? valA.localeCompare(valB, 'pt-BR') 
+            : valB.localeCompare(valA, 'pt-BR');
+        }
+
+        return sortDirection === 'asc' ? valA - valB : valB - valA;
+      });
     }
 
     return result;
@@ -696,6 +744,106 @@ export default function App() {
           </span>
         </div>
       </div>
+    );
+  };
+
+  const getStatusColor = (status) => {
+    if (status.includes('Concluído') || status.includes('Encerrado')) return 'hsl(142, 70%, 45%)';
+    if (status.includes('Recebido') || status.includes('vistoria técnica') || status.includes('Vistoria concluída')) return 'hsl(215, 60%, 55%)';
+    if (status.includes('orçamento') || status.includes('Orçamento')) {
+      if (status.includes('análise')) return 'hsl(24, 95%, 55%)';
+      return 'hsl(38, 92%, 50%)';
+    }
+    if (status.includes('execução') || status.includes('adequação')) return 'hsl(199, 89%, 48%)';
+    return 'hsl(215, 16%, 47%)';
+  };
+
+  const getSectorColor = (sector) => {
+    const s = sector.toUpperCase();
+    if (s.includes('GOP')) return 'hsl(199, 89%, 48%)';
+    if (s.includes('CTO')) return 'hsl(174, 65%, 41%)';
+    if (s.includes('CPS')) return 'hsl(340, 75%, 55%)';
+    if (s.includes('GIN')) {
+      if (s.includes('UNIDADE') || s.includes('ESCOLA')) return 'hsl(262, 70%, 58%)';
+      return 'hsl(280, 65%, 50%)';
+    }
+    if (s.includes('UNIDADE') || s.includes('ESCOLA')) return 'hsl(262, 70%, 58%)';
+    return 'hsl(215, 16%, 47%)';
+  };
+
+  const handleCopySummary = (text, type = 'informações') => {
+    navigator.clipboard.writeText(text);
+    triggerToast(`Resumo de ${type} copiado para a área de transferência!`, "success");
+  };
+
+  const handleExportCSV = () => {
+    const filtered = getFilteredTickets();
+    if (filtered.length === 0) {
+      triggerToast("Nenhum chamado encontrado para exportação.", "error");
+      return;
+    }
+
+    const headers = [
+      "Código", "Unidade Escolar", "Designação", "Data Solicitação", 
+      "Local Demanda", "Tipo Demanda", "Status Atual", "Setor Responsável", 
+      "Prioridade", "Modificado Em", "Resultado Aptidão", "Observações"
+    ];
+
+    const rows = filtered.map(t => [
+      t.id_chamado || '',
+      t.unidade_escolar || '',
+      t.designacao || '',
+      t.data_solicitacao ? fmtDateBR(t.data_solicitacao) : '',
+      t.local_demanda || '',
+      t.tipo_demanda || '',
+      t.status_atual || '',
+      t.setor_responsavel || '',
+      t.prioridade || '',
+      t.modificado_em ? fmtDateBR(t.modificado_em) : '',
+      t.resultado_aptidao || '',
+      (t.observacoes || '').replace(/\r?\n|\r/g, " ")
+    ]);
+
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(';'))
+    ].join('\r\n');
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Chamados_GOP_3CRE_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    triggerToast(`Exportado ${filtered.length} chamados com sucesso!`, "success");
+  };
+
+  const renderSortableHeader = (label, field) => {
+    const isSorted = sortField === field;
+    return (
+      <th 
+        onClick={() => {
+          if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+          } else {
+            setSortField(field);
+            setSortDirection('asc');
+          }
+        }} 
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        className={`sortable-header ${isSorted ? 'sorted' : ''}`}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span>{label}</span>
+          <span style={{ fontSize: '11px', color: isSorted ? 'var(--primary)' : 'var(--text-light)', transition: '0.2s' }}>
+            {!isSorted ? '↕' : sortDirection === 'asc' ? '↑' : '↓'}
+          </span>
+        </div>
+      </th>
     );
   };
 
@@ -1003,6 +1151,17 @@ export default function App() {
                           >
                             <IconFocus />
                           </button>
+                          <button 
+                            className="btn-copy-summary" 
+                            onClick={() => handleCopySummary(
+                              `Bairro: ${bData.nome_exibicao}\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nEm Atenção: ${bData.atencao}`, 
+                              'bairro'
+                            )} 
+                            title="Copiar resumo gerencial do bairro"
+                            style={{ marginLeft: '4px' }}
+                          >
+                            <IconCopy />
+                          </button>
                         </div>
                         <button className="btn-close-small" onClick={() => setSelectedBairroNormalized(null)} title="Fechar detalhes do bairro">
                           <IconClose />
@@ -1086,7 +1245,91 @@ export default function App() {
                     <h3><IconDashboard /> Visão de Metas & Conclusões</h3>
                     <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Consolidado Geral</span>
                   </div>
-                  {renderDashboardDonutChart()}
+                  
+                  <div className="dashboard-goals-split">
+                    {/* Coluna 1: Donut Chart Geral */}
+                    <div className="goals-column">
+                      {renderDashboardDonutChart()}
+                    </div>
+
+                    {/* Coluna 2: Status dos Chamados */}
+                    <div className="goals-column">
+                      <h4>Status das Demandas</h4>
+                      <div className="mini-progress-list">
+                        {(() => {
+                          const statusCounts = tickets.reduce((acc, t) => {
+                            const st = t.status_atual || 'Não especificado';
+                            acc[st] = (acc[st] || 0) + 1;
+                            return acc;
+                          }, {});
+                          const sortedStatuses = Object.entries(statusCounts).sort((a, b) => b[1] - a[1]);
+                          return sortedStatuses.map(([status, count]) => {
+                            const pct = Math.round((count / tickets.length) * 100) || 0;
+                            const color = getStatusColor(status);
+                            return (
+                              <div key={status} className="mini-progress-item">
+                                <div className="mini-progress-label">
+                                  <span className="status-bullet" style={{ backgroundColor: color }} />
+                                  <span className="status-name" title={status}>{status}</span>
+                                </div>
+                                <div className="mini-progress-track-wrapper">
+                                  <div className="mini-progress-track">
+                                    <div 
+                                      className="mini-progress-fill" 
+                                      style={{ 
+                                        width: `${pct}%`,
+                                        backgroundColor: color 
+                                      }} 
+                                    />
+                                  </div>
+                                  <span className="mini-progress-value">{count}</span>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Coluna 3: Setor Responsável */}
+                    <div className="goals-column">
+                      <h4>Responsabilidade (Último Setor)</h4>
+                      <div className="mini-progress-list">
+                        {(() => {
+                          const sectorCounts = tickets.reduce((acc, t) => {
+                            const sec = t.setor_responsavel || 'Não especificado';
+                            acc[sec] = (acc[sec] || 0) + 1;
+                            return acc;
+                          }, {});
+                          const sortedSectors = Object.entries(sectorCounts).sort((a, b) => b[1] - a[1]);
+                          return sortedSectors.map(([sector, count]) => {
+                            const pct = Math.round((count / tickets.length) * 100) || 0;
+                            const color = getSectorColor(sector);
+                            return (
+                              <div key={sector} className="mini-progress-item">
+                                <div className="mini-progress-label">
+                                  <span className="sector-bullet" style={{ backgroundColor: color }} />
+                                  <span className="sector-name" title={sector}>{sector}</span>
+                                </div>
+                                <div className="mini-progress-track-wrapper">
+                                  <div className="mini-progress-track">
+                                    <div 
+                                      className="mini-progress-fill" 
+                                      style={{ 
+                                        width: `${pct}%`,
+                                        backgroundColor: color 
+                                      }} 
+                                    />
+                                  </div>
+                                  <span className="mini-progress-value">{count}</span>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
 {/* (removido) "Distribuição pelas 12 Etapas POP" — substituído pelo Mapa Operacional; a leitura por etapa agora aparece na legenda do mapa */}
@@ -1097,10 +1340,10 @@ export default function App() {
               {/* Right Section: Inactivity Ranking */}
               <div className="dashboard-section" style={{ height: 'fit-content' }}>
                 <div className="section-header">
-                  <h3><IconWarning /> Ranking de Inatividade (Gargalos)</h3>
+                  <h3><IconWarning /> Acompanhamento Prioritário de Demandas</h3>
                 </div>
                 <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
-                  Chamados ativos parados há mais tempo sem movimentação no sistema.
+                  Lista das demandas em andamento ordenadas por tempo de tramitação para priorização de ações.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1175,7 +1418,7 @@ export default function App() {
         {/* Tickets Tab (Lists Mirror) */}
         {currentTab === 'tickets' && (
           <div className="dashboard-section" style={{ padding: '24px' }}>
-            <div className="section-header" style={{ marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="section-header" style={{ marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
               <div>
                 <h3><IconList /> Lista de chamados</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
@@ -1196,6 +1439,81 @@ export default function App() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* FASE 4: Barra de Ferramentas de Tabelas (Filtros, Contadores e Exportador CSV) */}
+            <div className="table-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '18px', padding: '12px 18px', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {/* Filtro Prioridade */}
+                <div className="filter-select-wrapper">
+                  <span className="filter-label">Prioridade:</span>
+                  <select 
+                    className="form-control select-filter" 
+                    value={filterPriority} 
+                    onChange={(e) => setFilterPriority(e.target.value)}
+                    style={{ width: '110px', padding: '5px 10px', fontSize: '12px', borderRadius: '4px' }}
+                  >
+                    <option value="">Todas</option>
+                    <option value="Crítica">Crítica</option>
+                    <option value="Alta">Alta</option>
+                    <option value="Média">Média</option>
+                    <option value="Baixa">Baixa</option>
+                  </select>
+                </div>
+
+                {/* Filtro Status */}
+                <div className="filter-select-wrapper">
+                  <span className="filter-label">Status:</span>
+                  <select 
+                    className="form-control select-filter" 
+                    value={filterStatus} 
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    style={{ width: '200px', padding: '5px 10px', fontSize: '12px', borderRadius: '4px' }}
+                  >
+                    <option value="">Todos</option>
+                    {Array.from(new Set(tickets.map(t => t.status_atual))).sort().map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Contador de chamados exibidos */}
+                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', fontWeight: '700', marginLeft: '8px' }}>
+                  Exibindo <span style={{ color: 'var(--primary)' }}>{getFilteredTickets().length}</span> de <span>{tickets.length}</span> chamados
+                </div>
+
+                {/* Botão limpar filtros */}
+                {(filterPriority || filterStatus || ticketSearch) && (
+                  <button 
+                    onClick={() => { setFilterPriority(''); setFilterStatus(''); setTicketSearch(''); }}
+                    style={{ fontSize: '11.5px', color: 'var(--color-red)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '800', padding: '2px 6px', textTransform: 'uppercase' }}
+                  >
+                    Limpar Filtros
+                  </button>
+                )}
+              </div>
+
+              {/* Botão de Exportação CSV */}
+              <button 
+                className="btn btn-primary btn-export" 
+                onClick={handleExportCSV}
+                style={{
+                  padding: '7px 14px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, hsl(142, 60%, 40%), hsl(142, 70%, 30%))',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <span>📥 Exportar Lista (CSV)</span>
+              </button>
             </div>
 
             {/* Lists View tabs */}
@@ -1259,14 +1577,14 @@ export default function App() {
               <table className="lists-table">
                 <thead>
                   <tr>
-                    <th>Código</th>
-                    <th>Unidade Escolar</th>
+                    {renderSortableHeader('Código', 'id_chamado')}
+                    {renderSortableHeader('Unidade Escolar', 'unidade_escolar')}
                     <th>Tipo Demanda</th>
                     <th>Local</th>
-                    <th>Responsável</th>
+                    {renderSortableHeader('Responsável', 'setor_responsavel')}
                     <th>Status Atual</th>
-                    <th>Prioridade</th>
-                    <th>Modificado Em</th>
+                    {renderSortableHeader('Prioridade', 'prioridade')}
+                    {renderSortableHeader('Modificado Em', 'modificado_em')}
                     <th>Aptidão</th>
                   </tr>
                 </thead>
@@ -1391,10 +1709,22 @@ export default function App() {
                     borderLeft: '4px solid var(--primary)',
                     marginBottom: '14px'
                   }}>
-                    <h4 style={{ fontWeight: '850', fontSize: '16px', color: 'var(--primary)' }}>
-                      {selectedSchool.unidade_escolar}
-                    </h4>
-                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <h4 style={{ fontWeight: '850', fontSize: '16px', color: 'var(--primary)', margin: 0 }}>
+                        {selectedSchool.unidade_escolar}
+                      </h4>
+                      <button 
+                        className="btn-copy-summary" 
+                        onClick={() => handleCopySummary(
+                          `Escola: ${selectedSchool.unidade_escolar}\nDesignação: ${selectedSchool.designacao}\nSICI: ${selectedSchool.sici}\nBairro: ${selectedSchool.bairro}\nSalas de Aula: ${selectedSchool.qtd_salas_de_aula}\nClimatizadas: ${selectedSchool.aparelhos_em_sala}\nNecessidade: ${selectedSchool.necessidade_aparelhos} aparelhos\nAção: ${selectedSchool.acao_sugerida}`, 
+                          'escola'
+                        )} 
+                        title="Copiar ficha técnica da escola"
+                      >
+                        <IconCopy />
+                      </button>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700', marginTop: '4px', display: 'block' }}>
                       Designação: {selectedSchool.designacao} · Código SICI: {selectedSchool.sici}
                     </span>
                   </div>
@@ -1472,6 +1802,60 @@ export default function App() {
                       </div>
                     );
                   })()}
+
+                  {/* FASE 4: Ações rápidas de conectividade entre abas */}
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                    <button 
+                      onClick={() => {
+                        setFormSelectedSchool(selectedSchool);
+                        setFormSearchQuery(selectedSchool.unidade_escolar);
+                        setNewTicket(prev => ({
+                          ...prev,
+                          local_demanda: '',
+                          observacoes: `Ficha da Escola: Salas: ${selectedSchool.qtd_salas_de_aula}, Climatizadas: ${selectedSchool.aparelhos_em_sala}, Necessidade: ${selectedSchool.necessidade_aparelhos} aparelhos.`
+                        }));
+                        setCurrentTab('form');
+                        triggerToast(`Escola ${selectedSchool.unidade_escolar} vinculada no formulário de registro!`, "info");
+                      }}
+                      className="btn btn-primary"
+                      style={{ 
+                        flex: 1, 
+                        fontSize: '12px', 
+                        fontWeight: '700', 
+                        padding: '10px 14px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <IconPlus /> Registrar Chamado
+                    </button>
+                    
+                    <button 
+                      onClick={() => {
+                        setTicketSearch(selectedSchool.unidade_escolar);
+                        setActiveListsView('all');
+                        setCurrentTab('tickets');
+                        triggerToast(`Filtrando chamados para a escola ${selectedSchool.unidade_escolar}!`, "info");
+                      }}
+                      className="btn select-filter"
+                      style={{ 
+                        flex: 1, 
+                        fontSize: '12px', 
+                        fontWeight: '700', 
+                        padding: '10px 14px', 
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--bg-app)',
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <IconSearch /> Ver Chamados
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -2129,6 +2513,17 @@ CREATE TABLE IF NOT EXISTS historico (
                 <h2 className="modal-title-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <IconList />
                   <span>Ficha do Chamado {editingTicket.id_chamado}</span>
+                  <button 
+                    className="btn-copy-summary" 
+                    onClick={() => handleCopySummary(
+                      `Chamado: ${editingTicket.id_chamado}\nUnidade: ${editingTicket.unidade_escolar}\nStatus: ${editingTicket.status_atual}\nSetor Responsável: ${editingTicket.setor_responsavel}\nPrioridade: ${editingTicket.prioridade}\nÚltima Providência: ${editingTicket.proxima_providencia}\nObservações: ${editingTicket.observacoes}`, 
+                      'chamado'
+                    )} 
+                    title="Copiar resumo completo do chamado"
+                    style={{ marginLeft: '4px' }}
+                  >
+                    <IconCopy />
+                  </button>
                 </h2>
                 <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
                   {editingTicket.unidade_escolar} · Designação: {editingTicket.designacao}

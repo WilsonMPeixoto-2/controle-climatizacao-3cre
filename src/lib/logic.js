@@ -279,8 +279,15 @@ export function compileEmailTemplate(templateText, ticket, dateRef = new Date())
   return templateText
     .replace(/{ID_CHAMADO}/g, ticket.id_chamado ?? '')
     .replace(/{UNIDADE}/g, ticket.unidade_escolar ?? '')
-    .replace(/{DATA}/g, dataStr);
+    .replace(/{DATA}/g, dataStr)
+    .replace(/{STATUS}/g, ticket.status_atual ?? '')
+    .replace(/{SETOR}/g, ticket.setor_responsavel ?? '')
+    .replace(/{PRIORIDADE}/g, ticket.prioridade ?? '')
+    .replace(/{LOCAL_DEMANDA}/g, ticket.local_demanda ?? '')
+    .replace(/{PROXIMA_PROVIDENCIA}/g, ticket.proxima_providencia ?? '')
+    .replace(/{DESIGNACAO}/g, ticket.designacao ?? '');
 }
+
 
 // ---------------------------------------------------------------------------
 // Normalização e Agregação por Bairro

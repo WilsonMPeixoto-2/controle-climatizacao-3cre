@@ -2263,3 +2263,181 @@ html:not(.dark-theme) .bairro-details-card {
   flex-shrink: 0;
 }
 
+/* ==========================================================================
+   FASE 4: Grade dividida em 3 colunas, botões de ação e tabelas inteligentes
+   ========================================================================== */
+
+/* Grade de 3 colunas no card de metas */
+.dashboard-goals-split {
+  display: grid;
+  grid-template-columns: 1.15fr 1.3fr 1.35fr;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-goals-split {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.goals-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goals-column h4 {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin: 0 0 6px 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 6px;
+}
+
+/* Listagens de progresso de status e setores */
+.mini-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.mini-progress-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mini-progress-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.status-bullet, .sector-bullet {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-name, .sector-name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.mini-progress-track-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mini-progress-track {
+  flex: 1;
+  height: 6px;
+  background-color: var(--border-color);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 1s ease-out;
+}
+
+.mini-progress-value {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  min-width: 16px;
+  text-align: right;
+}
+
+/* Barra de ferramentas (Filtros e exportador) */
+.filter-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.select-filter {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition);
+}
+
+.select-filter:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-light) !important;
+}
+
+.btn-export:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  filter: brightness(1.1);
+}
+
+.btn-export:active {
+  transform: translateY(0);
+}
+
+.sortable-header {
+  transition: background-color 0.2s ease;
+}
+
+.sortable-header:hover {
+  background-color: rgba(148, 163, 184, 0.05) !important;
+}
+
+.sortable-header.sorted {
+  background-color: rgba(148, 163, 184, 0.02) !important;
+}
+
+/* Botões e elementos de cópia premium */
+.btn-copy-summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 4px;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+.btn-copy-summary:hover {
+  color: var(--primary);
+  background-color: var(--primary-light);
+}
+
+.btn-copy-summary svg {
+  width: 14px;
+  height: 14px;
+}
+
+
