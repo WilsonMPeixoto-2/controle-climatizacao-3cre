@@ -148,6 +148,10 @@ export default function App() {
   const [filterPriority, setFilterPriority] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [emailTab, setEmailTab] = useState('preview');
+
+  // Controle de edição inline de comentários do histórico
+  const [editingEventId, setEditingEventId] = useState(null);
+  const [editingEventText, setEditingEventText] = useState('');
   const [schoolLogs, setSchoolLogs] = useState(() => {
     try {
       const saved = localStorage.getItem('gop_school_notes');
@@ -594,6 +598,43 @@ export default function App() {
     setShowEditModal(true);
   };
 
+  const saveEditedHistoryEvent = async (eventId, newText) => {
+    if (!newText.trim()) return;
+
+    // Atualiza localmente no estado 'history'
+    const updatedHistory = history.map(h => {
+      if (h.id_evento === eventId) {
+        return { ...h, observacao: newText };
+      }
+      return h;
+    });
+    setHistory(updatedHistory);
+
+    // Salva no Supabase se conectado
+    let cloudOk = true;
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient
+          .from('historico')
+          .update({ observacao: newText })
+          .eq('id_evento', eventId);
+        if (error) throw error;
+      } catch (err) {
+        cloudOk = false;
+        console.error("Erro ao atualizar comentário no Supabase:", err);
+      }
+    }
+
+    setEditingEventId(null);
+    setEditingEventText('');
+    triggerToast(
+      cloudOk 
+        ? "Comentário do histórico atualizado!" 
+        : "Comentário atualizado localmente (falha ao salvar na nuvem).",
+      cloudOk ? 'success' : 'error'
+    );
+  };
+
   const saveEditedTicket = async () => {
     const validation = editTicketSchema.safeParse(editingTicket);
     if (!validation.success) {
@@ -607,17 +648,37 @@ export default function App() {
       return;
     }
 
-    const hasStatusChanged = oldTicket.status_atual !== editingTicket.status_atual;
-    const hasSectorChanged = oldTicket.setor_responsavel !== editingTicket.setor_responsavel;
-    const hasNextStepChanged = oldTicket.proxima_providencia !== editingTicket.proxima_providencia;
-
-    // Build timeline details if updated
-    let eventNote = '';
-    if (hasStatusChanged) eventNote += `Status alterado para: ${editingTicket.status_atual}. `;
-    if (hasSectorChanged) eventNote += `Responsabilidade: ${editingTicket.setor_responsavel}. `;
-    if (hasNextStepChanged) eventNote += `Próximo passo: ${editingTicket.proxima_providencia}. `;
-
     const nowIso = new Date().toISOString().substring(0, 19);
+    const dataFormatada = fmtDateBR(nowIso);
+
+    const camposMapeados = {
+      status_atual: 'Status',
+      setor_responsavel: 'Setor Responsável',
+      prioridade: 'Prioridade',
+      proxima_providencia: 'Próxima Providência',
+      ultima_movimentacao: 'Última Movimentação Relevante',
+      comunicacao_cto: 'Comunicação CTO',
+      informacao_validada: 'Informação Validada',
+      local_demanda: 'Local exato',
+      tipo_demanda: 'Tipo de solicitação',
+      tipo_aparelho: 'Tipo de aparelho',
+      btu_existente: 'BTU Existente',
+      btu_pretendido: 'BTU Pretendido',
+      resultado_aptidao: 'Aptidão técnica',
+      observacoes: 'Observações Gerais'
+    };
+
+    const logsGerados = [];
+    Object.keys(camposMapeados).forEach(campo => {
+      const valOld = String(oldTicket[campo] || '').trim();
+      const valNew = String(editingTicket[campo] || '').trim();
+      if (valOld !== valNew) {
+        logsGerados.push({
+          campoNome: camposMapeados[campo],
+          desc: `${camposMapeados[campo]} alterado de '${valOld || 'Vazio'}' para '${valNew || 'Vazio'}' em ${dataFormatada}.`
+        });
+      }
+    });
 
     const updatedRecord = {
       ...editingTicket,
@@ -633,20 +694,22 @@ export default function App() {
     });
     setTickets(updatedTickets);
 
-    const newEvent = eventNote ? {
-      id_evento: `EV-${String(history.length + 1).padStart(5, '0')}`,
-      data: nowIso,
-      id_chamado: editingTicket.id_chamado,
-      designacao: editingTicket.designacao,
-      unidade_escolar: editingTicket.unidade_escolar,
-      marco_relevante: editingTicket.status_atual,
-      setor: editingTicket.setor_responsavel.split('/')[0].trim(),
-      responsavel_registro: "GOP / Sistema",
-      observacao: `[Modificação] ${eventNote} ${editingTicket.ultima_movimentacao}`
-    } : null;
+    const novosEventos = logsGerados.map((log, index) => {
+      return {
+        id_evento: `EV-${Date.now()}-${index}`,
+        data: nowIso,
+        id_chamado: editingTicket.id_chamado,
+        designacao: editingTicket.designacao,
+        unidade_escolar: editingTicket.unidade_escolar,
+        marco_relevante: `Alteração de ${log.campoNome}`,
+        setor: (editingTicket.setor_responsavel || 'GOP').split('/')[0].trim() || 'GOP',
+        responsavel_registro: "GOP / Sistema",
+        observacao: log.desc
+      };
+    });
 
-    if (newEvent) {
-      setHistory([newEvent, ...history]);
+    if (novosEventos.length > 0) {
+      setHistory([...novosEventos, ...history]);
     }
 
     // Save to Cloud in real-time if connected!
@@ -660,8 +723,8 @@ export default function App() {
         
         if (tkErr) throw tkErr;
 
-        if (newEvent) {
-          const { error: evErr } = await supabaseClient.from('historico').insert(newEvent);
+        if (novosEventos.length > 0) {
+          const { error: evErr } = await supabaseClient.from('historico').insert(novosEventos);
           if (evErr) throw evErr;
         }
       } catch (err) {
@@ -3006,28 +3069,108 @@ CREATE TABLE IF NOT EXISTS historico (
                 {/* Right side: Summary & Timeline */}
                 <div>
                   <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--secondary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                    🏢 Ficha Técnica da Demanda
+                    🏢 Ficha Técnica da Demanda (Editável)
                   </h4>
 
                   <div style={{ 
-                    padding: '12px', 
+                    padding: '16px', 
                     borderRadius: 'var(--radius-xs)', 
                     backgroundColor: 'var(--bg-app)',
                     border: '1px solid var(--border-color)',
-                    fontSize: '13px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px',
-                    marginBottom: '20px',
-                    fontWeight: '600'
+                    gap: '12px',
+                    marginBottom: '20px'
                   }}>
-                    <div><strong>Local exato:</strong> {editingTicket.local_demanda || 'Não especificado'}</div>
-                    <div><strong>Tipo de solicitação:</strong> {editingTicket.tipo_demanda || 'Climatização Geral'}</div>
-                    <div><strong>Aparelho atual:</strong> {editingTicket.tipo_aparelho || 'Não informado'}</div>
-                    <div><strong>Aptidão técnica:</strong> {editingTicket.resultado_aptidao || 'Pendente de vistoria'}</div>
-                    <div><strong>Abertura:</strong> {formatDateBrazilian(editingTicket.criado_em) || 'Data não disponível'}</div>
-                    <div><strong>Última Alteração:</strong> {formatDateBrazilian(editingTicket.modificado_em) || 'Sem movimentações'}</div>
-                    <div className="inactivity-warning-row" style={{ color: 'var(--color-orange)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Local Exato</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        style={{ padding: '6px 10px', fontSize: '13px', height: '32px' }}
+                        value={editingTicket.local_demanda || ''}
+                        onChange={(e) => setEditingTicket({ ...editingTicket, local_demanda: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Tipo de Solicitação</label>
+                      <select 
+                        className="form-control" 
+                        style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
+                        value={editingTicket.tipo_demanda || 'Substituição/Instalação de Aparelho'}
+                        onChange={(e) => setEditingTicket({ ...editingTicket, tipo_demanda: e.target.value })}
+                      >
+                        <option value="Substituição/Instalação de Aparelho">Substituição/Instalação de Aparelho</option>
+                        <option value="Nova Instalação">Nova Instalação</option>
+                        <option value="Substituição de Aparelho">Substituição de Aparelho</option>
+                        <option value="Manutenção Corretiva">Manutenção Corretiva</option>
+                        <option value="Manutenção Preventiva">Manutenção Preventiva</option>
+                        <option value="Adequação infra/elétrica">Adequação infra/elétrica</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '8px' }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Aparelho</label>
+                        <select 
+                          className="form-control" 
+                          style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
+                          value={editingTicket.tipo_aparelho || 'Split'}
+                          onChange={(e) => setEditingTicket({ ...editingTicket, tipo_aparelho: e.target.value })}
+                        >
+                          <option value="Split">Split</option>
+                          <option value="Janela">Janela</option>
+                          <option value="Split e Janela">Split e Janela</option>
+                          <option value="Não Possui">Não Possui</option>
+                          <option value="Não Sabe Informar">Não Sabe Informar</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Exist.</label>
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          style={{ padding: '6px 10px', fontSize: '13px', height: '32px' }}
+                          placeholder="Existente"
+                          value={editingTicket.btu_existente || ''}
+                          onChange={(e) => setEditingTicket({ ...editingTicket, btu_existente: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Pret.</label>
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          style={{ padding: '6px 10px', fontSize: '13px', height: '32px' }}
+                          placeholder="Pretendido"
+                          value={editingTicket.btu_pretendido || ''}
+                          onChange={(e) => setEditingTicket({ ...editingTicket, btu_pretendido: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Aptidão Técnica</label>
+                      <select 
+                        className="form-control" 
+                        style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
+                        value={editingTicket.resultado_aptidao || 'Pendente'}
+                        onChange={(e) => setEditingTicket({ ...editingTicket, resultado_aptidao: e.target.value })}
+                      >
+                        <option value="Pendente">Pendente</option>
+                        <option value="Apta">Apta</option>
+                        <option value="Apta parcialmente">Apta parcialmente</option>
+                        <option value="Não apta">Não apta</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '4px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
+                      <div>Abertura: {formatDateBrazilian(editingTicket.criado_em) || 'N/A'}</div>
+                      <div>Alterado: {formatDateBrazilian(editingTicket.modificado_em) || 'Sem mov.'}</div>
+                    </div>
+                    
+                    <div className="inactivity-warning-row" style={{ color: 'var(--color-orange)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
                       <IconClock />
                       <span>Sem movimentação há {getInactivityDays(editingTicket.modificado_em)} dias.</span>
                     </div>
@@ -3043,13 +3186,67 @@ CREATE TABLE IF NOT EXISTS historico (
                       .map(h => (
                         <div key={h.id_evento} className="timeline-event">
                           <div className="timeline-event-marker" />
-                          <div className="timeline-event-card" style={{ padding: '8px 10px' }}>
-                            <div className="timeline-event-meta">
-                              <span>📅 {formatDateBrazilian(h.data)}</span>
-                              <span>👤 {h.responsavel_registro}</span>
+                          <div className="timeline-event-card" style={{ padding: '8px 10px', position: 'relative' }}>
+                            <div className="timeline-event-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span>📅 {formatDateBrazilian(h.data)} · 👤 {h.responsavel_registro}</span>
+                              {editingEventId !== h.id_evento && (
+                                <button 
+                                  onClick={() => {
+                                    setEditingEventId(h.id_evento);
+                                    setEditingEventText(h.observacao || '');
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '11px',
+                                    color: 'var(--primary)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px',
+                                    fontWeight: '700',
+                                    padding: '2px 4px',
+                                    borderRadius: '2px'
+                                  }}
+                                  title="Editar comentário do histórico"
+                                >
+                                  ✏️ Editar
+                                </button>
+                              )}
                             </div>
-                            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{h.marco_relevante}</div>
-                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: '1.3' }}>{h.observacao}</p>
+                            <div style={{ fontSize: '12.5px', fontWeight: 'bold', marginTop: '2px', color: 'var(--text-main)' }}>{h.marco_relevante}</div>
+                            
+                            {editingEventId === h.id_evento ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                                <textarea 
+                                  className="form-control"
+                                  rows="2"
+                                  value={editingEventText}
+                                  onChange={(e) => setEditingEventText(e.target.value)}
+                                  style={{ fontSize: '12.5px', padding: '6px', minHeight: '60px' }}
+                                />
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                  <button 
+                                    className="btn" 
+                                    style={{ padding: '3px 8px', fontSize: '11.5px', height: '24px', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
+                                    onClick={() => setEditingEventId(null)}
+                                  >
+                                    Cancelar
+                                  </button>
+                                  <button 
+                                    className="btn btn-primary" 
+                                    style={{ padding: '3px 8px', fontSize: '11.5px', height: '24px' }}
+                                    onClick={() => saveEditedHistoryEvent(h.id_evento, editingEventText)}
+                                  >
+                                    Salvar
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.35' }}>
+                                {h.observacao}
+                              </p>
+                            )}
                           </div>
                         </div>
                       ))}
