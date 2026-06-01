@@ -147,6 +147,97 @@ export default function App() {
   const [sortDirection, setSortDirection] = useState('asc');
   const [filterPriority, setFilterPriority] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [emailTab, setEmailTab] = useState('preview');
+  const [schoolLogs, setSchoolLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gop_school_notes');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const [newCommentText, setNewCommentText] = useState('');
+  const [attachedFileName, setAttachedFileName] = useState('');
+  const [attachedFileMeta, setAttachedFileMeta] = useState(null);
+
+  // Persistir anotações de escolas localmente no localStorage
+  useEffect(() => {
+    localStorage.setItem('gop_school_notes', JSON.stringify(schoolLogs));
+  }, [schoolLogs]);
+
+  const handleAddSchoolLog = (type = 'comentario') => {
+    if (type === 'comentario' && !newCommentText.trim()) return;
+    if (type === 'documento' && !attachedFileName.trim()) return;
+
+    const newLog = {
+      id: 'SL-' + Date.now(),
+      type,
+      date: new Date().toISOString(),
+      content: type === 'comentario' ? newCommentText : attachedFileName,
+      docMeta: type === 'documento' ? attachedFileMeta : null,
+      user: 'GOP / 3ª CRE'
+    };
+
+    setSchoolLogs(prev => {
+      const list = prev[selectedSchool.designacao] || [];
+      return {
+        ...prev,
+        [selectedSchool.designacao]: [newLog, ...list]
+      };
+    });
+
+    if (type === 'comentario') {
+      setNewCommentText('');
+      triggerToast("Anotação técnica registrada na ficha!", "success");
+    } else {
+      setAttachedFileName('');
+      setAttachedFileMeta(null);
+      triggerToast("Laudo anexado com sucesso!", "success");
+    }
+  };
+
+  const renderRichEmail = (text, ticket) => {
+    if (!text) return '';
+    let rich = text;
+    
+    // Escapar caracteres HTML básicos para segurança XSS
+    rich = rich
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    // Converter quebras de linha em tags <br/> para HTML
+    rich = rich.replace(/\n/g, '<br/>').replace(/\n/g, '<br/>');
+
+    if (!ticket) {
+      return <div dangerouslySetInnerHTML={{ __html: rich }} />;
+    }
+
+    // Lista de variáveis a serem realçadas em negrito e ciano
+    const vars = [
+      ticket.id_chamado,
+      ticket.unidade_escolar,
+      ticket.designacao,
+      ticket.status_atual,
+      ticket.setor_responsavel,
+      ticket.prioridade,
+      ticket.local_demanda,
+      ticket.proxima_providencia
+    ].filter(Boolean);
+
+    // Ordenar de forma decrescente para evitar substituição parcial de termos menores
+    vars.sort((a, b) => b.length - a.length);
+
+    // Substituir ocorrências exatas por <strong> estilizado
+    vars.forEach(v => {
+      const escaped = v.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'g');
+      rich = rich.replace(regex, '<strong class="email-highlight">$1</strong>');
+    });
+
+    return <div dangerouslySetInnerHTML={{ __html: rich }} />;
+  };
   const [selectedBairroNormalized, setSelectedBairroNormalized] = useState(null);
   const [focusedBairro, setFocusedBairro] = useState(null);
 
@@ -954,18 +1045,17 @@ export default function App() {
 
       {/* Sidebar navigation */}
       <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="sidebar-logo">3ª</div>
+        <div 
+          className="sidebar-brand"
+          onClick={() => {
+            setCurrentTab('dashboard');
+            triggerToast("Retornando ao Painel Executivo...", "info");
+          }}
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          title="Ir para o Painel Executivo"
+        >
+          <div className="sidebar-logo" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>GC</div>
           <div className="sidebar-brand-text">GOP <span>Clima</span></div>
-        </div>
-
-        {/* Professional user slot */}
-        <div className="sidebar-user">
-          <div className="sidebar-user-avatar">3ª</div>
-          <div className="sidebar-user-info">
-            <span className="sidebar-user-name">GOP · 3ª CRE</span>
-            <span className="sidebar-user-role">{openTickets} chamado{openTickets === 1 ? '' : 's'} ativo{openTickets === 1 ? '' : 's'}</span>
-          </div>
         </div>
 
         <nav style={{ flex: 1 }}>
@@ -1035,7 +1125,7 @@ export default function App() {
         {/* Top Header */}
         <header className="main-header">
           <div className="header-title">
-            <h1>Controle Vivo de Climatização</h1>
+            <h1 className="main-portal-title">Gestão de Climatização Escolar</h1>
             <p>Gerência de Operações · Coordenadoria Regional de Educação (GOP/3ª CRE) · Data de Referência: {formatDateBrazilian(todayRef().toISOString())}</p>
           </div>
           <div className="header-actions">
@@ -1864,10 +1954,34 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {selectedSchool && (
                 <>
+                  {/* PRINT ONLY HEADER */}
+                  <div className="print-only-header" style={{ marginBottom: '20px' }}>
+                    <div style={{ textAlign: 'center', borderBottom: '2px solid var(--text-main)', paddingBottom: '12px' }}>
+                      <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0 }}>PREFEITURA DA CIDADE DO RIO DE JANEIRO</h2>
+                      <p style={{ fontSize: '12px', margin: '4px 0 0 0', textTransform: 'uppercase', fontWeight: '700', color: 'var(--text-muted)' }}>
+                        3ª Coordenadoria Regional de Educação · GOP Clima
+                      </p>
+                      <h3 style={{ fontSize: '16px', fontWeight: '800', marginTop: '12px', color: 'var(--primary)' }}>
+                        Ficha Técnica Consolidada da Unidade Escolar
+                      </h3>
+                      <p style={{ fontSize: '11px', color: 'var(--text-light)', margin: '4px 0 0 0' }}>
+                        Gerada em {formatDateBrazilian(todayRef().toISOString())} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Tickets associated */}
                   <div className="dashboard-section">
-                    <div className="section-header">
-                      <h3><IconFolder /> Chamados da Unidade ({tickets.filter(t => t.designacao === selectedSchool.designacao).length})</h3>
+                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0 }}><IconFolder /> Chamados da Unidade ({tickets.filter(t => t.designacao === selectedSchool.designacao).length})</h3>
+                      <button 
+                        className="btn btn-secondary theme-toggle-header" 
+                        onClick={() => window.print()}
+                        style={{ fontSize: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', fontWeight: '700' }}
+                        title="Salvar toda a Ficha Consolidada em PDF"
+                      >
+                        🖨️ Salvar Ficha (PDF)
+                      </button>
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1906,35 +2020,184 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* School Event Timeline history */}
+                  {/* School Event Timeline history (Integrated) */}
                   <div className="dashboard-section">
                     <div className="section-header">
-                      <h3><IconClock /> Linha do Tempo e Marcos Históricos</h3>
+                      <h3><IconClock /> Linha do Tempo Consolidada</h3>
                     </div>
 
                     <div className="timeline">
-                      {history
-                        .filter(h => h.designacao === selectedSchool.designacao || h.unidade_escolar === selectedSchool.unidade_escolar)
-                        .map(h => (
-                          <div key={h.id_evento} className="timeline-event">
-                            <div className="timeline-event-marker" />
-                            <div className="timeline-event-card">
+                      {(() => {
+                        // 1. Marcos do banco
+                        const dbEvents = history
+                          .filter(h => h.designacao === selectedSchool.designacao || h.unidade_escolar === selectedSchool.unidade_escolar)
+                          .map(h => ({
+                            id: h.id_evento || `db-${Math.random()}`,
+                            data: h.data,
+                            autor: h.responsavel_registro || 'Sistema',
+                            setor: h.setor || 'GOP',
+                            titulo: h.id_chamado ? `Chamado ${h.id_chamado}: ${h.marco_relevante}` : h.marco_relevante,
+                            texto: h.observacao,
+                            tipo: 'historico_db'
+                          }));
+
+                        // 2. Notas locais da GOP
+                        const localList = schoolLogs[selectedSchool.designacao] || [];
+                        const localEvents = localList.map(n => ({
+                          id: n.id,
+                          data: n.date,
+                          autor: n.user || 'GOP/3ª CRE',
+                          setor: 'GOP',
+                          titulo: n.type === 'documento' ? `Documento Anexo: ${n.content}` : `Anotação Técnica GOP`,
+                          texto: n.content,
+                          tipo: 'comentario_local',
+                          docMeta: n.docMeta,
+                          logType: n.type
+                        }));
+
+                        // 3. Mesclar e ordenar cronologicamente decrescente
+                        const integrated = [...dbEvents, ...localEvents].sort((a, b) => new Date(b.data || b.date) - new Date(a.data || a.date));
+
+                        if (integrated.length === 0) {
+                          return (
+                            <p style={{ fontSize: '12px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
+                              Nenhum marco de evento registrado no histórico para esta unidade.
+                            </p>
+                          );
+                        }
+
+                        return integrated.map(ev => (
+                          <div key={ev.id} className="timeline-event" style={{ borderLeft: ev.tipo === 'comentario_local' ? '2px dashed var(--primary)' : '2px solid var(--border-color)' }}>
+                            <div className="timeline-event-marker" style={{ backgroundColor: ev.tipo === 'comentario_local' ? 'var(--primary)' : 'var(--border-color)' }} />
+                            <div className="timeline-event-card" style={{ borderLeft: ev.tipo === 'comentario_local' ? `3px solid ${ev.logType === 'documento' ? 'var(--primary)' : 'var(--color-amber)'}` : 'none' }}>
                               <div className="timeline-event-meta">
-                                <span>📅 {formatDateBrazilian(h.data)}</span>
-                                <span style={{ fontWeight: 'bold' }}>👤 {h.responsavel_registro} ({h.setor})</span>
+                                <span>📅 {formatDateBrazilian(ev.data)}</span>
+                                <span style={{ fontWeight: 'bold' }}>👤 {ev.autor} ({ev.setor})</span>
                               </div>
-                              <div className="timeline-event-title">
-                                {h.id_chamado ? `Chamado ${h.id_chamado}: ` : ''}{h.marco_relevante}
+                              <div className="timeline-event-title" style={{ color: ev.tipo === 'comentario_local' ? 'var(--primary)' : 'var(--text-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>{ev.titulo}</span>
+                                {ev.tipo === 'comentario_local' && (
+                                  <button 
+                                    onClick={() => {
+                                      setSchoolLogs(prev => {
+                                        const list = prev[selectedSchool.designacao] || [];
+                                        return {
+                                          ...prev,
+                                          [selectedSchool.designacao]: list.filter(item => item.id !== ev.id)
+                                        };
+                                      });
+                                      triggerToast("Registro removido!", "info");
+                                    }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: '11px', padding: '0 4px' }}
+                                    title="Remover este registro"
+                                    className="no-print"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
                               </div>
-                              <p className="timeline-event-desc">{h.observacao}</p>
+                              
+                              {ev.logType === 'documento' ? (
+                                <div style={{ marginTop: '6px' }}>
+                                  <a 
+                                    href="#" 
+                                    onClick={(e) => { 
+                                      e.preventDefault(); 
+                                      triggerToast(`Visualizando documento simulado: ${ev.texto} (${ev.docMeta?.size || 'N/A'})`, 'info'); 
+                                    }} 
+                                    style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '12px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                  >
+                                    📄 {ev.texto} 
+                                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '500' }}>({ev.docMeta?.size || 'Metadados carregados'})</span>
+                                  </a>
+                                </div>
+                              ) : (
+                                <p className="timeline-event-desc">{ev.texto}</p>
+                              )}
                             </div>
                           </div>
-                        ))}
-                      {history.filter(h => h.designacao === selectedSchool.designacao || h.unidade_escolar === selectedSchool.unidade_escolar).length === 0 && (
-                        <p style={{ fontSize: '12px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
-                          Nenhum marco de evento registrado no histórico para esta unidade.
-                        </p>
-                      )}
+                        ));
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* FASE 4.5: Formulário para Notas Operacionais e Upload Simulado (GOP Notes) */}
+                  <div className="dashboard-section no-print">
+                    <div className="section-header">
+                      <h3><IconFileText /> Registrar Comentário / Anexo Técnico</h3>
+                    </div>
+                    
+                    <p style={{ fontSize: '12.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
+                      Insira anotações de progresso técnico ou anexe digitalizações de documentos (ex: laudos, orçamentos, fotos de vistoria) para manter a ficha técnica consolidada.
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <textarea 
+                          className="form-control"
+                          rows="3"
+                          placeholder="Escreva aqui observações do chamado, pendências elétricas resolvidas, ordens de serviço..."
+                          value={newCommentText}
+                          onChange={(e) => setNewCommentText(e.target.value)}
+                          style={{ fontSize: '12.5px', padding: '10px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-xs)' }}
+                        />
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                        {/* PREMIUM METADATA FILE UPLOAD */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input 
+                            type="file" 
+                            id="school-file-upload-look" 
+                            style={{ display: 'none' }} 
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                setAttachedFileName(file.name);
+                                setAttachedFileMeta({
+                                  name: file.name,
+                                  size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+                                  type: file.type
+                                });
+                                triggerToast(`Laudo anexado: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`, 'info');
+                              }
+                            }}
+                          />
+                          <label 
+                            htmlFor="school-file-upload-look" 
+                            className="btn btn-secondary" 
+                            style={{ fontSize: '11.5px', padding: '8px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', fontWeight: '700' }}
+                          >
+                            📎 {attachedFileName ? 'Alterar Arquivo' : 'Anexar Laudo/Foto'}
+                          </label>
+                          {attachedFileName && (
+                            <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '700', maxWidth: '180px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              📄 {attachedFileName} ({attachedFileMeta?.size})
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {attachedFileName && (
+                            <button 
+                              className="btn btn-secondary"
+                              onClick={() => {
+                                handleAddSchoolLog('documento');
+                              }}
+                              style={{ fontSize: '11.5px', padding: '8px 12px', fontWeight: '700' }}
+                            >
+                              Salvar Anexo
+                            </button>
+                          )}
+                          <button 
+                            className="btn btn-primary"
+                            onClick={() => handleAddSchoolLog('comentario')}
+                            style={{ fontSize: '11.5px', padding: '8px 12px', fontWeight: '700' }}
+                          >
+                            Salvar Nota
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </>
@@ -2306,11 +2569,65 @@ export default function App() {
                   </div>
                 </div>
                 
-                <textarea 
-                  className="email-preview-body"
-                  value={customEmailBody}
-                  onChange={(e) => setCustomEmailBody(e.target.value)}
-                />
+                {/* Abas de Visualização (Visualização Formatada vs Texto Puro) */}
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-app)', borderTopLeftRadius: 'var(--radius-sm)', borderTopRightRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                  <button 
+                    type="button"
+                    onClick={() => setEmailTab('preview')}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: emailTab === 'preview' ? 'var(--bg-card)' : 'transparent',
+                      border: 'none',
+                      borderBottom: emailTab === 'preview' ? '3px solid var(--primary)' : 'none',
+                      color: emailTab === 'preview' ? 'var(--primary)' : 'var(--text-light)',
+                      fontWeight: '800',
+                      fontSize: '11.5px',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      transition: 'var(--transition)'
+                    }}
+                  >
+                    ✨ Visualização Destacada (Rich Preview)
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setEmailTab('edit')}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: emailTab === 'edit' ? 'var(--bg-card)' : 'transparent',
+                      border: 'none',
+                      borderBottom: emailTab === 'edit' ? '3px solid var(--primary)' : 'none',
+                      color: emailTab === 'edit' ? 'var(--primary)' : 'var(--text-light)',
+                      fontWeight: '800',
+                      fontSize: '11.5px',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      transition: 'var(--transition)'
+                    }}
+                  >
+                    📝 Editar Texto (Texto Puro)
+                  </button>
+                </div>
+
+                {emailTab === 'preview' ? (
+                  <div 
+                    className="email-preview-body rich-email-body"
+                    style={{ overflowY: 'auto', maxHeight: '420px', minHeight: '300px', backgroundColor: 'var(--bg-card)' }}
+                  >
+                    {renderRichEmail(customEmailBody, tickets.find(t => t.id_chamado === selectedEmailTicketId))}
+                  </div>
+                ) : (
+                  <textarea 
+                    className="email-preview-body plain-email-body"
+                    value={customEmailBody}
+                    onChange={(e) => setCustomEmailBody(e.target.value)}
+                    style={{ minHeight: '300px' }}
+                  />
+                )}
 
                 <div className="email-preview-actions">
                   <span style={{ 
@@ -2650,9 +2967,10 @@ CREATE TABLE IF NOT EXISTS historico (
                       <label className="form-label">Observações Gerais</label>
                       <textarea 
                         className="form-control" 
-                        rows="2" 
+                        rows="8" 
                         value={editingTicket.observacoes}
                         onChange={(e) => setEditingTicket({ ...editingTicket, observacoes: e.target.value })}
+                        style={{ fontSize: '13px', lineHeight: '1.5', padding: '12px' }}
                       />
                     </div>
                   </div>

@@ -1021,7 +1021,7 @@ html:not(.dark-theme) body::after {
   backdrop-filter: blur(24px);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
-  width: 780px;
+  width: 1050px; /* Expandido de 780px para 1050px */
   max-width: 95vw;
   max-height: 90vh;
   overflow-y: auto;
@@ -1187,7 +1187,7 @@ html:not(.dark-theme) body::after {
 
 .email-preview-field-label {
   font-weight: 800;
-  width: 75px;
+  min-width: 110px; /* Expandido de 75px para min-width 110px para evitar sobreposição de DESTINATÁRIO */
   color: var(--text-light);
   text-transform: uppercase;
   font-size: 10px;
@@ -2441,3 +2441,100 @@ html:not(.dark-theme) .bairro-details-card {
 }
 
 
+
+/* FASE 5: Estilos de Destaque, Rebranding e Mídia de Impressão */
+.main-portal-title {
+  font-family: var(--font-sans);
+  font-weight: 850;
+  font-size: 26px;
+  letter-spacing: -0.8px;
+  background: linear-gradient(135deg, #ffffff 30%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  margin-bottom: 2px;
+}
+
+html:not(.dark-theme) .main-portal-title {
+  background: linear-gradient(135deg, var(--secondary) 30%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.email-highlight {
+  font-weight: 800;
+  color: var(--primary) !important;
+  background-color: var(--primary-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 100%;
+}
+
+.email-tab-btn:hover {
+  color: var(--primary) !important;
+  background-color: rgba(2, 132, 199, 0.05);
+}
+
+.rich-email-body {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  line-height: 1.6 !important;
+}
+
+/* Ocultação de elementos na tela e durante a impressão */
+.no-print {
+  display: block;
+}
+
+/* Print Media Query for clean native PDF generation */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+  
+  .sidebar, .main-header, .suggestion-container, .btn, .btn-copy-summary, .table-toolbar, .view-tabs, .admin-advanced, .email-preview-actions, .theme-toggle-header, button, .no-print, input, textarea, select {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+  
+  .school-grid-layout {
+    display: block !important;
+    width: 100% !important;
+  }
+  
+  .dashboard-section {
+    page-break-inside: avoid !important;
+    border: 1px solid #ddd !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    margin-bottom: 20px !important;
+    padding: 15px !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+  }
+  
+  .school-indicator {
+    border: 1px solid #ccc !important;
+    color: #000 !important;
+    background: #eee !important;
+  }
+
+  .timeline-event-marker {
+    background-color: #000 !important;
+  }
+
+  .timeline-event-card {
+    background: #ffffff !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    color: #000000 !important;
+  }
+}
