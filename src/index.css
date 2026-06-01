@@ -547,7 +547,7 @@ html:not(.dark-theme) body::after {
 /* Sections & Layout grids */
 .dashboard-layout {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 24px;
 }
 
@@ -2277,7 +2277,7 @@ html:not(.dark-theme) .bairro-details-card {
 /* Grade de 3 colunas no card de metas */
 .dashboard-goals-split {
   display: grid;
-  grid-template-columns: 1.15fr 1.3fr 1.35fr;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.3fr) minmax(0, 1.35fr);
   gap: 28px;
   align-items: flex-start;
 }
@@ -2543,5 +2543,51 @@ html:not(.dark-theme) .main-portal-title {
     border: 1px solid #ddd !important;
     box-shadow: none !important;
     color: #000000 !important;
+  }
+}
+
+/* ==========================================================================
+   FASE 6: Responsividade Completa e Ajuste Premium Mobile (Fim do Overflow)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    padding: 24px 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .sidebar-brand {
+    margin-bottom: 24px;
+  }
+  .sidebar-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sidebar-item {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .sidebar-footer {
+    display: none;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 28px 16px;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  .dashboard-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }

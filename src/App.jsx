@@ -152,7 +152,7 @@ export default function App() {
     try {
       const saved = localStorage.getItem('gop_school_notes');
       return saved ? JSON.parse(saved) : {};
-    } catch (e) {
+    } catch {
       return {};
     }
   });
@@ -166,36 +166,6 @@ export default function App() {
     localStorage.setItem('gop_school_notes', JSON.stringify(schoolLogs));
   }, [schoolLogs]);
 
-  const handleAddSchoolLog = (type = 'comentario') => {
-    if (type === 'comentario' && !newCommentText.trim()) return;
-    if (type === 'documento' && !attachedFileName.trim()) return;
-
-    const newLog = {
-      id: 'SL-' + Date.now(),
-      type,
-      date: new Date().toISOString(),
-      content: type === 'comentario' ? newCommentText : attachedFileName,
-      docMeta: type === 'documento' ? attachedFileMeta : null,
-      user: 'GOP / 3ª CRE'
-    };
-
-    setSchoolLogs(prev => {
-      const list = prev[selectedSchool.designacao] || [];
-      return {
-        ...prev,
-        [selectedSchool.designacao]: [newLog, ...list]
-      };
-    });
-
-    if (type === 'comentario') {
-      setNewCommentText('');
-      triggerToast("Anotação técnica registrada na ficha!", "success");
-    } else {
-      setAttachedFileName('');
-      setAttachedFileMeta(null);
-      triggerToast("Laudo anexado com sucesso!", "success");
-    }
-  };
 
   const renderRichEmail = (text, ticket) => {
     if (!text) return '';
@@ -231,7 +201,7 @@ export default function App() {
 
     // Substituir ocorrências exatas por <strong> estilizado
     vars.forEach(v => {
-      const escaped = v.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const escaped = v.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
       const regex = new RegExp(`(${escaped})`, 'g');
       rich = rich.replace(regex, '<strong class="email-highlight">$1</strong>');
     });
@@ -289,14 +259,45 @@ export default function App() {
   const [toastType, setToastType] = useState('success'); // 'success' | 'error' | 'info'
 
   // Display floating toast
-  const triggerToast = useCallback((msg, type) => {
+  const triggerToast = (msg, type) => {
     const kind = type || (/(erro|falha|inv[áa]lid|preencha|primeiro)/i.test(msg) ? 'error' : 'success');
     setToastMessage(msg);
     setToastType(kind);
     setTimeout(() => {
       setToastMessage('');
     }, 3000);
-  }, []);
+  };
+
+  const handleAddSchoolLog = useCallback((type = 'comentario') => {
+    if (type === 'comentario' && !newCommentText.trim()) return;
+    if (type === 'documento' && !attachedFileName.trim()) return;
+
+    const newLog = {
+      id: 'SL-' + Date.now(),
+      type,
+      date: new Date().toISOString(),
+      content: type === 'comentario' ? newCommentText : attachedFileName,
+      docMeta: type === 'documento' ? attachedFileMeta : null,
+      user: 'GOP / 3ª CRE'
+    };
+
+    setSchoolLogs(prev => {
+      const list = prev[selectedSchool.designacao] || [];
+      return {
+        ...prev,
+        [selectedSchool.designacao]: [newLog, ...list]
+      };
+    });
+
+    if (type === 'comentario') {
+      setNewCommentText('');
+      triggerToast("Anotação técnica registrada na ficha!", "success");
+    } else {
+      setAttachedFileName('');
+      setAttachedFileMeta(null);
+      triggerToast("Laudo anexado com sucesso!", "success");
+    }
+  }, [newCommentText, attachedFileName, attachedFileMeta, selectedSchool]);
 
   const refreshEmailDraft = (ticketId = selectedEmailTicketId, templateIndex = selectedTemplateIndex) => {
     setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, ticketId, templateIndex));
@@ -323,7 +324,7 @@ export default function App() {
   }, [showEditModal]);
 
   // 2. Initialize Supabase Connection
-  const initializeSupabase = useCallback(async (url, key) => {
+  const initializeSupabase = async (url, key) => {
     setCloudLoading(true);
     setSyncStatusText('Conectando à nuvem...');
     try {
@@ -384,7 +385,7 @@ export default function App() {
     } finally {
       setCloudLoading(false);
     }
-  }, [triggerToast]);
+  };
 
   // 1. Initial cloud configuration. Local db.json is loaded by lazy state above.
   useEffect(() => {
@@ -394,7 +395,8 @@ export default function App() {
       }, 0);
       return () => window.clearTimeout(timer);
     }
-  }, [initialCloudConfig, initializeSupabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCloudConfig]);
 
   const handleConnectCloud = (e) => {
     e.preventDefault();

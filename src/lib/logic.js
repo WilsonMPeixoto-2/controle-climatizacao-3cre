@@ -54,6 +54,12 @@ export function diffDays(isoStr, ref = new Date()) {
 
 /** Formata uma data ISO para o padrão brasileiro (dd/mm/aaaa). */
 export function formatDateBrazilian(isoStr) {
+  if (!isoStr) return '';
+  const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}/${month}/${year}`;
+  }
   const d = toDate(isoStr);
   if (!d) return isoStr || '';
   return d.toLocaleDateString('pt-BR');
