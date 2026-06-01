@@ -2245,6 +2245,11 @@ html:not(.dark-theme) .op-map {
   border-color: rgba(100, 116, 139, 0.22) !important;
 }
 
+html:not(.dark-theme) .leaflet-tile {
+  filter: grayscale(85%) contrast(90%) brightness(104%) opacity(0.4) !important;
+  transition: filter 0.3s ease;
+}
+
 html:not(.dark-theme) .bairro-details-card {
   background-color: rgba(255, 255, 255, 0.96) !important;
   border-color: rgba(100, 116, 139, 0.22) !important;

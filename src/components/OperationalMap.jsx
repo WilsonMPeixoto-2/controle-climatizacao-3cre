@@ -43,28 +43,25 @@ function getBairroStyle(feature, theme, stats) {
       }
     }
   } else {
-    // Tema Claro: Paleta Premium Sólida de Alto Contraste (Baseada em Tailwind UI/Apple)
-    color = 'rgba(100, 116, 139, 0.45)'; // Slate 400
-    fillColor = '#f1f5f9'; // Cinza gelo suave (bairros limpos delimitados no mapa)
-    fillOpacity = 0.85;
-    weight = 1.2;
+    // Tema Claro: Paleta Premium Sólida de Alto Contraste e Elegância Editorial
+    color = '#9AAFC4'; // Contorno cinza-azulado suave e uniforme sugerido
+    fillColor = '#DCE7F2'; // Neutro/Sem chamados: azul-acinzentado muito claro
+    fillOpacity = 0.90;
+    weight = 1.0;
 
     if (bairroData && bairroData.chamados_ativos > 0) {
       if (bairroData.criticos > 0) {
-        color = '#dc2626'; // Red 600
-        fillColor = '#fee2e2'; // Red 100
-        fillOpacity = 0.85;
+        fillColor = '#E76E6A'; // Crítico / atenção especial: vermelho coral premium
+        fillOpacity = 0.95;
         weight = 1.8;
       } else if (bairroData.atencao > 0) {
-        color = '#d97706'; // Amber 600
-        fillColor = '#fef3c7'; // Amber 100
-        fillOpacity = 0.8;
+        fillColor = '#E9B95B'; // Orçamento / atenção: âmbar suave elegante
+        fillOpacity = 0.92;
         weight = 1.6;
       } else {
-        color = '#0284c7'; // Sky 600
-        fillColor = '#bae6fd'; // Sky 200
-        fillOpacity = 0.75;
-        weight = 1.5;
+        fillColor = '#5DA9E9'; // Triagem / execução: azul claro vivo e legível
+        fillOpacity = 0.90;
+        weight = 1.4;
       }
     }
   }
