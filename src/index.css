@@ -33,11 +33,11 @@
   --text-on-primary: hsl(0, 0%, 100%);
   
   /* Status Colors */
-  --color-green: hsl(142, 72%, 36%);
-  --color-amber: hsl(38, 92%, 44%);
-  --color-orange: hsl(20, 90%, 48%);
-  --color-red: hsl(350, 85%, 48%);
-  --color-blue: hsl(214, 90%, 48%);
+  --color-green: hsl(142, 70%, 28%); /* Verde Esmeralda Acessível */
+  --color-amber: hsl(35, 88%, 32%); /* Mel de Ouro Acessível (WCAG AA) */
+  --color-orange: hsl(16, 85%, 38%); /* Laranja Telha Acessível (WCAG AA) */
+  --color-red: hsl(350, 78%, 38%); /* Vermelho Carmim Acessível (WCAG AA) */
+  --color-blue: hsl(214, 85%, 38%); /* Azul Safira Acessível (WCAG AA) */
   --color-gray: hsl(215, 12%, 48%);
 
   /* Alerta de Antiguidade (tempo total em aberto) — tons de índigo (família fria, distinta do SLA) */
@@ -113,14 +113,16 @@
 
 body {
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 15.5px; /* Ligeiramente ampliado para maior legibilidade geral */
+  line-height: 1.6;
   background-color: var(--bg-app);
   color: var(--text-main);
   transition: background-color 0.25s ease, color 0.25s ease;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.005); /* Suavização subpixel em navegadores modernos */
   position: relative;
 }
 
@@ -352,7 +354,7 @@ html:not(.dark-theme) body::after {
   font-weight: 700;
   color: var(--text-muted);
   transition: var(--transition);
-  font-size: 12.5px;
+  font-size: 13.5px; /* Aumentado de 12.5px */
 }
 
 .theme-toggle-btn svg {
@@ -394,7 +396,7 @@ html:not(.dark-theme) body::after {
 
 .header-title p {
   color: var(--text-light);
-  font-size: 13px;
+  font-size: 14px; /* Aumentado de 13px */
   margin-top: 6px;
   font-weight: 600;
 }
@@ -408,7 +410,7 @@ html:not(.dark-theme) body::after {
   max-width: 760px;
   margin: -18px 0 24px 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px; /* Aumentado de 13px */
   font-weight: 600;
   line-height: 1.5;
 }
@@ -422,7 +424,7 @@ html:not(.dark-theme) body::after {
   padding: 11px 22px;
   border-radius: var(--radius-xs);
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 14px; /* Aumentado de 13.5px */
   cursor: pointer;
   transition: var(--transition);
   border: 1px solid transparent;
@@ -506,7 +508,7 @@ html:not(.dark-theme) body::after {
   align-items: center;
   color: var(--text-muted);
   font-weight: 700;
-  font-size: 11.5px;
+  font-size: 12.5px; /* Aumentado de 11.5px */
   text-transform: uppercase;
   letter-spacing: 0.6px;
   margin-bottom: 12px;
@@ -536,7 +538,7 @@ html:not(.dark-theme) body::after {
 }
 
 .stat-description {
-  font-size: 11px;
+  font-size: 12px; /* Aumentado de 11px */
   color: var(--text-light);
   margin-top: 8px;
   font-weight: 600;
@@ -610,7 +612,7 @@ html:not(.dark-theme) body::after {
 
 .bar-label {
   width: 180px;
-  font-size: 12px;
+  font-size: 13px; /* Aumentado de 12px */
   font-weight: 700;
   color: var(--text-muted);
   text-overflow: ellipsis;
@@ -638,7 +640,7 @@ html:not(.dark-theme) body::after {
 .bar-value {
   width: 50px;
   text-align: right;
-  font-size: 12px;
+  font-size: 13px; /* Aumentado de 12px */
   font-weight: 800;
 }
 
@@ -670,7 +672,7 @@ html:not(.dark-theme) body::after {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 12.5px;
+  font-size: 13.5px; /* Aumentado de 12.5px */
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -694,7 +696,7 @@ html:not(.dark-theme) body::after {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 13px;
+  font-size: 13.8px; /* Aumentado de 13px */
 }
 
 .lists-table th {
@@ -704,7 +706,7 @@ html:not(.dark-theme) body::after {
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
   user-select: none;
-  font-size: 11.5px;
+  font-size: 12.5px; /* Aumentado de 11.5px */
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
@@ -798,7 +800,7 @@ html:not(.dark-theme) body::after {
   color: var(--text-main);
 }
 .sector-metric-label {
-  font-size: 10px;
+  font-size: 11px; /* Aumentado de 10px */
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -812,8 +814,8 @@ html:not(.dark-theme) body::after {
   gap: 5px;
   padding: 4px 10px;
   border-radius: 99px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px; /* Aumentado de 11px */
+  font-weight: 800; /* Deixado mais robusto */
 }
 
 .badge-priority-critica { background-color: var(--color-red-tint); color: var(--color-red); }
@@ -1187,10 +1189,10 @@ html:not(.dark-theme) body::after {
 
 .email-preview-field-label {
   font-weight: 800;
-  min-width: 110px; /* Expandido de 75px para min-width 110px para evitar sobreposição de DESTINATÁRIO */
+  min-width: 110px; /* Mantido min-width 110px */
   color: var(--text-light);
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: 11.5px; /* Aumentado de 10px */
   letter-spacing: 0.5px;
 }
 

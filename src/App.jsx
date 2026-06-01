@@ -930,7 +930,7 @@ export default function App() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span>{label}</span>
-          <span style={{ fontSize: '11px', color: isSorted ? 'var(--primary)' : 'var(--text-light)', transition: '0.2s' }}>
+          <span style={{ fontSize: '13px', color: isSorted ? 'var(--primary)' : 'var(--text-light)', transition: '0.2s' }}>
             {!isSorted ? '↕' : sortDirection === 'asc' ? '↑' : '↓'}
           </span>
         </div>
@@ -1002,14 +1002,14 @@ export default function App() {
             <div className="donut-legend-dot" style={{ backgroundColor: 'var(--primary)' }} />
             <div>
               <span>Chamados Ativos: </span>
-              <strong>{active}</strong> <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>({activePct}%)</span>
+              <strong>{active}</strong> <span style={{ fontSize: '13px', color: 'var(--text-light)' }}>({activePct}%)</span>
             </div>
           </div>
           <div className="donut-legend-item">
             <div className="donut-legend-dot" style={{ backgroundColor: 'var(--border-color)' }} />
             <div>
               <span>Concluídos: </span>
-              <strong>{closed}</strong> <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>({closedPct}%)</span>
+              <strong>{closed}</strong> <span style={{ fontSize: '13px', color: 'var(--text-light)' }}>({closedPct}%)</span>
             </div>
           </div>
         </div>
@@ -1211,7 +1211,7 @@ export default function App() {
             <div className="dashboard-section op-panel">
               <div className="section-header">
                 <h3><IconBuilding /> Mapa Operacional</h3>
-                <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600' }}>Área de atuação da 3ª CRE · Zona Norte</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '600' }}>Área de atuação da 3ª CRE · Zona Norte</span>
               </div>
               
               <div className={`map-and-details-container ${selectedBairroNormalized ? 'has-details' : ''}`}>
@@ -1333,7 +1333,7 @@ export default function App() {
                 <div className="dashboard-section">
                   <div className="section-header">
                     <h3><IconDashboard /> Visão de Metas & Conclusões</h3>
-                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Consolidado Geral</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Consolidado Geral</span>
                   </div>
                   
                   <div className="dashboard-goals-split">
@@ -1432,7 +1432,7 @@ export default function App() {
                 <div className="section-header">
                   <h3><IconWarning /> Acompanhamento Prioritário de Demandas</h3>
                 </div>
-                <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
+                <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
                   Lista das demandas em andamento ordenadas por tempo de tramitação para priorização de ações.
                 </p>
 
@@ -1458,12 +1458,12 @@ export default function App() {
                       >
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <strong style={{ fontSize: '12.5px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
+                            <strong style={{ fontSize: '13.5px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
                             <span className={`badge ${t.prioridade === 'Crítica' ? 'badge-priority-critica' : 'badge-priority-alta'}`} style={{ fontSize: '9px', padding: '1px 5px' }}>
                               {t.prioridade}
                             </span>
                           </div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: '600' }}>
+                          <div style={{ fontSize: '13px', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: '600' }}>
                             {t.unidade_escolar}
                           </div>
                         </div>
@@ -1478,9 +1478,9 @@ export default function App() {
                               {t.inactivityDays} dias
                             </span>
                           </div>
-                          <div style={{ fontSize: '10px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' }}>sem alteração</div>
+                          <div style={{ fontSize: '11.5px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' }}>sem alteração</div>
                           {typeof t.ageDays === 'number' && t.ageDays > 0 && (
-                            <div style={{ fontSize: '10px', color: 'var(--color-age-severe)', fontWeight: '700', marginTop: '3px' }}>
+                            <div style={{ fontSize: '11.5px', color: 'var(--color-age-severe)', fontWeight: '700', marginTop: '3px' }}>
                               {t.ageDays} dias em aberto
                             </div>
                           )}
@@ -1496,7 +1496,7 @@ export default function App() {
                     <span className="sync-dot" style={{ backgroundColor: cloudConnected ? 'var(--color-green)' : 'var(--color-red)', boxShadow: cloudConnected ? '0 0 8px var(--color-green)' : '0 0 8px var(--color-red)' }} />
                   <span>{syncStatusText}</span>
                 </div>
-                <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--text-light)' }}>
+                <span style={{ fontSize: '11.5px', fontWeight: '800', color: 'var(--text-light)' }}>
                     {cloudConnected ? 'Base online ativa' : 'Configurar base online'}
                   </span>
                 </div>
@@ -1511,7 +1511,7 @@ export default function App() {
             <div className="section-header" style={{ marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
               <div>
                 <h3><IconList /> Lista de chamados</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
                   Use esta tela para localizar chamados, filtrar por setor e abrir uma linha para atualizar o andamento.
                 </p>
               </div>
@@ -1541,7 +1541,7 @@ export default function App() {
                     className="form-control select-filter" 
                     value={filterPriority} 
                     onChange={(e) => setFilterPriority(e.target.value)}
-                    style={{ width: '110px', padding: '5px 10px', fontSize: '12px', borderRadius: '4px' }}
+                    style={{ width: '110px', padding: '5px 10px', fontSize: '13px', borderRadius: '4px' }}
                   >
                     <option value="">Todas</option>
                     <option value="Crítica">Crítica</option>
@@ -1558,7 +1558,7 @@ export default function App() {
                     className="form-control select-filter" 
                     value={filterStatus} 
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    style={{ width: '200px', padding: '5px 10px', fontSize: '12px', borderRadius: '4px' }}
+                    style={{ width: '200px', padding: '5px 10px', fontSize: '13px', borderRadius: '4px' }}
                   >
                     <option value="">Todos</option>
                     {Array.from(new Set(tickets.map(t => t.status_atual))).sort().map(status => (
@@ -1568,7 +1568,7 @@ export default function App() {
                 </div>
 
                 {/* Contador de chamados exibidos */}
-                <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', fontWeight: '700', marginLeft: '8px' }}>
+                <div style={{ fontSize: '13.5px', color: 'var(--text-muted)', fontWeight: '700', marginLeft: '8px' }}>
                   Exibindo <span style={{ color: 'var(--primary)' }}>{getFilteredTickets().length}</span> de <span>{tickets.length}</span> chamados
                 </div>
 
@@ -1576,7 +1576,7 @@ export default function App() {
                 {(filterPriority || filterStatus || ticketSearch) && (
                   <button 
                     onClick={() => { setFilterPriority(''); setFilterStatus(''); setTicketSearch(''); }}
-                    style={{ fontSize: '11.5px', color: 'var(--color-red)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '800', padding: '2px 6px', textTransform: 'uppercase' }}
+                    style={{ fontSize: '13.5px', color: 'var(--color-red)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '800', padding: '2px 6px', textTransform: 'uppercase' }}
                   >
                     Limpar Filtros
                   </button>
@@ -1589,7 +1589,7 @@ export default function App() {
                 onClick={handleExportCSV}
                 style={{
                   padding: '7px 14px',
-                  fontSize: '12px',
+                  fontSize: '13px',
                   fontWeight: '700',
                   color: '#fff',
                   background: 'linear-gradient(135deg, hsl(142, 60%, 40%), hsl(142, 70%, 30%))',
@@ -1745,7 +1745,7 @@ export default function App() {
               <div className="section-header">
                 <h3><IconBuilding /> Cadastro Vivo 3ª CRE — Consulta Rápida</h3>
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
                 Pesquise uma escola pelo nome, designação, SICI ou bairro para consultar a ficha da unidade e seus chamados vinculados.
               </p>
 
@@ -1782,7 +1782,7 @@ export default function App() {
                       </div>
                     ))}
                     {searchSchools(schools, lookupSchoolQuery).length === 0 && (
-                      <div style={{ padding: '10px 14px', color: 'var(--text-light)', fontSize: '12px', fontWeight: '600' }}>
+                      <div style={{ padding: '10px 14px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600' }}>
                         Nenhuma escola correspondente
                       </div>
                     )}
@@ -1814,7 +1814,7 @@ export default function App() {
                         <IconCopy />
                       </button>
                     </div>
-                    <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700', marginTop: '4px', display: 'block' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '700', marginTop: '4px', display: 'block' }}>
                       Designação: {selectedSchool.designacao} · Código SICI: {selectedSchool.sici}
                     </span>
                   </div>
@@ -1852,7 +1852,7 @@ export default function App() {
                   </div>
 
                   <div style={{ marginTop: '16px' }}>
-                    <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: '800', color: 'var(--text-light)', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                    <div style={{ fontSize: '11.5px', textTransform: 'uppercase', fontWeight: '800', color: 'var(--text-light)', marginBottom: '8px', letterSpacing: '0.5px' }}>
                       Status de Validação de Cadastro
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -1885,7 +1885,7 @@ export default function App() {
                         border: '1px dashed var(--border-color)',
                         borderLeft: `4px solid ${acVar}`
                       }}>
-                        <strong style={{ fontSize: '12px', display: 'block', marginBottom: '4px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px' }}>🎯 Ação Sugerida pelo POP:</strong>
+                        <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px' }}>🎯 Ação Sugerida pelo POP:</strong>
                         <span style={{ fontSize: '13px', fontWeight: '750', color: acVar }}>
                           {selectedSchool.acao_sugerida}
                         </span>
@@ -1910,7 +1910,7 @@ export default function App() {
                       className="btn btn-primary"
                       style={{ 
                         flex: 1, 
-                        fontSize: '12px', 
+                        fontSize: '13px', 
                         fontWeight: '700', 
                         padding: '10px 14px', 
                         display: 'flex', 
@@ -1932,7 +1932,7 @@ export default function App() {
                       className="btn select-filter"
                       style={{ 
                         flex: 1, 
-                        fontSize: '12px', 
+                        fontSize: '13px', 
                         fontWeight: '700', 
                         padding: '10px 14px', 
                         border: '1px solid var(--border-color)',
@@ -1958,13 +1958,13 @@ export default function App() {
                   <div className="print-only-header" style={{ marginBottom: '20px' }}>
                     <div style={{ textAlign: 'center', borderBottom: '2px solid var(--text-main)', paddingBottom: '12px' }}>
                       <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0 }}>PREFEITURA DA CIDADE DO RIO DE JANEIRO</h2>
-                      <p style={{ fontSize: '12px', margin: '4px 0 0 0', textTransform: 'uppercase', fontWeight: '700', color: 'var(--text-muted)' }}>
+                      <p style={{ fontSize: '13px', margin: '4px 0 0 0', textTransform: 'uppercase', fontWeight: '700', color: 'var(--text-muted)' }}>
                         3ª Coordenadoria Regional de Educação · GOP Clima
                       </p>
                       <h3 style={{ fontSize: '16px', fontWeight: '800', marginTop: '12px', color: 'var(--primary)' }}>
                         Ficha Técnica Consolidada da Unidade Escolar
                       </h3>
-                      <p style={{ fontSize: '11px', color: 'var(--text-light)', margin: '4px 0 0 0' }}>
+                      <p style={{ fontSize: '13px', color: 'var(--text-light)', margin: '4px 0 0 0' }}>
                         Gerada em {formatDateBrazilian(todayRef().toISOString())} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -1977,7 +1977,7 @@ export default function App() {
                       <button 
                         className="btn btn-secondary theme-toggle-header" 
                         onClick={() => window.print()}
-                        style={{ fontSize: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', fontWeight: '700' }}
+                        style={{ fontSize: '13px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', fontWeight: '700' }}
                         title="Salvar toda a Ficha Consolidada em PDF"
                       >
                         🖨️ Salvar Ficha (PDF)
@@ -2002,8 +2002,8 @@ export default function App() {
                           className="hover-trigger"
                         >
                           <div>
-                            <strong style={{ fontSize: '12px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontWeight: '500' }}>
+                            <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
+                            <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px', fontWeight: '500' }}>
                               Local: {t.local_demanda} | Setor: {t.setor_responsavel}
                             </div>
                           </div>
@@ -2013,7 +2013,7 @@ export default function App() {
                         </div>
                       ))}
                       {tickets.filter(t => t.designacao === selectedSchool.designacao).length === 0 && (
-                        <p style={{ fontSize: '12px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
+                        <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
                           Nenhum chamado ativo registrado para esta unidade escolar.
                         </p>
                       )}
@@ -2060,7 +2060,7 @@ export default function App() {
 
                         if (integrated.length === 0) {
                           return (
-                            <p style={{ fontSize: '12px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
+                            <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
                               Nenhum marco de evento registrado no histórico para esta unidade.
                             </p>
                           );
@@ -2088,7 +2088,7 @@ export default function App() {
                                       });
                                       triggerToast("Registro removido!", "info");
                                     }}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: '11px', padding: '0 4px' }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: '13px', padding: '0 4px' }}
                                     title="Remover este registro"
                                     className="no-print"
                                   >
@@ -2105,10 +2105,10 @@ export default function App() {
                                       e.preventDefault(); 
                                       triggerToast(`Visualizando documento simulado: ${ev.texto} (${ev.docMeta?.size || 'N/A'})`, 'info'); 
                                     }} 
-                                    style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '12px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                    style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '13px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                   >
                                     📄 {ev.texto} 
-                                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '500' }}>({ev.docMeta?.size || 'Metadados carregados'})</span>
+                                    <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: '500' }}>({ev.docMeta?.size || 'Metadados carregados'})</span>
                                   </a>
                                 </div>
                               ) : (
@@ -2127,7 +2127,7 @@ export default function App() {
                       <h3><IconFileText /> Registrar Comentário / Anexo Técnico</h3>
                     </div>
                     
-                    <p style={{ fontSize: '12.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
+                    <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
                       Insira anotações de progresso técnico ou anexe digitalizações de documentos (ex: laudos, orçamentos, fotos de vistoria) para manter a ficha técnica consolidada.
                     </p>
 
@@ -2139,7 +2139,7 @@ export default function App() {
                           placeholder="Escreva aqui observações do chamado, pendências elétricas resolvidas, ordens de serviço..."
                           value={newCommentText}
                           onChange={(e) => setNewCommentText(e.target.value)}
-                          style={{ fontSize: '12.5px', padding: '10px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-xs)' }}
+                          style={{ fontSize: '13.5px', padding: '10px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-xs)' }}
                         />
                       </div>
                       
@@ -2166,12 +2166,12 @@ export default function App() {
                           <label 
                             htmlFor="school-file-upload-look" 
                             className="btn btn-secondary" 
-                            style={{ fontSize: '11.5px', padding: '8px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', fontWeight: '700' }}
+                            style={{ fontSize: '13.5px', padding: '8px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', fontWeight: '700' }}
                           >
                             📎 {attachedFileName ? 'Alterar Arquivo' : 'Anexar Laudo/Foto'}
                           </label>
                           {attachedFileName && (
-                            <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '700', maxWidth: '180px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: '700', maxWidth: '180px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                               📄 {attachedFileName} ({attachedFileMeta?.size})
                             </span>
                           )}
@@ -2184,7 +2184,7 @@ export default function App() {
                               onClick={() => {
                                 handleAddSchoolLog('documento');
                               }}
-                              style={{ fontSize: '11.5px', padding: '8px 12px', fontWeight: '700' }}
+                              style={{ fontSize: '13.5px', padding: '8px 12px', fontWeight: '700' }}
                             >
                               Salvar Anexo
                             </button>
@@ -2192,7 +2192,7 @@ export default function App() {
                           <button 
                             className="btn btn-primary"
                             onClick={() => handleAddSchoolLog('comentario')}
-                            style={{ fontSize: '11.5px', padding: '8px 12px', fontWeight: '700' }}
+                            style={{ fontSize: '13.5px', padding: '8px 12px', fontWeight: '700' }}
                           >
                             Salvar Nota
                           </button>
@@ -2212,7 +2212,7 @@ export default function App() {
             <div className="section-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
               <div>
                 <h3><IconForm /> Registrar chamado</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
                   Selecione a unidade escolar, informe o local da demanda e registre a próxima providência inicial.
                 </p>
               </div>
@@ -2327,7 +2327,7 @@ export default function App() {
                     borderRadius: 'var(--radius-xs)',
                     backgroundColor: 'var(--primary-light)',
                     borderLeft: '4px solid var(--primary)',
-                    fontSize: '12px',
+                    fontSize: '13px',
                     fontWeight: '600',
                     marginBottom: '20px'
                   }}>
@@ -2503,7 +2503,7 @@ export default function App() {
             <div className="section-header" style={{ marginBottom: '24px' }}>
               <div>
                 <h3><IconMail /> Comunicações</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
                   Escolha um chamado e um modelo para gerar uma minuta de e-mail com os dados já preenchidos.
                 </p>
               </div>
@@ -2582,7 +2582,7 @@ export default function App() {
                       borderBottom: emailTab === 'preview' ? '3px solid var(--primary)' : 'none',
                       color: emailTab === 'preview' ? 'var(--primary)' : 'var(--text-light)',
                       fontWeight: '800',
-                      fontSize: '11.5px',
+                      fontSize: '13.5px',
                       cursor: 'pointer',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -2602,7 +2602,7 @@ export default function App() {
                       borderBottom: emailTab === 'edit' ? '3px solid var(--primary)' : 'none',
                       color: emailTab === 'edit' ? 'var(--primary)' : 'var(--text-light)',
                       fontWeight: '800',
-                      fontSize: '11.5px',
+                      fontSize: '13.5px',
                       cursor: 'pointer',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -2631,7 +2631,7 @@ export default function App() {
 
                 <div className="email-preview-actions">
                   <span style={{ 
-                    fontSize: '11px', 
+                    fontSize: '13px', 
                     color: 'var(--text-light)', 
                     marginRight: 'auto', 
                     alignSelf: 'center',
@@ -2661,7 +2661,7 @@ export default function App() {
             <div className="section-header" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
               <div>
                 <h3><IconSettings /> Administração dos Dados</h3>
-                <p style={{ fontSize: '12.5px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
+                <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
                   Acompanhe a situação da base usada pelo sistema. As ações técnicas ficam separadas para evitar uso acidental.
                 </p>
               </div>
@@ -2842,7 +2842,7 @@ CREATE TABLE IF NOT EXISTS historico (
                     <IconCopy />
                   </button>
                 </h2>
-                <p style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-light)', marginTop: '4px', fontWeight: '500' }}>
                   {editingTicket.unidade_escolar} · Designação: {editingTicket.designacao}
                 </p>
               </div>
@@ -2951,7 +2951,7 @@ CREATE TABLE IF NOT EXISTS historico (
                       <div className="form-group">
                         <select 
                           className="form-control"
-                          style={{ padding: '4px 10px', fontSize: '11px' }}
+                          style={{ padding: '4px 10px', fontSize: '13px' }}
                           value={editingTicket.informacao_validada}
                           onChange={(e) => setEditingTicket({ ...editingTicket, informacao_validada: e.target.value })}
                         >
@@ -2987,7 +2987,7 @@ CREATE TABLE IF NOT EXISTS historico (
                     borderRadius: 'var(--radius-xs)', 
                     backgroundColor: 'var(--bg-app)',
                     border: '1px solid var(--border-color)',
-                    fontSize: '12px',
+                    fontSize: '13px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
@@ -3021,13 +3021,13 @@ CREATE TABLE IF NOT EXISTS historico (
                               <span>📅 {formatDateBrazilian(h.data)}</span>
                               <span>👤 {h.responsavel_registro}</span>
                             </div>
-                            <div style={{ fontSize: '11px', fontWeight: 'bold' }}>{h.marco_relevante}</div>
-                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: '1.3' }}>{h.observacao}</p>
+                            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{h.marco_relevante}</div>
+                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: '1.3' }}>{h.observacao}</p>
                           </div>
                         </div>
                       ))}
                     {history.filter(h => h.id_chamado === editingTicket.id_chamado).length === 0 && (
-                      <p style={{ fontSize: '11px', color: 'var(--text-light)', textAlign: 'center', padding: '10px', fontWeight: '600' }}>
+                      <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '10px', fontWeight: '600' }}>
                         Nenhum evento registrado.
                       </p>
                     )}
