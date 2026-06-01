@@ -1119,6 +1119,31 @@ export default function App() {
           </ul>
         </nav>
 
+        <div className="sidebar-footer" style={{
+          padding: '18px 16px',
+          borderTop: '1px solid var(--border-color)',
+          fontSize: '11px',
+          color: 'var(--text-light)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '5px',
+          fontFamily: 'var(--font-sans)',
+          lineHeight: '1.4'
+        }}>
+          <div>Desenvolvido por <strong style={{ color: 'var(--text-main)', fontWeight: '700' }}>Wilson M. Peixoto</strong> — SME/RJ</div>
+          <div style={{ fontStyle: 'italic', fontSize: '10.5px', color: 'var(--primary)', fontWeight: '600' }}>Inovação para a Gestão Pública</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: 'var(--text-light)' }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>(21) 99497-4132</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: 'var(--text-light)' }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <a href="mailto:wilson.mpeixoto@rioeduca.net" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s', fontWeight: '500' }} onMouseOver={(e) => e.target.style.color = 'var(--primary)'} onMouseOut={(e) => e.target.style.color = 'inherit'}>wilson.mpeixoto@rioeduca.net</a>
+            </div>
+          </div>
+        </div>
+
         {/* Toggle de tema unificado no cabeçalho (Modo Claro/Escuro) — evita controle duplicado */}
       </aside>
 
