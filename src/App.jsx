@@ -152,9 +152,33 @@ export default function App() {
 
   // App states
   const [currentTab, setCurrentTab] = useState('dashboard');
-  const [tickets, setTickets] = useState(initialTickets);
+  const [tickets, setTickets] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gop_tickets');
+      return saved ? JSON.parse(saved) : initialTickets;
+    } catch {
+      return initialTickets;
+    }
+  });
   const [schools, setSchools] = useState(initialSchools);
-  const [history, setHistory] = useState(initialHistory);
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gop_history');
+      return saved ? JSON.parse(saved) : initialHistory;
+    } catch {
+      return initialHistory;
+    }
+  });
+
+  // Persistir chamados e histórico localmente para offline/local-fallback
+  useEffect(() => {
+    localStorage.setItem('gop_tickets', JSON.stringify(tickets));
+  }, [tickets]);
+
+  useEffect(() => {
+    localStorage.setItem('gop_history', JSON.stringify(history));
+  }, [history]);
+
   const [emailTemplates, setEmailTemplates] = useState(initialEmailTemplates);
   const [theme, setTheme] = useState('dark'); // 'dark' or 'light'
   const [sortField, setSortField] = useState('id_chamado');
