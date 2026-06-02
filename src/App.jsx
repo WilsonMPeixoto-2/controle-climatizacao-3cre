@@ -164,6 +164,7 @@ export default function App() {
   const [newCommentText, setNewCommentText] = useState('');
   const [attachedFileName, setAttachedFileName] = useState('');
   const [attachedFileMeta, setAttachedFileMeta] = useState(null);
+  const [attachedFile, setAttachedFile] = useState(null);
 
   // Persistir anotações de escolas localmente no localStorage
   useEffect(() => {
@@ -272,19 +273,89 @@ export default function App() {
     }, 3000);
   };
 
-  const handleAddSchoolLog = useCallback((type = 'comentario') => {
+  const handleAddSchoolLog = useCallback(async (type = 'comentario') => {
     if (type === 'comentario' && !newCommentText.trim()) return;
     if (type === 'documento' && !attachedFileName.trim()) return;
+
+    let storageType = 'local';
+    let cloudUrl = '';
+
+    if (type === 'documento' && attachedFile) {
+      if (cloudConnected && supabaseClient) {
+        try {
+          const fileExt = attachedFile.name.split('.').pop();
+          const filePath = `${selectedSchool.designacao}/${Date.now()}_${attachedFile.name}`;
+          
+          // Upload real do arquivo para o bucket 'laudos-cre3'
+          const { data, error } = await supabaseClient.storage
+            .from('laudos-cre3')
+            .upload(filePath, attachedFile, {
+              cacheControl: '3600',
+              upsert: false
+            });
+            
+          if (error) throw error;
+          
+          // Se der certo, obtém a URL pública
+          const { data: publicUrlData } = supabaseClient.storage
+             .from('laudos-cre3')
+             .getPublicUrl(filePath);
+             
+          cloudUrl = publicUrlData?.publicUrl || '';
+          storageType = 'cloud';
+          
+          triggerToast("Laudo enviado para o Supabase Storage real!", "success");
+        } catch (err) {
+          console.error("Erro no Supabase Storage:", err);
+          storageType = 'local';
+          triggerToast("Upload de nuvem falhou (bucket 'laudos-cre3' inativo). Salvo no cache local.", "info");
+        }
+      }
+    }
 
     const newLog = {
       id: 'SL-' + Date.now(),
       type,
       date: new Date().toISOString(),
       content: type === 'comentario' ? newCommentText : attachedFileName,
-      docMeta: type === 'documento' ? attachedFileMeta : null,
+      docMeta: type === 'documento' ? {
+        ...attachedFileMeta,
+        storageType,
+        url: cloudUrl
+      } : null,
       user: 'GOP / 3ª CRE'
     };
 
+    // Se estiver conectado à nuvem Supabase, salva o log diretamente na tabela `historico`
+    if (cloudConnected && supabaseClient) {
+      try {
+        const newHistoryEvent = {
+          id_evento: newLog.id,
+          data: newLog.date,
+          designacao: selectedSchool.designacao,
+          unidade_escolar: selectedSchool.unidade_escolar,
+          marco_relevante: type === 'comentario' ? 'Nota Técnica GOP' : `Documento Anexo: ${attachedFileName}`,
+          setor: 'GOP',
+          responsavel_registro: 'GOP / 3ª CRE',
+          observacao: type === 'comentario' 
+            ? newCommentText 
+            : JSON.stringify({ ...attachedFileMeta, storageType, url: cloudUrl })
+        };
+
+        const { error } = await supabaseClient
+          .from('historico')
+          .insert([newHistoryEvent]);
+          
+        if (error) throw error;
+        
+        // Atualiza o estado local do histórico
+        setHistory(prev => [newHistoryEvent, ...prev]);
+      } catch (err) {
+        console.error("Falha ao salvar histórico na nuvem:", err);
+      }
+    }
+
+    // Persiste no schoolLogs local para retrocompatibilidade e fallback
     setSchoolLogs(prev => {
       const list = prev[selectedSchool.designacao] || [];
       return {
@@ -299,9 +370,9 @@ export default function App() {
     } else {
       setAttachedFileName('');
       setAttachedFileMeta(null);
-      triggerToast("Laudo anexado com sucesso!", "success");
+      setAttachedFile(null);
     }
-  }, [newCommentText, attachedFileName, attachedFileMeta, selectedSchool]);
+  }, [newCommentText, attachedFileName, attachedFileMeta, attachedFile, selectedSchool, cloudConnected, supabaseClient]);
 
   const refreshEmailDraft = (ticketId = selectedEmailTicketId, templateIndex = selectedTemplateIndex) => {
     setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, ticketId, templateIndex));
@@ -2132,15 +2203,33 @@ export default function App() {
                         // 1. Marcos do banco
                         const dbEvents = history
                           .filter(h => h.designacao === selectedSchool.designacao || h.unidade_escolar === selectedSchool.unidade_escolar)
-                          .map(h => ({
-                            id: h.id_evento || `db-${Math.random()}`,
-                            data: h.data,
-                            autor: h.responsavel_registro || 'Sistema',
-                            setor: h.setor || 'GOP',
-                            titulo: h.id_chamado ? `Chamado ${h.id_chamado}: ${h.marco_relevante}` : h.marco_relevante,
-                            texto: h.observacao,
-                            tipo: 'historico_db'
-                          }));
+                          .map(h => {
+                            let docMeta = null;
+                            let isDocument = false;
+                            let docText = h.observacao || '';
+                            
+                            if (h.marco_relevante && h.marco_relevante.startsWith('Documento Anexo:')) {
+                              isDocument = true;
+                              try {
+                                docMeta = JSON.parse(h.observacao);
+                                docText = docMeta.name;
+                              } catch (e) {
+                                docText = h.observacao || '';
+                              }
+                            }
+                            
+                            return {
+                              id: h.id_evento || `db-${Math.random()}`,
+                              data: h.data,
+                              autor: h.responsavel_registro || 'Sistema',
+                              setor: h.setor || 'GOP',
+                              titulo: h.id_chamado ? `Chamado ${h.id_chamado}: ${h.marco_relevante}` : h.marco_relevante,
+                              texto: docText,
+                              tipo: 'historico_db',
+                              logType: isDocument ? 'documento' : 'comentario',
+                              docMeta: docMeta
+                            };
+                          });
 
                         // 2. Notas locais da GOP
                         const localList = schoolLogs[selectedSchool.designacao] || [];
@@ -2199,18 +2288,54 @@ export default function App() {
                               </div>
                               
                               {ev.logType === 'documento' ? (
-                                <div style={{ marginTop: '6px' }}>
-                                  <a 
-                                    href="#" 
-                                    onClick={(e) => { 
-                                      e.preventDefault(); 
-                                      triggerToast(`Visualizando documento simulado: ${ev.texto} (${ev.docMeta?.size || 'N/A'})`, 'info'); 
-                                    }} 
-                                    style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '13px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                  >
-                                    📄 {ev.texto} 
-                                    <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: '500' }}>({ev.docMeta?.size || 'Metadados carregados'})</span>
-                                  </a>
+                                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    <a 
+                                      href={ev.docMeta?.url || '#'} 
+                                      target={ev.docMeta?.url ? '_blank' : undefined}
+                                      rel={ev.docMeta?.url ? 'noopener noreferrer' : undefined}
+                                      onClick={(e) => { 
+                                        if (!ev.docMeta?.url) {
+                                          e.preventDefault(); 
+                                          triggerToast(`Visualizando documento local no cache: ${ev.texto} (${ev.docMeta?.size || 'N/A'})`, 'info'); 
+                                        }
+                                      }} 
+                                      style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '13px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                    >
+                                      📄 {ev.texto} 
+                                      <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: '500' }}>({ev.docMeta?.size || 'N/A'})</span>
+                                    </a>
+
+                                    {ev.docMeta?.storageType === 'cloud' ? (
+                                      <span style={{
+                                        fontSize: '10.5px',
+                                        fontWeight: '800',
+                                        padding: '2px 8px',
+                                        borderRadius: '99px',
+                                        backgroundColor: 'var(--color-green-tint)',
+                                        color: 'var(--color-green)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}>
+                                        ☁️ Disponível na Nuvem (Equipe)
+                                      </span>
+                                    ) : (
+                                      <span style={{
+                                        fontSize: '10.5px',
+                                        fontWeight: '800',
+                                        padding: '2px 8px',
+                                        borderRadius: '99px',
+                                        backgroundColor: 'var(--color-amber-tint)',
+                                        color: 'var(--color-amber)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}>
+                                        💻 Salvo Localmente (Navegador)
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               ) : (
                                 <p className="timeline-event-desc">{ev.texto}</p>
@@ -2231,6 +2356,26 @@ export default function App() {
                     <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
                       Insira anotações de progresso técnico ou anexe digitalizações de documentos (ex: laudos, orçamentos, fotos de vistoria) para manter a ficha técnica consolidada.
                     </p>
+
+                    <div style={{
+                      padding: '12px 16px',
+                      borderRadius: 'var(--radius-xs)',
+                      background: 'var(--color-amber-tint)',
+                      borderLeft: '4px solid var(--color-amber)',
+                      fontSize: '12.5px',
+                      fontWeight: '600',
+                      lineHeight: '1.5',
+                      color: 'var(--text-muted)',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px'
+                    }}>
+                      <span style={{ fontSize: '15px', lineHeight: '1' }}>⚠️</span>
+                      <div>
+                        <strong>Aviso de Conformidade (Armazenamento Híbrido):</strong> Se conectado em nuvem, os arquivos são enviados fisicamente para o Supabase Storage real bucket <code>'laudos-cre3'</code>. Caso o bucket não esteja configurado, os arquivos serão salvos isoladamente no cache local deste navegador (localStorage). Para compartilhar com a equipe externa, prefira links do Google Drive no comentário.
+                      </div>
+                    </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
                       <div className="form-group" style={{ margin: 0 }}>
@@ -2254,6 +2399,7 @@ export default function App() {
                             onChange={(e) => {
                               const file = e.target.files[0];
                               if (file) {
+                                setAttachedFile(file); // Salva a referência real do arquivo
                                 setAttachedFileName(file.name);
                                 setAttachedFileMeta({
                                   name: file.name,
