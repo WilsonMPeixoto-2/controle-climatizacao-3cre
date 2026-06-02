@@ -137,7 +137,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Políticas na tabela 'storage.objects'
 CREATE POLICY "Permitir leitura pública de anexos em gop-anexos" 
 ON storage.objects FOR SELECT TO anon, authenticated 
-USING (bucket_id = 'gop-anexos');
+USING (bucket_id = 'gop-anexos' AND (storage.foldername(name))[1] = 'chamados');
 
 CREATE POLICY "Permitir upload de anexos no subdiretorio chamados em gop-anexos" 
 ON storage.objects FOR INSERT TO anon, authenticated 

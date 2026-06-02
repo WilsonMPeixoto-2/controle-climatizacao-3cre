@@ -13,7 +13,9 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp;
 
 -- 3. Criação da Trigger BEFORE INSERT na tabela 'chamados'
 DROP TRIGGER IF EXISTS trg_generate_id_chamado ON chamados;

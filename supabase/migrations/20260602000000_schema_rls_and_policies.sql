@@ -161,7 +161,7 @@ ON CONFLICT (id) DO NOTHING;
 DROP POLICY IF EXISTS "Permitir leitura pública de anexos em gop-anexos" ON storage.objects;
 CREATE POLICY "Permitir leitura pública de anexos em gop-anexos" ON storage.objects
   FOR SELECT TO anon, authenticated
-  USING (bucket_id = 'gop-anexos');
+  USING (bucket_id = 'gop-anexos' AND (storage.foldername(name))[1] = 'chamados');
 
 -- 5.2. Permitir que anon/authenticated façam upload/INSERT sob a subpasta 'chamados/'
 DROP POLICY IF EXISTS "Permitir upload de anexos no subdiretorio chamados em gop-anexos" ON storage.objects;
