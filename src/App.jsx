@@ -140,6 +140,10 @@ const IconCloud = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-.08A7 7 0 0 0 4.75 8.75a6 6 0 0 0-1.56 11.23A5 5 0 0 0 8 20h10a5 5 0 0 0 0-10z"/></svg>
 );
 
+const IconInfo = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+);
+
 export default function App() {
   const [initialCloudConfig] = useState(() => ({
     url: import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_url') || '',
@@ -1335,7 +1339,7 @@ export default function App() {
                 onClick={() => setCurrentTab('cloud')}
               >
                 <IconSettings />
-                <span>Configurações</span>
+                <span>Administração dos Dados</span>
               </button>
             </li>
           </ul>
@@ -1400,6 +1404,10 @@ export default function App() {
             </p>
 
             {/* Stat row */}
+            <p className="stat-cards-instruction" style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
+              <IconInfo style={{ width: '14px', height: '14px', color: 'var(--primary)' }} />
+              <span>Clique em um indicador para filtrar a lista de chamados abaixo.</span>
+            </p>
             <div className="card-grid">
               <div 
                 className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
@@ -1482,9 +1490,15 @@ export default function App() {
 
             {/* Mapa Operacional — área de atuação da 3ª CRE (substitui os cards de Etapas e Setor) */}
             <div className="dashboard-section op-panel">
-              <div className="section-header">
-                <h3><IconBuilding /> Mapa Operacional</h3>
-                <span style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '600' }}>Área de atuação da 3ª CRE · Zona Norte</span>
+              <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <h3><IconBuilding /> Mapa Operacional</h3>
+                  <span style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '600', marginTop: '2px' }}>Área de atuação da 3ª CRE · Zona Norte</span>
+                </div>
+                <span className="map-instruction" style={{ fontSize: '12.5px', color: 'var(--primary)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--primary-light)', padding: '6px 14px', borderRadius: '20px', border: '1px solid var(--border-hover)' }}>
+                  <IconInfo style={{ width: '13px', height: '13px', flexShrink: 0 }} />
+                  Clique em um bairro para ver escolas e chamados ativos.
+                </span>
               </div>
               
               <div className={`map-and-details-container ${selectedBairroNormalized ? 'has-details' : ''}`}>

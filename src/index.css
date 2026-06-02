@@ -496,7 +496,7 @@ html:not(.dark-theme) body::after {
 
 .stat-card.active {
   border-color: var(--card-accent, var(--primary)) !important;
-  box-shadow: 0 0 16px var(--card-accent), var(--shadow-md);
+  box-shadow: 0 6px 16px -4px var(--card-accent), var(--shadow-md);
   background-color: var(--primary-light);
 }
 
@@ -736,9 +736,8 @@ html:not(.dark-theme) body::after {
   background-color: var(--primary-light);
 }
 
-/* Condicionais de Inatividade do Lists (Refined Glass tints) */
+/* Condicionais de Inatividade do Lists (Refined Sidebar Border style) */
 .lists-row-warning {
-  background-color: var(--color-amber-tint) !important;
   border-left: 4px solid var(--color-amber) !important;
 }
 
@@ -747,7 +746,6 @@ html:not(.dark-theme) body::after {
 }
 
 .lists-row-severe {
-  background-color: var(--color-red-tint) !important;
   border-left: 4px solid var(--color-red) !important;
 }
 
@@ -757,13 +755,11 @@ html:not(.dark-theme) body::after {
 
 /* Condicionais de Antiguidade (tempo total em aberto) — tons de roxo */
 .lists-row-age-warning {
-  background-color: var(--color-age-warn-tint) !important;
   border-left: 4px solid var(--color-age-warn) !important;
 }
 .lists-row-age-warning td:first-child { padding-left: 12px; }
 
 .lists-row-age-severe {
-  background-color: var(--color-age-severe-tint) !important;
   border-left: 4px solid var(--color-age-severe) !important;
 }
 .lists-row-age-severe td:first-child { padding-left: 12px; }
@@ -1606,6 +1602,9 @@ html:not(.dark-theme) .suggestion-item:hover {
   z-index: 1; /* Cria stacking context local para evitar sobreposição de elementos GPU com modais no modo claro */
 }
 .leaflet-container { background: hsl(212, 32%, 8%); font-family: var(--font-sans); }
+.leaflet-interactive {
+  cursor: pointer !important;
+}
 /* halo ciano da região da 3ª CRE — escopado à classe cre-glow (não pega futuros overlays) */
 .leaflet-overlay-pane svg path.cre-glow { filter: drop-shadow(0 0 2px hsla(201, 90%, 62%, 0.55)) drop-shadow(0 0 8px hsla(201, 90%, 55%, 0.30)); }
 .cre-label {
