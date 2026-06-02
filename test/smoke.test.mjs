@@ -169,14 +169,25 @@ try {
     observacoes: 'Observações Gerais'
   };
 
+  const camposFemininos = [
+    'prioridade', 
+    'proxima_providencia', 
+    'ultima_movimentacao', 
+    'informacao_validada', 
+    'observacoes', 
+    'tipo_demanda', 
+    'resultado_aptidao'
+  ];
+
   const logsGerados = [];
   Object.keys(camposMapeados).forEach(campo => {
     const valOld = String(oldTicket[campo] || '').trim();
     const valNew = String(editingTicket[campo] || '').trim();
     if (valOld !== valNew) {
+      const preposicao = camposFemininos.includes(campo) ? 'alterada de' : 'alterado de';
       logsGerados.push({
         campoNome: camposMapeados[campo],
-        desc: `${camposMapeados[campo]} alterado de '${valOld || 'Vazio'}' para '${valNew || 'Vazio'}' em ${dataFormatada}.`
+        desc: `${camposMapeados[campo]} ${preposicao} '${valOld || 'Vazio'}' para '${valNew || 'Vazio'}' em ${dataFormatada}.`
       });
     }
   });
@@ -203,7 +214,7 @@ try {
   historyState = [...novosEventos, ...historyState];
 
   printResult('2.3. Persistência dos logs individuais na Linha do Tempo', novosEventos.length === 7 && historyState.filter(h => h.id_evento.includes('EV-TEST-AUDIT')).length === 7);
-  printResult('2.4. Formato de log automático verificado', novosEventos.some(n => n.observacao.includes("Aptidão técnica alterado de 'Pendente' para 'Apta parcialmente'")));
+  printResult('2.4. Formato de log automático verificado', novosEventos.some(n => n.observacao.includes("Aptidão técnica alterada de 'Pendente' para 'Apta parcialmente'")));
   console.log();
 } catch (e) {
   printResult('Teste 2 falhou criticamente', false, e.message);
