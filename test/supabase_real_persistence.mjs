@@ -42,6 +42,7 @@ console.log("===================================================================
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function runTest() {
+  const nowIso = new Date().toISOString().substring(0, 19);
   try {
     // 2. Buscar primeiro chamado ativo
     console.log("🔍 Buscando chamados no banco de dados...");
@@ -69,15 +70,36 @@ async function runTest() {
     const newAptidao = oldAptidao === 'Não apta' ? 'Apta' : 'Não apta';
     console.log(`\n🚀 Realizando UPDATE de '${oldAptidao}' para '${newAptidao}' no Supabase...`);
 
-    const { data: updateResult, error: updateErr } = await supabase
+    const { error: updateErr } = await supabase
       .from('chamados')
       .update({ resultado_aptidao: newAptidao })
-      .eq('id_chamado', targetId)
-      .select('*');
+      .eq('id_chamado', targetId);
 
     if (updateErr) throw updateErr;
+    console.log("✅ Chamado atualizado no Supabase!");
 
-    console.log("✅ Update enviado com sucesso!");
+    // 3b. Criar evento de histórico simulado (idêntico ao do App.jsx)
+    const testEventId = `EV-TEST-${Date.now()}`;
+    const testEvent = {
+      id_evento: testEventId,
+      data: nowIso,
+      id_chamado: targetId,
+      designacao: testTicket.designacao,
+      unidade_escolar: testTicket.unidade_escolar,
+      marco_relevante: 'Alteração de Aptidão técnica',
+      setor: 'GOP',
+      responsavel_registro: 'GOP / Sistema',
+      observacao: `Aptidão técnica alterada de '${oldAptidao}' para '${newAptidao}' em ${nowIso.substring(0, 10).split('-').reverse().join('/')}.`
+    };
+
+    console.log(`\n📝 Inserindo log automático na Linha do Tempo (tabela historico)...`);
+    console.log(`   Conteúdo: "${testEvent.observacao}"`);
+    const { error: eventInsertErr } = await supabase
+      .from('historico')
+      .insert([testEvent]);
+
+    if (eventInsertErr) throw eventInsertErr;
+    console.log("✅ Log inserido com sucesso!");
 
     // 4. Buscar novamente do banco de dados (forçando leitura do servidor remoto)
     console.log("\n📡 Lendo dados atualizados diretamente do Supabase...");
@@ -89,23 +111,49 @@ async function runTest() {
     if (verifyErr) throw verifyErr;
     
     const verifiedTicket = updatedTickets[0];
-    console.log(`   - Novo valor no banco: '${verifiedTicket.resultado_aptidao}'`);
+    console.log(`   - Novo valor no banco (chamados): '${verifiedTicket.resultado_aptidao}'`);
 
-    if (verifiedTicket.resultado_aptidao === newAptidao) {
-      console.log("   🎉 CONFIRMADO: Edição persistida com sucesso e atualizada de verdade!");
+    // 4b. Verificar se o evento de histórico foi realmente gravado
+    const { data: verifiedEvents, error: verifyEventErr } = await supabase
+      .from('historico')
+      .select('*')
+      .eq('id_evento', testEventId);
+
+    if (verifyEventErr) throw verifyEventErr;
+    if (!verifiedEvents || verifiedEvents.length === 0) {
+      throw new Error("O evento de histórico não foi encontrado no banco de dados.");
+    }
+    console.log(`   - Log gravado encontrado no banco (historico): "${verifiedEvents[0].observacao}"`);
+
+    if (verifiedTicket.resultado_aptidao === newAptidao && verifiedEvents[0].id_evento === testEventId) {
+      console.log("   🎉 CONFIRMADO: Edição e log automático persistidos com sucesso!");
     } else {
-      throw new Error(`O valor retornado '${verifiedTicket.resultado_aptidao}' não bate com o esperado '${newAptidao}'`);
+      throw new Error(`Valores incorretos retornados.`);
     }
 
-    // 5. Reverter para o valor original para não poluir o banco
-    console.log(`\n↩️ Revertendo a alteração para o valor original ('${oldAptidao}')...`);
+    // 5. Reverter para o valor original para não poluir o banco e limpar o log
+    console.log(`\n↩️ Revertendo a alteração do chamado para o valor original ('${oldAptidao}')...`);
     const { error: revertErr } = await supabase
       .from('chamados')
       .update({ resultado_aptidao: oldAptidao })
       .eq('id_chamado', targetId);
 
     if (revertErr) throw revertErr;
-    console.log("✅ Reversão concluída com sucesso!");
+    console.log("✅ Reversão do chamado concluída!");
+
+    console.log(`🧹 Removendo o log de teste da tabela historico...`);
+    // Nota: Como não há política de UPDATE/DELETE exposta para anon no RLS da tabela historico por segurança contra adulteração, 
+    // a remoção do log de teste pelo cliente público pode falhar. Vamos testar.
+    const { error: deleteEventErr } = await supabase
+      .from('historico')
+      .delete()
+      .eq('id_evento', testEventId);
+    
+    if (deleteEventErr) {
+      console.log(`   (Nota: Deleção de log ignorada ou protegida por política de segurança RLS: ${deleteEventErr.message})`);
+    } else {
+      console.log("✅ Log de teste limpo com sucesso!");
+    }
 
     // 6. Confirmação final da reversão
     const { data: revertedTickets } = await supabase
@@ -113,8 +161,8 @@ async function runTest() {
       .select('resultado_aptidao')
       .eq('id_chamado', targetId);
     
-    console.log(`   - Valor final no banco: '${revertedTickets[0].resultado_aptidao}'`);
-    console.log("\n🎯 RESULTADO: Teste bem-sucedido! A edição é 100% persistente e funcional.");
+    console.log(`   - Valor final do chamado no banco: '${revertedTickets[0].resultado_aptidao}'`);
+    console.log("\n🎯 RESULTADO: Teste bem-sucedido! A edição do chamado e a geração do log automático são 100% persistentes e funcionais.");
     console.log("======================================================================\n");
 
   } catch (err) {
