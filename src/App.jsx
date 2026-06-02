@@ -905,6 +905,9 @@ export default function App() {
         data_solicitacao: nowIso,
         local_demanda: newTicket.local_demanda,
         tipo_demanda: newTicket.tipo_demanda,
+        tipo_aparelho: newTicket.tipo_aparelho || 'Split',
+        btu_existente: newTicket.btu_existente || '',
+        btu_pretendido: newTicket.btu_pretendido || '',
         status_atual: newTicket.status_atual,
         setor_responsavel: newTicket.setor_responsavel,
         proxima_providencia: newTicket.proxima_providencia,
@@ -3440,12 +3443,11 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label" htmlFor="edit-ticket-movimentacao">Última Movimentação Relevante *</label>
+                      <label className="form-label" htmlFor="edit-ticket-movimentacao">Última Movimentação Relevante</label>
                       <input 
                         id="edit-ticket-movimentacao"
                         type="text" 
                         className="form-control" 
-                        required
                         value={editingTicket.ultima_movimentacao || ''}
                         onChange={(e) => setEditingTicket({ ...editingTicket, ultima_movimentacao: e.target.value })}
                       />

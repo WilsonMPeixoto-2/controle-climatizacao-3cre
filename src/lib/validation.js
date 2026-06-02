@@ -43,8 +43,13 @@ export const editTicketSchema = z.object({
   status_atual: requiredText('Escolha o status atual.'),
   setor_responsavel: requiredText('Escolha o setor responsável.'),
   proxima_providencia: requiredText('Informe a próxima providência.'),
-  ultima_movimentacao: requiredText('Informe a última movimentação relevante.'),
+  ultima_movimentacao: z.preprocess(
+    (value) => (value == null ? '' : String(value).trim()),
+    z.string()
+  ),
   prioridade: requiredText('Escolha a prioridade.'),
+  informacao_validada: requiredText('Informe a validação da informação.'),
+  resultado_aptidao: requiredText('Informe a aptidão técnica.'),
   criado_em: optionalDate,
   modificado_em: optionalDate
 }).passthrough();
