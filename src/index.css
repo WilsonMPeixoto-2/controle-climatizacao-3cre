@@ -2254,7 +2254,7 @@ html:not(.dark-theme) .op-map {
 }
 
 html:not(.dark-theme) .leaflet-tile {
-  filter: grayscale(85%) contrast(90%) brightness(104%) opacity(0.4) !important;
+  filter: grayscale(45%) contrast(105%) brightness(98%) opacity(0.85) !important;
   transition: filter 0.3s ease;
 }
 

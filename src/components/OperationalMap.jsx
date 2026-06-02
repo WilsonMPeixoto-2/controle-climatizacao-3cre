@@ -43,30 +43,40 @@ function getBairroStyle(feature, theme, stats) {
       }
     }
   } else {
-    // Tema Claro: Paleta Premium Fosca de Estilo Cartográfico (Mapa técnico institucional)
-    color = '#7DAFCC'; // Borda azul
-    fillOpacity = 0.58; // Reduzida a presença visual (fillOpacity: 0.58)
-    weight = 1.1; // strokeWidth cartográfico fino
+    // Tema Claro: Paleta Premium Cartográfica Translúcida de Alta Fidelidade (Estilo Editorial)
+    // Contornos dinâmicos para limites nítidos e ricos entre os bairros (exatamente como no Dark Mode)
+    fillOpacity = 0.45; // Translúcido para ver as ruas e detalhes sob os polígonos
 
     if (bairroData && bairroData.chamados_ativos > 0) {
       if (bairroData.criticos > 0) {
-        fillColor = '#D98287'; // Vermelho fosco
+        color = '#D98287'; // Borda vermelha fosca sólida
+        fillColor = '#FCE8E6'; // Vermelho translúcido muito suave
+        weight = 1.6;
       } else if (bairroData.atencao > 0) {
-        fillColor = '#D8B85A'; // Amarelo fosco
+        color = '#D8B85A'; // Borda amarela fosca sólida
+        fillColor = '#FDF6E2'; // Amarelo translúcido muito suave
+        weight = 1.4;
       } else {
-        fillColor = '#BFD8EA'; // Azul claro fosco
+        color = '#7DAFCC'; // Borda azul fosca sólida
+        fillColor = '#EBF3F9'; // Azul translúcido muito suave
+        weight = 1.3;
       }
     } else if (bairroData && bairroData.escolas_cadastradas > 0) {
-      fillColor = '#6EAD7A'; // Verde fosco ("Em dia")
+      color = '#6EAD7A'; // Borda verde fosca sólida ("Em dia")
+      fillColor = '#EEF7F0'; // Verde translúcido muito suave
+      weight = 1.2;
     } else {
-      fillColor = '#F1F5F9'; // Neutro cartográfico (Papel bom)
+      color = 'rgba(148, 163, 184, 0.45)'; // Contorno cinza-azulado levíssimo
+      fillColor = 'transparent'; // Sem preenchimento para visual cartográfico limpo
+      fillOpacity = 0;
+      weight = 0.85;
     }
   }
 
   return {
     color: color,
     weight: weight,
-    opacity: isDark ? 0.95 : 0.75, // strokeOpacity: 0.75 no light mode
+    opacity: isDark ? 0.95 : 0.85, // strokeOpacity: 0.85 no light mode para contornos nítidos e limpos
     fillColor: fillColor,
     fillOpacity: fillOpacity,
   };
