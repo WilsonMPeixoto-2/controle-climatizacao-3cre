@@ -26,6 +26,7 @@ import {
   listSchoolAttachments,
   deleteTicketAttachment,
   getAttachmentPublicUrl,
+  getAttachmentDownloadUrl,
 } from './lib/attachments.js';
 
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
@@ -439,10 +440,10 @@ export default function App() {
       setTicketAttachments(prev => [anexo, ...prev]);
       setSchoolAttachments(prev => [anexo, ...prev]);
       setAllAttachments(prev => [anexo, ...prev]);
-      triggerToast('Anexo enviado com sucesso!', 'success');
+      triggerToast('Arquivo enviado com sucesso!', 'success');
     } catch (err) {
       console.error("Erro no upload do anexo:", err);
-      triggerToast(err.message || 'Erro ao enviar anexo.', 'error');
+      triggerToast(err.message || 'Erro ao enviar arquivo.', 'error');
     } finally {
       setAttachmentUploading(false);
       event.target.value = '';
@@ -457,10 +458,10 @@ export default function App() {
       setTicketAttachments(prev => prev.filter(a => a.id !== attachment.id));
       setSchoolAttachments(prev => prev.filter(a => a.id !== attachment.id));
       setAllAttachments(prev => prev.filter(a => a.id !== attachment.id));
-      triggerToast('Anexo excluído com sucesso!', 'success');
+      triggerToast('Arquivo excluído com sucesso!', 'success');
     } catch (err) {
       console.error("Erro ao excluir anexo:", err);
-      triggerToast(err.message || 'Erro ao excluir anexo.', 'error');
+      triggerToast(err.message || 'Erro ao excluir arquivo.', 'error');
     }
   };
 
@@ -2334,7 +2335,7 @@ export default function App() {
                   {/* Arquivos da Unidade */}
                   <div className="dashboard-section no-print">
                     <div className="section-header">
-                      <h3>📂 Arquivos e Anexos da Unidade ({schoolAttachments.length})</h3>
+                      <h3>📂 Arquivos da unidade ({schoolAttachments.length})</h3>
                     </div>
                     
                     <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
@@ -2376,24 +2377,37 @@ export default function App() {
                             </div>
                           </div>
                           
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            style={{ padding: '6px 12px', fontSize: '12.5px', fontWeight: '700' }}
-                            onClick={() => window.open(
-                              getAttachmentPublicUrl(supabaseClient, anexo),
-                              '_blank',
-                              'noopener,noreferrer'
-                            )}
-                          >
-                            Abrir Arquivo
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ padding: '6px 10px', fontSize: '12.5px', fontWeight: '700' }}
+                              onClick={() => {
+                                const { data } = supabaseClient.storage.from(anexo.bucket).getPublicUrl(anexo.storage_path);
+                                window.open(data.publicUrl, '_blank', 'noopener,noreferrer');
+                              }}
+                            >
+                              Abrir
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ padding: '6px 10px', fontSize: '12.5px', fontWeight: '700' }}
+                              onClick={() => window.open(
+                                getAttachmentDownloadUrl(supabaseClient, anexo),
+                                '_blank',
+                                'noopener,noreferrer'
+                              )}
+                            >
+                              Baixar
+                            </button>
+                          </div>
                         </div>
                       ))}
                       {schoolAttachments.length === 0 && (
-                        <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
-                          Nenhum anexo oficial registrado para esta unidade escolar.
-                        </p>
+                        <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-card)' }}>
+                          Nenhum documento salvo ainda
+                        </div>
                       )}
                     </div>
                   </div>
@@ -3474,7 +3488,7 @@ CREATE TABLE IF NOT EXISTS historico (
 
                   {/* Seção de Anexos do Chamado */}
                   <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    📎 Documentos e Anexos ({ticketAttachments.length})
+                    📎 Documentos do chamado ({ticketAttachments.length})
                   </h4>
                   <div style={{
                     padding: '16px',
@@ -3514,7 +3528,7 @@ CREATE TABLE IF NOT EXISTS historico (
                               margin: 0
                             }}
                           >
-                            {attachmentUploading ? 'Enviando...' : '📎 Novo Anexo'}
+                            {attachmentUploading ? 'Enviando...' : '📎 Anexar documento'}
                           </label>
                         </>
                       ) : (
@@ -3570,6 +3584,18 @@ CREATE TABLE IF NOT EXISTS historico (
                             <button
                               type="button"
                               className="btn btn-secondary"
+                              style={{ padding: '4px 10px', fontSize: '12px', fontWeight: '700' }}
+                              onClick={() => window.open(
+                                getAttachmentDownloadUrl(supabaseClient, anexo),
+                                '_blank',
+                                'noopener,noreferrer'
+                              )}
+                            >
+                              Baixar
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
                               style={{ 
                                 padding: '4px 8px', 
                                 fontSize: '12px', 
@@ -3589,7 +3615,7 @@ CREATE TABLE IF NOT EXISTS historico (
                       ))}
                       {ticketAttachments.length === 0 && (
                         <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-xs)' }}>
-                          Nenhum anexo oficial registrado para este chamado.
+                          Nenhum documento salvo ainda
                         </div>
                       )}
                     </div>

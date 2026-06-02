@@ -116,10 +116,13 @@ export function getAttachmentPublicUrl(supabaseClient, attachment) {
     .from(attachment.bucket)
     .getPublicUrl(attachment.storage_path);
 
-  // Força download automático do navegador ao abrir
-  return `${data.publicUrl}?download=${encodeURIComponent(attachment.nome_original)}`;
+  return data.publicUrl;
 }
 
 export function getAttachmentDownloadUrl(supabaseClient, attachment) {
-  return getAttachmentPublicUrl(supabaseClient, attachment);
+  const { data } = supabaseClient.storage
+    .from(attachment.bucket)
+    .getPublicUrl(attachment.storage_path);
+
+  return `${data.publicUrl}?download=${encodeURIComponent(attachment.nome_original)}`;
 }
