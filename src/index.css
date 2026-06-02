@@ -1616,12 +1616,15 @@ html:not(.dark-theme) .suggestion-item:hover {
 }
 .cre-label::before { display: none; }
 
-/* Contraste dos rótulos em tema claro */
+/* Contraste dos rótulos em tema claro: Estilo Cartográfico Editorial Impresso */
 html:not(.dark-theme) .cre-label {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 1px solid rgba(100, 116, 139, 0.25) !important;
-  color: #0f172a !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #334155 !important;
+  font-weight: 800;
+  font-size: 11px;
+  text-shadow: 0 0 3px #ffffff, 0 0 5px #ffffff, 0 0 8px #ffffff !important; /* Sombra de texto off-white para contraste cartográfico premium */
 }
 .leaflet-control-attribution {
   background: hsla(216, 40%, 8%, 0.72) !important;
@@ -2226,14 +2229,19 @@ html:not(.dark-theme) .bairro-stat-badge-warning {
 
 /* Sobrescritas para o Tema Claro */
 html:not(.dark-theme) .cre-tooltip-custom {
-  background: rgba(255, 255, 255, 0.94) !important;
-  color: hsl(215, 33%, 15%) !important;
-  box-shadow: var(--shadow-sm) !important;
-  border-color: rgba(100, 116, 139, 0.22) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #334155 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid rgba(125, 175, 204, 0.3) !important; /* Borda usando a cor de borda azul fosca suave (#7DAFCC) */
 }
 
 html:not(.dark-theme) .cre-tooltip-custom::before {
-  border-right-color: rgba(255, 255, 255, 0.94) !important;
+  border-right-color: rgba(255, 255, 255, 0.96) !important;
+}
+
+html:not(.dark-theme) .cre-tooltip-custom .map-tooltip-title {
+  color: #334155 !important;
+  border-bottom-color: rgba(125, 175, 204, 0.2) !important;
 }
 
 html:not(.dark-theme) .leaflet-container {

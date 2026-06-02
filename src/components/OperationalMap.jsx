@@ -43,33 +43,30 @@ function getBairroStyle(feature, theme, stats) {
       }
     }
   } else {
-    // Tema Claro: Paleta Premium Sólida de Alto Contraste e Elegância Editorial
-    color = '#9AAFC4'; // Contorno cinza-azulado suave e uniforme sugerido
-    fillColor = '#DCE7F2'; // Neutro/Sem chamados: azul-acinzentado muito claro
-    fillOpacity = 0.90;
-    weight = 1.0;
+    // Tema Claro: Paleta Premium Fosca de Estilo Cartográfico (Mapa técnico institucional)
+    color = '#7DAFCC'; // Borda azul
+    fillOpacity = 0.58; // Reduzida a presença visual (fillOpacity: 0.58)
+    weight = 1.1; // strokeWidth cartográfico fino
 
     if (bairroData && bairroData.chamados_ativos > 0) {
       if (bairroData.criticos > 0) {
-        fillColor = '#E76E6A'; // Crítico / atenção especial: vermelho coral premium
-        fillOpacity = 0.95;
-        weight = 1.8;
+        fillColor = '#D98287'; // Vermelho fosco
       } else if (bairroData.atencao > 0) {
-        fillColor = '#E9B95B'; // Orçamento / atenção: âmbar suave elegante
-        fillOpacity = 0.92;
-        weight = 1.6;
+        fillColor = '#D8B85A'; // Amarelo fosco
       } else {
-        fillColor = '#5DA9E9'; // Triagem / execução: azul claro vivo e legível
-        fillOpacity = 0.90;
-        weight = 1.4;
+        fillColor = '#BFD8EA'; // Azul claro fosco
       }
+    } else if (bairroData && bairroData.escolas_cadastradas > 0) {
+      fillColor = '#6EAD7A'; // Verde fosco ("Em dia")
+    } else {
+      fillColor = '#F1F5F9'; // Neutro cartográfico (Papel bom)
     }
   }
 
   return {
     color: color,
     weight: weight,
-    opacity: 0.95,
+    opacity: isDark ? 0.95 : 0.75, // strokeOpacity: 0.75 no light mode
     fillColor: fillColor,
     fillOpacity: fillOpacity,
   };
