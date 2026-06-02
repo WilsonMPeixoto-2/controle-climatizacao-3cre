@@ -235,6 +235,7 @@ export default function App() {
   const [ticketAttachments, setTicketAttachments] = useState([]);
   const [schoolAttachments, setSchoolAttachments] = useState([]);
   const [attachmentUploading, setAttachmentUploading] = useState(false);
+  const [allAttachments, setAllAttachments] = useState([]);
 
   // Lookup tab states
   const [lookupSchoolQuery, setLookupSchoolQuery] = useState(initialSelectedSchool?.unidade_escolar || '');
@@ -437,6 +438,7 @@ export default function App() {
       const anexo = await uploadTicketAttachment(supabaseClient, editingTicket, file);
       setTicketAttachments(prev => [anexo, ...prev]);
       setSchoolAttachments(prev => [anexo, ...prev]);
+      setAllAttachments(prev => [anexo, ...prev]);
       triggerToast('Anexo enviado com sucesso!', 'success');
     } catch (err) {
       console.error("Erro no upload do anexo:", err);
@@ -454,6 +456,7 @@ export default function App() {
       await deleteTicketAttachment(supabaseClient, attachment);
       setTicketAttachments(prev => prev.filter(a => a.id !== attachment.id));
       setSchoolAttachments(prev => prev.filter(a => a.id !== attachment.id));
+      setAllAttachments(prev => prev.filter(a => a.id !== attachment.id));
       triggerToast('Anexo excluído com sucesso!', 'success');
     } catch (err) {
       console.error("Erro ao excluir anexo:", err);
@@ -499,6 +502,12 @@ export default function App() {
           .order('data', { ascending: false });
           
         if (historyData) setHistory(historyData);
+
+        // Load all attachments
+        const { data: attachmentsData } = await client
+          .from('anexos_chamado')
+          .select('*');
+        if (attachmentsData) setAllAttachments(attachmentsData);
 
         // Load e-mail templates from Supabase so the app uses the curated online models.
         const { data: emailTemplatesData, error: emailTemplatesError } = await client
@@ -561,6 +570,7 @@ export default function App() {
       setTickets(dbData.chamados || []);
       setSchools(dbData.escolas || []);
       setHistory(dbData.historico || []);
+      setAllAttachments([]);
     }
     triggerToast("Desconectado da nuvem. Modo local ativo.");
   };
@@ -1938,7 +1948,35 @@ export default function App() {
                         onClick={() => openTicketEdit(t)}
                         style={{ cursor: 'pointer' }}
                       >
-                        <td style={{ fontWeight: '800' }}>{t.id_chamado}</td>
+                        <td style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>{t.id_chamado}</span>
+                            {(() => {
+                              const count = allAttachments.filter(a => a.id_chamado === t.id_chamado).length;
+                              if (count > 0) {
+                                return (
+                                  <span 
+                                    style={{
+                                      fontSize: '11px',
+                                      fontWeight: '800',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                                      color: 'var(--primary)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px'
+                                    }}
+                                    title={`${count} documento(s) anexo(s)`}
+                                  >
+                                    📎 {count}
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        </td>
                         <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '700' }} title={t.unidade_escolar}>
                           {t.unidade_escolar}
                         </td>
@@ -2249,7 +2287,33 @@ export default function App() {
                           className="hover-trigger"
                         >
                           <div>
-                            <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
+                              {(() => {
+                                const count = allAttachments.filter(a => a.id_chamado === t.id_chamado).length;
+                                if (count > 0) {
+                                  return (
+                                    <span 
+                                      style={{
+                                        fontSize: '11px',
+                                        fontWeight: '800',
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                                        color: 'var(--primary)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px'
+                                      }}
+                                      title={`${count} documento(s) anexo(s)`}
+                                    >
+                                      📎 {count}
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px', fontWeight: '500' }}>
                               Local: {t.local_demanda} | Setor: {t.setor_responsavel}
                             </div>
