@@ -5,6 +5,8 @@ import { Analytics } from '@vercel/analytics/react';
 import {
   formatDateBrazilian as fmtDateBR,
   inactivityDays as calcInactivityDays,
+  ageDays as calcAgeDays,
+  isClosed,
   slaLevel,
   ageLevel,
   computeMetrics,
@@ -668,8 +670,16 @@ export default function App() {
       result = filterBySector(result, 'GIN');
     } else if (activeListsView === 'cto') {
       result = filterBySector(result, 'CTO');
-    } else if (activeListsView === 'stuck') {
-      result = result.filter(t => slaLevel(t, todayRef()) !== 'ok');
+    } else if (activeListsView === 'stuck' || activeListsView === 'inactive7') {
+      result = result.filter(t => !isClosed(t) && calcInactivityDays(t, todayRef()) >= 7);
+    } else if (activeListsView === 'inactive15') {
+      result = result.filter(t => !isClosed(t) && calcInactivityDays(t, todayRef()) >= 15);
+    } else if (activeListsView === 'age30') {
+      result = result.filter(t => !isClosed(t) && calcAgeDays(t, todayRef()) >= 30);
+    } else if (activeListsView === 'age60') {
+      result = result.filter(t => !isClosed(t) && calcAgeDays(t, todayRef()) >= 60);
+    } else if (activeListsView === 'active') {
+      result = result.filter(t => !isClosed(t));
     } else if (activeListsView === 'closed') {
       result = result.filter(t => t.status_atual === '10 - Concluído' || t.status_atual === '11 - Encerrado');
     }
@@ -1409,7 +1419,11 @@ export default function App() {
 
             {/* Stat row */}
             <div className="card-grid">
-              <div className="stat-card" style={{ '--card-accent': 'var(--primary)' }}>
+              <div 
+                className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
+                onClick={() => setActiveListsView('all')}
+                style={{ '--card-accent': 'var(--primary)' }}
+              >
                 <div className="stat-header">
                   <span>Chamados Registrados</span>
                   <div className="stat-icon"><IconFolder /></div>
@@ -1418,7 +1432,11 @@ export default function App() {
                 <div className="stat-description">Total histórico importado</div>
               </div>
 
-              <div className="stat-card" style={{ '--card-accent': 'var(--color-blue)' }}>
+              <div 
+                className={`stat-card ${activeListsView === 'active' ? 'active' : ''}`}
+                onClick={() => setActiveListsView('active')}
+                style={{ '--card-accent': 'var(--color-blue)' }}
+              >
                 <div className="stat-header">
                   <span>Chamados Ativos</span>
                   <div className="stat-icon"><IconRefresh /></div>
@@ -1427,25 +1445,37 @@ export default function App() {
                 <div className="stat-description">Demandas em triagem ou andamento</div>
               </div>
 
-              <div className="stat-card" style={{ '--card-accent': 'var(--color-amber)' }}>
+              <div 
+                className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
+                onClick={() => setActiveListsView('inactive7')}
+                style={{ '--card-accent': 'var(--color-amber)' }}
+              >
                 <div className="stat-header">
-                  <span>Parados +7 Dias</span>
+                  <span>Em Aberto +7 Dias</span>
                   <div className="stat-icon"><IconWarning /></div>
                 </div>
                 <div className="stat-number" style={{ color: 'var(--color-amber)' }}>{inactivePlus7}</div>
                 <div className="stat-description">Sem movimentação (Alerta Âmbar)</div>
               </div>
 
-              <div className="stat-card" style={{ '--card-accent': 'var(--color-red)' }}>
+              <div 
+                className={`stat-card ${activeListsView === 'inactive15' ? 'active' : ''}`}
+                onClick={() => setActiveListsView('inactive15')}
+                style={{ '--card-accent': 'var(--color-red)' }}
+              >
                 <div className="stat-header">
-                  <span>Parados +15 Dias</span>
+                  <span>Em Aberto +15 Dias</span>
                   <div className="stat-icon"><IconSiren /></div>
                 </div>
                 <div className="stat-number" style={{ color: 'var(--color-red)' }}>{inactivePlus15}</div>
                 <div className="stat-description">Sem movimentação (Alerta Vermelho)</div>
               </div>
 
-              <div className="stat-card" style={{ '--card-accent': 'var(--color-age-warn)' }}>
+              <div 
+                className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
+                onClick={() => setActiveListsView('age30')}
+                style={{ '--card-accent': 'var(--color-age-warn)' }}
+              >
                 <div className="stat-header">
                   <span>Em Aberto +30 Dias</span>
                   <div className="stat-icon"><IconClock /></div>
@@ -1454,7 +1484,11 @@ export default function App() {
                 <div className="stat-description">Tempo total em aberto (Antiguidade)</div>
               </div>
 
-              <div className="stat-card" style={{ '--card-accent': 'var(--color-age-severe)' }}>
+              <div 
+                className={`stat-card ${activeListsView === 'age60' ? 'active' : ''}`}
+                onClick={() => setActiveListsView('age60')}
+                style={{ '--card-accent': 'var(--color-age-severe)' }}
+              >
                 <div className="stat-header">
                   <span>Em Aberto +60 Dias</span>
                   <div className="stat-icon"><IconCalendar /></div>
@@ -1869,7 +1903,7 @@ export default function App() {
                 Todos os Chamados ({tickets.length})
               </button>
               <button className={`view-tab ${activeListsView === 'gop' ? 'active' : ''}`} onClick={() => setActiveListsView('gop')}>
-                Com a GOP
+                Com o GOP
               </button>
               <button className={`view-tab ${activeListsView === 'cps' ? 'active' : ''}`} onClick={() => setActiveListsView('cps')}>
                 Com a CPS
@@ -1880,12 +1914,34 @@ export default function App() {
               <button className={`view-tab ${activeListsView === 'cto' ? 'active' : ''}`} onClick={() => setActiveListsView('cto')}>
                 Com a CTO
               </button>
-              <button className={`view-tab ${activeListsView === 'stuck' ? 'active' : ''}`} onClick={() => setActiveListsView('stuck')}>
-                Parados +7d ({inactivePlus7})
+              <button className={`view-tab ${activeListsView === 'stuck' || activeListsView === 'inactive7' ? 'active' : ''}`} onClick={() => setActiveListsView('inactive7')}>
+                Sem Atualização +7d ({inactivePlus7})
               </button>
               <button className={`view-tab ${activeListsView === 'closed' ? 'active' : ''}`} onClick={() => setActiveListsView('closed')}>
                 Concluídos/Encerrados
               </button>
+
+              {['active', 'inactive15', 'age30', 'age60'].includes(activeListsView) && (
+                <button 
+                  className="view-tab active" 
+                  onClick={() => setActiveListsView('all')} 
+                  style={{ 
+                    borderBottomColor: 'var(--card-accent, var(--primary))',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: '800'
+                  }}
+                  title="Clique para limpar o filtro"
+                >
+                  🔍 Filtro: {
+                    activeListsView === 'active' ? 'Ativos' :
+                    activeListsView === 'inactive15' ? 'Sem Atualização +15d' :
+                    activeListsView === 'age30' ? 'Em Aberto +30d' :
+                    'Em Aberto +60d'
+                  } <span style={{ opacity: 0.6, fontSize: '10px' }}>✕</span>
+                </button>
+              )}
             </div>
 
             {/* Bloco C — Indicadores da visão de setor (quando uma aba de setor está ativa) */}
@@ -1908,7 +1964,7 @@ export default function App() {
                     </div>
                     <div className="sector-metric">
                       <span className="sector-metric-num" style={{ color: 'var(--color-amber)' }}>{sm.stuck}</span>
-                      <span className="sector-metric-label">Parados (SLA)</span>
+                      <span className="sector-metric-label">Sem Atualização</span>
                     </div>
                     <div className="sector-metric">
                       <span className="sector-metric-num" style={{ color: 'var(--color-green)' }}>{sm.closed}</span>

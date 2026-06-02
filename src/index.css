@@ -484,12 +484,20 @@ html:not(.dark-theme) body::after {
   position: relative;
   overflow: hidden;
   transition: var(--transition);
+  cursor: pointer;
+  user-select: none;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-md);
-  border-color: var(--primary);
+  border-color: var(--card-accent, var(--primary));
+}
+
+.stat-card.active {
+  border-color: var(--card-accent, var(--primary)) !important;
+  box-shadow: 0 0 16px var(--card-accent), var(--shadow-md);
+  background-color: var(--primary-light);
 }
 
 .stat-card::after {
