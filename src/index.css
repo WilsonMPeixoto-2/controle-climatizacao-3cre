@@ -820,6 +820,7 @@ html:not(.dark-theme) body::after {
   border-radius: 99px;
   font-size: 12px; /* Aumentado de 11px */
   font-weight: 800; /* Deixado mais robusto */
+  white-space: nowrap;
 }
 
 .badge-priority-critica { background-color: var(--color-red-tint); color: var(--color-red); }
@@ -1030,7 +1031,7 @@ html:not(.dark-theme) body::after {
   width: 1050px; /* Expandido de 780px para 1050px */
   max-width: 95vw;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden;
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -1078,7 +1079,9 @@ html:not(.dark-theme) body::after {
 
 .modal-body {
   padding: 28px;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .modal-footer {
