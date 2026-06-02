@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import creBairros from '../data/cre-bairros.geo.json';
@@ -89,10 +89,9 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
   const geoJsonRef = useRef(null);
   const layersRef = useRef({});
 
-  // 1. Calcula estatísticas agregadas por bairro usando a lógica pura
-  const stats = aggregateBairroStats(tickets, schools);
+  const stats = useMemo(() => aggregateBairroStats(tickets, schools), [tickets, schools]);
 
-  // 2. Efeito de Inicialização do Mapa
+  // 2. Efeito de Inicialização do Mapa (Roda apenas uma vez no mount)
   useEffect(() => {
     if (mapRef.current || !elRef.current) return;
 
@@ -156,7 +155,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
               html: '',
               iconSize: [0, 0]
             }),
-            interactive: false // Não intercepta cliques ou hovers, permitindo que a camada GeoJSON embaixo funcione normalmente
+            interactive: false // Não intercepta cliques ou hovers
           });
           labelMarker.bindTooltip(nm, { permanent: true, direction: 'center', className: 'cre-label' });
           labelMarker.addTo(map);
@@ -183,37 +182,94 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
     geoJsonRef.current = geoJson;
 
     map.fitBounds(geoJson.getBounds(), { padding: [22, 22] });
-    map.setMaxBounds(geoJson.getBounds().pad(2.5)); // Limites expandidos para permitir navegação livre e sem travamentos rígidos
+    map.setMaxBounds(geoJson.getBounds().pad(2.5)); // Limites expandidos
 
-    // Corrige renderizações tardias do container CSS
-    const t = setTimeout(() => map.invalidateSize(), 80);
+    // Corrige renderizações tardias do container CSS com segurança
+    const t = setTimeout(() => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize();
+      }
+    }, 80);
+
+    // Cria um ResizeObserver seguro para monitorar o redimensionamento do contêiner no mobile
+    let resizeObserver;
+    if (window.ResizeObserver && elRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(elRef.current);
+    }
 
     return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       clearTimeout(t);
-      map.remove();
+      if (mapRef.current) {
+        mapRef.current.remove();
+      }
       mapRef.current = null;
       tileLayerRef.current = null;
       geoJsonRef.current = null;
       layersRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tickets, schools, theme]); // Recria o mapa se a listagem ou tema inicial mudar
+  }, []); // Inicialização estrita de ciclo único!
 
-  // 3. Efeito Reativo de Troca de Tema (Atualiza tiles e estilos dos polígonos de forma dinâmica)
+  // 3. Efeito Reativo de Atualização de Dados e Tema (In-place sem destruir o mapa)
   useEffect(() => {
-    if (!mapRef.current || !tileLayerRef.current) return;
+    if (!mapRef.current || !geoJsonRef.current) return;
 
-    const isDark = theme === 'dark';
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
-
-    tileLayerRef.current.setUrl(tileUrl);
-
-    if (geoJsonRef.current) {
-      geoJsonRef.current.setStyle((f) => getBairroStyle(f, theme, stats));
+    // Atualiza o Tile Layer para o tema correto
+    if (tileLayerRef.current) {
+      const isDark = theme === 'dark';
+      const tileUrl = isDark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+      tileLayerRef.current.setUrl(tileUrl);
     }
-  }, [theme, stats]);
+
+    // Atualiza os estilos de cada polígono GeoJSON
+    geoJsonRef.current.setStyle((f) => getBairroStyle(f, theme, stats));
+
+    // Atualiza os tooltips e comportamentos hover reativos de cada polígono
+    geoJsonRef.current.eachLayer((l) => {
+      const f = l.feature;
+      if (!f) return;
+      const nm = f.properties?.NOME || '';
+      const normalized = normalizeString(nm);
+      const bairroData = stats[normalized] || { escolas_cadastradas: 0, chamados_ativos: 0, criticos: 0, atencao: 0 };
+
+      // Tooltip dinâmico rico atualizado
+      const tooltipHtml = `
+        <div class="map-tooltip">
+          <div class="map-tooltip-title">${nm}</div>
+          <div class="map-tooltip-row"><span>Escolas:</span> <strong>${bairroData.escolas_cadastradas}</strong></div>
+          <div class="map-tooltip-row"><span>Chamados Ativos:</span> <strong>${bairroData.chamados_ativos}</strong></div>
+          <div class="map-tooltip-row" style="color: var(--color-red); font-weight: bold;"><span>Críticos:</span> <strong>${bairroData.criticos}</strong></div>
+          <div class="map-tooltip-row" style="color: var(--color-amber); font-weight: bold;"><span>Atenção:</span> <strong>${bairroData.atencao}</strong></div>
+        </div>
+      `;
+
+      l.unbindTooltip();
+      l.bindTooltip(tooltipHtml, { sticky: true, direction: 'auto', className: 'cre-tooltip-custom' });
+
+      // Atualiza os event listeners locais para refletir os novos dados
+      l.off('mouseover');
+      l.off('mouseout');
+
+      l.on('mouseover', () => {
+        const currentStyle = getBairroStyle(f, theme, stats);
+        l.setStyle({ fillOpacity: currentStyle.fillOpacity + 0.12 });
+      });
+      l.on('mouseout', () => {
+        const currentStyle = getBairroStyle(f, theme, stats);
+        l.setStyle({ fillOpacity: currentStyle.fillOpacity });
+      });
+    });
+  }, [stats, theme]);
 
   // 4. Efeito de Realce e Foco por Polígono da Escola Selecionada (Consulta Rápida)
   useEffect(() => {

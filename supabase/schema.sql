@@ -11,17 +11,17 @@
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS escolas (
   designacao              TEXT PRIMARY KEY,
-  unidade_escolar         TEXT,
+  unidade_escolar         TEXT NOT NULL,
   sici                    TEXT,
   endereco                TEXT,
   bairro                  TEXT,
   confirmado_pela_unidade TEXT,
   validado_pela_gop       TEXT,
-  qtd_salas_de_aula       INTEGER,
-  aparelhos_em_sala       INTEGER,
-  aparelhos_total         INTEGER,
-  salas_sem_aparelho      INTEGER,
-  necessidade_aparelhos   INTEGER,
+  qtd_salas_de_aula       INTEGER DEFAULT 0,
+  aparelhos_em_sala       INTEGER DEFAULT 0,
+  aparelhos_total         INTEGER DEFAULT 0,
+  salas_sem_aparelho      INTEGER DEFAULT 0,
+  necessidade_aparelhos   INTEGER DEFAULT 0,
   acao_sugerida           TEXT
 );
 
@@ -30,22 +30,22 @@ CREATE TABLE IF NOT EXISTS escolas (
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS chamados (
   id_chamado          TEXT PRIMARY KEY,
-  unidade_escolar     TEXT,
-  designacao          TEXT REFERENCES escolas(designacao),
-  data_solicitacao    TIMESTAMPTZ,
-  local_demanda       TEXT,
-  tipo_demanda        TEXT,
-  status_atual        TEXT,
-  setor_responsavel   TEXT,
+  unidade_escolar     TEXT NOT NULL,
+  designacao          TEXT REFERENCES escolas(designacao) ON DELETE RESTRICT,
+  data_solicitacao    TIMESTAMPTZ NOT NULL,
+  local_demanda       TEXT NOT NULL,
+  tipo_demanda        TEXT NOT NULL,
+  status_atual        TEXT NOT NULL,
+  setor_responsavel   TEXT NOT NULL,
   proxima_providencia TEXT,
   ultima_movimentacao TEXT,
   informacao_validada TEXT,
-  prioridade          TEXT,
-  comunicacao_cto     TEXT,
+  prioridade          TEXT NOT NULL,
+  comunicacao_cto     TEXT DEFAULT 'Não',
   observacoes         TEXT,
   resultado_aptidao   TEXT,
-  criado_em           TIMESTAMPTZ,
-  modificado_em       TIMESTAMPTZ
+  criado_em           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  modificado_em       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ---------------------------------------------------------------------------
@@ -53,13 +53,13 @@ CREATE TABLE IF NOT EXISTS chamados (
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS historico (
   id_evento            TEXT PRIMARY KEY,
-  data                 TIMESTAMPTZ,
-  id_chamado           TEXT REFERENCES chamados(id_chamado),
+  data                 TIMESTAMPTZ NOT NULL,
+  id_chamado           TEXT REFERENCES chamados(id_chamado) ON DELETE CASCADE,
   designacao           TEXT,
   unidade_escolar      TEXT,
-  marco_relevante      TEXT,
-  setor                TEXT,
-  responsavel_registro TEXT,
+  marco_relevante      TEXT NOT NULL,
+  setor                TEXT NOT NULL,
+  responsavel_registro TEXT NOT NULL,
   observacao           TEXT
 );
 
@@ -68,9 +68,26 @@ CREATE TABLE IF NOT EXISTS historico (
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS modelos_email (
   id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  tipo     TEXT,
+  tipo     TEXT NOT NULL,
   etapa    TEXT,
-  template TEXT
+  template TEXT NOT NULL
+);
+
+-- ---------------------------------------------------------------------------
+-- 5. Anexos de Chamados (arquivos físicos e metadados no Supabase Storage)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS anexos_chamado (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id_chamado      TEXT NOT NULL REFERENCES chamados(id_chamado) ON DELETE CASCADE,
+  designacao      TEXT REFERENCES escolas(designacao) ON DELETE CASCADE,
+  unidade_escolar TEXT,
+  bucket          TEXT NOT NULL DEFAULT 'gop-anexos',
+  storage_path    TEXT NOT NULL UNIQUE,
+  nome_original   TEXT NOT NULL,
+  mime_type       TEXT,
+  tamanho_bytes   BIGINT,
+  descricao       TEXT,
+  criado_em       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ---------------------------------------------------------------------------
@@ -81,23 +98,51 @@ CREATE INDEX IF NOT EXISTS idx_chamados_status     ON chamados (status_atual);
 CREATE INDEX IF NOT EXISTS idx_chamados_modificado ON chamados (modificado_em);
 CREATE INDEX IF NOT EXISTS idx_historico_chamado   ON historico (id_chamado);
 CREATE INDEX IF NOT EXISTS idx_historico_data      ON historico (data);
-
--- ---------------------------------------------------------------------------
--- 5. Anexos de Chamados (arquivos físicos e metadados no Supabase Storage)
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS anexos_chamado (
-  id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  id_chamado     TEXT NOT NULL REFERENCES chamados(id_chamado) ON DELETE CASCADE,
-  designacao     TEXT REFERENCES escolas(designacao) ON DELETE CASCADE,
-  unidade_escolar TEXT,
-  bucket         TEXT NOT NULL DEFAULT 'gop-anexos',
-  storage_path   TEXT NOT NULL UNIQUE,
-  nome_original  TEXT NOT NULL,
-  mime_type      TEXT,
-  tamanho_bytes  BIGINT,
-  descricao      TEXT,
-  criado_em      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 CREATE INDEX IF NOT EXISTS idx_anexos_chamado_id_chamado ON anexos_chamado (id_chamado);
 CREATE INDEX IF NOT EXISTS idx_anexos_chamado_designacao ON anexos_chamado (designacao);
+
+-- ---------------------------------------------------------------------------
+-- 6. Ativação do Row Level Security (RLS) e Políticas de Segurança
+-- ---------------------------------------------------------------------------
+ALTER TABLE escolas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chamados ENABLE ROW LEVEL SECURITY;
+ALTER TABLE historico ENABLE ROW LEVEL SECURITY;
+ALTER TABLE modelos_email ENABLE ROW LEVEL SECURITY;
+ALTER TABLE anexos_chamado ENABLE ROW LEVEL SECURITY;
+
+-- 6.1. Políticas de Leitura Pública
+CREATE POLICY "Permitir leitura pública de escolas" ON escolas FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Permitir leitura pública de modelos_email" ON modelos_email FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Permitir leitura pública de chamados" ON chamados FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Permitir leitura pública de historico" ON historico FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Permitir leitura pública de anexos_chamado" ON anexos_chamado FOR SELECT TO anon, authenticated USING (true);
+
+-- 6.2. Políticas de Escrita de Chamados e Histórico (GOP / Técnicos)
+CREATE POLICY "Permitir inserção de chamados" ON chamados FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "Permitir atualização de chamados" ON chamados FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir inserção de historico" ON historico FOR INSERT TO anon, authenticated WITH CHECK (true);
+
+-- 6.3. Políticas de Anexos (Associação e Upload)
+CREATE POLICY "Permitir inserção de anexos_chamado" ON anexos_chamado FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "Permitir exclusão de anexos_chamado" ON anexos_chamado FOR DELETE TO anon, authenticated USING (true);
+
+-- ---------------------------------------------------------------------------
+-- 7. Segurança de Armazenamento do Supabase Storage (gop-anexos)
+-- ---------------------------------------------------------------------------
+-- Garante a criação do bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('gop-anexos', 'gop-anexos', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Políticas na tabela 'storage.objects'
+CREATE POLICY "Permitir leitura pública de anexos em gop-anexos" 
+ON storage.objects FOR SELECT TO anon, authenticated 
+USING (bucket_id = 'gop-anexos');
+
+CREATE POLICY "Permitir upload de anexos no subdiretorio chamados em gop-anexos" 
+ON storage.objects FOR INSERT TO anon, authenticated 
+WITH CHECK (bucket_id = 'gop-anexos' AND (storage.foldername(name))[1] = 'chamados');
+
+CREATE POLICY "Permitir exclusão de anexos no subdiretorio chamados em gop-anexos" 
+ON storage.objects FOR DELETE TO anon, authenticated 
+USING (bucket_id = 'gop-anexos' AND (storage.foldername(name))[1] = 'chamados');

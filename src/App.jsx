@@ -2714,6 +2714,30 @@ export default function App() {
               </div>
             ) : (
               <form noValidate onSubmit={handleRegisterNewTicket}>
+                {!supabaseClient && (
+                  <div className="local-warning-banner" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    color: 'var(--color-red)',
+                    fontSize: '0.9rem',
+                    lineHeight: '1.4',
+                    marginBottom: '24px',
+                  }}>
+                    <IconWarning />
+                    <div>
+                      <strong>Atenção: Modo Local Ativo (Sem Conexão Supabase)</strong>
+                      <p style={{ margin: '4px 0 0 0', opacity: 0.85, fontSize: '0.82rem' }}>
+                        Qualquer chamado criado ou alterado agora ficará salvo apenas na memória temporária do seu navegador e será <strong>totalmente perdido</strong> ao atualizar ou fechar esta página.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* 1. SEÇÃO DE IDENTIFICAÇÃO */}
                 <div className="form-section-title">
                   <IconBuilding />
@@ -2722,8 +2746,9 @@ export default function App() {
                 
                 <div className="form-grid form-grid-3-cols">
                   <div className="form-group suggestion-container">
-                    <label className="form-label">Buscar Escola por Nome / Designação *</label>
+                    <label className="form-label" htmlFor="new-ticket-school-search">Buscar Escola por Nome / Designação *</label>
                     <input 
+                      id="new-ticket-school-search"
                       type="text"
                       className="form-control"
                       placeholder="Pesquise para autocompletar..."
@@ -2756,8 +2781,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Designação (Preenchido auto)</label>
+                    <label className="form-label" htmlFor="new-ticket-designacao">Designação (Preenchido auto)</label>
                     <input 
+                      id="new-ticket-designacao"
                       type="text" 
                       className="form-control" 
                       disabled 
@@ -2766,8 +2792,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Código SICI (Preenchido auto)</label>
+                    <label className="form-label" htmlFor="new-ticket-sici">Código SICI (Preenchido auto)</label>
                     <input 
+                      id="new-ticket-sici"
                       type="text" 
                       className="form-control" 
                       disabled 
@@ -2798,8 +2825,9 @@ export default function App() {
 
                 <div className="form-grid">
                   <div className="form-group">
-                    <label className="form-label">Tipo de Solicitação *</label>
+                    <label className="form-label" htmlFor="new-ticket-tipo">Tipo de Solicitação *</label>
                     <select 
+                      id="new-ticket-tipo"
                       className="form-control"
                       value={newTicket.tipo_demanda}
                       onChange={(e) => setNewTicket({ ...newTicket, tipo_demanda: e.target.value })}
@@ -2814,8 +2842,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Local Exato da Demanda *</label>
+                    <label className="form-label" htmlFor="new-ticket-local">Local Exato da Demanda *</label>
                     <input 
+                      id="new-ticket-local"
                       type="text"
                       className="form-control"
                       placeholder="Ex: Sala 5, Secretaria, Diretoria"
@@ -2826,8 +2855,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Tipo de Equipamento</label>
+                    <label className="form-label" htmlFor="new-ticket-aparelho">Tipo de Equipamento</label>
                     <select 
+                      id="new-ticket-aparelho"
                       className="form-control"
                       value={newTicket.tipo_aparelho}
                       onChange={(e) => setNewTicket({ ...newTicket, tipo_aparelho: e.target.value })}
@@ -2841,8 +2871,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">BTU Existente</label>
+                    <label className="form-label" htmlFor="new-ticket-btu-existente">BTU Existente</label>
                     <input 
+                      id="new-ticket-btu-existente"
                       type="text" 
                       className="form-control" 
                       placeholder="Ex: 12000"
@@ -2852,8 +2883,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">BTU Pretendido</label>
+                    <label className="form-label" htmlFor="new-ticket-btu-pretendido">BTU Pretendido</label>
                     <input 
+                      id="new-ticket-btu-pretendido"
                       type="text" 
                       className="form-control" 
                       placeholder="Ex: 18000"
@@ -2871,8 +2903,9 @@ export default function App() {
 
                 <div className="form-grid">
                   <div className="form-group">
-                    <label className="form-label">Prioridade Inicial *</label>
+                    <label className="form-label" htmlFor="new-ticket-prioridade">Prioridade Inicial *</label>
                     <select 
+                      id="new-ticket-prioridade"
                       className="form-control"
                       value={newTicket.prioridade}
                       onChange={(e) => setNewTicket({ ...newTicket, prioridade: e.target.value })}
@@ -2885,8 +2918,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Status Inicial *</label>
+                    <label className="form-label" htmlFor="new-ticket-status">Status Inicial *</label>
                     <select 
+                      id="new-ticket-status"
                       className="form-control"
                       value={newTicket.status_atual}
                       onChange={(e) => setNewTicket({ ...newTicket, status_atual: e.target.value })}
@@ -2899,8 +2933,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Setor Responsável Atual *</label>
+                    <label className="form-label" htmlFor="new-ticket-setor">Setor Responsável Atual *</label>
                     <select 
+                      id="new-ticket-setor"
                       className="form-control"
                       value={newTicket.setor_responsavel}
                       onChange={(e) => setNewTicket({ ...newTicket, setor_responsavel: e.target.value })}
@@ -2916,8 +2951,9 @@ export default function App() {
 
                 <div className="form-grid">
                   <div className="form-group form-group-full">
-                    <label className="form-label">Próxima Providência GOP *</label>
+                    <label className="form-label" htmlFor="new-ticket-providencia">Próxima Providência GOP *</label>
                     <input 
+                      id="new-ticket-providencia"
                       type="text" 
                       className="form-control" 
                       required
@@ -2927,8 +2963,9 @@ export default function App() {
                   </div>
 
                   <div className="form-group form-group-full">
-                    <label className="form-label">Observações de Campo</label>
+                    <label className="form-label" htmlFor="new-ticket-observacoes">Observações de Campo</label>
                     <textarea 
+                      id="new-ticket-observacoes"
                       className="form-control" 
                       rows="3" 
                       placeholder="Adicione informações adicionais recebidas..."
@@ -3313,10 +3350,32 @@ CREATE TABLE IF NOT EXISTS historico (
                     ⚙️ Atualização Administrativa da GOP
                   </h4>
 
+                  {!supabaseClient && (
+                    <div className="local-warning-banner" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      color: 'var(--color-red)',
+                      fontSize: '0.78rem',
+                      lineHeight: '1.3',
+                      marginBottom: '12px',
+                    }}>
+                      <IconWarning />
+                      <div>
+                        <strong>Modo Local Ativo:</strong> Alterações serão perdidas ao recarregar a página.
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div className="form-group">
-                      <label className="form-label">Status do Chamado (12 Etapas POP) *</label>
+                      <label className="form-label" htmlFor="edit-ticket-status">Status do Chamado (12 Etapas POP) *</label>
                       <select 
+                        id="edit-ticket-status"
                         className="form-control"
                         value={editingTicket.status_atual}
                         onChange={(e) => setEditingTicket({ ...editingTicket, status_atual: e.target.value })}
@@ -3337,8 +3396,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Setor Responsável Atual *</label>
+                      <label className="form-label" htmlFor="edit-ticket-setor">Setor Responsável Atual *</label>
                       <select 
+                        id="edit-ticket-setor"
                         className="form-control"
                         value={editingTicket.setor_responsavel}
                         onChange={(e) => setEditingTicket({ ...editingTicket, setor_responsavel: e.target.value })}
@@ -3357,8 +3417,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Prioridade *</label>
+                      <label className="form-label" htmlFor="edit-ticket-prioridade">Prioridade *</label>
                       <select 
+                        id="edit-ticket-prioridade"
                         className="form-control"
                         value={editingTicket.prioridade}
                         onChange={(e) => setEditingTicket({ ...editingTicket, prioridade: e.target.value })}
@@ -3371,8 +3432,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Próxima Providência (O que falta fazer) *</label>
+                      <label className="form-label" htmlFor="edit-ticket-providencia">Próxima Providência (O que falta fazer) *</label>
                       <input 
+                        id="edit-ticket-providencia"
                         type="text" 
                         className="form-control" 
                         required
@@ -3382,8 +3444,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Última Movimentação Relevante *</label>
+                      <label className="form-label" htmlFor="edit-ticket-movimentacao">Última Movimentação Relevante *</label>
                       <input 
+                        id="edit-ticket-movimentacao"
                         type="text" 
                         className="form-control" 
                         required
@@ -3404,7 +3467,9 @@ CREATE TABLE IF NOT EXISTS historico (
                       </div>
 
                       <div className="form-group">
+                        <label htmlFor="edit-ticket-validation" className="sr-only" style={{ display: 'none' }}>Validação</label>
                         <select 
+                          id="edit-ticket-validation"
                           className="form-control"
                           style={{ padding: '4px 10px', fontSize: '13px' }}
                           value={editingTicket.informacao_validada}
@@ -3419,8 +3484,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Observações Gerais</label>
+                      <label className="form-label" htmlFor="edit-ticket-observacoes">Observações Gerais</label>
                       <textarea 
+                        id="edit-ticket-observacoes"
                         className="form-control" 
                         rows="8" 
                         value={editingTicket.observacoes}
@@ -3448,8 +3514,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     marginBottom: '20px'
                   }}>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Local Exato</label>
+                      <label className="form-label" htmlFor="edit-ticket-local" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Local Exato</label>
                       <input 
+                        id="edit-ticket-local"
                         type="text" 
                         className="form-control" 
                         style={{ padding: '6px 10px', fontSize: '13px', height: '32px' }}
@@ -3459,8 +3526,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Tipo de Solicitação</label>
+                      <label className="form-label" htmlFor="edit-ticket-tipo" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Tipo de Solicitação</label>
                       <select 
+                        id="edit-ticket-tipo"
                         className="form-control" 
                         style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
                         value={editingTicket.tipo_demanda || 'Substituição/Instalação de Aparelho'}
@@ -3477,8 +3545,9 @@ CREATE TABLE IF NOT EXISTS historico (
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '8px' }}>
                       <div className="form-group" style={{ margin: 0 }}>
-                        <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Aparelho</label>
+                        <label className="form-label" htmlFor="edit-ticket-aparelho" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Aparelho</label>
                         <select 
+                          id="edit-ticket-aparelho"
                           className="form-control" 
                           style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
                           value={editingTicket.tipo_aparelho || 'Split'}
@@ -3492,8 +3561,9 @@ CREATE TABLE IF NOT EXISTS historico (
                         </select>
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
-                        <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Exist.</label>
+                        <label className="form-label" htmlFor="edit-ticket-btu-existente" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Exist.</label>
                         <input 
+                          id="edit-ticket-btu-existente"
                           type="text" 
                           className="form-control" 
                           style={{ padding: '6px 10px', fontSize: '13px', height: '32px' }}
@@ -3503,8 +3573,9 @@ CREATE TABLE IF NOT EXISTS historico (
                         />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
-                        <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Pret.</label>
+                        <label className="form-label" htmlFor="edit-ticket-btu-pretendido" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Pret.</label>
                         <input 
+                          id="edit-ticket-btu-pretendido"
                           type="text" 
                           className="form-control" 
                           style={{ padding: '6px 10px', fontSize: '13px', height: '32px' }}
@@ -3516,8 +3587,9 @@ CREATE TABLE IF NOT EXISTS historico (
                     </div>
 
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Aptidão Técnica</label>
+                      <label className="form-label" htmlFor="edit-ticket-aptidao" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>Aptidão Técnica</label>
                       <select 
+                        id="edit-ticket-aptidao"
                         className="form-control" 
                         style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
                         value={editingTicket.resultado_aptidao || 'Pendente'}

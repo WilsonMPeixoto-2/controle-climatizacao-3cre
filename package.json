@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run lint && npm run test && vite build",
     "lint": "eslint .",
-    "test": "node test/logic.test.mjs",
+    "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/smoke.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -2857,11 +2857,6 @@
   ],
   "modelos_email": [
     {
-      "tipo": "Templates para comunicação com setores parceiros. Substitua os marcadores {ID_CHAMADO}, {UNIDADE} e {DATA} antes de enviar.",
-      "etapa": "",
-      "template": "TEMPLATE"
-    },
-    {
       "tipo": "Solicitação de Vistoria",
       "etapa": "02 → 03",
       "template": "Assunto: Solicitação de vistoria técnica — Chamado {ID_CHAMADO} ({UNIDADE})\n\nPrezados, encaminho para conhecimento e providências a demanda de climatização registrada pela {UNIDADE} sob o chamado {ID_CHAMADO}. Solicito o agendamento de vistoria técnica para avaliação da situação local conforme POP-002/25.\n\nInformações:\n• Identificação do local: [descrever]\n• Tipo de aparelho existente: [split/janela] | BTUs: [informar]\n• 1º ou 2º aparelho do local: [informar]\n\nAtenciosamente, GOP/3ª CRE"
