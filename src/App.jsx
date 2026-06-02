@@ -297,11 +297,10 @@ export default function App() {
     if (type === 'documento' && attachedFile) {
       if (cloudConnected && supabaseClient) {
         try {
-          const fileExt = attachedFile.name.split('.').pop();
           const filePath = `${selectedSchool.designacao}/${Date.now()}_${attachedFile.name}`;
           
           // Upload real do arquivo para o bucket 'laudos-cre3'
-          const { data, error } = await supabaseClient.storage
+          const { error } = await supabaseClient.storage
             .from('laudos-cre3')
             .upload(filePath, attachedFile, {
               cacheControl: '3600',
@@ -2433,7 +2432,7 @@ export default function App() {
                               try {
                                 docMeta = JSON.parse(h.observacao);
                                 docText = docMeta.name;
-                              } catch (e) {
+                              } catch {
                                 docText = h.observacao || '';
                               }
                             }
