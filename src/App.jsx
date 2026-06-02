@@ -172,9 +172,6 @@ export default function App() {
   });
 
   const [newCommentText, setNewCommentText] = useState('');
-  const [attachedFileName, setAttachedFileName] = useState('');
-  const [attachedFileMeta, setAttachedFileMeta] = useState(null);
-  const [attachedFile, setAttachedFile] = useState(null);
 
   // Persistir anotações de escolas localmente no localStorage
   useEffect(() => {
@@ -289,55 +286,15 @@ export default function App() {
     }, 3000);
   };
 
-  const handleAddSchoolLog = useCallback(async (type = 'comentario') => {
-    if (type === 'comentario' && !newCommentText.trim()) return;
-    if (type === 'documento' && !attachedFileName.trim()) return;
-
-    let storageType = 'local';
-    let cloudUrl = '';
-
-    if (type === 'documento' && attachedFile) {
-      if (cloudConnected && supabaseClient) {
-        try {
-          const filePath = `${selectedSchool.designacao}/${Date.now()}_${attachedFile.name}`;
-          
-          // Upload real do arquivo para o bucket 'laudos-cre3'
-          const { error } = await supabaseClient.storage
-            .from('laudos-cre3')
-            .upload(filePath, attachedFile, {
-              cacheControl: '3600',
-              upsert: false
-            });
-            
-          if (error) throw error;
-          
-          // Se der certo, obtém a URL pública
-          const { data: publicUrlData } = supabaseClient.storage
-             .from('laudos-cre3')
-             .getPublicUrl(filePath);
-             
-          cloudUrl = publicUrlData?.publicUrl || '';
-          storageType = 'cloud';
-          
-          triggerToast("Laudo enviado para o Supabase Storage real!", "success");
-        } catch (err) {
-          console.error("Erro no Supabase Storage:", err);
-          storageType = 'local';
-          triggerToast("Upload de nuvem falhou (bucket 'laudos-cre3' inativo). Salvo no cache local.", "info");
-        }
-      }
-    }
+  const handleAddSchoolLog = useCallback(async () => {
+    if (!newCommentText.trim()) return;
 
     const newLog = {
       id: 'SL-' + Date.now(),
-      type,
+      type: 'comentario',
       date: new Date().toISOString(),
-      content: type === 'comentario' ? newCommentText : attachedFileName,
-      docMeta: type === 'documento' ? {
-        ...attachedFileMeta,
-        storageType,
-        url: cloudUrl
-      } : null,
+      content: newCommentText,
+      docMeta: null,
       user: 'GOP / 3ª CRE'
     };
 
@@ -349,12 +306,10 @@ export default function App() {
           data: newLog.date,
           designacao: selectedSchool.designacao,
           unidade_escolar: selectedSchool.unidade_escolar,
-          marco_relevante: type === 'comentario' ? 'Nota Técnica GOP' : `Documento Anexo: ${attachedFileName}`,
+          marco_relevante: 'Nota Técnica GOP',
           setor: 'GOP',
           responsavel_registro: 'GOP / 3ª CRE',
-          observacao: type === 'comentario' 
-            ? newCommentText 
-            : JSON.stringify({ ...attachedFileMeta, storageType, url: cloudUrl })
+          observacao: newCommentText
         };
 
         const { error } = await supabaseClient
@@ -379,15 +334,9 @@ export default function App() {
       };
     });
 
-    if (type === 'comentario') {
-      setNewCommentText('');
-      triggerToast("Anotação técnica registrada na ficha!", "success");
-    } else {
-      setAttachedFileName('');
-      setAttachedFileMeta(null);
-      setAttachedFile(null);
-    }
-  }, [newCommentText, attachedFileName, attachedFileMeta, attachedFile, selectedSchool, cloudConnected, supabaseClient]);
+    setNewCommentText('');
+    triggerToast("Anotação técnica registrada na ficha!", "success");
+  }, [newCommentText, selectedSchool, cloudConnected, supabaseClient]);
 
   const refreshEmailDraft = (ticketId = selectedEmailTicketId, templateIndex = selectedTemplateIndex) => {
     setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, ticketId, templateIndex));
@@ -943,90 +892,123 @@ export default function App() {
     setSubmitting(true);
     let cloudOk = true;
     try {
-    const nextIdNum = tickets.reduce((max, t) => {
-      const num = parseInt(t.id_chamado.split('-').pop(), 10);
-      return num > max ? num : max;
-    }, 0) + 1;
-    
-    const generatedId = `GOP-AR-2026-${String(nextIdNum).padStart(4, '0')}`;
-    const nowIso = new Date().toISOString().substring(0, 19);
+      const nowIso = new Date().toISOString().substring(0, 19);
 
-    const ticketRecord = {
-      id_chamado: generatedId,
-      unidade_escolar: formSelectedSchool.unidade_escolar,
-      designacao: formSelectedSchool.designacao,
-      data_solicitacao: nowIso,
-      local_demanda: newTicket.local_demanda,
-      tipo_demanda: newTicket.tipo_demanda,
-      status_atual: newTicket.status_atual,
-      setor_responsavel: newTicket.setor_responsavel,
-      proxima_providencia: newTicket.proxima_providencia,
-      ultima_movimentacao: "Chamado registrado no sistema.",
-      informacao_validada: newTicket.informacao_validada,
-      prioridade: newTicket.prioridade,
-      comunicacao_cto: "Não",
-      observacoes: newTicket.observacoes,
-      resultado_aptidao: newTicket.resultado_aptidao,
-      criado_em: nowIso,
-      modificado_em: nowIso
-    };
+      // Constrói o registro do chamado (id_chamado é omitido para inserção na nuvem e gerado na trigger do banco)
+      const ticketRecord = {
+        unidade_escolar: formSelectedSchool.unidade_escolar,
+        designacao: formSelectedSchool.designacao,
+        data_solicitacao: nowIso,
+        local_demanda: newTicket.local_demanda,
+        tipo_demanda: newTicket.tipo_demanda,
+        status_atual: newTicket.status_atual,
+        setor_responsavel: newTicket.setor_responsavel,
+        proxima_providencia: newTicket.proxima_providencia,
+        ultima_movimentacao: "Chamado registrado no sistema.",
+        informacao_validada: newTicket.informacao_validada,
+        prioridade: newTicket.prioridade,
+        comunicacao_cto: "Não",
+        observacoes: newTicket.observacoes,
+        resultado_aptidao: newTicket.resultado_aptidao,
+        criado_em: nowIso,
+        modificado_em: nowIso
+      };
 
-    const initialEvent = {
-      id_evento: `EV-${String(history.length + 1).padStart(5, '0')}`,
-      data: nowIso,
-      id_chamado: generatedId,
-      designacao: formSelectedSchool.designacao,
-      unidade_escolar: formSelectedSchool.unidade_escolar,
-      marco_relevante: newTicket.status_atual,
-      setor: "GOP",
-      responsavel_registro: "GOP / Sistema",
-      observacao: `Abertura oficial do chamado. Demanda cadastrada para o local: ${newTicket.local_demanda}.`
-    };
+      let finalTicketRecord;
+      let finalEventRecord;
 
-    // Update state locally
-    setTickets([ticketRecord, ...tickets]);
-    setHistory([initialEvent, ...history]);
+      if (supabaseClient) {
+        try {
+          // 1. Inserir chamado no Supabase (o trigger irá gerar o id_chamado) e recuperar o registro inserido
+          const { data: dbRecord, error: tkErr } = await supabaseClient
+            .from('chamados')
+            .insert(ticketRecord)
+            .select('*')
+            .single();
 
-    // Save to cloud in real-time!
-    if (supabaseClient) {
-      try {
-        const { error: tkErr } = await supabaseClient.from('chamados').insert(ticketRecord);
-        if (tkErr) throw tkErr;
+          if (tkErr) throw tkErr;
+          finalTicketRecord = dbRecord;
 
-        const { error: evErr } = await supabaseClient.from('historico').insert(initialEvent);
-        if (evErr) throw evErr;
-      } catch (err) {
-        cloudOk = false;
-        console.error("Cloud insert failed:", err);
+          // 2. Criar e inserir o evento inicial do histórico referenciando o id_chamado retornado
+          const initialEvent = {
+            id_evento: `EV-${String(Date.now()).slice(-5)}`, // ID robusto baseado em timestamp para evitar conflitos
+            data: nowIso,
+            id_chamado: dbRecord.id_chamado,
+            designacao: formSelectedSchool.designacao,
+            unidade_escolar: formSelectedSchool.unidade_escolar,
+            marco_relevante: newTicket.status_atual,
+            setor: "GOP",
+            responsavel_registro: "GOP / Sistema",
+            observacao: `Abertura oficial do chamado. Demanda cadastrada para o local: ${newTicket.local_demanda}.`
+          };
+
+          const { error: evErr } = await supabaseClient.from('historico').insert(initialEvent);
+          if (evErr) throw evErr;
+
+          finalEventRecord = initialEvent;
+        } catch (err) {
+          cloudOk = false;
+          console.error("Cloud insert failed, falling back to local memory generation:", err);
+        }
       }
-    }
 
-    // Show success panel
-    setNewTicketSuccess(generatedId);
-    triggerToast(
-      cloudOk
-        ? "Chamado criado com sucesso!"
-        : "Chamado criado, mas a gravação na nuvem falhou — salvo só neste dispositivo.",
-      cloudOk ? 'success' : 'error'
-    );
+      // Se não estiver conectado ou se a gravação em nuvem falhou, calcula ID sequencial no frontend (Fallback offline)
+      if (!supabaseClient || !cloudOk) {
+        const nextIdNum = tickets.reduce((max, t) => {
+          const num = parseInt(t.id_chamado.split('-').pop(), 10);
+          return num > max ? num : max;
+        }, 0) + 1;
 
-    // Clean inputs
-    setNewTicket({
-      local_demanda: '',
-      tipo_demanda: 'Substituição/Instalação de Aparelho',
-      tipo_aparelho: 'Split',
-      btu_existente: '',
-      btu_pretendido: '',
-      prioridade: 'Média',
-      observacoes: '',
-      proxima_providencia: 'Aguardando triagem inicial pela GOP.',
-      status_atual: '1 - Recebido — em triagem',
-      setor_responsavel: 'GOP',
-      informacao_validada: 'Pendente de Vistoria',
-      resultado_aptidao: 'Pendente'
-    });
-    setFormSelectedSchool(null);
-    setFormSearchQuery('');
+        const generatedId = `GOP-AR-2026-${String(nextIdNum).padStart(4, '0')}`;
+
+        finalTicketRecord = {
+          id_chamado: generatedId,
+          ...ticketRecord
+        };
+
+        finalEventRecord = {
+          id_evento: `EV-${String(history.length + 1).padStart(5, '0')}`,
+          data: nowIso,
+          id_chamado: generatedId,
+          designacao: formSelectedSchool.designacao,
+          unidade_escolar: formSelectedSchool.unidade_escolar,
+          marco_relevante: newTicket.status_atual,
+          setor: "GOP",
+          responsavel_registro: "GOP / Sistema",
+          observacao: `Abertura oficial do chamado. Demanda cadastrada para o local: ${newTicket.local_demanda}.`
+        };
+      }
+
+      // Atualiza o estado local consolidando os registros reais finais
+      setTickets([finalTicketRecord, ...tickets]);
+      setHistory([finalEventRecord, ...history]);
+
+      // Mostra painel de sucesso com o ID real gerado
+      setNewTicketSuccess(finalTicketRecord.id_chamado);
+      triggerToast(
+        cloudOk
+          ? "Chamado criado com sucesso!"
+          : "Chamado criado, mas a gravação na nuvem falhou — salvo só neste dispositivo.",
+        cloudOk ? 'success' : 'error'
+      );
+
+      // Limpa inputs
+      setNewTicket({
+        local_demanda: '',
+        tipo_demanda: 'Substituição/Instalação de Aparelho',
+        tipo_aparelho: 'Split',
+        btu_existente: '',
+        btu_pretendido: '',
+        prioridade: 'Média',
+        observacoes: '',
+        proxima_providencia: 'Aguardando triagem inicial pela GOP.',
+        status_atual: '1 - Recebido — em triagem',
+        setor_responsavel: 'GOP',
+        informacao_validada: 'Pendente de Vistoria',
+        resultado_aptidao: 'Pendente'
+      });
+      setFormSelectedSchool(null);
+      setFormSearchQuery('');
     } finally {
       setSubmitting(false);
     }
