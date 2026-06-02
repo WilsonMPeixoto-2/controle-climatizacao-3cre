@@ -20,6 +20,13 @@ import {
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
+import {
+  uploadTicketAttachment,
+  listTicketAttachments,
+  listSchoolAttachments,
+  deleteTicketAttachment,
+  getAttachmentPublicUrl,
+} from './lib/attachments.js';
 
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
 // e antiguidade são derivados em ./lib/logic.js a partir desta referência.
@@ -224,6 +231,11 @@ export default function App() {
   const [cloudLoading, setCloudLoading] = useState(false);
   const [supabaseClient, setSupabaseClient] = useState(null);
 
+  // Estados de controle para arquivos e uploads reais
+  const [ticketAttachments, setTicketAttachments] = useState([]);
+  const [schoolAttachments, setSchoolAttachments] = useState([]);
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
+
   // Lookup tab states
   const [lookupSchoolQuery, setLookupSchoolQuery] = useState(initialSelectedSchool?.unidade_escolar || '');
   const [selectedSchool, setSelectedSchool] = useState(initialSelectedSchool);
@@ -397,6 +409,57 @@ export default function App() {
     document.body.style.overflow = 'hidden';
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
   }, [showEditModal]);
+
+  // Carrega anexos consolidados da escola de forma reativa
+  useEffect(() => {
+    const fetchSchoolAttachments = async () => {
+      if (supabaseClient && selectedSchool?.designacao) {
+        try {
+          const anexos = await listSchoolAttachments(supabaseClient, selectedSchool.designacao);
+          setSchoolAttachments(anexos || []);
+        } catch (err) {
+          console.error("Erro ao carregar anexos da escola:", err);
+          setSchoolAttachments([]);
+        }
+      } else {
+        setSchoolAttachments([]);
+      }
+    };
+    fetchSchoolAttachments();
+  }, [selectedSchool, supabaseClient]);
+
+  const handleUploadTicketAttachment = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !editingTicket) return;
+
+    setAttachmentUploading(true);
+    try {
+      const anexo = await uploadTicketAttachment(supabaseClient, editingTicket, file);
+      setTicketAttachments(prev => [anexo, ...prev]);
+      setSchoolAttachments(prev => [anexo, ...prev]);
+      triggerToast('Anexo enviado com sucesso!', 'success');
+    } catch (err) {
+      console.error("Erro no upload do anexo:", err);
+      triggerToast(err.message || 'Erro ao enviar anexo.', 'error');
+    } finally {
+      setAttachmentUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleDeleteTicketAttachment = async (attachment) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o anexo "${attachment.nome_original}"?`)) return;
+
+    try {
+      await deleteTicketAttachment(supabaseClient, attachment);
+      setTicketAttachments(prev => prev.filter(a => a.id !== attachment.id));
+      setSchoolAttachments(prev => prev.filter(a => a.id !== attachment.id));
+      triggerToast('Anexo excluído com sucesso!', 'success');
+    } catch (err) {
+      console.error("Erro ao excluir anexo:", err);
+      triggerToast(err.message || 'Erro ao excluir anexo.', 'error');
+    }
+  };
 
   // 2. Initialize Supabase Connection
   const initializeSupabase = async (url, key) => {
@@ -664,9 +727,21 @@ export default function App() {
   const getDashboardStuckRanking = () => stuckRanking(tickets, todayRef(), 5);
 
   // Edit ticket action
-  const openTicketEdit = (ticket) => {
+  const openTicketEdit = async (ticket) => {
     setEditingTicket({ ...ticket });
     setShowEditModal(true);
+    
+    if (supabaseClient) {
+      try {
+        const anexos = await listTicketAttachments(supabaseClient, ticket.id_chamado);
+        setTicketAttachments(anexos);
+      } catch (err) {
+        console.error("Erro ao listar anexos do chamado:", err);
+        setTicketAttachments([]);
+      }
+    } else {
+      setTicketAttachments([]);
+    }
   };
 
   const saveEditedHistoryEvent = async (eventId, newText) => {
@@ -2192,6 +2267,73 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Arquivos da Unidade */}
+                  <div className="dashboard-section no-print">
+                    <div className="section-header">
+                      <h3>📂 Arquivos e Anexos da Unidade ({schoolAttachments.length})</h3>
+                    </div>
+                    
+                    <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
+                      Todos os laudos, termos e fotos vinculados aos chamados desta unidade no Supabase Storage.
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {schoolAttachments.map(anexo => (
+                        <div 
+                          key={anexo.id} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            padding: '12px 14px', 
+                            borderRadius: 'var(--radius-xs)', 
+                            border: '1px solid var(--border-color)', 
+                            backgroundColor: 'var(--bg-app)',
+                            transition: 'border-color 0.2s'
+                          }}
+                          className="hover-trigger"
+                        >
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{anexo.nome_original}</strong>
+                              <span style={{
+                                fontSize: '10.5px',
+                                fontWeight: '800',
+                                padding: '1px 6px',
+                                borderRadius: '99px',
+                                backgroundColor: 'var(--primary-light)',
+                                color: 'var(--primary)'
+                              }}>
+                                {anexo.id_chamado}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '500' }}>
+                              Tamanho: {(anexo.tamanho_bytes / 1024).toFixed(1)} KB · Enviado em: {formatDateBrazilian(anexo.criado_em)}
+                            </div>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '12.5px', fontWeight: '700' }}
+                            onClick={() => window.open(
+                              getAttachmentPublicUrl(supabaseClient, anexo),
+                              '_blank',
+                              'noopener,noreferrer'
+                            )}
+                          >
+                            Abrir Arquivo
+                          </button>
+                        </div>
+                      ))}
+                      {schoolAttachments.length === 0 && (
+                        <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
+                          Nenhum anexo oficial registrado para esta unidade escolar.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   {/* School Event Timeline history (Integrated) */}
                   <div className="dashboard-section">
                     <div className="section-header">
@@ -2347,103 +2489,36 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* FASE 4.5: Formulário para Notas Operacionais e Upload Simulado (GOP Notes) */}
+                  {/* FASE 4.5: Formulário para Notas Operacionais Locais (GOP Notes) */}
                   <div className="dashboard-section no-print">
                     <div className="section-header">
-                      <h3><IconFileText /> Registrar Comentário / Anexo Técnico</h3>
+                      <h3><IconFileText /> Registrar Observação Local</h3>
                     </div>
                     
                     <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
-                      Insira anotações de progresso técnico ou anexe digitalizações de documentos (ex: laudos, orçamentos, fotos de vistoria) para manter a ficha técnica consolidada.
+                      Insira anotações de progresso técnico ou observações administrativas para manter a ficha técnica da unidade atualizada localmente neste navegador.
                     </p>
-
-                    <div style={{
-                      padding: '12px 16px',
-                      borderRadius: 'var(--radius-xs)',
-                      background: 'var(--color-amber-tint)',
-                      borderLeft: '4px solid var(--color-amber)',
-                      fontSize: '12.5px',
-                      fontWeight: '600',
-                      lineHeight: '1.5',
-                      color: 'var(--text-muted)',
-                      marginBottom: '16px',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '8px'
-                    }}>
-                      <span style={{ fontSize: '15px', lineHeight: '1' }}>⚠️</span>
-                      <div>
-                        <strong>Aviso de Conformidade (Armazenamento Híbrido):</strong> Se conectado em nuvem, os arquivos são enviados fisicamente para o Supabase Storage real bucket <code>'laudos-cre3'</code>. Caso o bucket não esteja configurado, os arquivos serão salvos isoladamente no cache local deste navegador (localStorage). Para compartilhar com a equipe externa, prefira links do Google Drive no comentário.
-                      </div>
-                    </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
                       <div className="form-group" style={{ margin: 0 }}>
                         <textarea 
                           className="form-control"
                           rows="3"
-                          placeholder="Escreva aqui observações do chamado, pendências elétricas resolvidas, ordens de serviço..."
+                          placeholder="Escreva aqui observações internas, pendências, notas de reuniões..."
                           value={newCommentText}
                           onChange={(e) => setNewCommentText(e.target.value)}
                           style={{ fontSize: '13.5px', padding: '10px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-xs)' }}
                         />
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        {/* PREMIUM METADATA FILE UPLOAD */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <input 
-                            type="file" 
-                            id="school-file-upload-look" 
-                            style={{ display: 'none' }} 
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) {
-                                setAttachedFile(file); // Salva a referência real do arquivo
-                                setAttachedFileName(file.name);
-                                setAttachedFileMeta({
-                                  name: file.name,
-                                  size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-                                  type: file.type
-                                });
-                                triggerToast(`Laudo anexado: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`, 'info');
-                              }
-                            }}
-                          />
-                          <label 
-                            htmlFor="school-file-upload-look" 
-                            className="btn btn-secondary" 
-                            style={{ fontSize: '13.5px', padding: '8px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', fontWeight: '700' }}
-                          >
-                            📎 {attachedFileName ? 'Alterar Arquivo' : 'Anexar Laudo/Foto'}
-                          </label>
-                          {attachedFileName && (
-                            <span style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: '700', maxWidth: '180px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                              📄 {attachedFileName} ({attachedFileMeta?.size})
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          {attachedFileName && (
-                            <button 
-                              className="btn btn-secondary"
-                              onClick={() => {
-                                handleAddSchoolLog('documento');
-                              }}
-                              style={{ fontSize: '13.5px', padding: '8px 12px', fontWeight: '700' }}
-                            >
-                              Salvar Anexo
-                            </button>
-                          )}
-                          <button 
-                            className="btn btn-primary"
-                            onClick={() => handleAddSchoolLog('comentario')}
-                            style={{ fontSize: '13.5px', padding: '8px 12px', fontWeight: '700' }}
-                          >
-                            Salvar Nota
-                          </button>
-                        </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
+                        <button 
+                          className="btn btn-primary"
+                          onClick={() => handleAddSchoolLog('comentario')}
+                          style={{ fontSize: '13.5px', padding: '8px 12px', fontWeight: '700' }}
+                        >
+                          Salvar Observação
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -3330,6 +3405,129 @@ CREATE TABLE IF NOT EXISTS historico (
                     <div className="inactivity-warning-row" style={{ color: 'var(--color-orange)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
                       <IconClock />
                       <span>Sem movimentação há {getInactivityDays(editingTicket.modificado_em)} dias.</span>
+                    </div>
+                  </div>
+
+                  {/* Seção de Anexos do Chamado */}
+                  <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📎 Documentos e Anexos ({ticketAttachments.length})
+                  </h4>
+                  <div style={{
+                    padding: '16px',
+                    borderRadius: 'var(--radius-xs)',
+                    backgroundColor: 'var(--bg-app)',
+                    border: '1px solid var(--border-color)',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '12.5px', color: 'var(--text-light)', fontWeight: '500' }}>
+                        Laudos técnicos, termos ou fotos da vistoria.
+                      </span>
+                      {supabaseClient ? (
+                        <>
+                          <input
+                            id="ticket-attachment"
+                            type="file"
+                            accept="application/pdf,image/png,image/jpeg,image/webp"
+                            onChange={handleUploadTicketAttachment}
+                            style={{ display: 'none' }}
+                            disabled={attachmentUploading}
+                          />
+                          <label 
+                            htmlFor="ticket-attachment" 
+                            className={`btn ${attachmentUploading ? 'btn-secondary' : 'btn-primary'}`}
+                            style={{ 
+                              fontSize: '12.5px', 
+                              padding: '6px 12px', 
+                              cursor: attachmentUploading ? 'not-allowed' : 'pointer', 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '6px',
+                              fontWeight: '700',
+                              margin: 0
+                            }}
+                          >
+                            {attachmentUploading ? 'Enviando...' : '📎 Novo Anexo'}
+                          </label>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: 'var(--color-orange)', fontWeight: '700' }}>
+                          ⚠️ Conecte ao Supabase para anexar
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                      {ticketAttachments.map(anexo => (
+                        <div 
+                          key={anexo.id} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            padding: '10px 12px', 
+                            borderRadius: 'var(--radius-xs)', 
+                            border: '1px solid var(--border-color)', 
+                            backgroundColor: 'var(--bg-card)',
+                            transition: 'border-color 0.2s'
+                          }}
+                          className="hover-trigger"
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '18px' }}>
+                              {anexo.mime_type?.includes('pdf') ? '📄' : '🖼️'}
+                            </span>
+                            <div>
+                              <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {anexo.nome_original}
+                              </div>
+                              <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                {(anexo.tamanho_bytes / 1024).toFixed(1)} KB · {formatDateBrazilian(anexo.criado_em)}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 10px', fontSize: '12px', fontWeight: '700' }}
+                              onClick={() => window.open(
+                                getAttachmentPublicUrl(supabaseClient, anexo),
+                                '_blank',
+                                'noopener,noreferrer'
+                              )}
+                            >
+                              Abrir
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ 
+                                padding: '4px 8px', 
+                                fontSize: '12px', 
+                                color: 'var(--color-red, #ef4444)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onClick={() => handleDeleteTicketAttachment(anexo)}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {ticketAttachments.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-xs)' }}>
+                          Nenhum anexo oficial registrado para este chamado.
+                        </div>
+                      )}
                     </div>
                   </div>
 

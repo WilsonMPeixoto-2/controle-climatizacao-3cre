@@ -81,3 +81,23 @@ CREATE INDEX IF NOT EXISTS idx_chamados_status     ON chamados (status_atual);
 CREATE INDEX IF NOT EXISTS idx_chamados_modificado ON chamados (modificado_em);
 CREATE INDEX IF NOT EXISTS idx_historico_chamado   ON historico (id_chamado);
 CREATE INDEX IF NOT EXISTS idx_historico_data      ON historico (data);
+
+-- ---------------------------------------------------------------------------
+-- 5. Anexos de Chamados (arquivos físicos e metadados no Supabase Storage)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS anexos_chamado (
+  id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id_chamado     TEXT NOT NULL REFERENCES chamados(id_chamado) ON DELETE CASCADE,
+  designacao     TEXT REFERENCES escolas(designacao) ON DELETE CASCADE,
+  unidade_escolar TEXT,
+  bucket         TEXT NOT NULL DEFAULT 'gop-anexos',
+  storage_path   TEXT NOT NULL UNIQUE,
+  nome_original  TEXT NOT NULL,
+  mime_type      TEXT,
+  tamanho_bytes  BIGINT,
+  descricao      TEXT,
+  criado_em      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_anexos_chamado_id_chamado ON anexos_chamado (id_chamado);
+CREATE INDEX IF NOT EXISTS idx_anexos_chamado_designacao ON anexos_chamado (designacao);

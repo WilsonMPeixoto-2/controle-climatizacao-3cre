@@ -21,6 +21,13 @@ import {
   stuckRanking
 } from '../src/lib/logic.js';
 import { createTicketSchema, editTicketSchema } from '../src/lib/validation.js';
+import {
+  uploadTicketAttachment,
+  listTicketAttachments,
+  listSchoolAttachments,
+  deleteTicketAttachment,
+  getAttachmentDownloadUrl,
+} from '../src/lib/attachments.js';
 
 // Carrega a base local de referência (db.json)
 const rawDb = fs.readFileSync('./src/data/db.json', 'utf-8');
@@ -221,40 +228,97 @@ try {
 }
 
 // ---------------------------------------------------------------------------
-// TESTE 3: Upload Simulado de Anexos/Laudos e Persistência de Metadados
+// TESTE 3: Integração de Anexos com Supabase Storage e Metadados
 // ---------------------------------------------------------------------------
 try {
-  console.log('--- Teste 3: Registro de Anexos e Laudos Técnicos ---');
+  console.log('--- Teste 3: Registro e Gerenciamento de Anexos Reais ---');
 
-  // Simula o preenchimento de um anexo de laudo no modal (Ficha da Escola)
-  const attachedFileSimulated = {
-    name: 'laudo_vistoria_nereu_312014.pdf',
-    size: '1.45 MB',
+  // 1. Criar Mock do Cliente Supabase com APIs de Storage e PostgREST
+  const mockDb = [];
+  const mockStorage = [];
+
+  const mockSupabaseClient = {
+    storage: {
+      from: (bucket) => ({
+        upload: async (path, file) => {
+          mockStorage.push({ bucket, path, file });
+          return { data: { path }, error: null };
+        },
+        remove: async (paths) => {
+          paths.forEach(p => {
+            const idx = mockStorage.findIndex(s => s.path === p);
+            if (idx !== -1) mockStorage.splice(idx, 1);
+          });
+          return { data: null, error: null };
+        },
+        getPublicUrl: (path) => ({
+          data: { publicUrl: `https://wmnzcujojlygkcszocwb.supabase.co/storage/v1/object/public/${bucket}/${path}` }
+        })
+      })
+    },
+    from: (table) => ({
+      insert: (record) => ({
+        select: () => ({
+          single: async () => {
+            const newRecord = { id: mockDb.length + 1, criado_em: new Date().toISOString(), ...record };
+            mockDb.push(newRecord);
+            return { data: newRecord, error: null };
+          }
+        })
+      }),
+      select: () => ({
+        eq: (field, value) => ({
+          order: async () => {
+            const filtered = mockDb.filter(r => r[field] === value);
+            return { data: filtered, error: null };
+          }
+        })
+      }),
+      delete: () => ({
+        eq: (field, value) => {
+          const idx = mockDb.findIndex(r => r[field] === value);
+          if (idx !== -1) mockDb.splice(idx, 1);
+          return { error: null };
+        }
+      })
+    })
+  };
+
+  const mockTicket = {
+    id_chamado: 'GOP-AR-2026-TEST',
+    designacao: '312014',
+    unidade_escolar: 'E. M. Nereu Sampaio'
+  };
+
+  const mockFile = {
+    name: 'laudo_vistoria_nereu.pdf',
+    size: 2 * 1024 * 1024, // 2 MB
     type: 'application/pdf'
   };
 
-  const newLogRecord = {
-    id: 'SL-TEST-DOC',
-    type: 'documento',
-    date: new Date().toISOString(),
-    content: attachedFileSimulated.name,
-    docMeta: {
-      name: attachedFileSimulated.name,
-      size: attachedFileSimulated.size,
-      type: attachedFileSimulated.type
-    },
-    user: 'GOP / 3ª CRE'
-  };
+  // 2. Testar Upload do Anexo
+  const anexo = await uploadTicketAttachment(mockSupabaseClient, mockTicket, mockFile, 'Laudo técnico inicial');
+  printResult('3.1. Upload físico de anexo e inserção lógica', anexo.id === 1 && anexo.nome_original === mockFile.name);
+  printResult('3.2. Preservação das referências id_chamado e designacao', anexo.id_chamado === 'GOP-AR-2026-TEST' && anexo.designacao === '312014');
+  printResult('3.3. Preservação do campo unidade_escolar', anexo.unidade_escolar === 'E. M. Nereu Sampaio');
 
-  // Persiste na ficha local da escola (Nereu Sampaio - designacao 312014)
-  const schoolDesignacao = '312014';
-  const list = schoolNotesState[schoolDesignacao] || [];
-  schoolNotesState[schoolDesignacao] = [newLogRecord, ...list];
+  // 3. Testar Listagem por Chamado
+  const anexosChamado = await listTicketAttachments(mockSupabaseClient, 'GOP-AR-2026-TEST');
+  printResult('3.4. Listagem correta por id_chamado', anexosChamado.length === 1 && anexosChamado[0].id === 1);
 
-  const persistedDoc = schoolNotesState[schoolDesignacao][0];
+  // 4. Testar Listagem por Escola (Lookup)
+  const anexosEscola = await listSchoolAttachments(mockSupabaseClient, '312014');
+  printResult('3.5. Listagem consolidada por designacao de escola', anexosEscola.length === 1 && anexosEscola[0].id === 1);
 
-  printResult('3.1. Salvamento do Laudo na Ficha Local da Escola', persistedDoc.id === 'SL-TEST-DOC');
-  printResult('3.2. Preservação de metadados críticos do arquivo', persistedDoc.docMeta.size === '1.45 MB' && persistedDoc.docMeta.type === 'application/pdf');
+  // 5. Testar Geração de URL de Download
+  const downloadUrl = getAttachmentDownloadUrl(mockSupabaseClient, anexo);
+  printResult('3.6. URL de download gerada a partir do storage_path com query param', downloadUrl.includes(anexo.storage_path) && downloadUrl.includes('?download='));
+
+  // 6. Testar Deleção de Anexo
+  const deleteOk = await deleteTicketAttachment(mockSupabaseClient, anexo);
+  const anexosPosDelete = await listTicketAttachments(mockSupabaseClient, 'GOP-AR-2026-TEST');
+  printResult('3.7. Deleção atômica física e lógica de anexo', deleteOk && anexosPosDelete.length === 0 && mockStorage.length === 0);
+
   console.log();
 } catch (e) {
   printResult('Teste 3 falhou criticamente', false, e.message);
