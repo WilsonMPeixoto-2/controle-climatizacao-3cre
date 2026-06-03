@@ -95,20 +95,27 @@ export async function deleteTicketAttachment(supabaseClient, attachment) {
   if (!supabaseClient) throw new Error('Base online não conectada.');
   if (!attachment) throw new Error('Anexo inválido.');
 
-  // 1. Exclui o arquivo físico no Storage
-  const { error: storageError } = await supabaseClient.storage
-    .from(attachment.bucket)
-    .remove([attachment.storage_path]);
-
-  if (storageError) throw storageError;
-
-  // 2. Exclui o registro lógico no banco
+  // 1. Exclui o registro lógico no banco primeiro para evitar link quebrado no frontend
   const { error: dbError } = await supabaseClient
     .from('anexos_chamado')
     .delete()
     .eq('id', attachment.id);
 
   if (dbError) throw dbError;
+
+  // 2. Exclui o arquivo físico no Storage
+  try {
+    const { error: storageError } = await supabaseClient.storage
+      .from(attachment.bucket)
+      .remove([attachment.storage_path]);
+
+    if (storageError) {
+      console.warn("Aviso: Falha ao remover arquivo físico do Storage após remoção lógica:", storageError);
+    }
+  } catch (err) {
+    console.warn("Aviso: Exceção ao remover arquivo físico do Storage:", err);
+  }
+
   return true;
 }
 

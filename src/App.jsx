@@ -22,7 +22,9 @@ import {
   MapPin, 
   Copy,
   Settings,
-  Cloud
+  Cloud,
+  Sparkles,
+  User
 } from 'lucide-react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
@@ -70,12 +72,13 @@ const initialTickets = dbData?.chamados || [];
 const initialSchools = dbData?.escolas || [];
 const initialHistory = dbData?.historico || [];
 const initialEmailTemplates = dbData?.modelos_email || [];
-const initialSelectedSchool = initialSchools[0] || null;
+const initialSelectedSchool = null;
 
 const buildEmailDraft = (templates, ticketList, ticketId, templateIndex) => {
-  const ticket = ticketList.find(t => t.id_chamado === ticketId) || ticketList[0];
+  if (!ticketId) return 'Selecione um chamado para gerar a minuta.';
+  const ticket = ticketList.find(t => t.id_chamado === ticketId);
   const templateText = templates[templateIndex]?.template || '';
-  return ticket ? compileEmailTemplate(templateText, ticket, todayRef()) : templateText;
+  return ticket ? compileEmailTemplate(templateText, ticket, todayRef()) : 'Chamado não encontrado.';
 };
 
 // Premium wrappers around Lucide Icons for drop-in backward compatibility
@@ -101,6 +104,8 @@ const IconPin = () => <MapPin size={18} strokeWidth={2.2} />;
 const IconCopy = () => <Copy size={18} strokeWidth={2.2} />;
 const IconSettings = () => <Settings size={18} strokeWidth={2.2} />;
 const IconFileText = () => <FileText size={18} strokeWidth={2.2} />;
+const IconSparkles = () => <Sparkles size={18} strokeWidth={2.2} />;
+const IconUser = () => <User size={18} strokeWidth={2.2} />;
 
 const EmptyState = ({ iconType, title, description, style = {} }) => {
   const renderIcon = () => {
@@ -401,22 +406,34 @@ export default function App() {
         
         // Atualiza o estado local do histórico
         setHistory(prev => [newHistoryEvent, ...prev]);
+
+        // Persiste no schoolLogs local para retrocompatibilidade e fallback
+        setSchoolLogs(prev => {
+          const list = prev[selectedSchool.designacao] || [];
+          return {
+            ...prev,
+            [selectedSchool.designacao]: [newLog, ...list]
+          };
+        });
+
+        setNewCommentText('');
+        triggerToast("Anotação técnica registrada na ficha!", "success");
       } catch (err) {
         console.error("Falha ao salvar histórico na nuvem:", err);
+        triggerToast("Erro ao registrar anotação técnica na nuvem.", "error");
       }
+    } else {
+      // Modo local offline
+      setSchoolLogs(prev => {
+        const list = prev[selectedSchool.designacao] || [];
+        return {
+          ...prev,
+          [selectedSchool.designacao]: [newLog, ...list]
+        };
+      });
+      setNewCommentText('');
+      triggerToast("Anotação técnica registrada localmente (Modo Offline)!", "info");
     }
-
-    // Persiste no schoolLogs local para retrocompatibilidade e fallback
-    setSchoolLogs(prev => {
-      const list = prev[selectedSchool.designacao] || [];
-      return {
-        ...prev,
-        [selectedSchool.designacao]: [newLog, ...list]
-      };
-    });
-
-    setNewCommentText('');
-    triggerToast("Anotação técnica registrada na ficha!", "success");
   }, [newCommentText, selectedSchool, cloudConnected, supabaseClient]);
 
   const refreshEmailDraft = (ticketId = selectedEmailTicketId, templateIndex = selectedTemplateIndex) => {
@@ -436,12 +453,19 @@ export default function App() {
   // Fecha o modal de edição com Esc e trava o scroll do fundo enquanto aberto
   useEffect(() => {
     if (!showEditModal) return;
-    const onKey = (e) => { if (e.key === 'Escape') setShowEditModal(false); };
+    const onKey = (e) => { 
+      if (e.key === 'Escape' && !isSavingTicket && !isSavingHistory) {
+        setShowEditModal(false);
+      } 
+    };
     const prevOverflow = document.body.style.overflow;
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
-  }, [showEditModal]);
+    return () => { 
+      document.removeEventListener('keydown', onKey); 
+      document.body.style.overflow = prevOverflow; 
+    };
+  }, [showEditModal, isSavingTicket, isSavingHistory]);
 
   // Carrega anexos consolidados da escola de forma reativa
   useEffect(() => {
@@ -828,7 +852,7 @@ export default function App() {
       <div className="operational-summary-card animate-slide-in">
         <div className="summary-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span className="summary-icon">✨</span>
+            <span className="summary-icon" style={{ display: 'inline-flex' }}><IconSparkles /></span>
             <h3 className="summary-title">Resumo operacional de hoje</h3>
           </div>
           <span className="summary-badge-editorial">Leitura Operacional</span>
@@ -1026,7 +1050,7 @@ export default function App() {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <div className="task-empty-icon" style={{ fontSize: '24px' }}>✨</div>
+              <div className="task-empty-icon" style={{ display: 'inline-flex', color: 'var(--primary)' }}><IconSparkles /></div>
               <div className="task-empty-title" style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-main)' }}>Tudo em dia!</div>
               <p className="task-empty-desc" style={{ fontSize: '12.5px', color: 'var(--text-light)', margin: 0 }}>
                 Nenhuma ação urgente pendente para os chamados cadastrados.
@@ -1177,7 +1201,19 @@ export default function App() {
       // 2. Insere os novos eventos de histórico na nuvem
       if (novosEventos.length > 0) {
         const { error: evErr } = await supabaseClient.from('historico').insert(novosEventos);
-        if (evErr) throw evErr;
+        if (evErr) {
+          // Rollback transacional compensatório: revertemos a atualização do chamado para seu estado anterior
+          console.error("Falha ao registrar histórico. Executando rollback do chamado...", evErr);
+          const { error: rollbackErr } = await supabaseClient
+            .from('chamados')
+            .update(oldTicket)
+            .eq('id_chamado', editingTicket.id_chamado);
+          
+          if (rollbackErr) {
+            console.error("ERRO GRAVE: Falha ao executar rollback compensatório no Supabase:", rollbackErr);
+          }
+          throw evErr;
+        }
       }
 
       // 3. Somente após sucesso na nuvem, atualiza o estado local do frontend
@@ -1281,7 +1317,18 @@ export default function App() {
           };
 
           const { error: evErr } = await supabaseClient.from('historico').insert(initialEvent);
-          if (evErr) throw evErr;
+          if (evErr) {
+            // Rollback transacional compensatório: removemos o chamado recém-criado para evitar registro órfão
+            console.error("Falha ao registrar histórico inicial. Executando rollback (deleção) do chamado...", evErr);
+            const { error: rollbackErr } = await supabaseClient
+              .from('chamados')
+              .delete()
+              .eq('id_chamado', dbRecord.id_chamado);
+            if (rollbackErr) {
+              console.error("ERRO GRAVE: Falha ao executar rollback (deleção) no Supabase:", rollbackErr);
+            }
+            throw evErr;
+          }
 
           finalEventRecord = initialEvent;
         } catch (err) {
@@ -3563,7 +3610,9 @@ export default function App() {
                           refreshEmailDraft(selectedEmailTicketId, idx);
                         }}
                       >
-                        <div className="template-item-title">📧 {tp.tipo}</div>
+                        <div className="template-item-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <IconMail /> {tp.tipo}
+                        </div>
                         <div className="template-item-meta">Etapa POP: {tp.etapa}</div>
                       </div>
                     ))}
@@ -3662,6 +3711,8 @@ export default function App() {
                       navigator.clipboard.writeText(customEmailBody);
                       triggerToast("Texto copiado para a área de transferência!");
                     }}
+                    disabled={!selectedEmailTicketId}
+                    style={!selectedEmailTicketId ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   >
                     <IconCopy />
                     <span>Copiar E-mail</span>
@@ -3840,7 +3891,7 @@ CREATE TABLE IF NOT EXISTS historico (
 
       {/* Edit Ticket & Ficha Técnica Modal */}
       {showEditModal && editingTicket && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+        <div className="modal-overlay" onClick={() => { if (!isSavingTicket && !isSavingHistory) setShowEditModal(false); }}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
@@ -3863,7 +3914,13 @@ CREATE TABLE IF NOT EXISTS historico (
                   {editingTicket.unidade_escolar} · Designação: {editingTicket.designacao}
                 </p>
               </div>
-              <button className="modal-close-btn" onClick={() => setShowEditModal(false)}><IconClose /></button>
+              <button 
+                className="modal-close-btn" 
+                onClick={() => { if (!isSavingTicket && !isSavingHistory) setShowEditModal(false); }}
+                disabled={isSavingTicket || isSavingHistory}
+              >
+                <IconClose />
+              </button>
             </div>
 
             <div className="modal-body">
@@ -3871,8 +3928,8 @@ CREATE TABLE IF NOT EXISTS historico (
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
                 {/* Left side: Editors */}
                 <div>
-                  <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                    ⚙️ Atualização Administrativa da GOP
+                  <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <IconSettings /> Atualização Administrativa da GOP
                   </h4>
 
                   {!supabaseClient && (
@@ -4299,8 +4356,13 @@ CREATE TABLE IF NOT EXISTS historico (
                         <div key={h.id_evento} className="timeline-event">
                           <div className="timeline-event-marker" />
                           <div className="timeline-event-card" style={{ padding: '8px 10px', position: 'relative' }}>
-                            <div className="timeline-event-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span>📅 {formatDateBrazilian(h.data)} · 👤 {h.responsavel_registro}</span>
+                            <div className="timeline-event-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <IconCalendar style={{ width: '13px', height: '13px' }} /> {formatDateBrazilian(h.data)}
+                              </span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                                <IconUser style={{ width: '13px', height: '13px' }} /> {h.responsavel_registro}
+                              </span>
                               {editingEventId !== h.id_evento && supabaseClient && (
                                 <button 
                                   onClick={() => {
@@ -4315,14 +4377,14 @@ CREATE TABLE IF NOT EXISTS historico (
                                     color: 'var(--primary)',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '2px',
+                                    gap: '4px',
                                     fontWeight: '700',
                                     padding: '2px 4px',
                                     borderRadius: '2px'
                                   }}
                                   title="Editar comentário do histórico"
                                 >
-                                  ✏️ Editar
+                                  <span>Editar</span>
                                 </button>
                               )}
                             </div>
@@ -4409,15 +4471,20 @@ CREATE TABLE IF NOT EXISTS historico (
                   <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Conecte a base online para salvar.</span>
                 </div>
               )}
-              <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={isSavingTicket}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => { if (!isSavingTicket && !isSavingHistory) setShowEditModal(false); }} 
+                disabled={isSavingTicket || isSavingHistory}
+              >
                 Fechar
               </button>
               <button 
                 type="button" 
                 className="btn btn-primary" 
                 onClick={saveEditedTicket}
-                disabled={!supabaseClient || isSavingTicket}
-                style={!supabaseClient || isSavingTicket ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                disabled={!supabaseClient || isSavingTicket || isSavingHistory}
+                style={!supabaseClient || isSavingTicket || isSavingHistory ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               >
                 {isSavingTicket ? (
                   <span>Salvando...</span>

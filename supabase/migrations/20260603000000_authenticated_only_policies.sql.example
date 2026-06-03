@@ -1,0 +1,83 @@
+-- 20260603000000_authenticated_only_policies.sql.example
+--
+-- EXTRATO DE POLÍTICAS DE ENDURECIMENTO (RLS) PARA PRODUÇÃO
+--
+-- ATENÇÃO: Não execute este arquivo diretamente até que a autenticação de usuários
+-- (Supabase Auth) esteja totalmente integrada no frontend do aplicativo.
+-- A ativação destas políticas bloqueará o acesso anônimo (anon) de leitura/escrita.
+
+-- ============================================================================
+-- 1. Restrição de Leitura e Escrita de Escolas, Modelos de E-mail
+-- ============================================================================
+
+-- Permite leitura de escolas apenas para usuários autenticados
+DROP POLICY IF EXISTS "Permitir leitura pública de escolas" ON escolas;
+CREATE POLICY "Permitir leitura de escolas para autenticados" ON escolas 
+  FOR SELECT TO authenticated USING (true);
+
+-- Permite leitura de modelos_email apenas para usuários autenticados
+DROP POLICY IF EXISTS "Permitir leitura pública de modelos_email" ON modelos_email;
+CREATE POLICY "Permitir leitura de modelos_email para autenticados" ON modelos_email 
+  FOR SELECT TO authenticated USING (true);
+
+-- ============================================================================
+-- 2. Restrição de Chamados e Histórico (Operacional GOP)
+-- ============================================================================
+
+-- Leitura de chamados restrita a autenticados
+DROP POLICY IF EXISTS "Permitir leitura pública de chamados" ON chamados;
+CREATE POLICY "Permitir leitura de chamados para autenticados" ON chamados 
+  FOR SELECT TO authenticated USING (true);
+
+-- Inserção de chamados restrita a autenticados
+DROP POLICY IF EXISTS "Permitir inserção de chamados" ON chamados;
+CREATE POLICY "Permitir inserção de chamados por autenticados" ON chamados 
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+-- Atualização de chamados restrita a autenticados
+DROP POLICY IF EXISTS "Permitir atualização de chamados" ON chamados;
+CREATE POLICY "Permitir atualização de chamados por autenticados" ON chamados 
+  FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+-- Leitura de histórico restrita a autenticados
+DROP POLICY IF EXISTS "Permitir leitura pública de historico" ON historico;
+CREATE POLICY "Permitir leitura de historico para autenticados" ON historico 
+  FOR SELECT TO authenticated USING (true);
+
+-- Inserção de histórico restrita a autenticados
+DROP POLICY IF EXISTS "Permitir inserção de historico" ON historico;
+CREATE POLICY "Permitir inserção de historico por autenticados" ON historico 
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+-- ============================================================================
+-- 3. Restrição de Metadados e Arquivos Físicos (Storage)
+-- ============================================================================
+
+-- Anexos (Metadados do Banco de Dados)
+DROP POLICY IF EXISTS "Permitir leitura pública de anexos_chamado" ON anexos_chamado;
+CREATE POLICY "Permitir leitura de anexos_chamado para autenticados" ON anexos_chamado 
+  FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Permitir inserção de anexos_chamado" ON anexos_chamado;
+CREATE POLICY "Permitir inserção de anexos_chamado por autenticados" ON anexos_chamado 
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Permitir exclusão de anexos_chamado" ON anexos_chamado;
+CREATE POLICY "Permitir exclusão de anexos_chamado por autenticados" ON anexos_chamado 
+  FOR DELETE TO authenticated USING (true);
+
+-- Objetos Físicos (Supabase Storage bucket gop-anexos)
+DROP POLICY IF EXISTS "Permitir leitura pública de anexos em gop-anexos" ON storage.objects;
+CREATE POLICY "Permitir leitura de anexos em gop-anexos para autenticados" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'gop-anexos' AND (storage.foldername(name))[1] = 'chamados');
+
+DROP POLICY IF EXISTS "Permitir upload de anexos no subdiretorio chamados em gop-anexos" ON storage.objects;
+CREATE POLICY "Permitir upload de anexos no subdiretorio chamados em gop-anexos para autenticados" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'gop-anexos' AND (storage.foldername(name))[1] = 'chamados');
+
+DROP POLICY IF EXISTS "Permitir exclusão de anexos no subdiretorio chamados em gop-anexos" ON storage.objects;
+CREATE POLICY "Permitir exclusão de anexos no subdiretorio chamados em gop-anexos para autenticados" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'gop-anexos' AND (storage.foldername(name))[1] = 'chamados');

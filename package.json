@@ -8,6 +8,8 @@
     "build": "npm run lint && npm run test && vite build",
     "lint": "eslint .",
     "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/school-dossier.test.mjs && node test/smoke.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
     "preview": "vite preview"
   },
   "dependencies": {

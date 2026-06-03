@@ -82,6 +82,7 @@ export function getOperationalSummary(tickets, schools, allAttachments, ref = ne
       id_chamado: t.id_chamado,
       score: calculateUrgencyScore(t, allAttachments, ref)
     }))
+    .filter(item => item.score > 0) // Recomenda apenas se houver pontuação de urgência > 0
     .sort((a, b) => b.score - a.score || a.id_chamado.localeCompare(b.id_chamado))
     .slice(0, 3)
     .map(item => item.id_chamado);
@@ -116,6 +117,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
 
   for (const item of eligibleTickets) {
     const t = item.ticket;
+    if (processedTickets.has(t.id_chamado)) continue; // Evita duplicar chamados com múltiplos gatilhos
     const statusLower = (t.status_atual || '').toLowerCase();
     const provLower = (t.proxima_providencia || '').toLowerCase();
 

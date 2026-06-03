@@ -186,8 +186,12 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
 
     // Corrige renderizações tardias do container CSS com segurança
     const t = setTimeout(() => {
-      if (mapRef.current) {
-        mapRef.current.invalidateSize();
+      try {
+        if (mapRef.current && elRef.current?.isConnected) {
+          mapRef.current.invalidateSize();
+        }
+      } catch (e) {
+        console.warn("Leaflet: Erro ao invalidar tamanho no timeout:", e);
       }
     }, 80);
 
@@ -195,8 +199,12 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
     let resizeObserver;
     if (window.ResizeObserver && elRef.current) {
       resizeObserver = new ResizeObserver(() => {
-        if (mapRef.current) {
-          mapRef.current.invalidateSize();
+        try {
+          if (mapRef.current && elRef.current?.isConnected) {
+            mapRef.current.invalidateSize();
+          }
+        } catch (e) {
+          console.warn("Leaflet: Erro ao invalidar tamanho no ResizeObserver:", e);
         }
       });
       resizeObserver.observe(elRef.current);
@@ -208,7 +216,11 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       }
       clearTimeout(t);
       if (mapRef.current) {
-        mapRef.current.remove();
+        try {
+          mapRef.current.remove();
+        } catch (e) {
+          console.warn("Leaflet: Erro ao remover mapa no cleanup:", e);
+        }
       }
       mapRef.current = null;
       tileLayerRef.current = null;
@@ -273,54 +285,70 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
 
   // 4. Efeito de Realce e Foco por Polígono da Escola Selecionada (Consulta Rápida)
   useEffect(() => {
-    if (!mapRef.current || !geoJsonRef.current || !selectedSchool) return;
+    if (!mapRef.current || !geoJsonRef.current || !selectedSchool || !elRef.current?.isConnected) return;
 
-    const schoolBairro = selectedSchool.bairro;
-    if (!schoolBairro) return;
+    try {
+      const schoolBairro = selectedSchool.bairro;
+      if (!schoolBairro) return;
 
-    const normalized = normalizeString(schoolBairro);
-    const layer = layersRef.current[normalized];
+      const normalized = normalizeString(schoolBairro);
+      const layer = layersRef.current[normalized];
 
-    if (layer) {
-      // Reseta os estilos anteriores de todas as camadas
-      geoJsonRef.current.eachLayer((lyr) => {
-        geoJsonRef.current.resetStyle(lyr);
-      });
+      if (layer && mapRef.current && geoJsonRef.current) {
+        // Reseta os estilos anteriores de todas as camadas
+        geoJsonRef.current.eachLayer((lyr) => {
+          try {
+            geoJsonRef.current.resetStyle(lyr);
+          } catch (err) {
+            console.warn("Leaflet: erro ao resetar estilo da camada", err);
+          }
+        });
 
-      // Aplica realce estrito no polígono do bairro
-      layer.setStyle({
-        weight: 3.5,
-        color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
-        fillOpacity: 0.35,
-      });
+        // Aplica realce estrito no polígono do bairro
+        layer.setStyle({
+          weight: 3.5,
+          color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
+          fillOpacity: 0.35,
+        });
 
-      // Dá zoom e centraliza nos limites do polígono geográfico (Sem geocodificar coordenadas da escola)
-      mapRef.current.fitBounds(layer.getBounds(), { padding: [40, 40] });
+        // Dá zoom e centraliza nos limites do polígono geográfico (Sem geocodificar coordenadas da escola)
+        mapRef.current.fitBounds(layer.getBounds(), { padding: [40, 40] });
+      }
+    } catch (e) {
+      console.warn("Leaflet: Erro no realce da escola selecionada:", e);
     }
   }, [selectedSchool]);
 
   // 5. Efeito de Foco Territorial por Clique no Card Lateral de Detalhes
   useEffect(() => {
-    if (!mapRef.current || !geoJsonRef.current || !focusedBairro) return;
+    if (!mapRef.current || !geoJsonRef.current || !focusedBairro || !elRef.current?.isConnected) return;
 
-    const normalized = focusedBairro.name;
-    const layer = layersRef.current[normalized];
+    try {
+      const normalized = focusedBairro.name;
+      const layer = layersRef.current[normalized];
 
-    if (layer) {
-      // Reseta os estilos anteriores de todas as camadas
-      geoJsonRef.current.eachLayer((lyr) => {
-        geoJsonRef.current.resetStyle(lyr);
-      });
+      if (layer && mapRef.current && geoJsonRef.current) {
+        // Reseta os estilos anteriores de todas as camadas
+        geoJsonRef.current.eachLayer((lyr) => {
+          try {
+            geoJsonRef.current.resetStyle(lyr);
+          } catch (err) {
+            console.warn("Leaflet: erro ao resetar estilo da camada", err);
+          }
+        });
 
-      // Aplica realce estrito no polígono do bairro
-      layer.setStyle({
-        weight: 3.5,
-        color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
-        fillOpacity: 0.35,
-      });
+        // Aplica realce estrito no polígono do bairro
+        layer.setStyle({
+          weight: 3.5,
+          color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
+          fillOpacity: 0.35,
+        });
 
-      // Dá zoom e centraliza nos limites do polígono geográfico de forma suave (flyToBounds)
-      mapRef.current.flyToBounds(layer.getBounds(), { padding: [40, 40], duration: 1.2 });
+        // Dá zoom e centraliza nos limites do polígono geográfico de forma suave (flyToBounds)
+        mapRef.current.flyToBounds(layer.getBounds(), { padding: [40, 40], duration: 1.2 });
+      }
+    } catch (e) {
+      console.warn("Leaflet: Erro no foco territorial do bairro:", e);
     }
   }, [focusedBairro]);
 

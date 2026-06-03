@@ -29,3 +29,8 @@ dist-ssr
 *.sw?
 .vercel
 .env*.local
+
+# Playwright
+test-results/
+playwright-report/
+recovered_steps.json
