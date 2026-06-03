@@ -2511,7 +2511,16 @@ html:not(.dark-theme) .main-portal-title {
   display: block;
 }
 
+.print-only-header {
+  display: none !important;
+}
+
 /* Print Media Query for clean native PDF generation */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
 @media print {
   body {
     background-color: #ffffff !important;
@@ -2521,6 +2530,22 @@ html:not(.dark-theme) .main-portal-title {
   
   .sidebar, .main-header, .suggestion-container, .btn, .btn-copy-summary, .table-toolbar, .view-tabs, .admin-advanced, .email-preview-actions, .theme-toggle-header, button, .no-print, input, textarea, select {
     display: none !important;
+  }
+  
+  /* Sobrescrita de escopo específica para a impressão do Dossiê */
+  body.printing-school-dossier .lookup-sidebar {
+    display: none !important;
+  }
+
+  body.printing-school-dossier .print-only-header {
+    display: block !important;
+  }
+
+  body.printing-school-dossier .school-dossier-print-scope {
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    display: block !important;
   }
   
   .main-content {
@@ -2536,7 +2561,6 @@ html:not(.dark-theme) .main-portal-title {
   }
   
   .dashboard-section {
-    page-break-inside: avoid !important;
     border: 1px solid #ddd !important;
     background-color: #ffffff !important;
     color: #000000 !important;
@@ -2544,6 +2568,17 @@ html:not(.dark-theme) .main-portal-title {
     padding: 15px !important;
     box-shadow: none !important;
     border-radius: 8px !important;
+  }
+
+  /* Evitar quebras ruins de página em seções e cards */
+  .dossier-section,
+  .dossier-header-section,
+  .dossier-stat-card,
+  .dossier-evidence-row,
+  .timeline-event,
+  .timeline-event-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
   
   .school-indicator {
@@ -2787,5 +2822,62 @@ html:not(.dark-theme) .main-portal-title {
   background-color: var(--primary) !important;
   color: var(--text-on-primary) !important;
   box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+/* Reusable Premium Empty States */
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 24px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  transition: var(--transition);
+  max-width: 100%;
+}
+
+.empty-state-container:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.empty-state-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  margin-bottom: 14px;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  transition: var(--transition);
+}
+
+.empty-state-container:hover .empty-state-icon-wrapper {
+  transform: scale(1.05);
+  background: var(--primary);
+  color: var(--text-on-primary);
+}
+
+.empty-state-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+  letter-spacing: 0.2px;
+}
+
+.empty-state-description {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+  max-width: 320px;
+  line-height: 1.45;
 }
 

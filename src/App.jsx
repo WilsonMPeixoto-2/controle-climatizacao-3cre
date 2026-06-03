@@ -1,4 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import { 
+  LayoutDashboard, 
+  ListTodo, 
+  Search, 
+  FileText, 
+  Mail, 
+  Sun, 
+  Moon, 
+  Plus, 
+  FolderOpen, 
+  RefreshCw, 
+  AlertTriangle, 
+  AlertOctagon, 
+  Building2, 
+  Clock, 
+  Calendar, 
+  Check, 
+  X, 
+  Compass, 
+  MapPin, 
+  Copy,
+  Settings,
+  Cloud
+} from 'lucide-react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
 import { Analytics } from '@vercel/analytics/react';
@@ -13,7 +38,6 @@ import {
   stuckRanking,
   filterBySector,
   sectorSummary,
-  suggestedActionColor,
   compileEmailTemplate,
   searchSchools,
   stageGroupCounts,
@@ -26,6 +50,9 @@ import {
   getOperationalSummary,
   getActionItems
 } from './lib/operationalIntelligence.js';
+import {
+  getSchoolDossierData
+} from './lib/schoolDossier.js';
 import {
   uploadTicketAttachment,
   listTicketAttachments,
@@ -51,107 +78,94 @@ const buildEmailDraft = (templates, ticketList, ticketId, templateIndex) => {
   return ticket ? compileEmailTemplate(templateText, ticket, todayRef()) : templateText;
 };
 
-// Premium, Minimalist SVG Icon Components (Lucide-inspired)
-const IconDashboard = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-);
+// Premium wrappers around Lucide Icons for drop-in backward compatibility
+const IconDashboard = () => <LayoutDashboard size={18} strokeWidth={2.2} />;
+const IconList = () => <ListTodo size={18} strokeWidth={2.2} />;
+const IconSearch = () => <Search size={18} strokeWidth={2.2} />;
+const IconForm = () => <FileText size={18} strokeWidth={2.2} />;
+const IconMail = () => <Mail size={18} strokeWidth={2.2} />;
+const IconSun = () => <Sun size={18} strokeWidth={2.2} />;
+const IconMoon = () => <Moon size={18} strokeWidth={2.2} />;
+const IconPlus = () => <Plus size={18} strokeWidth={2.2} />;
+const IconFolder = () => <FolderOpen size={18} strokeWidth={2.2} />;
+const IconRefresh = () => <RefreshCw size={18} strokeWidth={2.2} />;
+const IconWarning = () => <AlertTriangle size={18} strokeWidth={2.2} />;
+const IconSiren = () => <AlertOctagon size={18} strokeWidth={2.2} />;
+const IconBuilding = () => <Building2 size={18} strokeWidth={2.2} />;
+const IconClock = () => <Clock size={18} strokeWidth={2.2} />;
+const IconCalendar = () => <Calendar size={18} strokeWidth={2.2} />;
+const IconCheck = () => <Check size={18} strokeWidth={2.2} />;
+const IconClose = () => <X size={18} strokeWidth={2.2} />;
+const IconFocus = () => <Compass size={18} strokeWidth={2.2} />;
+const IconPin = () => <MapPin size={18} strokeWidth={2.2} />;
+const IconCopy = () => <Copy size={18} strokeWidth={2.2} />;
+const IconSettings = () => <Settings size={18} strokeWidth={2.2} />;
+const IconFileText = () => <FileText size={18} strokeWidth={2.2} />;
 
-const IconList = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-);
+const EmptyState = ({ iconType, title, description, style = {} }) => {
+  const renderIcon = () => {
+    switch (iconType) {
+      case 'search':
+        return (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        );
+      case 'attachment':
+        return (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+          </svg>
+        );
+      case 'ticket':
+        return (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+        );
+      case 'history':
+        return (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+            <path d="M12 2a10 10 0 0 0-7.38 16.72" strokeDasharray="3 3" />
+          </svg>
+        );
+      default:
+        return (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        );
+    }
+  };
 
-const IconSearch = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-);
+  return (
+    <div className="empty-state-container" style={style}>
+      <div className="empty-state-icon-wrapper">
+        {renderIcon()}
+      </div>
+      <h4 className="empty-state-title">{title}</h4>
+      <p className="empty-state-description">{description}</p>
+    </div>
+  );
+};
 
-const IconForm = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-);
-
-const IconMail = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-);
-
-const IconSun = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-);
-
-const IconMoon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-);
-
-const IconPlus = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-);
-
-const IconFolder = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-);
-
-const IconRefresh = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-);
-
-const IconWarning = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-);
-
-const IconSiren = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-);
-
-const IconBuilding = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="16"/><line x1="15" y1="22" x2="15" y2="16"/><line x1="9" y1="16" x2="15" y2="16"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/><path d="M12 14h.01"/></svg>
-);
-
-const IconClock = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-);
-
-const IconCalendar = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-);
-
-const IconCheck = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-);
-
-const IconClose = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-);
-
-const IconFocus = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-);
-
-const IconPin = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="12" r="3"/></svg>
-);
-
-const IconCopy = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-);
-
-const IconSettings = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-);
-
-const IconFileText = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-);
-
-const IconCloud = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-.08A7 7 0 0 0 4.75 8.75a6 6 0 0 0-1.56 11.23A5 5 0 0 0 8 20h10a5 5 0 0 0 0-10z"/></svg>
-);
-
-const IconInfo = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-);
+const IconCloud = () => <Cloud size={18} strokeWidth={2.2} />;
+const IconInfo = (props) => <AlertTriangle {...props} size={18} strokeWidth={2.2} />;
 
 const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'email', 'cloud'];
 const VALID_THEMES = ['dark', 'light'];
 
 export default function App() {
+  const dossierRef = useRef(null);
   const [initialCloudConfig] = useState(() => ({
     url: import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_url') || '',
     key: import.meta.env.VITE_SUPABASE_KEY || localStorage.getItem('supabase_key') || ''
@@ -1415,6 +1429,18 @@ export default function App() {
     triggerToast(`Resumo de ${type} copiado para a área de transferência!`, "success");
   };
 
+  const handlePrintSchoolDossier = useReactToPrint({
+    contentRef: dossierRef,
+    documentTitle: `Dossie_Tecnico_${selectedSchool ? selectedSchool.designacao : 'Escola'}`,
+    onBeforePrint: () => {
+      document.body.classList.add('printing-school-dossier');
+      return Promise.resolve();
+    },
+    onAfterPrint: () => {
+      document.body.classList.remove('printing-school-dossier');
+    }
+  });
+
   const handleExportCSV = () => {
     const filtered = getFilteredTickets();
     if (filtered.length === 0) {
@@ -1916,7 +1942,12 @@ export default function App() {
                               );
                             })}
                             {bData.chamados_lista.length === 0 && (
-                              <p className="bairro-no-tickets">Nenhum chamado ativo neste bairro.</p>
+                              <EmptyState 
+                                iconType="ticket"
+                                title="Nenhum chamado ativo"
+                                description="Nenhum chamado ativo pendente neste bairro."
+                                style={{ padding: '16px 12px' }}
+                              />
                             )}
                           </div>
                         </div>
@@ -2390,8 +2421,13 @@ export default function App() {
                   })}
                   {getFilteredTickets().length === 0 && (
                     <tr>
-                      <td colSpan="9" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-light)', fontWeight: '600' }}>
-                        Nenhum chamado encontrado para os filtros atuais.
+                      <td colSpan="9" style={{ padding: '30px 10px' }}>
+                        <EmptyState 
+                          iconType="search"
+                          title="Nenhum chamado encontrado"
+                          description="Ajuste os filtros ou pesquise por escola, bairro, status ou ID do chamado."
+                          style={{ margin: '0 auto', maxWidth: '480px' }}
+                        />
                       </td>
                     </tr>
                   )}
@@ -2402,587 +2438,753 @@ export default function App() {
         )}
 
         {/* School Lookup Tab */}
-        {currentTab === 'lookup' && (
-          <div className="school-grid-layout">
-            {/* Left Column: School registry lookups */}
-            <div className="dashboard-section">
-              <div className="section-header">
-                <h3><IconBuilding /> Cadastro Vivo 3ª CRE — Consulta Rápida</h3>
-              </div>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
-                Pesquise uma escola pelo nome, designação, SICI ou bairro para consultar a ficha da unidade e seus chamados vinculados.
-              </p>
+        {currentTab === 'lookup' && (() => {
+          const dossier = selectedSchool
+            ? getSchoolDossierData({
+                school: selectedSchool,
+                tickets,
+                history,
+                schoolLogs,
+                refDate: todayRef()
+              })
+            : null;
 
-              {/* Autocomplete Input */}
-              <div className="suggestion-container" style={{ marginBottom: '24px' }}>
-                <div className="input-search">
-                  <IconSearch />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Digite o nome da escola ou designação..."
-                    value={lookupSchoolQuery}
-                    onChange={(e) => {
-                      setLookupSchoolQuery(e.target.value);
-                      setShowLookupSuggestions(true);
-                    }}
-                    onFocus={() => setShowLookupSuggestions(true)}
-                  />
-                </div>
-                
-                {showLookupSuggestions && lookupSchoolQuery && (
-                  <div className="suggestion-box">
-                    {searchSchools(schools, lookupSchoolQuery).map(s => (
-                      <div 
-                        key={s.designacao}
-                        className="suggestion-item"
-                        onClick={() => {
-                          setSelectedSchool(s);
-                          setLookupSchoolQuery(s.unidade_escolar);
-                          setShowLookupSuggestions(false);
+          return (
+            <div className="school-grid-layout">
+              {/* Left Column: Sidebar Controls (no-print) */}
+              <div className="lookup-sidebar no-print">
+                {/* Search box */}
+                <div className="dashboard-section compact-search-section">
+                  <div className="section-header">
+                    <h3><IconBuilding /> Dossiê da Escola</h3>
+                  </div>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: '1.45', fontWeight: '500' }}>
+                    Pesquise pelo nome, designação ou bairro.
+                  </p>
+
+                  <div className="suggestion-container" style={{ marginBottom: '16px' }}>
+                    <div className="input-search">
+                      <IconSearch />
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Nome ou designação..."
+                        value={lookupSchoolQuery}
+                        onChange={(e) => {
+                          setLookupSchoolQuery(e.target.value);
+                          setShowLookupSuggestions(true);
                         }}
-                      >
-                        🏢 {s.unidade_escolar} ({s.designacao})
-                      </div>
-                    ))}
-                    {searchSchools(schools, lookupSchoolQuery).length === 0 && (
-                      <div style={{ padding: '10px 14px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600' }}>
-                        Nenhuma escola correspondente
+                        onFocus={() => setShowLookupSuggestions(true)}
+                      />
+                    </div>
+                    
+                    {showLookupSuggestions && lookupSchoolQuery && (
+                      <div className="suggestion-box">
+                        {searchSchools(schools, lookupSchoolQuery).map(s => (
+                          <div 
+                            key={s.designacao}
+                            className="suggestion-item"
+                            onClick={() => {
+                              setSelectedSchool(s);
+                              setLookupSchoolQuery(s.unidade_escolar);
+                              setShowLookupSuggestions(false);
+                            }}
+                          >
+                            🏢 {s.unidade_escolar} ({s.designacao})
+                          </div>
+                        ))}
+                        {searchSchools(schools, lookupSchoolQuery).length === 0 && (
+                          <div style={{ padding: '12px 14px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '15px' }}>🔍</span>
+                            <span>Nenhuma escola encontrada</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
 
-              {selectedSchool && (
-                <div className="school-details-card">
-                  <div style={{ 
-                    padding: '18px', 
-                    borderRadius: 'var(--radius-xs)', 
-                    background: 'var(--primary-light)', 
-                    borderLeft: '4px solid var(--primary)',
-                    marginBottom: '14px'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                      <h4 style={{ fontWeight: '850', fontSize: '16px', color: 'var(--primary)', margin: 0 }}>
-                        {selectedSchool.unidade_escolar}
-                      </h4>
+                {/* Quick actions card */}
+                {selectedSchool && (
+                  <div className="dashboard-section compact-actions-section">
+                    <div className="section-header">
+                      <h3>Ações Rápidas</h3>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <button 
-                        className="btn-copy-summary" 
-                        onClick={() => handleCopySummary(
-                          `Escola: ${selectedSchool.unidade_escolar}\nDesignação: ${selectedSchool.designacao}\nSICI: ${selectedSchool.sici}\nBairro: ${selectedSchool.bairro}\nSalas de Aula: ${selectedSchool.qtd_salas_de_aula}\nClimatizadas: ${selectedSchool.aparelhos_em_sala}\nNecessidade: ${selectedSchool.necessidade_aparelhos} aparelhos\nAção: ${selectedSchool.acao_sugerida}`, 
-                          'escola'
-                        )} 
-                        title="Copiar ficha técnica da escola"
+                        onClick={() => {
+                          setFormSelectedSchool(selectedSchool);
+                          setFormSearchQuery(selectedSchool.unidade_escolar);
+                          setNewTicket(prev => ({
+                            ...prev,
+                            local_demanda: '',
+                            observacoes: `Ficha da Escola: Salas: ${selectedSchool.qtd_salas_de_aula}, Climatizadas: ${selectedSchool.aparelhos_em_sala}, Necessidade: ${selectedSchool.necessidade_aparelhos} aparelhos.`
+                          }));
+                          setCurrentTab('form');
+                          triggerToast(`Escola ${selectedSchool.unidade_escolar} vinculada no formulário de registro!`, "info");
+                        }}
+                        className="btn btn-primary"
+                        style={{ 
+                          width: '100%', 
+                          fontSize: '12.5px', 
+                          fontWeight: '700', 
+                          padding: '10px 14px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
                       >
-                        <IconCopy />
+                        <IconPlus /> Registrar chamado para esta unidade
+                      </button>
+                      
+                      <button 
+                        onClick={() => {
+                          setTicketSearch(selectedSchool.unidade_escolar);
+                          setActiveListsView('all');
+                          setCurrentTab('tickets');
+                          triggerToast(`Filtrando chamados para a escola ${selectedSchool.unidade_escolar}!`, "info");
+                        }}
+                        className="btn select-filter"
+                        style={{ 
+                          width: '100%', 
+                          fontSize: '12.5px', 
+                          fontWeight: '700', 
+                          padding: '10px 14px', 
+                          border: '1px solid var(--border-color)',
+                          backgroundColor: 'var(--bg-app)',
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <IconSearch /> Ver chamados desta unidade
                       </button>
                     </div>
-                    <span style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '700', marginTop: '4px', display: 'block' }}>
-                      Designação: {selectedSchool.designacao} · Código SICI: {selectedSchool.sici}
-                    </span>
                   </div>
+                )}
 
-                  {/* Circular Coverage progress */}
-                  {renderCircularCoverage(selectedSchool)}
-
-                  <div className="school-detail-row">
-                    <span className="school-detail-label">Endereço</span>
-                    <span className="school-detail-value">{selectedSchool.endereco}</span>
+                {/* Status legend box */}
+                <div className="dashboard-section legend-section">
+                  <div className="section-header">
+                    <h3>Status de Climatização</h3>
                   </div>
-                  <div className="school-detail-row">
-                    <span className="school-detail-label">Bairro</span>
-                    <span className="school-detail-value">{selectedSchool.bairro}</span>
-                  </div>
-                  <div className="school-detail-row">
-                    <span className="school-detail-label">Total Salas de Aula</span>
-                    <span className="school-detail-value">{selectedSchool.qtd_salas_de_aula}</span>
-                  </div>
-                  <div className="school-detail-row">
-                    <span className="school-detail-label">Aparelhos em Sala</span>
-                    <span className="school-detail-value">{selectedSchool.aparelhos_em_sala}</span>
-                  </div>
-                  <div className="school-detail-row">
-                    <span className="school-detail-label">Aparelhos Total (Escola)</span>
-                    <span className="school-detail-value">{selectedSchool.aparelhos_total}</span>
-                  </div>
-                  <div className="school-detail-row" style={{ borderBottomColor: 'var(--primary-light)' }}>
-                    <span className="school-detail-label" style={{ color: 'var(--color-red)' }}>Salas Sem Aparelho</span>
-                    <span className="school-detail-value" style={{ color: 'var(--color-red)' }}>{selectedSchool.salas_sem_aparelho}</span>
-                  </div>
-                  <div className="school-detail-row" style={{ borderBottomColor: 'var(--primary-light)' }}>
-                    <span className="school-detail-label" style={{ color: 'var(--color-orange)' }}>Necessidade Estimada</span>
-                    <span className="school-detail-value" style={{ color: 'var(--color-orange)' }}>{selectedSchool.necessidade_aparelhos} aparelhos</span>
-                  </div>
-
-                  <div style={{ marginTop: '16px' }}>
-                    <div style={{ fontSize: '11.5px', textTransform: 'uppercase', fontWeight: '800', color: 'var(--text-light)', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                      Status de Validação de Cadastro
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <div className="school-indicator" style={{
-                        backgroundColor: selectedSchool.confirmado_pela_unidade === 'Sim' ? 'var(--color-green-tint)' : 'var(--color-red-tint)',
-                        color: selectedSchool.confirmado_pela_unidade === 'Sim' ? 'var(--color-green)' : 'var(--color-red)'
-                      }}>
-                        {selectedSchool.confirmado_pela_unidade === 'Sim' ? '✓ Confirmado Unidade' : '✗ Não Confirmado'}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <span className="legend-dot status-regular-dot" style={{ backgroundColor: 'var(--color-green)', width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0, marginTop: '5px' }}></span>
+                      <div>
+                        <strong style={{ fontSize: '12.5px', color: 'var(--text-main)', display: 'block' }}>Situação Regular</strong>
+                        <span style={{ fontSize: '11.5px', color: 'var(--text-light)' }}>Climatização satisfatória, dados validados e sem chamados ativos.</span>
                       </div>
-                      <div className="school-indicator" style={{
-                        backgroundColor: selectedSchool.validado_pela_gop === 'Sim' ? 'var(--color-green-tint)' : 'var(--color-red-tint)',
-                        color: selectedSchool.validado_pela_gop === 'Sim' ? 'var(--color-green)' : 'var(--color-red)'
-                      }}>
-                        {selectedSchool.validado_pela_gop === 'Sim' ? '✓ Validado GOP' : '✗ Não Validado'}
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <span className="legend-dot status-atencao-dot" style={{ backgroundColor: 'var(--color-amber)', width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0, marginTop: '5px' }}></span>
+                      <div>
+                        <strong style={{ fontSize: '12.5px', color: 'var(--text-main)', display: 'block' }}>Em Atenção</strong>
+                        <span style={{ fontSize: '11.5px', color: 'var(--text-light)' }}>Dados não validados/confirmados, salas sem aparelho ou chamado ativo comum.</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <span className="legend-dot status-critica-dot" style={{ backgroundColor: 'var(--color-red)', width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0, marginTop: '5px' }}></span>
+                      <div>
+                        <strong style={{ fontSize: '12.5px', color: 'var(--text-main)', display: 'block' }}>Situação Crítica</strong>
+                        <span style={{ fontSize: '11.5px', color: 'var(--text-light)' }}>Possui chamados críticos/altos, cobertura &lt; 30% ou pendência crônica inativa.</span>
                       </div>
                     </div>
                   </div>
+                  <p style={{ fontSize: '11px', color: 'var(--text-light)', fontStyle: 'italic', marginTop: '16px', marginBottom: 0, borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+                    A classificação é calculada automaticamente com base nos dados cadastrados, chamados ativos e validações disponíveis.
+                  </p>
+                </div>
+              </div>
 
-                  {(() => {
-                    const acColor = suggestedActionColor(selectedSchool);
-                    const acVar = acColor === 'red' ? 'var(--color-red)'
-                                : acColor === 'amber' ? 'var(--color-amber)'
-                                : 'var(--color-green)';
-                    return (
+              {/* Right Column: School Executive Dossier (school-dossier-print-scope) */}
+              <div ref={dossierRef} className="school-dossier-print-scope">
+                {!selectedSchool ? (
+                  <div className="dashboard-section empty-dossier-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center', minHeight: '400px' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏢</div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>Dossiê Executivo da Unidade</h3>
+                    <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginTop: '8px', maxWidth: '380px', lineHeight: '1.5' }}>
+                      Selecione uma escola no painel de busca à esquerda para carregar a ficha técnica institucional e o histórico consolidado.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* PRINT ONLY HEADER */}
+                    <div className="print-only-header" style={{ marginBottom: '24px' }}>
+                      <div style={{ textAlign: 'center', borderBottom: '2px solid var(--text-main)', paddingBottom: '12px' }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0 }}>PREFEITURA DA CIDADE DO RIO DE JANEIRO</h2>
+                        <p style={{ fontSize: '13px', margin: '4px 0 0 0', textTransform: 'uppercase', fontWeight: '700', color: 'var(--text-muted)' }}>
+                          3ª Coordenadoria Regional de Educação · GOP Clima
+                        </p>
+                        <h3 style={{ fontSize: '16px', fontWeight: '800', marginTop: '12px', color: 'var(--primary)' }}>
+                          Dossiê Técnico-Executivo da Unidade Escolar
+                        </h3>
+                        <p style={{ fontSize: '12.5px', color: 'var(--text-light)', margin: '4px 0 0 0' }}>
+                          Emitido em {formatDateBrazilian(todayRef().toISOString())} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · Responsável: GOP / 3ª CRE
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Cabeçalho do Dossiê */}
+                    <div className="dashboard-section dossier-header-section" style={{ padding: '24px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+                        <div style={{ flex: 1, minWidth: '250px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Ficha Técnica Consolidada
+                          </span>
+                          <h2 style={{ fontSize: '22px', fontWeight: '850', color: 'var(--text-main)', margin: '4px 0 6px 0', lineHeight: '1.2' }}>
+                            {selectedSchool.unidade_escolar}
+                          </h2>
+                          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '13px', color: 'var(--text-light)', fontWeight: '600' }}>
+                            <span>Designação: <strong>{selectedSchool.designacao}</strong></span>
+                            <span>•</span>
+                            <span>Código SICI: <strong>{selectedSchool.sici || 'Não Informado'}</strong></span>
+                            <span>•</span>
+                            <span>Bairro: <strong>{selectedSchool.bairro}</strong></span>
+                          </div>
+                        </div>
+
+                        <div className="no-print" style={{ display: 'flex', gap: '10px' }}>
+                          <button 
+                            className="btn btn-secondary" 
+                            onClick={handlePrintSchoolDossier}
+                            style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', fontWeight: '700', fontSize: '13px' }}
+                            title="Exportar toda a Ficha Consolidada em PDF"
+                          >
+                            🖨️ Exportar Ficha (PDF)
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Banner de Situação de Climatização */}
+                      <div style={{ marginTop: '20px' }}>
+                        {dossier.status === 'critica' && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '16px',
+                            borderRadius: 'var(--radius-xs)',
+                            backgroundColor: 'var(--color-red-tint)',
+                            border: '1px solid var(--color-red)',
+                            color: 'var(--color-red)'
+                          }}>
+                            <span style={{ fontSize: '24px' }}>🚨</span>
+                            <div>
+                              <strong style={{ display: 'block', fontSize: '14.5px', fontWeight: '800' }}>Situação Crítica</strong>
+                              <span style={{ fontSize: '13px', opacity: 0.9 }}>Unidade possui chamados críticos em aberto ou baixa cobertura de climatização. Exige intervenção imediata.</span>
+                            </div>
+                          </div>
+                        )}
+                        {dossier.status === 'atencao' && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '16px',
+                            borderRadius: 'var(--radius-xs)',
+                            backgroundColor: 'var(--color-amber-tint)',
+                            border: '1px solid var(--color-amber)',
+                            color: 'var(--color-amber)'
+                          }}>
+                            <span style={{ fontSize: '24px' }}>⚠️</span>
+                            <div>
+                              <strong style={{ display: 'block', fontSize: '14.5px', fontWeight: '800' }}>Em Atenção</strong>
+                              <span style={{ fontSize: '13px', opacity: 0.9 }}>Dados pendentes de validação ou demandas ativas de menor severidade em andamento.</span>
+                            </div>
+                          </div>
+                        )}
+                        {dossier.status === 'regular' && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '16px',
+                            borderRadius: 'var(--radius-xs)',
+                            backgroundColor: 'var(--color-green-tint)',
+                            border: '1px solid var(--color-green)',
+                            color: 'var(--color-green)'
+                          }}>
+                            <span style={{ fontSize: '24px' }}>✓</span>
+                            <div>
+                              <strong style={{ display: 'block', fontSize: '14.5px', fontWeight: '800' }}>Situação Regular</strong>
+                              <span style={{ fontSize: '13px', opacity: 0.9 }}>Infraestrutura validada, dados confirmados e sem chamados em aberto.</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bloco de Infraestrutura */}
+                    <div className="dashboard-section dossier-section">
+                      <div className="section-header">
+                        <h3>Infraestrutura de Climatização</h3>
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+                        <div className="dossier-stat-card" style={{ padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Salas de Aula</span>
+                          <div style={{ fontSize: '22px', fontWeight: '850', color: 'var(--text-main)', marginTop: '4px' }}>{selectedSchool.qtd_salas_de_aula || '0'}</div>
+                        </div>
+                        <div className="dossier-stat-card" style={{ padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Salas Climatizadas</span>
+                          <div style={{ fontSize: '22px', fontWeight: '850', color: 'var(--color-green)', marginTop: '4px' }}>{selectedSchool.aparelhos_em_sala || '0'}</div>
+                        </div>
+                        <div className="dossier-stat-card" style={{ padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Salas sem Aparelho</span>
+                          <div style={{ fontSize: '22px', fontWeight: '850', color: Number(selectedSchool.salas_sem_aparelho) > 0 ? 'var(--color-red)' : 'var(--text-main)', marginTop: '4px' }}>
+                            {selectedSchool.salas_sem_aparelho || '0'}
+                          </div>
+                        </div>
+                        <div className="dossier-stat-card" style={{ padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Necessidade Estimada</span>
+                          <div style={{ fontSize: '22px', fontWeight: '850', color: Number(selectedSchool.necessidade_aparelhos) > 0 ? 'var(--color-orange)' : 'var(--text-main)', marginTop: '4px' }}>
+                            {selectedSchool.necessidade_aparelhos || '0'} aparelhos
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                        {/* Cobertura percentual progress */}
+                        <div style={{ flex: 1, minWidth: '220px' }}>
+                          {dossier.coveragePercent === null ? (
+                            <div style={{ padding: '12px 16px', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600' }}>
+                              ⚠️ <strong>Percentual não calculado</strong><br/>
+                              Dados de salas de aula não informados no cadastro.
+                            </div>
+                          ) : (
+                            renderCircularCoverage(selectedSchool)
+                          )}
+                        </div>
+
+                        {/* Validação de cadastro */}
+                        <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', gap: '10px' }}>
+                            <div style={{
+                              padding: '6px 12px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              backgroundColor: selectedSchool.confirmado_pela_unidade === 'Sim' ? 'var(--color-green-tint)' : 'var(--color-red-tint)',
+                              color: selectedSchool.confirmado_pela_unidade === 'Sim' ? 'var(--color-green)' : 'var(--color-red)',
+                              border: `1px solid ${selectedSchool.confirmado_pela_unidade === 'Sim' ? 'var(--color-green)' : 'var(--color-red)'}`
+                            }}>
+                              {selectedSchool.confirmado_pela_unidade === 'Sim' ? '✓ Confirmado pela Escola' : '✗ Pendente Escola'}
+                            </div>
+                            <div style={{
+                              padding: '6px 12px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              backgroundColor: selectedSchool.validado_pela_gop === 'Sim' ? 'var(--color-green-tint)' : 'var(--color-red-tint)',
+                              color: selectedSchool.validado_pela_gop === 'Sim' ? 'var(--color-green)' : 'var(--color-red)',
+                              border: `1px solid ${selectedSchool.validado_pela_gop === 'Sim' ? 'var(--color-green)' : 'var(--color-red)'}`
+                            }}>
+                              {selectedSchool.validado_pela_gop === 'Sim' ? '✓ Validado pela GOP' : '✗ Pendente GOP'}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                            Endereço: <span style={{ fontWeight: '500' }}>{selectedSchool.endereco || 'Não informado'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* POP Action */}
                       <div style={{
                         marginTop: '20px',
                         padding: '16px',
                         borderRadius: 'var(--radius-xs)',
                         backgroundColor: 'var(--bg-app)',
                         border: '1px dashed var(--border-color)',
-                        borderLeft: `4px solid ${acVar}`
+                        borderLeft: `4px solid ${
+                          dossier.status === 'critica' ? 'var(--color-red)' :
+                          dossier.status === 'atencao' ? 'var(--color-amber)' : 'var(--color-green)'
+                        }`
                       }}>
-                        <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px' }}>🎯 Ação Sugerida pelo POP:</strong>
-                        <span style={{ fontSize: '13px', fontWeight: '750', color: acVar }}>
+                        <strong style={{ fontSize: '12px', display: 'block', marginBottom: '4px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px' }}>🎯 Ação Sugerida (Procedimento POP):</strong>
+                        <span style={{ fontSize: '13.5px', fontWeight: '800', color: 'var(--text-main)' }}>
                           {selectedSchool.acao_sugerida}
                         </span>
                       </div>
-                    );
-                  })()}
-
-                  {/* FASE 4: Ações rápidas de conectividade entre abas */}
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-                    <button 
-                      onClick={() => {
-                        setFormSelectedSchool(selectedSchool);
-                        setFormSearchQuery(selectedSchool.unidade_escolar);
-                        setNewTicket(prev => ({
-                          ...prev,
-                          local_demanda: '',
-                          observacoes: `Ficha da Escola: Salas: ${selectedSchool.qtd_salas_de_aula}, Climatizadas: ${selectedSchool.aparelhos_em_sala}, Necessidade: ${selectedSchool.necessidade_aparelhos} aparelhos.`
-                        }));
-                        setCurrentTab('form');
-                        triggerToast(`Escola ${selectedSchool.unidade_escolar} vinculada no formulário de registro!`, "info");
-                      }}
-                      className="btn btn-primary"
-                      style={{ 
-                        flex: 1, 
-                        fontSize: '13px', 
-                        fontWeight: '700', 
-                        padding: '10px 14px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <IconPlus /> Registrar Chamado
-                    </button>
-                    
-                    <button 
-                      onClick={() => {
-                        setTicketSearch(selectedSchool.unidade_escolar);
-                        setActiveListsView('all');
-                        setCurrentTab('tickets');
-                        triggerToast(`Filtrando chamados para a escola ${selectedSchool.unidade_escolar}!`, "info");
-                      }}
-                      className="btn select-filter"
-                      style={{ 
-                        flex: 1, 
-                        fontSize: '13px', 
-                        fontWeight: '700', 
-                        padding: '10px 14px', 
-                        border: '1px solid var(--border-color)',
-                        backgroundColor: 'var(--bg-app)',
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <IconSearch /> Ver Chamados
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Column: Active tickets and History Timeline */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {selectedSchool && (
-                <>
-                  {/* PRINT ONLY HEADER */}
-                  <div className="print-only-header" style={{ marginBottom: '20px' }}>
-                    <div style={{ textAlign: 'center', borderBottom: '2px solid var(--text-main)', paddingBottom: '12px' }}>
-                      <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0 }}>PREFEITURA DA CIDADE DO RIO DE JANEIRO</h2>
-                      <p style={{ fontSize: '13px', margin: '4px 0 0 0', textTransform: 'uppercase', fontWeight: '700', color: 'var(--text-muted)' }}>
-                        3ª Coordenadoria Regional de Educação · GOP Clima
-                      </p>
-                      <h3 style={{ fontSize: '16px', fontWeight: '800', marginTop: '12px', color: 'var(--primary)' }}>
-                        Ficha Técnica Consolidada da Unidade Escolar
-                      </h3>
-                      <p style={{ fontSize: '13px', color: 'var(--text-light)', margin: '4px 0 0 0' }}>
-                        Gerada em {formatDateBrazilian(todayRef().toISOString())} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
                     </div>
-                  </div>
 
-                  {/* Tickets associated */}
-                  <div className="dashboard-section">
-                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0 }}><IconFolder /> Chamados da Unidade ({tickets.filter(t => t.designacao === selectedSchool.designacao).length})</h3>
-                      <button 
-                        className="btn btn-secondary theme-toggle-header" 
-                        onClick={() => window.print()}
-                        style={{ fontSize: '13px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', fontWeight: '700' }}
-                        title="Salvar toda a Ficha Consolidada em PDF"
-                      >
-                        🖨️ Salvar Ficha (PDF)
-                      </button>
-                    </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {tickets.filter(t => t.designacao === selectedSchool.designacao).map(t => (
-                        <div 
-                          key={t.id_chamado}
-                          onClick={() => openTicketEdit(t)}
-                          style={{
-                            padding: '12px 14px',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: 'var(--radius-xs)',
-                            backgroundColor: 'var(--bg-app)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                          }}
-                          className="hover-trigger"
-                        >
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
-                              {(() => {
-                                const count = allAttachments.filter(a => a.id_chamado === t.id_chamado).length;
-                                if (count > 0) {
-                                  return (
-                                    <span 
-                                      style={{
-                                        fontSize: '11px',
-                                        fontWeight: '800',
-                                        padding: '1px 6px',
-                                        borderRadius: '4px',
-                                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                                        color: 'var(--primary)',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '3px'
-                                      }}
-                                      title={`${count} documento(s) anexo(s)`}
-                                    >
-                                      📎 {count}
-                                    </span>
-                                  );
-                                }
-                                return null;
-                              })()}
-                            </div>
-                            <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px', fontWeight: '500' }}>
-                              Local: {t.local_demanda} | Setor: {t.setor_responsavel}
-                            </div>
-                          </div>
-                          <span className="badge badge-status" style={getStatusStyle(t.status_atual)}>
-                            {t.status_atual}
+                    {/* Bloco de Chamados */}
+                    <div className="dashboard-section dossier-section">
+                      <div className="section-header">
+                        <h3>Chamados e Demandas Vinculadas</h3>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+                        <div style={{ padding: '14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)', textAlign: 'center' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Ativos</span>
+                          <div style={{ fontSize: '20px', fontWeight: '850', color: 'var(--primary)', marginTop: '4px' }}>{dossier.activeCount}</div>
+                        </div>
+                        <div style={{ padding: '14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)', textAlign: 'center' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Concluídos</span>
+                          <div style={{ fontSize: '20px', fontWeight: '850', color: 'var(--color-green)', marginTop: '4px' }}>{dossier.closedCount}</div>
+                        </div>
+                        <div style={{ padding: '14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)', textAlign: 'center' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase' }}>Críticos Ativos</span>
+                          <div style={{ fontSize: '20px', fontWeight: '850', color: dossier.criticalCount > 0 ? 'var(--color-red)' : 'var(--text-main)', marginTop: '4px' }}>{dossier.criticalCount}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                          📢 <strong>Último Andamento:</strong> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>
+                            {dossier.latestUpdate 
+                              ? `${formatDateBrazilian(dossier.latestUpdate.data)} - ${dossier.latestUpdate.description}`
+                              : 'Nenhum andamento registrado no histórico.'
+                            }
                           </span>
                         </div>
-                      ))}
-                      {tickets.filter(t => t.designacao === selectedSchool.designacao).length === 0 && (
-                        <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
-                          Nenhum chamado ativo registrado para esta unidade escolar.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Arquivos da Unidade */}
-                  <div className="dashboard-section no-print">
-                    <div className="section-header">
-                      <h3>📂 Arquivos da unidade ({schoolAttachments.length})</h3>
-                    </div>
-                    
-                    <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
-                      Todos os laudos, termos e fotos vinculados aos chamados desta unidade no Supabase Storage.
-                    </p>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {schoolAttachments.map(anexo => (
-                        <div 
-                          key={anexo.id} 
-                          style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            padding: '12px 14px', 
-                            borderRadius: 'var(--radius-xs)', 
-                            border: '1px solid var(--border-color)', 
-                            backgroundColor: 'var(--bg-app)',
-                            transition: 'border-color 0.2s'
-                          }}
-                          className="hover-trigger"
-                        >
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{anexo.nome_original}</strong>
-                              <span style={{
-                                fontSize: '10.5px',
-                                fontWeight: '800',
-                                padding: '1px 6px',
-                                borderRadius: '99px',
-                                backgroundColor: 'var(--primary-light)',
-                                color: 'var(--primary)'
-                              }}>
-                                {anexo.id_chamado}
-                              </span>
-                            </div>
-                            <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '500' }}>
-                              Tamanho: {(anexo.tamanho_bytes / 1024).toFixed(1)} KB · Enviado em: {formatDateBrazilian(anexo.criado_em)}
-                            </div>
-                          </div>
-                          
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              style={{ padding: '6px 10px', fontSize: '12.5px', fontWeight: '700' }}
-                              onClick={() => {
-                                const { data } = supabaseClient.storage.from(anexo.bucket).getPublicUrl(anexo.storage_path);
-                                window.open(data.publicUrl, '_blank', 'noopener,noreferrer');
-                              }}
-                            >
-                              Abrir
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              style={{ padding: '6px 10px', fontSize: '12.5px', fontWeight: '700' }}
-                              onClick={() => window.open(
-                                getAttachmentDownloadUrl(supabaseClient, anexo),
-                                '_blank',
-                                'noopener,noreferrer'
-                              )}
-                            >
-                              Baixar
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {schoolAttachments.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-card)' }}>
-                          Nenhum documento salvo ainda
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* School Event Timeline history (Integrated) */}
-                  <div className="dashboard-section">
-                    <div className="section-header">
-                      <h3><IconClock /> Linha do Tempo Consolidada</h3>
-                    </div>
-
-                    <div className="timeline">
-                      {(() => {
-                        // 1. Marcos do banco
-                        const dbEvents = history
-                          .filter(h => h.designacao === selectedSchool.designacao || h.unidade_escolar === selectedSchool.unidade_escolar)
-                          .map(h => {
-                            let docMeta = null;
-                            let isDocument = false;
-                            let docText = h.observacao || '';
-                            
-                            if (h.marco_relevante && h.marco_relevante.startsWith('Documento Anexo:')) {
-                              isDocument = true;
-                              try {
-                                docMeta = JSON.parse(h.observacao);
-                                docText = docMeta.name;
-                              } catch {
-                                docText = h.observacao || '';
-                              }
+                        <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                          ⏳ <strong>Chamado Ativo Mais Antigo:</strong> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>
+                            {dossier.oldestActiveTicket 
+                              ? `${dossier.oldestActiveTicket.id_chamado} (${formatDateBrazilian(dossier.oldestActiveTicket.data_solicitacao)})`
+                              : 'Nenhum chamado ativo pendente.'
                             }
-                            
-                            return {
-                              id: h.id_evento || `db-${Math.random()}`,
-                              data: h.data,
-                              autor: h.responsavel_registro || 'Sistema',
-                              setor: h.setor || 'GOP',
-                              titulo: h.id_chamado ? `Chamado ${h.id_chamado}: ${h.marco_relevante}` : h.marco_relevante,
-                              texto: docText,
-                              tipo: 'historico_db',
-                              logType: isDocument ? 'documento' : 'comentario',
-                              docMeta: docMeta
-                            };
-                          });
+                          </span>
+                        </div>
+                      </div>
 
-                        // 2. Notas locais da GOP
-                        const localList = schoolLogs[selectedSchool.designacao] || [];
-                        const localEvents = localList.map(n => ({
-                          id: n.id,
-                          data: n.date,
-                          autor: n.user || 'GOP/3ª CRE',
-                          setor: 'GOP',
-                          titulo: n.type === 'documento' ? `Documento Anexo: ${n.content}` : `Anotação Técnica GOP`,
-                          texto: n.content,
-                          tipo: 'comentario_local',
-                          docMeta: n.docMeta,
-                          logType: n.type
-                        }));
-
-                        // 3. Mesclar e ordenar cronologicamente decrescente
-                        const integrated = [...dbEvents, ...localEvents].sort((a, b) => new Date(b.data || b.date) - new Date(a.data || a.date));
-
-                        if (integrated.length === 0) {
-                          return (
-                            <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '16px', fontWeight: '600' }}>
-                              Nenhum marco de evento registrado no histórico para esta unidade.
-                            </p>
-                          );
-                        }
-
-                        return integrated.map(ev => (
-                          <div key={ev.id} className="timeline-event" style={{ borderLeft: ev.tipo === 'comentario_local' ? '2px dashed var(--primary)' : '2px solid var(--border-color)' }}>
-                            <div className="timeline-event-marker" style={{ backgroundColor: ev.tipo === 'comentario_local' ? 'var(--primary)' : 'var(--border-color)' }} />
-                            <div className="timeline-event-card" style={{ borderLeft: ev.tipo === 'comentario_local' ? `3px solid ${ev.logType === 'documento' ? 'var(--primary)' : 'var(--color-amber)'}` : 'none' }}>
-                              <div className="timeline-event-meta">
-                                <span>📅 {formatDateBrazilian(ev.data)}</span>
-                                <span style={{ fontWeight: 'bold' }}>👤 {ev.autor} ({ev.setor})</span>
-                              </div>
-                              <div className="timeline-event-title" style={{ color: ev.tipo === 'comentario_local' ? 'var(--primary)' : 'var(--text-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span>{ev.titulo}</span>
-                                {ev.tipo === 'comentario_local' && (
-                                  <button 
-                                    onClick={() => {
-                                      setSchoolLogs(prev => {
-                                        const list = prev[selectedSchool.designacao] || [];
-                                        return {
-                                          ...prev,
-                                          [selectedSchool.designacao]: list.filter(item => item.id !== ev.id)
-                                        };
-                                      });
-                                      triggerToast("Registro removido!", "info");
-                                    }}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: '13px', padding: '0 4px' }}
-                                    title="Remover este registro"
-                                    className="no-print"
-                                  >
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
-                              
-                              {ev.logType === 'documento' ? (
-                                <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <a 
-                                      href={ev.docMeta?.url || '#'} 
-                                      target={ev.docMeta?.url ? '_blank' : undefined}
-                                      rel={ev.docMeta?.url ? 'noopener noreferrer' : undefined}
-                                      onClick={(e) => { 
-                                        if (!ev.docMeta?.url) {
-                                          e.preventDefault(); 
-                                          triggerToast(`Visualizando documento local no cache: ${ev.texto} (${ev.docMeta?.size || 'N/A'})`, 'info'); 
-                                        }
-                                      }} 
-                                      style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '13px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                    >
-                                      📄 {ev.texto} 
-                                      <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: '500' }}>({ev.docMeta?.size || 'N/A'})</span>
-                                    </a>
-
-                                    {ev.docMeta?.storageType === 'cloud' ? (
-                                      <span style={{
-                                        fontSize: '10.5px',
-                                        fontWeight: '800',
-                                        padding: '2px 8px',
-                                        borderRadius: '99px',
-                                        backgroundColor: 'var(--color-green-tint)',
-                                        color: 'var(--color-green)',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                      }}>
-                                        ☁️ Disponível na Nuvem (Equipe)
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '800', color: 'var(--text-light)', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                          Lista de Chamados da Unidade ({dossier.schoolTickets.length}):
+                        </div>
+                        {dossier.schoolTickets.map(t => (
+                          <div 
+                            key={t.id_chamado}
+                            onClick={() => openTicketEdit(t)}
+                            style={{
+                              padding: '12px 14px',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: 'var(--radius-xs)',
+                              backgroundColor: 'var(--bg-app)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                            className="hover-trigger"
+                          >
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
+                                {(() => {
+                                  const count = allAttachments.filter(a => a.id_chamado === t.id_chamado).length;
+                                  if (count > 0) {
+                                    return (
+                                      <span 
+                                        style={{
+                                          fontSize: '11px',
+                                          fontWeight: '800',
+                                          padding: '1px 6px',
+                                          borderRadius: '4px',
+                                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                                          color: 'var(--primary)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px'
+                                        }}
+                                        title={`${count} documento(s) anexo(s)`}
+                                      >
+                                        📎 {count}
                                       </span>
-                                    ) : (
-                                      <span style={{
-                                        fontSize: '10.5px',
-                                        fontWeight: '800',
-                                        padding: '2px 8px',
-                                        borderRadius: '99px',
-                                        backgroundColor: 'var(--color-amber-tint)',
-                                        color: 'var(--color-amber)',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                      }}>
-                                        💻 Salvo Localmente (Navegador)
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <p className="timeline-event-desc">{ev.texto}</p>
-                              )}
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                                <span className={`badge badge-priority-${t.prioridade.toLowerCase()}`} style={{ fontSize: '9px', padding: '1px 4px' }}>{t.prioridade}</span>
+                              </div>
+                              <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px', fontWeight: '500' }}>
+                                Local: {t.local_demanda} | Responsável: {t.setor_responsavel}
+                              </div>
                             </div>
+                            <span className="badge badge-status" style={getStatusStyle(t.status_atual)}>
+                              {t.status_atual}
+                            </span>
                           </div>
-                        ));
-                      })()}
+                        ))}
+                        {dossier.schoolTickets.length === 0 && (
+                          <EmptyState 
+                            iconType="ticket"
+                            title="Nenhum chamado cadastrado"
+                            description="Registre uma nova demanda no formulário para iniciar o acompanhamento."
+                          />
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* FASE 4.5: Formulário para Notas Operacionais Locais (GOP Notes) */}
-                  <div className="dashboard-section no-print">
-                    <div className="section-header">
-                      <h3><IconFileText /> Registrar Observação Local</h3>
-                    </div>
-                    
-                    <p style={{ fontSize: '13.5px', color: 'var(--text-light)', marginBottom: '14px', fontWeight: '500', lineHeight: '1.4' }}>
-                      Insira anotações de progresso técnico ou observações administrativas para manter a ficha técnica da unidade atualizada localmente neste navegador.
-                    </p>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-app)' }}>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <textarea 
-                          className="form-control"
-                          rows="3"
-                          placeholder="Escreva aqui observações internas, pendências, notas de reuniões..."
-                          value={newCommentText}
-                          onChange={(e) => setNewCommentText(e.target.value)}
-                          style={{ fontSize: '13.5px', padding: '10px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-xs)' }}
-                        />
+                    {/* Bloco de Evidências (Arquivos) */}
+                    <div className="dashboard-section dossier-section">
+                      <div className="section-header">
+                        <h3>Laudos e Evidências Técnicas</h3>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
-                        <button 
-                          className="btn btn-primary"
-                          onClick={() => handleAddSchoolLog('comentario')}
-                          style={{ fontSize: '13.5px', padding: '8px 12px', fontWeight: '700' }}
-                        >
-                          Salvar Observação
-                        </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {schoolAttachments.map(anexo => (
+                          <div 
+                            key={anexo.id} 
+                            style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              padding: '12px 14px', 
+                              borderRadius: 'var(--radius-xs)', 
+                              border: '1px solid var(--border-color)', 
+                              backgroundColor: 'var(--bg-app)',
+                            }}
+                            className="hover-trigger dossier-evidence-row"
+                          >
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <strong className="evidence-filename" style={{ fontSize: '13px', color: 'var(--text-main)' }}>{anexo.nome_original}</strong>
+                                <span style={{
+                                  fontSize: '10px',
+                                  fontWeight: '800',
+                                  padding: '1px 6px',
+                                  borderRadius: '99px',
+                                  backgroundColor: 'var(--primary-light)',
+                                  color: 'var(--primary)'
+                                }}>
+                                  {anexo.id_chamado}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '500' }}>
+                                Tamanho: {(anexo.tamanho_bytes / 1024).toFixed(1)} KB · Enviado em: {formatDateBrazilian(anexo.criado_em)}
+                              </div>
+                            </div>
+                            
+                            <div className="no-print" style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 10px', fontSize: '12.5px', fontWeight: '700' }}
+                                onClick={() => {
+                                  const { data } = supabaseClient.storage.from(anexo.bucket).getPublicUrl(anexo.storage_path);
+                                  window.open(data.publicUrl, '_blank', 'noopener,noreferrer');
+                                }}
+                              >
+                                Abrir
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 10px', fontSize: '12.5px', fontWeight: '700' }}
+                                onClick={() => window.open(
+                                  getAttachmentDownloadUrl(supabaseClient, anexo),
+                                  '_blank',
+                                  'noopener,noreferrer'
+                                )}>
+                                Baixar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {schoolAttachments.length === 0 && (
+                          <EmptyState 
+                            iconType="attachment"
+                            title="Nenhum documento vinculado ainda"
+                            description="Anexe laudos, fotos ou PDFs para consolidar o histórico da demanda."
+                          />
+                        )}
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
+
+                    {/* Bloco de Histórico (Linha do Tempo) */}
+                    <div className="dashboard-section dossier-section">
+                      <div className="section-header">
+                        <h3>Linha do Tempo e Nota Histórica</h3>
+                      </div>
+
+                      <div className="timeline">
+                        {(() => {
+                          const dbEvents = history
+                            .filter(h => h.designacao === selectedSchool.designacao || h.unidade_escolar === selectedSchool.unidade_escolar)
+                            .map(h => {
+                              let docMeta = null;
+                              let isDocument = false;
+                              let docText = h.observacao || '';
+                              
+                              if (h.marco_relevante && h.marco_relevante.startsWith('Documento Anexo:')) {
+                                isDocument = true;
+                                try {
+                                  docMeta = JSON.parse(h.observacao);
+                                  docText = docMeta.name;
+                                } catch {
+                                  docText = h.observacao || '';
+                                }
+                              }
+                              
+                              return {
+                                id: h.id_evento || `db-${Math.random()}`,
+                                data: h.data,
+                                autor: h.responsavel_registro || 'Sistema',
+                                setor: h.setor || 'GOP',
+                                titulo: h.id_chamado ? `Chamado ${h.id_chamado}: ${h.marco_relevante}` : h.marco_relevante,
+                                texto: docText,
+                                tipo: 'historico_db',
+                                logType: isDocument ? 'documento' : 'comentario',
+                                docMeta: docMeta
+                              };
+                            });
+
+                          const localList = schoolLogs[selectedSchool.designacao] || [];
+                          const localEvents = localList.map(n => ({
+                            id: n.id,
+                            data: n.date,
+                            autor: n.user || 'GOP/3ª CRE',
+                            setor: 'GOP',
+                            titulo: n.type === 'documento' ? `Documento Anexo: ${n.content}` : `Anotação Técnica GOP`,
+                            texto: n.content,
+                            tipo: 'comentario_local',
+                            docMeta: n.docMeta,
+                            logType: n.type
+                          }));
+
+                          const integrated = [...dbEvents, ...localEvents].sort((a, b) => new Date(b.data) - new Date(a.data));
+
+                          if (integrated.length === 0) {
+                            return (
+                              <EmptyState 
+                                iconType="history"
+                                title="Sem registros no histórico"
+                                description="Nenhum marco de evento registrado no histórico para esta unidade."
+                              />
+                            );
+                          }
+
+                          return integrated.map(ev => (
+                            <div key={ev.id} className="timeline-event" style={{ borderLeft: ev.tipo === 'comentario_local' ? '2px dashed var(--primary)' : '2px solid var(--border-color)' }}>
+                              <div className="timeline-event-marker" style={{ backgroundColor: ev.tipo === 'comentario_local' ? 'var(--primary)' : 'var(--border-color)' }} />
+                              <div className="timeline-event-card" style={{ borderLeft: ev.tipo === 'comentario_local' ? `3px solid ${ev.logType === 'documento' ? 'var(--primary)' : 'var(--color-amber)'}` : 'none' }}>
+                                <div className="timeline-event-meta">
+                                  <span>📅 {formatDateBrazilian(ev.data)}</span>
+                                  <span style={{ fontWeight: 'bold' }}>👤 {ev.autor} ({ev.setor})</span>
+                                </div>
+                                <div className="timeline-event-title" style={{ color: ev.tipo === 'comentario_local' ? 'var(--primary)' : 'var(--text-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span>{ev.titulo}</span>
+                                  {ev.tipo === 'comentario_local' && (
+                                    <button 
+                                      onClick={() => {
+                                        setSchoolLogs(prev => {
+                                          const list = prev[selectedSchool.designacao] || [];
+                                          return {
+                                            ...prev,
+                                            [selectedSchool.designacao]: list.filter(item => item.id !== ev.id)
+                                          };
+                                        });
+                                        triggerToast("Registro removido!", "info");
+                                      }}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: '13px', padding: '0 4px' }}
+                                      title="Remover este registro"
+                                      className="no-print"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                                
+                                {ev.logType === 'documento' ? (
+                                  <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                      <a 
+                                        href={ev.docMeta?.url || '#'} 
+                                        target={ev.docMeta?.url ? '_blank' : undefined}
+                                        rel={ev.docMeta?.url ? 'noopener noreferrer' : undefined}
+                                        onClick={(e) => { 
+                                          if (!ev.docMeta?.url) {
+                                            e.preventDefault(); 
+                                            triggerToast(`Visualizando documento local no cache: ${ev.texto} (${ev.docMeta?.size || 'N/A'})`, 'info'); 
+                                          }
+                                        }} 
+                                        style={{ color: 'var(--primary)', textDecoration: 'underline', fontSize: '13px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                      >
+                                        📄 {ev.texto} 
+                                        <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: '500' }}>({ev.docMeta?.size || 'N/A'})</span>
+                                      </a>
+
+                                      {ev.docMeta?.storageType === 'cloud' ? (
+                                        <span style={{
+                                          fontSize: '10.5px',
+                                          fontWeight: '800',
+                                          padding: '2px 8px',
+                                          borderRadius: '99px',
+                                          backgroundColor: 'var(--color-green-tint)',
+                                          color: 'var(--color-green)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px'
+                                        }}>
+                                          ☁️ Disponível na Nuvem (Equipe)
+                                        </span>
+                                      ) : (
+                                        <span style={{
+                                          fontSize: '10.5px',
+                                          fontWeight: '800',
+                                          padding: '2px 8px',
+                                          borderRadius: '99px',
+                                          backgroundColor: 'var(--color-amber-tint)',
+                                          color: 'var(--color-amber)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px'
+                                        }}>
+                                          💻 Salvo Localmente (Navegador)
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="timeline-event-desc">{ev.texto}</p>
+                                )}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Notas Operacionais Locais */}
+                    <div className="dashboard-section no-print">
+                      <div className="section-header">
+                        <h3>Anotações Técnicas (Registro Interno GOP)</h3>
+                      </div>
+                      
+                      <p style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '12px', fontWeight: '500', lineHeight: '1.45' }}>
+                        Adicione anotações, notas de reuniões ou observações locais sobre a climatização desta escola. Estes registros ficam salvos no histórico da unidade.
+                      </p>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <textarea
+                          rows="3"
+                          className="form-control"
+                          placeholder="Digite aqui a anotação técnica para a unidade..."
+                          value={newCommentText}
+                          onChange={(e) => setNewCommentText(e.target.value)}
+                          style={{ fontSize: '13.5px', padding: '10px 14px' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={handleAddSchoolLog}
+                            style={{ fontSize: '13px', padding: '8px 16px', fontWeight: '700', borderRadius: 'var(--radius-xs)', cursor: 'pointer' }}
+                          >
+                            Salvar Anotação
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Simulador de Novo Chamado Tab */}
         {currentTab === 'form' && (
@@ -4077,9 +4279,11 @@ CREATE TABLE IF NOT EXISTS historico (
                         </div>
                       ))}
                       {ticketAttachments.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-light)', fontSize: '13px', fontWeight: '600', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-xs)' }}>
-                          Nenhum documento salvo ainda
-                        </div>
+                        <EmptyState 
+                          iconType="attachment"
+                          title="Nenhum documento vinculado ainda"
+                          description="Anexe laudos, fotos ou PDFs para consolidar o histórico da demanda."
+                        />
                       )}
                     </div>
                   </div>
@@ -4162,9 +4366,12 @@ CREATE TABLE IF NOT EXISTS historico (
                         </div>
                       ))}
                     {history.filter(h => h.id_chamado === editingTicket.id_chamado).length === 0 && (
-                      <p style={{ fontSize: '13px', color: 'var(--text-light)', textAlign: 'center', padding: '10px', fontWeight: '600' }}>
-                        Nenhum evento registrado.
-                      </p>
+                      <EmptyState 
+                        iconType="history"
+                        title="Sem registros de histórico"
+                        description="Nenhum evento ou comentário registrado para este chamado."
+                        style={{ padding: '18px 12px' }}
+                      />
                     )}
                   </div>
                 </div>

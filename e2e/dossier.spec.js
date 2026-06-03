@@ -1,0 +1,58 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('GOP Clima E2E tests', () => {
+  test('deve carregar a home e exibir o painel operacional', async ({ page }) => {
+    // Abre a página local
+    await page.goto('/');
+
+    // Verifica que o painel principal foi renderizado com a leitura operacional de hoje
+    await expect(page.locator('text=Resumo operacional de hoje')).toBeVisible();
+    await expect(page.locator('text=O que exige ação agora')).toBeVisible();
+  });
+
+  test('deve alternar entre abas e carregar dossiê da escola', async ({ page }) => {
+    await page.goto('/');
+
+    // Clica na aba Consulta por Escola
+    await page.click('button:has-text("Consulta por Escola")');
+
+    // Verifica se a primeira escola já veio carregada ou se exibe tela inicial
+    const titleText = await page.locator('h2').first().innerText();
+    
+    if (titleText.includes('Dossiê Executivo') || !(titleText.includes('Chanceler Willy Brandt'))) {
+      // Digita no input de busca da escola se não for a escola padrão
+      const searchInput = page.locator('input[placeholder="Nome ou designação..."]');
+      await searchInput.fill('Chanceler Willy Brandt');
+
+      // Clica no item de sugestão que aparece no dropdown autocomplete
+      const suggestionItem = page.locator('.suggestion-item', { hasText: 'Chanceler Willy Brandt' });
+      await suggestionItem.waitFor({ state: 'visible' });
+      await suggestionItem.click();
+    }
+
+    // Confirma que a Ficha Técnica Consolidada da escola carregou
+    await expect(page.locator('h2:has-text("CIEP Chanceler Willy Brandt")')).toBeVisible();
+    await expect(page.locator('text=Designação: 313502')).toBeVisible();
+  });
+
+  test('deve alternar entre temas claro/escuro e persistir', async ({ page }) => {
+    await page.goto('/');
+
+    // Verifica o tema inicial (padrão dark-theme)
+    const htmlElement = page.locator('html');
+    await expect(htmlElement).toHaveClass(/dark-theme/);
+
+    // Clica no botão de alternar tema (.theme-toggle-header)
+    const themeBtn = page.locator('.theme-toggle-header');
+    if (await themeBtn.count() > 0) {
+      await themeBtn.click();
+      // Verifica se o tema mudou para light (remove dark-theme class)
+      await expect(htmlElement).not.toHaveClass(/dark-theme/);
+      
+      // Recarrega a página
+      await page.reload();
+      // Confirma que persiste como light (sem dark-theme)
+      await expect(htmlElement).not.toHaveClass(/dark-theme/);
+    }
+  });
+});
