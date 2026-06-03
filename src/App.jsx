@@ -3116,7 +3116,7 @@ export default function App() {
                       transition: 'var(--transition)'
                     }}
                   >
-                    ✨ Visualização formatada
+                    Visualização formatada
                   </button>
                   <button 
                     type="button"
@@ -3136,7 +3136,7 @@ export default function App() {
                       transition: 'var(--transition)'
                     }}
                   >
-                    📝 Editar texto do e-mail
+                    Editar texto do e-mail
                   </button>
                 </div>
 
