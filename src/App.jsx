@@ -275,6 +275,7 @@ export default function App() {
   const [activeListsView, setActiveListsView] = useState('all');
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isSavingTicket, setIsSavingTicket] = useState(false);
 
   // Form tab states
   const [formSearchQuery, setFormSearchQuery] = useState('');
@@ -779,6 +780,12 @@ export default function App() {
   };
 
   const saveEditedTicket = async () => {
+    if (isSavingTicket) return;
+    if (!supabaseClient) {
+      triggerToast('Edição bloqueada em modo local. Conecte a base online.', 'error');
+      return;
+    }
+
     const validation = editTicketSchema.safeParse(editingTicket);
     if (!validation.success) {
       triggerToast(firstValidationMessage(validation), 'info');
@@ -839,15 +846,6 @@ export default function App() {
       modificado_em: nowIso
     };
 
-    // Update tickets locally
-    const updatedTickets = tickets.map(t => {
-      if (t.id_chamado === editingTicket.id_chamado) {
-        return updatedRecord;
-      }
-      return t;
-    });
-    setTickets(updatedTickets);
-
     const novosEventos = logsGerados.map((log, index) => {
       return {
         id_evento: `EV-${Date.now()}-${index}`,
@@ -862,38 +860,47 @@ export default function App() {
       };
     });
 
-    if (novosEventos.length > 0) {
-      setHistory([...novosEventos, ...history]);
-    }
+    setIsSavingTicket(true);
 
-    // Save to Cloud in real-time if connected!
-    let cloudOk = true;
-    if (supabaseClient) {
-      try {
-        const { error: tkErr } = await supabaseClient
-          .from('chamados')
-          .update(updatedRecord)
-          .eq('id_chamado', editingTicket.id_chamado);
-        
-        if (tkErr) throw tkErr;
+    try {
+      // 1. Gravação pessimista: Atualiza no Supabase e lê o registro atualizado de volta com select().single()
+      const { data: savedTicket, error: tkErr } = await supabaseClient
+        .from('chamados')
+        .update(updatedRecord)
+        .eq('id_chamado', editingTicket.id_chamado)
+        .select('*')
+        .single();
+      
+      if (tkErr) throw tkErr;
+      if (!savedTicket) throw new Error('Não foi retornado nenhum registro após salvar.');
 
-        if (novosEventos.length > 0) {
-          const { error: evErr } = await supabaseClient.from('historico').insert(novosEventos);
-          if (evErr) throw evErr;
-        }
-      } catch (err) {
-        cloudOk = false;
-        console.error("Cloud save failed:", err);
+      // 2. Insere os novos eventos de histórico na nuvem
+      if (novosEventos.length > 0) {
+        const { error: evErr } = await supabaseClient.from('historico').insert(novosEventos);
+        if (evErr) throw evErr;
       }
-    }
 
-    setShowEditModal(false);
-    triggerToast(
-      cloudOk
-        ? "Chamado atualizado com sucesso!"
-        : "Alteração salva localmente, mas a gravação na nuvem falhou.",
-      cloudOk ? 'success' : 'error'
-    );
+      // 3. Somente após sucesso na nuvem, atualiza o estado local do frontend
+      const updatedTickets = tickets.map(t => {
+        if (t.id_chamado === editingTicket.id_chamado) {
+          return savedTicket;
+        }
+        return t;
+      });
+      setTickets(updatedTickets);
+
+      if (novosEventos.length > 0) {
+        setHistory([...novosEventos, ...history]);
+      }
+
+      setShowEditModal(false);
+      triggerToast("Chamado atualizado com sucesso!", 'success');
+    } catch (err) {
+      console.error("Cloud save failed:", err);
+      triggerToast(`Falha ao salvar alteração na nuvem: ${err.message || err}`, 'error');
+    } finally {
+      setIsSavingTicket(false);
+    }
   };
 
   // Submit a new ticket simulator
@@ -3389,7 +3396,7 @@ CREATE TABLE IF NOT EXISTS historico (
                     }}>
                       <IconWarning />
                       <div>
-                        <strong>Modo Local Ativo:</strong> Alterações serão perdidas ao recarregar a página.
+                        <strong>Edição Bloqueada — Modo Local Ativo.</strong> Conecte a base online (Supabase) para editar e salvar alterações permanentes.
                       </div>
                     </div>
                   )}
@@ -3402,6 +3409,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         className="form-control"
                         value={editingTicket.status_atual}
                         onChange={(e) => setEditingTicket({ ...editingTicket, status_atual: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       >
                         <option value="1 - Recebido — em triagem">1 - Recebido — em triagem</option>
                         <option value="2 - Em vistoria técnica">2 - Em vistoria técnica</option>
@@ -3425,6 +3433,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         className="form-control"
                         value={editingTicket.setor_responsavel}
                         onChange={(e) => setEditingTicket({ ...editingTicket, setor_responsavel: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       >
                         <option value="GOP">GOP</option>
                         <option value="CPS">CPS</option>
@@ -3446,6 +3455,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         className="form-control"
                         value={editingTicket.prioridade}
                         onChange={(e) => setEditingTicket({ ...editingTicket, prioridade: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       >
                         <option value="Baixa">Baixa</option>
                         <option value="Média">Média</option>
@@ -3463,6 +3473,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         required
                         value={editingTicket.proxima_providencia}
                         onChange={(e) => setEditingTicket({ ...editingTicket, proxima_providencia: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       />
                     </div>
 
@@ -3474,6 +3485,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         className="form-control" 
                         value={editingTicket.ultima_movimentacao || ''}
                         onChange={(e) => setEditingTicket({ ...editingTicket, ultima_movimentacao: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       />
                     </div>
 
@@ -3484,6 +3496,7 @@ CREATE TABLE IF NOT EXISTS historico (
                           id="c_cto"
                           checked={editingTicket.comunicacao_cto === 'Sim'}
                           onChange={(e) => setEditingTicket({ ...editingTicket, comunicacao_cto: e.target.checked ? 'Sim' : 'Não' })}
+                          disabled={!supabaseClient || isSavingTicket}
                         />
                         <label htmlFor="c_cto" className="form-label" style={{ cursor: 'pointer', margin: 0 }}>Comunicação CTO?</label>
                       </div>
@@ -3496,6 +3509,7 @@ CREATE TABLE IF NOT EXISTS historico (
                           style={{ padding: '4px 10px', fontSize: '13px' }}
                           value={editingTicket.informacao_validada}
                           onChange={(e) => setEditingTicket({ ...editingTicket, informacao_validada: e.target.value })}
+                          disabled={!supabaseClient || isSavingTicket}
                         >
                           <option value="Sim">Validada</option>
                           <option value="Pendente de Vistoria">Pendente de Vistoria</option>
@@ -3514,6 +3528,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         value={editingTicket.observacoes}
                         onChange={(e) => setEditingTicket({ ...editingTicket, observacoes: e.target.value })}
                         style={{ fontSize: '13px', lineHeight: '1.5', padding: '12px' }}
+                        disabled={!supabaseClient || isSavingTicket}
                       />
                     </div>
                   </div>
@@ -3544,6 +3559,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         style={{ padding: '6px 10px', fontSize: '13px', height: '32px' }}
                         value={editingTicket.local_demanda || ''}
                         onChange={(e) => setEditingTicket({ ...editingTicket, local_demanda: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       />
                     </div>
 
@@ -3555,6 +3571,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
                         value={editingTicket.tipo_demanda || 'Substituição/Instalação de Aparelho'}
                         onChange={(e) => setEditingTicket({ ...editingTicket, tipo_demanda: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       >
                         <option value="Substituição/Instalação de Aparelho">Substituição/Instalação de Aparelho</option>
                         <option value="Nova Instalação">Nova Instalação</option>
@@ -3574,6 +3591,7 @@ CREATE TABLE IF NOT EXISTS historico (
                           style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
                           value={editingTicket.tipo_aparelho || 'Split'}
                           onChange={(e) => setEditingTicket({ ...editingTicket, tipo_aparelho: e.target.value })}
+                          disabled={!supabaseClient || isSavingTicket}
                         >
                           <option value="Split">Split</option>
                           <option value="Janela">Janela</option>
@@ -3592,6 +3610,7 @@ CREATE TABLE IF NOT EXISTS historico (
                           placeholder="Existente"
                           value={editingTicket.btu_existente || ''}
                           onChange={(e) => setEditingTicket({ ...editingTicket, btu_existente: e.target.value })}
+                          disabled={!supabaseClient || isSavingTicket}
                         />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
@@ -3604,6 +3623,7 @@ CREATE TABLE IF NOT EXISTS historico (
                           placeholder="Pretendido"
                           value={editingTicket.btu_pretendido || ''}
                           onChange={(e) => setEditingTicket({ ...editingTicket, btu_pretendido: e.target.value })}
+                          disabled={!supabaseClient || isSavingTicket}
                         />
                       </div>
                     </div>
@@ -3616,6 +3636,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         style={{ padding: '4px 10px', fontSize: '13px', height: '32px' }}
                         value={editingTicket.resultado_aptidao || 'Pendente'}
                         onChange={(e) => setEditingTicket({ ...editingTicket, resultado_aptidao: e.target.value })}
+                        disabled={!supabaseClient || isSavingTicket}
                       >
                         <option value="Pendente">Pendente</option>
                         <option value="Apta">Apta</option>
@@ -3783,7 +3804,7 @@ CREATE TABLE IF NOT EXISTS historico (
                           <div className="timeline-event-card" style={{ padding: '8px 10px', position: 'relative' }}>
                             <div className="timeline-event-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span>📅 {formatDateBrazilian(h.data)} · 👤 {h.responsavel_registro}</span>
-                              {editingEventId !== h.id_evento && (
+                              {editingEventId !== h.id_evento && supabaseClient && (
                                 <button 
                                   onClick={() => {
                                     setEditingEventId(h.id_evento);
@@ -3869,12 +3890,40 @@ CREATE TABLE IF NOT EXISTS historico (
                 <IconMail />
                 <span>Minutar E-mail</span>
               </button>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>
+              {!supabaseClient && (
+                <div style={{ 
+                  color: 'hsl(38, 92%, 50%)', 
+                  fontSize: '11px', 
+                  fontWeight: '700', 
+                  textAlign: 'right', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '1px', 
+                  marginRight: '12px',
+                  alignItems: 'flex-end'
+                }}>
+                  <span>⚠ Edição bloqueada em modo local</span>
+                  <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Conecte a base online para salvar.</span>
+                </div>
+              )}
+              <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={isSavingTicket}>
                 Fechar
               </button>
-              <button type="button" className="btn btn-primary" onClick={saveEditedTicket}>
-                <IconCheck />
-                <span>Salvar Alterações</span>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                onClick={saveEditedTicket}
+                disabled={!supabaseClient || isSavingTicket}
+                style={!supabaseClient || isSavingTicket ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+              >
+                {isSavingTicket ? (
+                  <span>Salvando...</span>
+                ) : (
+                  <>
+                    <IconCheck />
+                    <span>Salvar Alterações</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

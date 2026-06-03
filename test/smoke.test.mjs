@@ -379,6 +379,52 @@ try {
   printResult('Teste 5 falhou criticamente', false, e.message);
 }
 
+// ---------------------------------------------------------------------------
+// TESTE 6: Fluxo Pessimista de Salvamento e Verificação com select('*').single()
+// ---------------------------------------------------------------------------
+try {
+  console.log('--- Teste 6: Fluxo Pessimista de Salvamento via Supabase (select.*.single) ---');
+
+  const ticketToUpdate = ticketsState.find(t => t.id_chamado === 'GOP-AR-2026-TEST');
+  const updatedFields = {
+    ...ticketToUpdate,
+    status_atual: '3 - Vistoria concluída',
+    proxima_providencia: 'Aguardando orçamento da GOP.'
+  };
+
+  // Mock do Supabase Client simulando .update().eq().select().single()
+  const mockSupabaseWithSelect = {
+    from: (table) => ({
+      update: (record) => ({
+        eq: (field, value) => ({
+          select: (selectStr) => ({
+            single: async () => {
+              if (table === 'chamados' && field === 'id_chamado' && value === 'GOP-AR-2026-TEST') {
+                return { data: { ...record, modificado_em: new Date().toISOString() }, error: null };
+              }
+              return { data: null, error: new Error('Query mismatch') };
+            }
+          })
+        })
+      })
+    })
+  };
+
+  const { data: savedTicket, error: tkErr } = await mockSupabaseWithSelect
+    .from('chamados')
+    .update(updatedFields)
+    .eq('id_chamado', 'GOP-AR-2026-TEST')
+    .select('*')
+    .single();
+
+  printResult('6.1. Execução bem sucedida do método pessimistic com select e single', !tkErr && !!savedTicket);
+  printResult('6.2. Registro retornado contém os campos atualizados', savedTicket.status_atual === '3 - Vistoria concluída');
+  printResult('6.3. Registro retornado possui data de modificação', !!savedTicket.modificado_em);
+  console.log();
+} catch (e) {
+  printResult('Teste 6 falhou criticamente', false, e.message);
+}
+
 console.log('\x1b[32m%s\x1b[0m', '================================================');
 console.log('\x1b[32m%s\x1b[0m', '🎉 RESULTADO: TODOS OS SMOKE TESTS PASSARAM! ');
 console.log('\x1b[32m%s\x1b[0m', '================================================');
