@@ -276,6 +276,7 @@ export default function App() {
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSavingTicket, setIsSavingTicket] = useState(false);
+  const [isSavingHistory, setIsSavingHistory] = useState(false);
 
   // Form tab states
   const [formSearchQuery, setFormSearchQuery] = useState('');
@@ -743,40 +744,44 @@ export default function App() {
   };
 
   const saveEditedHistoryEvent = async (eventId, newText) => {
+    if (isSavingHistory) return;
     if (!newText.trim()) return;
-
-    // Atualiza localmente no estado 'history'
-    const updatedHistory = history.map(h => {
-      if (h.id_evento === eventId) {
-        return { ...h, observacao: newText };
-      }
-      return h;
-    });
-    setHistory(updatedHistory);
-
-    // Salva no Supabase se conectado
-    let cloudOk = true;
-    if (supabaseClient) {
-      try {
-        const { error } = await supabaseClient
-          .from('historico')
-          .update({ observacao: newText })
-          .eq('id_evento', eventId);
-        if (error) throw error;
-      } catch (err) {
-        cloudOk = false;
-        console.error("Erro ao atualizar comentário no Supabase:", err);
-      }
+    if (!supabaseClient) {
+      triggerToast('Edição de comentário bloqueada em modo local. Conecte a base online.', 'error');
+      return;
     }
 
-    setEditingEventId(null);
-    setEditingEventText('');
-    triggerToast(
-      cloudOk 
-        ? "Comentário do histórico atualizado!" 
-        : "Comentário atualizado localmente (falha ao salvar na nuvem).",
-      cloudOk ? 'success' : 'error'
-    );
+    setIsSavingHistory(true);
+
+    try {
+      const { data: savedEvent, error } = await supabaseClient
+        .from('historico')
+        .update({ observacao: newText })
+        .eq('id_evento', eventId)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      if (!savedEvent) throw new Error('Nenhum registro retornado pelo banco após salvar.');
+
+      // Atualiza localmente no estado 'history' apenas após confirmação
+      const updatedHistory = history.map(h => {
+        if (h.id_evento === eventId) {
+          return savedEvent;
+        }
+        return h;
+      });
+      setHistory(updatedHistory);
+
+      setEditingEventId(null);
+      setEditingEventText('');
+      triggerToast("Comentário do histórico atualizado!", 'success');
+    } catch (err) {
+      console.error("Erro ao atualizar comentário no Supabase:", err);
+      triggerToast(`Falha ao salvar comentário na nuvem: ${err.message || err}`, 'error');
+    } finally {
+      setIsSavingHistory(false);
+    }
   };
 
   const saveEditedTicket = async () => {
@@ -3839,12 +3844,14 @@ CREATE TABLE IF NOT EXISTS historico (
                                   value={editingEventText}
                                   onChange={(e) => setEditingEventText(e.target.value)}
                                   style={{ fontSize: '12.5px', padding: '6px', minHeight: '60px' }}
+                                  disabled={isSavingHistory}
                                 />
                                 <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                                   <button 
                                     className="btn" 
                                     style={{ padding: '3px 8px', fontSize: '11.5px', height: '24px', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
                                     onClick={() => setEditingEventId(null)}
+                                    disabled={isSavingHistory}
                                   >
                                     Cancelar
                                   </button>
@@ -3852,8 +3859,9 @@ CREATE TABLE IF NOT EXISTS historico (
                                     className="btn btn-primary" 
                                     style={{ padding: '3px 8px', fontSize: '11.5px', height: '24px' }}
                                     onClick={() => saveEditedHistoryEvent(h.id_evento, editingEventText)}
+                                    disabled={isSavingHistory}
                                   >
-                                    Salvar
+                                    {isSavingHistory ? 'Salvando...' : 'Salvar'}
                                   </button>
                                 </div>
                               </div>

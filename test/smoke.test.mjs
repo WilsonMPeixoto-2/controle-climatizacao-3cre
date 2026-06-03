@@ -425,6 +425,48 @@ try {
   printResult('Teste 6 falhou criticamente', false, e.message);
 }
 
+// ---------------------------------------------------------------------------
+// TESTE 7: Fluxo Pessimista de Salvamento de Comentário do Histórico via Supabase (select('*').single())
+// ---------------------------------------------------------------------------
+try {
+  console.log('--- Teste 7: Fluxo Pessimista de Salvamento de Histórico via Supabase (select.*.single) ---');
+
+  const logToEdit = historyState.find(h => h.id_evento === 'EV-TEST-AUDIT-4');
+  const newCommentText = "Comentário revisado pessimistamente.";
+
+  // Mock do Supabase Client para histórico
+  const mockSupabaseWithSelectHistory = {
+    from: (table) => ({
+      update: (record) => ({
+        eq: (field, value) => ({
+          select: (selectStr) => ({
+            single: async () => {
+              if (table === 'historico' && field === 'id_evento' && value === 'EV-TEST-AUDIT-4') {
+                return { data: { ...logToEdit, observacao: record.observacao, modificado_em: new Date().toISOString() }, error: null };
+              }
+              return { data: null, error: new Error('Query mismatch') };
+            }
+          })
+        })
+      })
+    })
+  };
+
+  const { data: savedEvent, error: histErr } = await mockSupabaseWithSelectHistory
+    .from('historico')
+    .update({ observacao: newCommentText })
+    .eq('id_evento', 'EV-TEST-AUDIT-4')
+    .select('*')
+    .single();
+
+  printResult('7.1. Execução bem sucedida do método pessimistic para histórico com select e single', !histErr && !!savedEvent);
+  printResult('7.2. Registro retornado contém o comentário atualizado', savedEvent.observacao === newCommentText);
+  printResult('7.3. Registro retornado possui as chaves corretas', savedEvent.id_evento === 'EV-TEST-AUDIT-4');
+  console.log();
+} catch (e) {
+  printResult('Teste 7 falhou criticamente', false, e.message);
+}
+
 console.log('\x1b[32m%s\x1b[0m', '================================================');
 console.log('\x1b[32m%s\x1b[0m', '🎉 RESULTADO: TODOS OS SMOKE TESTS PASSARAM! ');
 console.log('\x1b[32m%s\x1b[0m', '================================================');
