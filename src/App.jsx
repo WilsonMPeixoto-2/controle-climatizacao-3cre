@@ -1920,6 +1920,7 @@ export default function App() {
                             className="btn-focus-bairro-small" 
                             onClick={() => setFocusedBairro({ name: selectedBairroNormalized, timestamp: Date.now() })} 
                             title="Recentralizar e focar este bairro no mapa"
+                            aria-label="Focar este bairro no mapa"
                           >
                             <IconFocus />
                           </button>
@@ -1930,12 +1931,18 @@ export default function App() {
                               'bairro'
                             )} 
                             title="Copiar resumo gerencial do bairro"
+                            aria-label="Copiar resumo gerencial do bairro"
                             style={{ marginLeft: '4px' }}
                           >
                             <IconCopy />
                           </button>
                         </div>
-                        <button className="btn-close-small" onClick={() => setSelectedBairroNormalized(null)} title="Fechar detalhes do bairro">
+                        <button 
+                          className="btn-close-small" 
+                          onClick={() => setSelectedBairroNormalized(null)} 
+                          title="Fechar detalhes do bairro"
+                          aria-label="Fechar detalhes do bairro"
+                        >
                           <IconClose />
                         </button>
                       </div>
@@ -2519,6 +2526,7 @@ export default function App() {
                         value={lookupSchoolQuery}
                         onChange={(e) => {
                           setLookupSchoolQuery(e.target.value);
+                          setSelectedSchool(null);
                           setShowLookupSuggestions(true);
                         }}
                         onFocus={() => setShowLookupSuggestions(true)}
@@ -2708,7 +2716,7 @@ export default function App() {
                       {/* Banner de Situação de Climatização */}
                       <div style={{ marginTop: '20px' }}>
                         {dossier.status === 'critica' && (
-                          <div style={{
+                          <div className="dossier-status-banner status-critica" style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '12px',
@@ -2726,7 +2734,7 @@ export default function App() {
                           </div>
                         )}
                         {dossier.status === 'atencao' && (
-                          <div style={{
+                          <div className="dossier-status-banner status-atencao" style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '12px',
@@ -2744,7 +2752,7 @@ export default function App() {
                           </div>
                         )}
                         {dossier.status === 'regular' && (
-                          <div style={{
+                          <div className="dossier-status-banner status-regular" style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '12px',
@@ -2809,7 +2817,7 @@ export default function App() {
                         {/* Validação de cadastro */}
                         <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                           <div style={{ display: 'flex', gap: '10px' }}>
-                            <div style={{
+                            <div className={`dossier-validation-badge ${selectedSchool.confirmado_pela_unidade === 'Sim' ? 'badge-confirmed' : 'badge-pending'}`} style={{
                               padding: '6px 12px',
                               borderRadius: '4px',
                               fontSize: '12px',
@@ -2820,7 +2828,7 @@ export default function App() {
                             }}>
                               {selectedSchool.confirmado_pela_unidade === 'Sim' ? '✓ Confirmado pela Escola' : '✗ Pendente Escola'}
                             </div>
-                            <div style={{
+                            <div className={`dossier-validation-badge ${selectedSchool.validado_pela_gop === 'Sim' ? 'badge-confirmed' : 'badge-pending'}`} style={{
                               padding: '6px 12px',
                               borderRadius: '4px',
                               fontSize: '12px',
@@ -2839,7 +2847,7 @@ export default function App() {
                       </div>
 
                       {/* POP Action */}
-                      <div style={{
+                      <div className={`dossier-pop-action status-${dossier.status}`} style={{
                         marginTop: '20px',
                         padding: '16px',
                         borderRadius: 'var(--radius-xs)',
@@ -3703,7 +3711,9 @@ export default function App() {
                     alignSelf: 'center',
                     fontWeight: '600'
                   }}>
-                    💡 Você pode editar o texto na caixa acima antes de copiar.
+                    {emailTab === 'preview' 
+                      ? "💡 Para alterar a minuta, use a aba 'Editar texto do e-mail'." 
+                      : "💡 Edite o texto na caixa acima antes de copiar."}
                   </span>
                   <button 
                     className="btn btn-primary"
@@ -3905,6 +3915,7 @@ CREATE TABLE IF NOT EXISTS historico (
                       'chamado'
                     )} 
                     title="Copiar resumo completo do chamado"
+                    aria-label="Copiar resumo do chamado"
                     style={{ marginLeft: '4px' }}
                   >
                     <IconCopy />
@@ -3918,6 +3929,7 @@ CREATE TABLE IF NOT EXISTS historico (
                 className="modal-close-btn" 
                 onClick={() => { if (!isSavingTicket && !isSavingHistory) setShowEditModal(false); }}
                 disabled={isSavingTicket || isSavingHistory}
+                aria-label="Fechar ficha do chamado"
               >
                 <IconClose />
               </button>

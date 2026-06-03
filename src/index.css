@@ -2597,6 +2597,104 @@ html:not(.dark-theme) .main-portal-title {
     box-shadow: none !important;
     color: #000000 !important;
   }
+
+  /* Forçar fundo branco e cores de texto adequadas em todos os elementos dentro do escopo de impressão */
+  body.printing-school-dossier .school-dossier-print-scope,
+  body.printing-school-dossier .school-dossier-print-scope *,
+  body.printing-school-dossier .school-dossier-print-scope [style] {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+    border-color: #e5e7eb !important;
+  }
+
+  /* Exceções sutis de legibilidade e realce de status para a impressão */
+  body.printing-school-dossier .school-dossier-print-scope .dossier-status-banner.status-critica,
+  body.printing-school-dossier .school-dossier-print-scope .dossier-status-banner.status-critica * {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+  }
+  
+  body.printing-school-dossier .school-dossier-print-scope .dossier-status-banner.status-atencao,
+  body.printing-school-dossier .school-dossier-print-scope .dossier-status-banner.status-atencao * {
+    background-color: #fffbeb !important;
+    color: #92400e !important;
+    border-color: #fde68a !important;
+  }
+
+  body.printing-school-dossier .school-dossier-print-scope .dossier-status-banner.status-regular,
+  body.printing-school-dossier .school-dossier-print-scope .dossier-status-banner.status-regular * {
+    background-color: #f0fdf4 !important;
+    color: #166534 !important;
+    border-color: #bbf7d0 !important;
+  }
+
+  /* Badges de validação da escola e gop */
+  body.printing-school-dossier .school-dossier-print-scope .dossier-validation-badge.badge-confirmed {
+    background-color: #f0fdf4 !important;
+    color: #166534 !important;
+    border-color: #86efac !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .dossier-validation-badge.badge-pending {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+  }
+
+  /* Ação Sugerida (POP) */
+  body.printing-school-dossier .school-dossier-print-scope .dossier-pop-action {
+    background-color: #f9fafb !important;
+    border: 1px dashed #d1d5db !important;
+    border-left: 4px solid #9ca3af !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .dossier-pop-action.status-critica {
+    border-left-color: #b91c1c !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .dossier-pop-action.status-atencao {
+    border-left-color: #d97706 !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .dossier-pop-action.status-regular {
+    border-left-color: #059669 !important;
+  }
+
+  /* Prioridades de chamados */
+  body.printing-school-dossier .school-dossier-print-scope .badge-priority-alta,
+  body.printing-school-dossier .school-dossier-print-scope .badge-priority-crítica,
+  body.printing-school-dossier .school-dossier-print-scope .badge-priority-critica {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fca5a5 !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .badge-priority-media {
+    background-color: #fffbeb !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .badge-priority-baixa {
+    background-color: #f0fdf4 !important;
+    color: #166534 !important;
+    border: 1px solid #bbf7d0 !important;
+  }
+  
+  /* Status de chamados */
+  body.printing-school-dossier .school-dossier-print-scope .badge-status {
+    border: 1px solid #d1d5db !important;
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+
+  /* SVG Circular progress */
+  body.printing-school-dossier .school-dossier-print-scope .circle-progress-bg {
+    stroke: #e5e7eb !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .circle-progress-bar {
+    stroke: #0284c7 !important;
+  }
+  body.printing-school-dossier .school-dossier-print-scope .circle-progress-wrapper div {
+    color: #0284c7 !important;
+  }
 }
 
 /* ==========================================================================

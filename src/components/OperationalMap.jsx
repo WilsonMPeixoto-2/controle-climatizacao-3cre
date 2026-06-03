@@ -88,6 +88,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
   const tileLayerRef = useRef(null);
   const geoJsonRef = useRef(null);
   const layersRef = useRef({});
+  const labelMarkersRef = useRef([]);
 
   const stats = useMemo(() => aggregateBairroStats(tickets, schools), [tickets, schools]);
 
@@ -159,6 +160,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
           });
           labelMarker.bindTooltip(nm, { permanent: true, direction: 'center', className: 'cre-label' });
           labelMarker.addTo(map);
+          labelMarkersRef.current.push(labelMarker);
         }
 
         // Interação hover local (alteração visual)
@@ -217,6 +219,32 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       clearTimeout(t);
       if (mapRef.current) {
         try {
+          // Fecha tooltip aberto no mapa
+          mapRef.current.closeTooltip();
+          
+          // Limpa marcadores permanentes de bairros e desvincula seus tooltips
+          labelMarkersRef.current.forEach((m) => {
+            try {
+              m.unbindTooltip();
+              m.remove();
+            } catch {
+              // Silencioso
+            }
+          });
+          labelMarkersRef.current = [];
+
+          // Limpa listeners e tooltips de cada polígono GeoJSON
+          if (geoJsonRef.current) {
+            geoJsonRef.current.eachLayer((l) => {
+              try {
+                l.unbindTooltip();
+                l.off();
+              } catch {
+                // Silencioso
+              }
+            });
+          }
+          
           mapRef.current.remove();
         } catch (e) {
           console.warn("Leaflet: Erro ao remover mapa no cleanup:", e);
@@ -232,7 +260,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
 
   // 3. Efeito Reativo de Atualização de Dados e Tema (In-place sem destruir o mapa)
   useEffect(() => {
-    if (!mapRef.current || !geoJsonRef.current) return;
+    if (!mapRef.current || !geoJsonRef.current || !mapRef.current._loaded) return;
 
     // Atualiza o Tile Layer para o tema correto
     if (tileLayerRef.current) {
@@ -285,7 +313,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
 
   // 4. Efeito de Realce e Foco por Polígono da Escola Selecionada (Consulta Rápida)
   useEffect(() => {
-    if (!mapRef.current || !geoJsonRef.current || !selectedSchool || !elRef.current?.isConnected) return;
+    if (!mapRef.current || !geoJsonRef.current || !selectedSchool || !elRef.current?.isConnected || !mapRef.current._loaded) return;
 
     try {
       const schoolBairro = selectedSchool.bairro;
@@ -321,7 +349,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
 
   // 5. Efeito de Foco Territorial por Clique no Card Lateral de Detalhes
   useEffect(() => {
-    if (!mapRef.current || !geoJsonRef.current || !focusedBairro || !elRef.current?.isConnected) return;
+    if (!mapRef.current || !geoJsonRef.current || !focusedBairro || !elRef.current?.isConnected || !mapRef.current._loaded) return;
 
     try {
       const normalized = focusedBairro.name;
