@@ -28,6 +28,11 @@ import {
   deleteTicketAttachment,
   getAttachmentDownloadUrl,
 } from '../src/lib/attachments.js';
+import {
+  calculateUrgencyScore,
+  getOperationalSummary,
+  getActionItems
+} from '../src/lib/operationalIntelligence.js';
 
 // Carrega a base local de referência (db.json)
 const rawDb = fs.readFileSync('./src/data/db.json', 'utf-8');
@@ -465,6 +470,100 @@ try {
   console.log();
 } catch (e) {
   printResult('Teste 7 falhou criticamente', false, e.message);
+}
+
+// ---------------------------------------------------------------------------
+// TESTE 8: Inteligência Operacional, Scores e Fila de Ações
+// ---------------------------------------------------------------------------
+try {
+  console.log('--- Teste 8: Lógica de Inteligência Operacional e Ações ---');
+
+  const mockTickets = [
+    {
+      id_chamado: 'TKT-01',
+      prioridade: 'Crítica',
+      status_atual: '1 - Recebido — em triagem',
+      data_solicitacao: '2026-05-01T12:00:00Z',
+      modificado_em: '2026-05-01T12:00:00Z',
+      comunicacao_cto: 'Não',
+      informacao_validada: 'Pendente de Vistoria',
+      unidade_escolar: 'Escola A'
+    },
+    {
+      id_chamado: 'TKT-02',
+      prioridade: 'Média',
+      status_atual: '5 - Vistoria aprovada — aguardando CTO',
+      data_solicitacao: '2026-05-15T12:00:00Z',
+      modificado_em: '2026-05-30T12:00:00Z',
+      comunicacao_cto: 'Não',
+      informacao_validada: 'Validada',
+      unidade_escolar: 'Escola B'
+    },
+    {
+      id_chamado: 'TKT-03',
+      prioridade: 'Crítica',
+      status_atual: '10 - Concluído',
+      data_solicitacao: '2026-05-20T12:00:00Z',
+      modificado_em: '2026-05-20T12:00:00Z',
+      unidade_escolar: 'Escola C'
+    },
+    {
+      id_chamado: 'TKT-04',
+      prioridade: 'Alta',
+      status_atual: '2 - Em vistoria técnica',
+      data_solicitacao: '2026-05-30T12:00:00Z',
+      modificado_em: '2026-05-30T12:00:00Z',
+      unidade_escolar: 'Escola D',
+      proxima_providencia: 'Aguardando retorno da unidade escolar'
+    }
+  ];
+
+  const mockSchools = [
+    { designacao: 'SCH-A', unidade_escolar: 'Escola A', bairro: 'Bairro Centro' },
+    { designacao: 'SCH-B', unidade_escolar: 'Escola B', bairro: 'Bairro Centro' }
+  ];
+
+  const mockAttachments = [
+    { id: 101, id_chamado: 'TKT-02', nome_original: 'laudo.pdf' }
+  ];
+
+  const testRefDate = new Date('2026-06-02T12:00:00Z');
+
+  const score1 = calculateUrgencyScore(mockTickets[0], mockAttachments, testRefDate);
+  const score2 = calculateUrgencyScore(mockTickets[1], mockAttachments, testRefDate);
+
+  printResult('8.1. Score de urgência calculado com precisão', score1 === 106 && score2 === 30, `TKT-01 Score: ${score1}, TKT-02 Score: ${score2}`);
+
+  const summary = getOperationalSummary(mockTickets, mockSchools, mockAttachments, testRefDate);
+  printResult('8.2. Resumo operacional com contagens e priorizações corretas', summary.totalActive === 3 && summary.prioritizedTickets[0] === 'TKT-01', `Prioritized: ${summary.prioritizedTickets.join(', ')}`);
+
+  const actionItems = getActionItems(mockTickets, mockSchools, mockAttachments, testRefDate);
+  const containsTkt01 = actionItems.some(i => i.ticket.id_chamado === 'TKT-01' && i.type === 'attachment');
+  const containsTkt02 = actionItems.some(i => i.ticket.id_chamado === 'TKT-02' && i.type === 'cto');
+  const containsTkt03 = actionItems.some(i => i.ticket.id_chamado === 'TKT-03' && i.type === 'completion');
+  const containsTkt04 = actionItems.some(i => i.ticket.id_chamado === 'TKT-04' && i.type === 'school');
+
+  printResult('8.3. Regras de ação geradas corretamente', containsTkt01 && containsTkt02 && containsTkt03 && containsTkt04);
+
+  const tkt01Actions = actionItems.filter(i => i.ticket.id_chamado === 'TKT-01');
+  printResult('8.4. Prevenção de duplicidade por chamado na fila de ações', tkt01Actions.length === 1 && tkt01Actions[0].type === 'attachment');
+
+  const manyTickets = Array.from({ length: 10 }, (_, i) => ({
+    id_chamado: `TKT-MANY-${i}`,
+    prioridade: 'Média',
+    status_atual: '1 - Recebido — em triagem',
+    modificado_em: '2026-05-01T12:00:00Z',
+    unidade_escolar: `Escola ${i}`
+  }));
+  const limitedActions = getActionItems(manyTickets, mockSchools, [], testRefDate);
+  printResult('8.5. Limitação estrita do painel para no máximo 5 ações prioritárias', limitedActions.length === 5);
+
+  const noActions = getActionItems([], mockSchools, [], testRefDate);
+  printResult('8.6. Retorno de lista vazia quando não há pendências pendentes', noActions.length === 0);
+
+  console.log();
+} catch (e) {
+  printResult('Teste 8 falhou criticamente', false, e.message);
 }
 
 console.log('\x1b[32m%s\x1b[0m', '================================================');

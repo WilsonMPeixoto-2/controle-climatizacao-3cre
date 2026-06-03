@@ -2609,3 +2609,183 @@ html:not(.dark-theme) .main-portal-title {
     gap: 8px;
   }
 }
+
+/* ===========================================================================
+   Inteligência Operacional e Fila de Ações
+   =========================================================================== */
+.operational-summary-card {
+  background-color: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+  border-left: 4px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: var(--transition);
+}
+
+.operational-summary-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-icon {
+  font-size: 18px;
+}
+
+.summary-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.summary-badge-editorial {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-hover);
+}
+
+.summary-text {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.priority-ticket-link {
+  font-family: monospace;
+  font-weight: 800;
+  color: var(--primary);
+  background-color: var(--primary-glow);
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: all 0.2s;
+  display: inline-block;
+  margin: 0 2px;
+}
+
+.priority-ticket-link:hover {
+  background-color: var(--primary);
+  color: var(--text-on-primary);
+  text-decoration: none;
+}
+
+.summary-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.summary-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+}
+
+.summary-chip-label {
+  color: var(--text-light);
+}
+
+.summary-chip-value {
+  font-weight: 800;
+}
+
+.summary-chip-value.color-blue {
+  color: var(--color-blue);
+}
+
+.summary-chip-value.color-red {
+  color: var(--color-red);
+}
+
+.summary-chip-value.color-amber {
+  color: var(--color-amber);
+}
+
+.summary-chip-value.color-teal {
+  color: var(--secondary);
+}
+
+.summary-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+}
+
+.summary-footnote {
+  font-size: 11px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* Fila de Ações - Tags de Severidade/Tipo */
+.task-tag {
+  display: inline-block;
+}
+
+.tag-danger {
+  background-color: var(--color-red-tint);
+  color: var(--color-red);
+  border: 1px solid var(--color-red);
+}
+
+.tag-warning {
+  background-color: var(--color-amber-tint);
+  color: var(--color-amber);
+  border: 1px solid var(--color-amber);
+}
+
+.tag-info {
+  background-color: var(--color-blue-tint);
+  color: var(--color-blue);
+  border: 1px solid var(--color-blue);
+}
+
+.tag-secondary {
+  background-color: var(--secondary-glow);
+  color: var(--secondary);
+  border: 1px solid var(--secondary);
+}
+
+.tag-success {
+  background-color: var(--color-green-tint);
+  color: var(--color-green);
+  border: 1px solid var(--color-green);
+}
+
+/* Micro-interações */
+.btn-task-action {
+  transition: var(--transition);
+}
+
+.btn-task-action:hover {
+  background-color: var(--primary) !important;
+  color: var(--text-on-primary) !important;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+

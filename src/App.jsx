@@ -23,6 +23,10 @@ import {
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
 import {
+  getOperationalSummary,
+  getActionItems
+} from './lib/operationalIntelligence.js';
+import {
   uploadTicketAttachment,
   listTicketAttachments,
   listSchoolAttachments,
@@ -669,6 +673,9 @@ export default function App() {
   const agePlus30 = metrics.agePlus30;           // antiguidade roxo claro ou pior
   const agePlus60 = metrics.agePlus60;           // antiguidade roxo intenso
 
+  const summary = getOperationalSummary(tickets, schools, allAttachments, todayRef());
+  const actionItems = getActionItems(tickets, schools, allAttachments, todayRef());
+
   // Tickets views filters
   const getFilteredTickets = () => {
     let result = [...tickets];
@@ -774,6 +781,247 @@ export default function App() {
     } else {
       setTicketAttachments([]);
     }
+  };
+
+  const goToCommunicationForTicket = (ticket, type) => {
+    let templateIndex = 0;
+    if (type === 'cto') {
+      const idx = emailTemplates.findIndex(t => 
+        (t.tipo || '').toLowerCase().includes('cto') || 
+        (t.template || '').toLowerCase().includes('cto')
+      );
+      templateIndex = idx !== -1 ? idx : 5;
+    } else if (type === 'school') {
+      const idx = emailTemplates.findIndex(t => 
+        (t.tipo || '').toLowerCase().includes('escola') || 
+        (t.tipo || '').toLowerCase().includes('vistoria') || 
+        (t.template || '').toLowerCase().includes('unidade')
+      );
+      templateIndex = idx !== -1 ? idx : 0;
+    }
+    
+    setSelectedEmailTicketId(ticket.id_chamado);
+    setSelectedTemplateIndex(templateIndex);
+    setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, ticket.id_chamado, templateIndex));
+    setCurrentTab('email');
+    triggerToast(`Minuta de e-mail gerada para o chamado ${ticket.id_chamado}!`, 'info');
+  };
+
+  const renderOperationalSummary = () => {
+    const { totalActive, criticalCount, stuckCount, topBairros, prioritizedTickets } = summary;
+    
+    return (
+      <div className="operational-summary-card animate-slide-in">
+        <div className="summary-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className="summary-icon">✨</span>
+            <h3 className="summary-title">Resumo operacional de hoje</h3>
+          </div>
+          <span className="summary-badge-editorial">Leitura Operacional</span>
+        </div>
+        
+        <p className="summary-text">
+          Há <strong>{totalActive}</strong> chamados ativos, sendo <strong>{criticalCount}</strong> em prioridade alta ou crítica. 
+          Foram identificados <strong>{stuckCount}</strong> chamados sem movimentação há mais de 15 dias. 
+          As maiores concentrações de chamados aparecem em {topBairros.length > 0 ? (
+            topBairros.map((b, i) => (
+              <span key={b}>
+                <strong>{b}</strong>
+                {i < topBairros.length - 1 ? ' e ' : ''}
+              </span>
+            ))
+          ) : (
+            'diversos setores'
+          )}. 
+          Recomenda-se priorizar os chamados{' '}
+          {prioritizedTickets.length > 0 ? (
+            prioritizedTickets.map((id, index) => (
+              <span key={id}>
+                <span 
+                  className="priority-ticket-link" 
+                  onClick={() => {
+                    const tk = tickets.find(t => t.id_chamado === id);
+                    if (tk) openTicketEdit(tk);
+                  }}
+                  title={`Abrir chamado ${id}`}
+                >
+                  {id}
+                </span>
+                {index < prioritizedTickets.length - 1 ? ', ' : ''}
+              </span>
+            ))
+          ) : (
+            'indicados na fila de ação.'
+          )}.
+        </p>
+        
+        <div className="summary-chips-container">
+          <div className="summary-chip font-semibold">
+            <span className="summary-chip-label">Ativos:</span>
+            <span className="summary-chip-value color-blue">{totalActive}</span>
+          </div>
+          <div className="summary-chip font-semibold">
+            <span className="summary-chip-label">Alta/Crítica:</span>
+            <span className="summary-chip-value color-red">{criticalCount}</span>
+          </div>
+          <div className="summary-chip font-semibold">
+            <span className="summary-chip-label">+15d sem movimentação:</span>
+            <span className="summary-chip-value color-amber">{stuckCount}</span>
+          </div>
+          <div className="summary-chip font-semibold">
+            <span className="summary-chip-label">Bairros Foco:</span>
+            <span className="summary-chip-value color-teal">{topBairros.join(', ') || 'Nenhum'}</span>
+          </div>
+        </div>
+        
+        <div className="summary-footer">
+          <span className="summary-footnote">
+            Leitura gerada automaticamente com base nos chamados cadastrados, prioridades, prazos e histórico de movimentação.
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderActionItems = () => {
+    return (
+      <div className="dashboard-section task-queue-section" style={{ marginBottom: 0 }}>
+        <div className="section-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <IconCheck />
+            <h3>O que exige ação agora</h3>
+          </div>
+          <span className="task-count-badge">{actionItems.length}</span>
+        </div>
+        <p className="task-queue-intro" style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
+          Pendências operacionais prioritárias ordenadas por urgência. Ações de e-mail iniciam minutas pré-configuradas.
+        </p>
+        
+        <div className="task-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {actionItems.length > 0 ? (
+            actionItems.map((item) => {
+              let borderCol = 'var(--primary)';
+              let tagText = 'Pendência';
+              let tagClass = 'tag-primary';
+              
+              if (item.type === 'attachment') {
+                borderCol = 'var(--color-red)';
+                tagText = 'Urgente';
+                tagClass = 'tag-danger';
+              } else if (item.type === 'stuck') {
+                borderCol = 'var(--color-amber)';
+                tagText = 'Atenção';
+                tagClass = 'tag-warning';
+              } else if (item.type === 'cto') {
+                borderCol = 'var(--color-blue)';
+                tagText = 'Comunicar CTO';
+                tagClass = 'tag-info';
+              } else if (item.type === 'school') {
+                borderCol = 'var(--secondary)';
+                tagText = 'Retorno Escola';
+                tagClass = 'tag-secondary';
+              } else if (item.type === 'completion') {
+                borderCol = 'var(--color-green)';
+                tagText = 'Encerramento';
+                tagClass = 'tag-success';
+              }
+              
+              return (
+                <div 
+                  key={item.id} 
+                  className="task-item animate-hover" 
+                  style={{ 
+                    padding: '14px 18px',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-xs)',
+                    backgroundColor: 'var(--bg-app)',
+                    borderLeft: `4px solid ${borderCol}`,
+                    transition: 'var(--transition)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span className={`task-tag ${tagClass}`} style={{
+                      fontSize: '10px',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      letterSpacing: '0.4px'
+                    }}>{tagText}</span>
+                    <span 
+                      className="task-ticket-id" 
+                      onClick={() => openTicketEdit(item.ticket)}
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        fontFamily: 'monospace',
+                        color: 'var(--text-light)',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                      title={`Abrir chamado ${item.ticket.id_chamado}`}
+                    >
+                      {item.ticket.id_chamado}
+                    </span>
+                  </div>
+                  <h4 className="task-title" style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
+                    {item.title}
+                  </h4>
+                  <p className="task-desc" style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                    {item.description}
+                  </p>
+                  <div className="task-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                    <button 
+                      className="btn-task-action" 
+                      onClick={() => {
+                        if (item.type === 'cto' || item.type === 'school') {
+                          goToCommunicationForTicket(item.ticket, item.type);
+                        } else {
+                          openTicketEdit(item.ticket);
+                        }
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '11.5px',
+                        fontWeight: '700',
+                        backgroundColor: 'var(--primary-light)',
+                        border: '1px solid var(--border-hover)',
+                        borderRadius: '6px',
+                        color: 'var(--primary)',
+                        cursor: 'pointer',
+                        transition: 'var(--transition)'
+                      }}
+                    >
+                      {item.actionLabel}
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="task-empty-state" style={{
+              padding: '28px 16px',
+              textAlign: 'center',
+              border: '1px dashed var(--border-color)',
+              borderRadius: 'var(--radius-xs)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <div className="task-empty-icon" style={{ fontSize: '24px' }}>✨</div>
+              <div className="task-empty-title" style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--text-main)' }}>Tudo em dia!</div>
+              <p className="task-empty-desc" style={{ fontSize: '12.5px', color: 'var(--text-light)', margin: 0 }}>
+                Nenhuma ação urgente pendente para os chamados cadastrados.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const saveEditedHistoryEvent = async (eventId, newText) => {
@@ -1475,6 +1723,8 @@ export default function App() {
               Veja a situação geral dos chamados, os alertas de prazo e os casos que precisam de atenção da GOP.
             </p>
 
+            {renderOperationalSummary()}
+
             {/* Stat row */}
             <p className="stat-cards-instruction" style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
               <IconInfo style={{ width: '14px', height: '14px', color: 'var(--primary)' }} />
@@ -1786,76 +2036,81 @@ export default function App() {
 {/* (removido) "Envolvimento e Demandas por Setor" — a visão por setor permanece na barra de setor da Lista de chamados (Bloco C) */}
               </div>
 
-              {/* Right Section: Inactivity Ranking */}
-              <div className="dashboard-section" style={{ height: 'fit-content' }}>
-                <div className="section-header">
-                  <h3><IconWarning /> Acompanhamento Prioritário de Demandas</h3>
-                </div>
-                <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
-                  Lista das demandas em andamento ordenadas por tempo de tramitação para priorização de ações.
-                </p>
+              {/* Right column: Action checklist, Inactivity ranking, and Sync panel */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {renderActionItems()}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {getDashboardStuckRanking().map((t) => {
-                    const isSevere = t.inactivityDays >= 15;
-                    return (
-                      <div 
-                        key={t.id_chamado} 
-                        onClick={() => openTicketEdit(t)}
-                        style={{
-                          padding: '14px 18px',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: 'var(--radius-xs)',
-                          backgroundColor: 'var(--bg-app)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          borderLeft: `4px solid ${isSevere ? 'var(--color-red)' : 'var(--color-amber)'}`,
-                          transition: 'var(--transition)'
-                        }}
-                      >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <strong style={{ fontSize: '13.5px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
-                            <span className={`badge ${t.prioridade === 'Crítica' ? 'badge-priority-critica' : 'badge-priority-alta'}`} style={{ fontSize: '9px', padding: '1px 5px' }}>
-                              {t.prioridade}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '13px', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: '600' }}>
-                            {t.unidade_escolar}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right', marginLeft: '12px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                            <span className={`sla-pulse ${isSevere ? 'sla-pulse-red' : 'sla-pulse-amber'}`} />
-                            <span style={{ 
-                              fontSize: '13.5px', 
-                              fontWeight: '800', 
-                              color: isSevere ? 'var(--color-red)' : 'var(--color-amber)' 
-                            }}>
-                              {t.inactivityDays} dias
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '11.5px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' }}>sem alteração</div>
-                          {typeof t.ageDays === 'number' && t.ageDays > 0 && (
-                            <div style={{ fontSize: '11.5px', color: 'var(--color-age-severe)', fontWeight: '700', marginTop: '3px' }}>
-                              {t.ageDays} dias em aberto
+                {/* Right Section: Inactivity Ranking */}
+                <div className="dashboard-section" style={{ height: 'fit-content', marginBottom: 0 }}>
+                  <div className="section-header">
+                    <h3><IconWarning /> Acompanhamento Prioritário de Demandas</h3>
+                  </div>
+                  <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.45', fontWeight: '500' }}>
+                    Lista das demandas em andamento ordenadas por tempo de tramitação para priorização de ações.
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {getDashboardStuckRanking().map((t) => {
+                      const isSevere = t.inactivityDays >= 15;
+                      return (
+                        <div 
+                          key={t.id_chamado} 
+                          onClick={() => openTicketEdit(t)}
+                          style={{
+                            padding: '14px 18px',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 'var(--radius-xs)',
+                            backgroundColor: 'var(--bg-app)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            borderLeft: `4px solid ${isSevere ? 'var(--color-red)' : 'var(--color-amber)'}`,
+                            transition: 'var(--transition)'
+                          }}
+                        >
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <strong style={{ fontSize: '13.5px', color: 'var(--text-main)' }}>{t.id_chamado}</strong>
+                              <span className={`badge ${t.prioridade === 'Crítica' ? 'badge-priority-critica' : 'badge-priority-alta'}`} style={{ fontSize: '9px', padding: '1px 5px' }}>
+                                {t.prioridade}
+                              </span>
                             </div>
-                          )}
+                            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: '600' }}>
+                              {t.unidade_escolar}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', marginLeft: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                              <span className={`sla-pulse ${isSevere ? 'sla-pulse-red' : 'sla-pulse-amber'}`} />
+                              <span style={{ 
+                                fontSize: '13.5px', 
+                                fontWeight: '800', 
+                                color: isSevere ? 'var(--color-red)' : 'var(--color-amber)' 
+                              }}>
+                                {t.inactivityDays} dias
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11.5px', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase', marginTop: '2px' }}>sem alteração</div>
+                            {typeof t.ageDays === 'number' && t.ageDays > 0 && (
+                              <div style={{ fontSize: '11.5px', color: 'var(--color-age-severe)', fontWeight: '700', marginTop: '3px' }}>
+                                {t.ageDays} dias em aberto
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Info and Sync center box */}
-                <div className="sync-panel" style={{ cursor: 'pointer' }} onClick={() => setCurrentTab('cloud')}>
+                <div className="sync-panel" style={{ cursor: 'pointer', margin: 0 }} onClick={() => setCurrentTab('cloud')}>
                   <div className="sync-status">
                     <span className="sync-dot" style={{ backgroundColor: cloudConnected ? 'var(--color-green)' : 'var(--color-red)', boxShadow: cloudConnected ? '0 0 8px var(--color-green)' : '0 0 8px var(--color-red)' }} />
-                  <span>{syncStatusText}</span>
-                </div>
-                <span style={{ fontSize: '11.5px', fontWeight: '800', color: 'var(--text-light)' }}>
+                    <span>{syncStatusText}</span>
+                  </div>
+                  <span style={{ fontSize: '11.5px', fontWeight: '800', color: 'var(--text-light)' }}>
                     {cloudConnected ? 'Base online ativa' : 'Configurar base online'}
                   </span>
                 </div>
