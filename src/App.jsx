@@ -144,6 +144,9 @@ const IconInfo = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
 );
 
+const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'email', 'cloud'];
+const VALID_THEMES = ['dark', 'light'];
+
 export default function App() {
   const [initialCloudConfig] = useState(() => ({
     url: import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_url') || '',
@@ -151,7 +154,14 @@ export default function App() {
   }));
 
   // App states
-  const [currentTab, setCurrentTab] = useState('dashboard');
+  const [currentTab, setCurrentTab] = useState(() => {
+    try {
+      const savedTab = sessionStorage.getItem('gop_current_tab');
+      return VALID_TABS.includes(savedTab) ? savedTab : 'dashboard';
+    } catch {
+      return 'dashboard';
+    }
+  });
   const [tickets, setTickets] = useState(() => {
     try {
       const saved = localStorage.getItem('gop_tickets');
@@ -179,8 +189,31 @@ export default function App() {
     localStorage.setItem('gop_history', JSON.stringify(history));
   }, [history]);
 
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('gop_current_tab', currentTab);
+    } catch (e) {
+      console.error("Erro ao salvar tab no sessionStorage:", e);
+    }
+  }, [currentTab]);
+
   const [emailTemplates, setEmailTemplates] = useState(initialEmailTemplates);
-  const [theme, setTheme] = useState('dark'); // 'dark' or 'light'
+  const [theme, setTheme] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('gop_theme');
+      return VALID_THEMES.includes(savedTheme) ? savedTheme : 'dark';
+    } catch {
+      return 'dark';
+    }
+  }); // 'dark' or 'light'
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gop_theme', theme);
+    } catch (e) {
+      console.error("Erro ao salvar tema no localStorage:", e);
+    }
+  }, [theme]);
   const [sortField, setSortField] = useState('id_chamado');
   const [sortDirection, setSortDirection] = useState('asc');
   const [filterPriority, setFilterPriority] = useState('');
