@@ -3096,7 +3096,7 @@ export default function App() {
                   </div>
                 </div>
                 
-                {/* Abas de Visualização (Visualização Formatada vs Texto Puro) */}
+                {/* Abas de Visualização (Visualização formatada vs Editar texto do e-mail) */}
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-app)', borderTopLeftRadius: 'var(--radius-sm)', borderTopRightRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                   <button 
                     type="button"
@@ -3116,7 +3116,7 @@ export default function App() {
                       transition: 'var(--transition)'
                     }}
                   >
-                    ✨ Visualização Destacada (Rich Preview)
+                    ✨ Visualização formatada
                   </button>
                   <button 
                     type="button"
@@ -3136,7 +3136,7 @@ export default function App() {
                       transition: 'var(--transition)'
                     }}
                   >
-                    📝 Editar Texto (Texto Puro)
+                    📝 Editar texto do e-mail
                   </button>
                 </div>
 
@@ -3606,7 +3606,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         </select>
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
-                        <label className="form-label" htmlFor="edit-ticket-btu-existente" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Exist.</label>
+                        <label className="form-label" htmlFor="edit-ticket-btu-existente" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU atual</label>
                         <input 
                           id="edit-ticket-btu-existente"
                           type="text" 
@@ -3619,7 +3619,7 @@ CREATE TABLE IF NOT EXISTS historico (
                         />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
-                        <label className="form-label" htmlFor="edit-ticket-btu-pretendido" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU Pret.</label>
+                        <label className="form-label" htmlFor="edit-ticket-btu-pretendido" style={{ fontWeight: '700', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>BTU pretendido</label>
                         <input 
                           id="edit-ticket-btu-pretendido"
                           type="text" 
