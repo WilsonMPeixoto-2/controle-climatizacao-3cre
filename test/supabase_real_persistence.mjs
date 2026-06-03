@@ -131,6 +131,80 @@ async function runTest() {
       throw new Error(`Valores incorretos retornados.`);
     }
 
+    // === TESTE DE ANEXO REAL (SUPABASE STORAGE E METADADOS) ===
+    console.log("\n📎 Iniciando teste real de Upload de Anexo...");
+    const testFileContent = Buffer.from("conteudo de teste do anexo");
+    const testFileName = `test-file-${Date.now()}.pdf`;
+    const testStoragePath = `chamados/${targetId}/${testFileName}`;
+
+    console.log(`   - Fazendo upload de arquivo para bucket 'gop-anexos' em path '${testStoragePath}'...`);
+    const { error: uploadErr } = await supabase.storage
+      .from('gop-anexos')
+      .upload(testStoragePath, testFileContent, {
+        contentType: 'application/pdf',
+        upsert: true
+      });
+
+    if (uploadErr) {
+      console.warn("⚠️ Falha ao fazer upload de anexo no bucket. Verifique se o bucket 'gop-anexos' existe e as permissões RLS.");
+      throw uploadErr;
+    }
+    console.log("   ✅ Arquivo físico gravado no Supabase Storage!");
+
+    console.log("   - Gravando registro lógico de metadados na tabela 'anexos_chamado'...");
+    const testAttachmentRecord = {
+      id_chamado: targetId,
+      designacao: testTicket.designacao,
+      unidade_escolar: testTicket.unidade_escolar,
+      bucket: 'gop-anexos',
+      storage_path: testStoragePath,
+      nome_original: 'arquivo-teste-real.pdf',
+      mime_type: 'application/pdf',
+      tamanho_bytes: testFileContent.length,
+      descricao: 'Anexo de teste real de persistência'
+    };
+
+    const { data: createdAttachment, error: metaErr } = await supabase
+      .from('anexos_chamado')
+      .insert(testAttachmentRecord)
+      .select('*')
+      .single();
+
+    if (metaErr) {
+      // Limpa do storage se falhar
+      await supabase.storage.from('gop-anexos').remove([testStoragePath]);
+      throw metaErr;
+    }
+    console.log(`   ✅ Metadados persistidos na tabela (ID: ${createdAttachment.id})!`);
+
+    // Busca do banco
+    console.log("   - Verificando listagem dos anexos para o chamado...");
+    const { data: attachmentsList, error: listErr } = await supabase
+      .from('anexos_chamado')
+      .select('*')
+      .eq('id_chamado', targetId);
+
+    if (listErr) throw listErr;
+    const found = attachmentsList.some(a => a.id === createdAttachment.id);
+    if (!found) throw new Error("O anexo criado não foi retornado na listagem!");
+    console.log("   ✅ Anexo localizado com sucesso na consulta remota!");
+
+    // Deleta para limpar
+    console.log("   - Removendo anexo físico do Storage...");
+    const { error: removeFileErr } = await supabase.storage
+      .from('gop-anexos')
+      .remove([testStoragePath]);
+    if (removeFileErr) throw removeFileErr;
+    console.log("   ✅ Arquivo físico removido!");
+
+    console.log("   - Removendo metadados da tabela...");
+    const { error: removeMetaErr } = await supabase
+      .from('anexos_chamado')
+      .delete()
+      .eq('id', createdAttachment.id);
+    if (removeMetaErr) throw removeMetaErr;
+    console.log("   ✅ Metadados removidos!");
+
     // 5. Reverter para o valor original para não poluir o banco e limpar o log
     console.log(`\n↩️ Revertendo a alteração do chamado para o valor original ('${oldAptidao}')...`);
     const { error: revertErr } = await supabase
