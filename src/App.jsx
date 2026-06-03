@@ -243,9 +243,8 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState('');
   const [emailTab, setEmailTab] = useState('preview');
 
-  // Controle de edição inline de comentários do histórico
-  const [editingEventId, setEditingEventId] = useState(null);
-  const [editingEventText, setEditingEventText] = useState('');
+  // Controle de comentários do histórico
+  const [newTicketComment, setNewTicketComment] = useState('');
   const [schoolLogs, setSchoolLogs] = useState(() => {
     try {
       const saved = localStorage.getItem('gop_school_notes');
@@ -407,14 +406,7 @@ export default function App() {
         // Atualiza o estado local do histórico
         setHistory(prev => [newHistoryEvent, ...prev]);
 
-        // Persiste no schoolLogs local para retrocompatibilidade e fallback
-        setSchoolLogs(prev => {
-          const list = prev[selectedSchool.designacao] || [];
-          return {
-            ...prev,
-            [selectedSchool.designacao]: [newLog, ...list]
-          };
-        });
+
 
         setNewCommentText('');
         triggerToast("Anotação técnica registrada na ficha!", "success");
@@ -635,6 +627,11 @@ export default function App() {
   const handleSyncLocalToCloud = async () => {
     if (!supabaseClient) {
       triggerToast("Conecte-se ao Supabase primeiro!");
+      return;
+    }
+    const confirmation = window.prompt("CUIDADO: Esta ação substituirá TODOS os dados de Escolas, Chamados e Histórico na base online do Supabase com os dados locais. Digite 'ENVIAR BASE LOCAL' para confirmar:");
+    if (confirmation !== 'ENVIAR BASE LOCAL') {
+      triggerToast("Sincronização cancelada.", "info");
       return;
     }
     setCloudLoading(true);
@@ -1062,42 +1059,46 @@ export default function App() {
     );
   };
 
-  const saveEditedHistoryEvent = async (eventId, newText) => {
-    if (isSavingHistory) return;
-    if (!newText.trim()) return;
+  const handleAddTicketHistoryEvent = async (commentText) => {
+    if (isSavingHistory) return false;
+    if (!commentText.trim()) return false;
     if (!supabaseClient) {
-      triggerToast('Edição de comentário bloqueada em modo local. Conecte a base online.', 'error');
-      return;
+      triggerToast('Registro de comentário bloqueado em modo local. Conecte a base online.', 'error');
+      return false;
     }
 
     setIsSavingHistory(true);
 
     try {
+      const nowIso = new Date().toISOString().substring(0, 19);
+      const newEvent = {
+        id_evento: `EV-MANUAL-${Date.now()}`,
+        data: nowIso,
+        id_chamado: editingTicket.id_chamado,
+        designacao: editingTicket.designacao,
+        unidade_escolar: editingTicket.unidade_escolar,
+        marco_relevante: 'Nota Técnica GOP',
+        setor: 'GOP',
+        responsavel_registro: 'GOP / 3ª CRE',
+        observacao: commentText.trim()
+      };
+
       const { data: savedEvent, error } = await supabaseClient
         .from('historico')
-        .update({ observacao: newText })
-        .eq('id_evento', eventId)
+        .insert([newEvent])
         .select('*')
         .single();
 
       if (error) throw error;
       if (!savedEvent) throw new Error('Nenhum registro retornado pelo banco após salvar.');
 
-      // Atualiza localmente no estado 'history' apenas após confirmação
-      const updatedHistory = history.map(h => {
-        if (h.id_evento === eventId) {
-          return savedEvent;
-        }
-        return h;
-      });
-      setHistory(updatedHistory);
-
-      setEditingEventId(null);
-      setEditingEventText('');
-      triggerToast("Comentário do histórico atualizado!", 'success');
+      setHistory(prev => [savedEvent, ...prev]);
+      triggerToast("Comentário registrado na linha do tempo!", 'success');
+      return true;
     } catch (err) {
-      console.error("Erro ao atualizar comentário no Supabase:", err);
-      triggerToast(`Falha ao salvar comentário na nuvem: ${err.message || err}`, 'error');
+      console.error("Erro ao registrar comentário no Supabase:", err);
+      triggerToast(`Falha ao registrar comentário na nuvem: ${err.message || err}`, 'error');
+      return false;
     } finally {
       setIsSavingHistory(false);
     }
@@ -1187,34 +1188,15 @@ export default function App() {
     setIsSavingTicket(true);
 
     try {
-      // 1. Gravação pessimista: Atualiza no Supabase e lê o registro atualizado de volta com select().single()
-      const { data: savedTicket, error: tkErr } = await supabaseClient
-        .from('chamados')
-        .update(updatedRecord)
-        .eq('id_chamado', editingTicket.id_chamado)
-        .select('*')
-        .single();
+      // 1. Gravação pessimista transacional via RPC no Supabase
+      const { data: savedTicket, error: rpcErr } = await supabaseClient
+        .rpc('save_ticket_with_history', {
+          p_ticket: updatedRecord,
+          p_events: novosEventos
+        });
       
-      if (tkErr) throw tkErr;
+      if (rpcErr) throw rpcErr;
       if (!savedTicket) throw new Error('Não foi retornado nenhum registro após salvar.');
-
-      // 2. Insere os novos eventos de histórico na nuvem
-      if (novosEventos.length > 0) {
-        const { error: evErr } = await supabaseClient.from('historico').insert(novosEventos);
-        if (evErr) {
-          // Rollback transacional compensatório: revertemos a atualização do chamado para seu estado anterior
-          console.error("Falha ao registrar histórico. Executando rollback do chamado...", evErr);
-          const { error: rollbackErr } = await supabaseClient
-            .from('chamados')
-            .update(oldTicket)
-            .eq('id_chamado', editingTicket.id_chamado);
-          
-          if (rollbackErr) {
-            console.error("ERRO GRAVE: Falha ao executar rollback compensatório no Supabase:", rollbackErr);
-          }
-          throw evErr;
-        }
-      }
 
       // 3. Somente após sucesso na nuvem, atualiza o estado local do frontend
       const updatedTickets = tickets.map(t => {
@@ -1729,7 +1711,25 @@ export default function App() {
             <li>
               <button 
                 className={`sidebar-item ${currentTab === 'cloud' ? 'active' : ''}`}
-                onClick={() => setCurrentTab('cloud')}
+                onClick={() => {
+                  try {
+                    const isAuth = sessionStorage.getItem('gop_admin_authenticated') === 'true';
+                    if (isAuth) {
+                      setCurrentTab('cloud');
+                    } else {
+                      const pass = window.prompt("Digite a chave de acesso administrativo para acessar as configurações de dados:");
+                      if (pass === "GOP-ADMIN-3CRE") {
+                        sessionStorage.setItem('gop_admin_authenticated', 'true');
+                        setCurrentTab('cloud');
+                        triggerToast("Acesso administrativo concedido!", "success");
+                      } else if (pass !== null) {
+                        triggerToast("Chave administrativa inválida.", "error");
+                      }
+                    }
+                  } catch {
+                    setCurrentTab('cloud');
+                  }
+                }}
               >
                 <IconSettings />
                 <span>Administração dos Dados</span>
@@ -4363,67 +4363,11 @@ CREATE TABLE IF NOT EXISTS historico (
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
                                 <IconUser style={{ width: '13px', height: '13px' }} /> {h.responsavel_registro}
                               </span>
-                              {editingEventId !== h.id_evento && supabaseClient && (
-                                <button 
-                                  onClick={() => {
-                                    setEditingEventId(h.id_evento);
-                                    setEditingEventText(h.observacao || '');
-                                  }}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '11px',
-                                    color: 'var(--primary)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    fontWeight: '700',
-                                    padding: '2px 4px',
-                                    borderRadius: '2px'
-                                  }}
-                                  title="Editar comentário do histórico"
-                                >
-                                  <span>Editar</span>
-                                </button>
-                              )}
                             </div>
                             <div style={{ fontSize: '12.5px', fontWeight: 'bold', marginTop: '2px', color: 'var(--text-main)' }}>{h.marco_relevante}</div>
-                            
-                            {editingEventId === h.id_evento ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
-                                <textarea 
-                                  className="form-control"
-                                  rows="2"
-                                  value={editingEventText}
-                                  onChange={(e) => setEditingEventText(e.target.value)}
-                                  style={{ fontSize: '12.5px', padding: '6px', minHeight: '60px' }}
-                                  disabled={isSavingHistory}
-                                />
-                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                  <button 
-                                    className="btn" 
-                                    style={{ padding: '3px 8px', fontSize: '11.5px', height: '24px', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
-                                    onClick={() => setEditingEventId(null)}
-                                    disabled={isSavingHistory}
-                                  >
-                                    Cancelar
-                                  </button>
-                                  <button 
-                                    className="btn btn-primary" 
-                                    style={{ padding: '3px 8px', fontSize: '11.5px', height: '24px' }}
-                                    onClick={() => saveEditedHistoryEvent(h.id_evento, editingEventText)}
-                                    disabled={isSavingHistory}
-                                  >
-                                    {isSavingHistory ? 'Salvando...' : 'Salvar'}
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.35' }}>
-                                {h.observacao}
-                              </p>
-                            )}
+                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.35' }}>
+                              {h.observacao}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -4436,6 +4380,39 @@ CREATE TABLE IF NOT EXISTS historico (
                       />
                     )}
                   </div>
+
+                  {supabaseClient && (
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                      <label htmlFor="new-ticket-comment" style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-light)', textTransform: 'uppercase' }}>
+                        ✍ Registrar Observação Adicional
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <textarea
+                          id="new-ticket-comment"
+                          className="form-control"
+                          rows="2"
+                          placeholder="Digite aqui uma observação técnica ou retificação..."
+                          style={{ fontSize: '13px', padding: '8px', minHeight: '50px', resize: 'vertical' }}
+                          value={newTicketComment}
+                          onChange={(e) => setNewTicketComment(e.target.value)}
+                          disabled={isSavingHistory}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          style={{ alignSelf: 'flex-end', height: '36px', padding: '0 16px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                          onClick={async () => {
+                            if (await handleAddTicketHistoryEvent(newTicketComment)) {
+                              setNewTicketComment('');
+                            }
+                          }}
+                          disabled={isSavingHistory}
+                        >
+                          {isSavingHistory ? 'Registrando...' : 'Registrar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

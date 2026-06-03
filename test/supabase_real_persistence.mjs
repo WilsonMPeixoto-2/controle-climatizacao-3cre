@@ -217,7 +217,7 @@ async function runTest() {
 
     console.log(`🧹 Removendo o log de teste da tabela historico...`);
     // Nota: Como não há política de UPDATE/DELETE exposta para anon no RLS da tabela historico por segurança contra adulteração, 
-    // a remoção do log de teste pelo cliente público pode falhar. Vamos testar.
+    // a remoção do log de teste pelo cliente público pode falhar. Vamos testar e confirmar.
     const { error: deleteEventErr } = await supabase
       .from('historico')
       .delete()
@@ -226,7 +226,18 @@ async function runTest() {
     if (deleteEventErr) {
       console.log(`   (Nota: Deleção de log ignorada ou protegida por política de segurança RLS: ${deleteEventErr.message})`);
     } else {
-      console.log("✅ Log de teste limpo com sucesso!");
+      // Confirmar se o registro foi realmente removido
+      const { data: checkDeleted, error: checkErr } = await supabase
+        .from('historico')
+        .select('id_evento')
+        .eq('id_evento', testEventId);
+      
+      if (checkErr) throw checkErr;
+      if (checkDeleted && checkDeleted.length > 0) {
+        console.warn(`   ⚠️ ALERTA: O log de teste NÃO foi removido do banco (remanescente detectado). RLS/Policy está bloqueando a exclusão.`);
+      } else {
+        console.log("   ✅ Log de teste limpo com sucesso (exclusão confirmada no banco)!");
+      }
     }
 
     // 6. Confirmação final da reversão
