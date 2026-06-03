@@ -218,22 +218,28 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       }
       clearTimeout(t);
       if (mapRef.current) {
+        // 1. Fecha tooltip do mapa de forma segura
         try {
-          // Fecha tooltip aberto no mapa
-          mapRef.current.closeTooltip();
-          
-          // Limpa marcadores permanentes de bairros e desvincula seus tooltips
-          labelMarkersRef.current.forEach((m) => {
-            try {
-              m.unbindTooltip();
-              m.remove();
-            } catch {
-              // Silencioso
-            }
-          });
-          labelMarkersRef.current = [];
+          if (mapRef.current.closeTooltip) {
+            mapRef.current.closeTooltip();
+          }
+        } catch {
+          // Silencioso
+        }
+        
+        // 2. Limpa marcadores permanentes de bairros e desvincula seus tooltips
+        labelMarkersRef.current.forEach((m) => {
+          try {
+            m.unbindTooltip();
+            m.remove();
+          } catch {
+            // Silencioso
+          }
+        });
+        labelMarkersRef.current = [];
 
-          // Limpa listeners e tooltips de cada polígono GeoJSON
+        // 3. Limpa listeners e tooltips do GeoJSON de forma isolada
+        try {
           if (geoJsonRef.current) {
             geoJsonRef.current.eachLayer((l) => {
               try {
@@ -244,7 +250,12 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
               }
             });
           }
-          
+        } catch {
+          // Silencioso
+        }
+
+        // 4. Remove o mapa do DOM de forma prioritária
+        try {
           mapRef.current.remove();
         } catch (e) {
           console.warn("Leaflet: Erro ao remover mapa no cleanup:", e);

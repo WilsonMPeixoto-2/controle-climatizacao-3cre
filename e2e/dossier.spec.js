@@ -16,18 +16,27 @@ test.describe('GOP Clima E2E tests', () => {
     // Clica na aba Consulta por Escola
     await page.click('button:has-text("Consulta por Escola")');
 
-    // Verifica se a primeira escola já veio carregada ou se exibe tela inicial
-    const titleText = await page.locator('h2').first().innerText();
+    // Verifica se a primeira escola já veio carregada ou se exibe tela inicial de forma robusta
+    const titleLocator = page.locator('h2');
     
-    if (titleText.includes('Dossiê Executivo') || !(titleText.includes('Chanceler Willy Brandt'))) {
-      // Digita no input de busca da escola se não for a escola padrão
+    if (await titleLocator.count() === 0) {
+      // Nenhuma escola selecionada (tela inicial vazia), preenchemos a busca
       const searchInput = page.locator('input[placeholder="Nome ou designação..."]');
       await searchInput.fill('Chanceler Willy Brandt');
 
-      // Clica no item de sugestão que aparece no dropdown autocomplete
       const suggestionItem = page.locator('.suggestion-item', { hasText: 'Chanceler Willy Brandt' });
       await suggestionItem.waitFor({ state: 'visible' });
       await suggestionItem.click();
+    } else {
+      const titleText = await titleLocator.first().innerText();
+      if (!titleText.includes('Chanceler Willy Brandt')) {
+        const searchInput = page.locator('input[placeholder="Nome ou designação..."]');
+        await searchInput.fill('Chanceler Willy Brandt');
+
+        const suggestionItem = page.locator('.suggestion-item', { hasText: 'Chanceler Willy Brandt' });
+        await suggestionItem.waitFor({ state: 'visible' });
+        await suggestionItem.click();
+      }
     }
 
     // Confirma que a Ficha Técnica Consolidada da escola carregou
