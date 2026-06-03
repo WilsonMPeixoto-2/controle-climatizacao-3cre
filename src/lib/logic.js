@@ -14,7 +14,23 @@
 // ---------------------------------------------------------------------------
 
 /** Status que encerram o ciclo de um chamado — excluídos de TODOS os alertas. */
-export const CLOSED_STATUSES = ['10 - Concluído', '11 - Encerrado', 'Suspenso / pendente'];
+export const CLOSED_STATUSES = ['10 - Concluído', '11 - Encerrado'];
+
+/** Status de suspensão — não é fechado, mas também não dispara alertas de SLA/Antiguidade. */
+export const SUSPENDED_STATUSES = ['Suspenso / pendente'];
+
+/**
+ * Normaliza o texto de prioridade para comparação estável.
+ * Trata variações de acento, caixa e espaços extras.
+ */
+export function normalizePriority(pri) {
+  const p = String(pri || '').trim().toLowerCase();
+  if (p === 'crítica' || p === 'critica') return 'Crítica';
+  if (p === 'alta') return 'Alta';
+  if (p === 'média' || p === 'media') return 'Média';
+  if (p === 'baixa') return 'Baixa';
+  return pri || '';
+}
 
 /** Limiares do Alerta de SLA (inércia: dias SEM movimentação). */
 export const SLA_WARN_DAYS = 7;   // âmbar
@@ -73,6 +89,16 @@ export function isClosed(ticket) {
   return CLOSED_STATUSES.includes(ticket?.status_atual);
 }
 
+/** Chamado suspenso — não faz parte do ciclo ativo, mas não é "fechado". */
+export function isSuspended(ticket) {
+  return SUSPENDED_STATUSES.includes(ticket?.status_atual);
+}
+
+/** Chamado inativo para fins de contagem (fechado OU suspenso). */
+export function isInactive(ticket) {
+  return isClosed(ticket) || isSuspended(ticket);
+}
+
 /** Dias SEM movimentação (inatividade), a partir de `modificado_em`. */
 export function inactivityDays(ticket, ref = new Date()) {
   return diffDays(ticket?.modificado_em, ref);
@@ -89,7 +115,7 @@ export function ageDays(ticket, ref = new Date()) {
  * Chamados encerrados nunca disparam alerta.
  */
 export function slaLevel(ticket, ref = new Date()) {
-  if (isClosed(ticket)) return 'ok';
+  if (isClosed(ticket) || isSuspended(ticket)) return 'ok';
   const d = inactivityDays(ticket, ref);
   if (d >= SLA_SEVERE_DAYS) return 'severe';
   if (d >= SLA_WARN_DAYS) return 'warning';
@@ -102,7 +128,7 @@ export function slaLevel(ticket, ref = new Date()) {
  * apareceria eternamente como "antigo".
  */
 export function ageLevel(ticket, ref = new Date()) {
-  if (isClosed(ticket)) return 'ok';
+  if (isClosed(ticket) || isSuspended(ticket)) return 'ok';
   const d = ageDays(ticket, ref);
   if (d >= AGE_SEVERE_DAYS) return 'severe';
   if (d >= AGE_WARN_DAYS) return 'warning';
@@ -118,7 +144,7 @@ export function computeMetrics(tickets, ref = new Date()) {
   let open = 0, slaWarn = 0, slaSevere = 0, ageWarn = 0, ageSevere = 0, closed = 0;
 
   for (const t of tickets) {
-    if (isClosed(t)) { closed++; continue; }
+    if (isClosed(t) || isSuspended(t)) { closed++; continue; }
     open++;
     const s = slaLevel(t, ref);
     if (s === 'severe') slaSevere++;
@@ -144,7 +170,7 @@ export function computeMetrics(tickets, ref = new Date()) {
 /** Ranking dos N chamados ativos mais parados (maior inatividade primeiro). */
 export function stuckRanking(tickets, ref = new Date(), n = 5) {
   return tickets
-    .filter(t => !isClosed(t))
+     .filter(t => !isClosed(t) && !isSuspended(t))
     .map(t => ({ ...t, inactivityDays: inactivityDays(t, ref), ageDays: ageDays(t, ref) }))
     .sort((a, b) => b.inactivityDays - a.inactivityDays)
     .slice(0, n);
@@ -164,7 +190,7 @@ export function stuckRanking(tickets, ref = new Date(), n = 5) {
  *   concluido → etapa 10/11 e "Suspenso / pendente" (ciclo encerrado)
  */
 export function stageGroup(ticket) {
-  if (isClosed(ticket)) return 'concluido';
+  if (isClosed(ticket) || isSuspended(ticket)) return 'concluido';
   const m = String(ticket?.status_atual || '').match(/^\s*(\d+)/);
   const s = m ? parseInt(m[1], 10) : 0;
   if (s >= 6) return 'execucao';
@@ -207,7 +233,7 @@ export function filterBySector(tickets, sector) {
 /** Indicadores próprios de uma visão de setor (para o cabeçalho da aba). */
 export function sectorSummary(tickets, sector, ref = new Date()) {
   const subset = filterBySector(tickets, sector);
-  const open = subset.filter(t => !isClosed(t)).length;
+  const open = subset.filter(t => !isClosed(t) && !isSuspended(t)).length;
   const stuck = subset.filter(t => slaLevel(t, ref) !== 'ok').length;
   return { sector, total: subset.length, open, closed: subset.length - open, stuck };
 }
@@ -378,7 +404,7 @@ export function aggregateBairroStats(tickets, schools, ref = new Date()) {
 
     const bairroStats = statsByBairro.get(normalized);
 
-    if (!isClosed(t)) {
+    if (!isClosed(t) && !isSuspended(t)) {
       bairroStats.chamados_ativos++;
 
       const sla = slaLevel(t, ref);

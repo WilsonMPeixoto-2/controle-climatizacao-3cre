@@ -217,6 +217,12 @@ html:not(.dark-theme) body::after {
   font-weight: 800;
   font-size: 18px;
   box-shadow: 0 4px 14px var(--primary-glow);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar-brand:hover .sidebar-logo {
+  box-shadow: 0 6px 22px var(--primary-glow), 0 0 12px var(--primary-glow);
+  transform: scale(1.06);
 }
 
 .sidebar-brand-text {
@@ -486,6 +492,20 @@ html:not(.dark-theme) body::after {
   transition: var(--transition);
   cursor: pointer;
   user-select: none;
+  animation: cardFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* Staggered entrance for metric cards */
+.stat-card:nth-child(1) { animation-delay: 0s; }
+.stat-card:nth-child(2) { animation-delay: 0.06s; }
+.stat-card:nth-child(3) { animation-delay: 0.12s; }
+.stat-card:nth-child(4) { animation-delay: 0.18s; }
+.stat-card:nth-child(5) { animation-delay: 0.24s; }
+.stat-card:nth-child(6) { animation-delay: 0.30s; }
+
+@keyframes cardFadeUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .stat-card:hover {
@@ -818,8 +838,8 @@ html:not(.dark-theme) body::after {
   gap: 5px;
   padding: 4px 10px;
   border-radius: 99px;
-  font-size: 12px; /* Aumentado de 11px */
-  font-weight: 800; /* Deixado mais robusto */
+  font-size: 12px;
+  font-weight: 800;
   white-space: nowrap;
 }
 
@@ -835,6 +855,9 @@ html:not(.dark-theme) body::after {
 .badge-status {
   background-color: var(--status-color-tint, var(--border-color));
   color: var(--status-color, var(--text-muted));
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* SLA Pulsing Dot warning indicator */
@@ -2751,7 +2774,7 @@ html:not(.dark-theme) .main-portal-title {
   backdrop-filter: blur(12px);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
-  padding: 24px;
+  padding: 24px 28px;
   box-shadow: var(--shadow-sm);
   margin-bottom: 24px;
   border-left: 4px solid var(--primary);
@@ -2759,6 +2782,20 @@ html:not(.dark-theme) .main-portal-title {
   flex-direction: column;
   gap: 16px;
   transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle gradient accent at top of summary card */
+.operational-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4px;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--primary), transparent 80%);
+  opacity: 0.5;
 }
 
 .operational-summary-card:hover {
@@ -2929,12 +2966,18 @@ html:not(.dark-theme) .main-portal-title {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 36px 24px;
+  padding: 40px 28px;
   border-radius: var(--radius-sm);
   background: var(--bg-card);
   border: 1px dashed var(--border-color);
   transition: var(--transition);
   max-width: 100%;
+  animation: emptyFadeIn 0.4s ease backwards;
+}
+
+@keyframes emptyFadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .empty-state-container:hover {
@@ -2946,25 +2989,26 @@ html:not(.dark-theme) .main-portal-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: var(--primary-light);
   color: var(--primary);
-  margin-bottom: 14px;
-  font-size: 20px;
+  margin-bottom: 16px;
+  font-size: 22px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
   transition: var(--transition);
 }
 
 .empty-state-container:hover .empty-state-icon-wrapper {
-  transform: scale(1.05);
+  transform: scale(1.08) rotate(3deg);
   background: var(--primary);
   color: var(--text-on-primary);
+  box-shadow: 0 6px 18px var(--primary-glow);
 }
 
 .empty-state-title {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--text-main);
   margin-bottom: 6px;
@@ -2972,10 +3016,44 @@ html:not(.dark-theme) .main-portal-title {
 }
 
 .empty-state-description {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-muted);
   font-weight: 500;
-  max-width: 320px;
-  line-height: 1.45;
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+/* Loading skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-loader {
+  background: linear-gradient(90deg, var(--border-color) 25%, transparent 50%, var(--border-color) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: var(--radius-xs);
+  min-height: 20px;
+}
+
+/* Light theme dossier status banner contrast fix */
+html:not(.dark-theme) .dossier-status-banner {
+  color: var(--text-main) !important;
+}
+
+html:not(.dark-theme) .dossier-status-banner p,
+html:not(.dark-theme) .dossier-status-banner strong {
+  color: inherit !important;
+}
+
+/* Section entrance animation */
+.dashboard-section {
+  animation: sectionFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes sectionFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 

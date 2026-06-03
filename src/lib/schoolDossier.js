@@ -5,7 +5,7 @@
  * da Unidade Escolar no Controle de Climatização GOP / 3ª CRE.
  */
 
-import { isClosed, inactivityDays } from './logic.js';
+import { isClosed, isSuspended, inactivityDays, normalizePriority } from './logic.js';
 
 /**
  * Calcula o percentual de climatização das salas de aula.
@@ -29,8 +29,8 @@ export function getSchoolClimateStatus(school, activeTickets, coveragePercent, r
   // 1. Condições de Situação Crítica
   // a) Qualquer chamado ativo com prioridade "Crítica" ou "Alta"
   const hasCriticalActiveTicket = activeTickets.some(t => {
-    const pri = String(t.prioridade || '').trim().toLowerCase();
-    return pri === 'crítica' || pri === 'critica' || pri === 'alta';
+    const p = normalizePriority(t.prioridade);
+    return p === 'Crítica' || p === 'Alta';
   });
 
   // b) Percentual de climatização inferior a 30%
@@ -79,12 +79,12 @@ export function getSchoolDossierData({ school, tickets, history, schoolLogs, ref
   if (!school) return null;
 
   const schoolTickets = tickets.filter(t => t.designacao === school.designacao);
-  const activeTickets = schoolTickets.filter(t => !isClosed(t));
-  const closedTickets = schoolTickets.filter(t => isClosed(t));
+  const activeTickets = schoolTickets.filter(t => !isClosed(t) && !isSuspended(t));
+  const closedTickets = schoolTickets.filter(t => isClosed(t) || isSuspended(t));
 
   const criticalTickets = activeTickets.filter(t => {
-    const pri = String(t.prioridade || '').trim().toLowerCase();
-    return pri === 'crítica' || pri === 'critica' || pri === 'alta';
+    const p = normalizePriority(t.prioridade);
+    return p === 'Crítica' || p === 'Alta';
   });
 
   const coveragePercent = calculateCoveragePercent(school);

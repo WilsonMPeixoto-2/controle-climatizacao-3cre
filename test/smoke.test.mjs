@@ -541,7 +541,8 @@ try {
   const containsTkt01 = actionItems.some(i => i.ticket.id_chamado === 'TKT-01' && i.type === 'attachment');
   const containsTkt02 = actionItems.some(i => i.ticket.id_chamado === 'TKT-02' && i.type === 'cto');
   const containsTkt03 = actionItems.some(i => i.ticket.id_chamado === 'TKT-03' && i.type === 'completion');
-  const containsTkt04 = actionItems.some(i => i.ticket.id_chamado === 'TKT-04' && i.type === 'school');
+  // TKT-04 agora é capturada por 'attachment' (prioridade Alta sem anexo) antes de chegar à regra 'school'
+  const containsTkt04 = actionItems.some(i => i.ticket.id_chamado === 'TKT-04' && i.type === 'attachment');
 
   printResult('8.3. Regras de ação geradas corretamente', containsTkt01 && containsTkt02 && containsTkt03 && containsTkt04);
 

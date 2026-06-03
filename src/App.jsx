@@ -34,6 +34,7 @@ import {
   inactivityDays as calcInactivityDays,
   ageDays as calcAgeDays,
   isClosed,
+  isSuspended,
   slaLevel,
   ageLevel,
   computeMetrics,
@@ -637,11 +638,11 @@ export default function App() {
     setCloudLoading(true);
     setSyncStatusText('Sincronizando tabelas...');
     try {
-      triggerToast("Sincronizando escolas (134 registros)...");
+      triggerToast(`Sincronizando escolas (${schools.length} registros)...`);
       const { error: escErr } = await supabaseClient.from('escolas').upsert(schools);
       if (escErr) throw escErr;
 
-      triggerToast("Sincronizando chamados ativos (28 registros)...");
+      triggerToast(`Sincronizando chamados (${tickets.length} registros)...`);
       const { error: chErr } = await supabaseClient.from('chamados').upsert(tickets);
       if (chErr) throw chErr;
 
@@ -725,17 +726,17 @@ export default function App() {
     } else if (activeListsView === 'cto') {
       result = filterBySector(result, 'CTO');
     } else if (activeListsView === 'stuck' || activeListsView === 'inactive7') {
-      result = result.filter(t => !isClosed(t) && calcInactivityDays(t, todayRef()) >= 7);
+      result = result.filter(t => !isClosed(t) && !isSuspended(t) && calcInactivityDays(t, todayRef()) >= 7);
     } else if (activeListsView === 'inactive15') {
-      result = result.filter(t => !isClosed(t) && calcInactivityDays(t, todayRef()) >= 15);
+      result = result.filter(t => !isClosed(t) && !isSuspended(t) && calcInactivityDays(t, todayRef()) >= 15);
     } else if (activeListsView === 'age30') {
-      result = result.filter(t => !isClosed(t) && calcAgeDays(t, todayRef()) >= 30);
+      result = result.filter(t => !isClosed(t) && !isSuspended(t) && calcAgeDays(t, todayRef()) >= 30);
     } else if (activeListsView === 'age60') {
-      result = result.filter(t => !isClosed(t) && calcAgeDays(t, todayRef()) >= 60);
+      result = result.filter(t => !isClosed(t) && !isSuspended(t) && calcAgeDays(t, todayRef()) >= 60);
     } else if (activeListsView === 'active') {
-      result = result.filter(t => !isClosed(t));
+      result = result.filter(t => !isClosed(t) && !isSuspended(t));
     } else if (activeListsView === 'closed') {
-      result = result.filter(t => t.status_atual === '10 - Concluído' || t.status_atual === '11 - Encerrado');
+      result = result.filter(t => t.status_atual === '10 - Concluído' || t.status_atual === '11 - Encerrado' || t.status_atual === 'Suspenso / pendente');
     }
 
     // Filtro rápido de prioridade
@@ -751,12 +752,12 @@ export default function App() {
     // Apply text search
     if (ticketSearch.trim()) {
       const q = ticketSearch.toLowerCase();
-      result = result.filter(t => 
-        t.id_chamado.toLowerCase().includes(q) || 
-        t.unidade_escolar.toLowerCase().includes(q) || 
-        t.local_demanda.toLowerCase().includes(q) || 
-        t.proxima_providencia.toLowerCase().includes(q) ||
-        t.status_atual.toLowerCase().includes(q)
+      result = result.filter(t =>
+        String(t.id_chamado || '').toLowerCase().includes(q) ||
+        String(t.unidade_escolar || '').toLowerCase().includes(q) ||
+        String(t.local_demanda || '').toLowerCase().includes(q) ||
+        String(t.proxima_providencia || '').toLowerCase().includes(q) ||
+        String(t.status_atual || '').toLowerCase().includes(q)
       );
     }
 
@@ -825,7 +826,10 @@ export default function App() {
         (t.tipo || '').toLowerCase().includes('cto') || 
         (t.template || '').toLowerCase().includes('cto')
       );
-      templateIndex = idx !== -1 ? idx : 5;
+      templateIndex = idx !== -1 ? idx : 0;
+      if (idx === -1) {
+        triggerToast('Modelo de e-mail para CTO não encontrado. Usando primeiro modelo disponível.', 'info');
+      }
     } else if (type === 'school') {
       const idx = emailTemplates.findIndex(t => 
         (t.tipo || '').toLowerCase().includes('escola') || 
@@ -1243,7 +1247,6 @@ export default function App() {
     }
 
     setSubmitting(true);
-    let cloudOk = true;
     try {
       const nowIso = new Date().toISOString().substring(0, 19);
 
@@ -1314,13 +1317,15 @@ export default function App() {
 
           finalEventRecord = initialEvent;
         } catch (err) {
-          cloudOk = false;
-          console.error("Cloud insert failed, falling back to local memory generation:", err);
+          console.error("Cloud insert failed:", err);
+          triggerToast(`Falha ao registrar chamado na nuvem: ${err.message || err}. O formulário foi mantido para nova tentativa.`, 'error');
+          setSubmitting(false);
+          return; // Aborta sem criar chamado local — dado não confiável
         }
       }
 
-      // Se não estiver conectado ou se a gravação em nuvem falhou, calcula ID sequencial no frontend (Fallback offline)
-      if (!supabaseClient || !cloudOk) {
+      // Fallback offline: cria ID local apenas quando NÃO há conexão Supabase
+      if (!supabaseClient) {
         const nextIdNum = tickets.reduce((max, t) => {
           const num = parseInt(t.id_chamado.split('-').pop(), 10);
           return num > max ? num : max;
@@ -1353,10 +1358,10 @@ export default function App() {
       // Mostra painel de sucesso com o ID real gerado
       setNewTicketSuccess(finalTicketRecord.id_chamado);
       triggerToast(
-        cloudOk
-          ? "Chamado criado com sucesso!"
-          : "Chamado criado, mas a gravação na nuvem falhou — salvo só neste dispositivo.",
-        cloudOk ? 'success' : 'error'
+        supabaseClient
+          ? "Chamado criado com sucesso na nuvem!"
+          : "Chamado criado em modo offline — salvo neste dispositivo.",
+        supabaseClient ? 'success' : 'info'
       );
 
       // Limpa inputs

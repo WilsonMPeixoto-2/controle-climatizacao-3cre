@@ -5,7 +5,7 @@
  * e filas de ações prioritárias no Controle de Climatização GOP / 3ª CRE.
  */
 
-import { isClosed, inactivityDays, aggregateBairroStats } from './logic.js';
+import { isClosed, isSuspended, inactivityDays, aggregateBairroStats, normalizePriority } from './logic.js';
 
 /**
  * Retorna o score de urgência de um chamado com base nos critérios estabelecidos:
@@ -62,10 +62,10 @@ export function calculateUrgencyScore(ticket, allAttachments = [], ref = new Dat
  * Gera o diagnóstico geral do resumo diário.
  */
 export function getOperationalSummary(tickets, schools, allAttachments, ref = new Date()) {
-  const activeTks = tickets.filter(t => !isClosed(t));
+  const activeTks = tickets.filter(t => !isClosed(t) && !isSuspended(t));
   const totalActive = activeTks.length;
 
-  const criticalCount = activeTks.filter(t => t.prioridade === 'Crítica' || t.prioridade === 'Alta').length;
+  const criticalCount = activeTks.filter(t => { const p = normalizePriority(t.prioridade); return p === 'Crítica' || p === 'Alta'; }).length;
   const stuckCount = activeTks.filter(t => inactivityDays(t, ref) >= 15).length;
 
   // Concentração por bairros
@@ -108,7 +108,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
   // Filtragem e ordenação dos chamados elegíveis (ativos ou concluídos sem fechamento)
   // Ordena os chamados pelo score para processar os mais urgentes primeiro
   const eligibleTickets = tickets
-    .filter(t => !isClosed(t) || t.status_atual === '10 - Concluído')
+    .filter(t => (!isClosed(t) && !isSuspended(t)) || t.status_atual === '10 - Concluído')
     .map(t => ({
       ticket: t,
       score: calculateUrgencyScore(t, allAttachments, ref)
@@ -121,8 +121,9 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
     const statusLower = (t.status_atual || '').toLowerCase();
     const provLower = (t.proxima_providencia || '').toLowerCase();
 
-    // Regra 1: Chamado crítico ativo sem anexo
-    if (!isClosed(t) && t.prioridade === 'Crítica') {
+    // Regra 1: Chamado crítico/alto ativo sem anexo
+    const np = normalizePriority(t.prioridade);
+    if (!isClosed(t) && !isSuspended(t) && (np === 'Crítica' || np === 'Alta')) {
       const hasAttachments = allAttachments.some(a => a.id_chamado === t.id_chamado);
       if (!hasAttachments) {
         items.push({
@@ -130,7 +131,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
           ticket: t,
           type: 'attachment',
           title: 'Anexar evidência técnica',
-          description: `Chamado crítico sem laudo, foto ou documento vinculado no chamado ${t.id_chamado}.`,
+          description: `Chamado ${np.toLowerCase()} sem laudo, foto ou documento vinculado no chamado ${t.id_chamado}.`,
           actionLabel: 'Anexar documento',
           score: item.score
         });
@@ -141,7 +142,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
 
     // Regra 2: Inatividade há +15 dias
     const inactDays = inactivityDays(t, ref);
-    if (!isClosed(t) && inactDays >= 15) {
+    if (!isClosed(t) && !isSuspended(t) && inactDays >= 15) {
       items.push({
         id: `stuck-15-${t.id_chamado}`,
         ticket: t,
@@ -156,7 +157,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
     }
 
     // Regra 3: Aguardando CTO
-    if (!isClosed(t) && ((statusLower.includes('cto') || statusLower.startsWith('5 ')) && t.comunicacao_cto !== 'Sim')) {
+    if (!isClosed(t) && !isSuspended(t) && ((statusLower.includes('cto') || statusLower.startsWith('5 ')) && t.comunicacao_cto !== 'Sim')) {
       items.push({
         id: `cto-pending-${t.id_chamado}`,
         ticket: t,
@@ -171,7 +172,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
     }
 
     // Regra 4: Aguardando retorno da escola
-    if (!isClosed(t) && (provLower.includes('aguardando escola') || provLower.includes('aguardando retorno da unidade') || statusLower.includes('aguardando escola'))) {
+    if (!isClosed(t) && !isSuspended(t) && (provLower.includes('aguardando escola') || provLower.includes('aguardando retorno da unidade') || statusLower.includes('aguardando escola'))) {
       items.push({
         id: `school-pending-${t.id_chamado}`,
         ticket: t,
