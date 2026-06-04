@@ -245,7 +245,8 @@ BEGIN
     '8 - Adequação concluída',
     '9 - Aguardando aparelho/instalação',
     '10 - Concluído',
-    '11 - Encerrado'
+    '11 - Encerrado',
+    'Suspenso / pendente'
   );
 
   SELECT COUNT(*) INTO v_prioridades_invalidas 
@@ -265,28 +266,33 @@ BEGIN
     v_prioridades_invalidas,
     v_orfaos_totais;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp;
 
 -- ---------------------------------------------------------------------------
 -- 10. Views Gerenciais de Apoio
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW public.vw_chamados_por_status AS
+CREATE OR REPLACE VIEW public.vw_chamados_por_status 
+WITH (security_invoker = true) AS
 SELECT status_atual, COUNT(*) AS total
 FROM public.chamados
 GROUP BY status_atual;
 
-CREATE OR REPLACE VIEW public.vw_chamados_por_bairro AS
-SELECT e.bairro, COUNT(*) AS total_chamados, COUNT(CASE WHEN c.status_atual NOT IN ('10 - Concluído', '11 - Encerrado') THEN 1 END) AS chamados_ativos
+CREATE OR REPLACE VIEW public.vw_chamados_por_bairro 
+WITH (security_invoker = true) AS
+SELECT e.bairro, COUNT(*) AS total_chamados, COUNT(CASE WHEN c.status_atual NOT IN ('10 - Concluído', '11 - Encerrado', 'Suspenso / pendente') THEN 1 END) AS chamados_ativos
 FROM public.chamados c
 JOIN public.escolas e ON c.designacao = e.designacao
 GROUP BY e.bairro;
 
-CREATE OR REPLACE VIEW public.vw_chamados_ativos AS
+CREATE OR REPLACE VIEW public.vw_chamados_ativos 
+WITH (security_invoker = true) AS
 SELECT * 
 FROM public.chamados
-WHERE status_atual NOT IN ('10 - Concluído', '11 - Encerrado');
+WHERE status_atual NOT IN ('10 - Concluído', '11 - Encerrado', 'Suspenso / pendente');
 
-CREATE OR REPLACE VIEW public.vw_escolas_resumo_climatizacao AS
+CREATE OR REPLACE VIEW public.vw_escolas_resumo_climatizacao 
+WITH (security_invoker = true) AS
 SELECT 
   designacao,
   unidade_escolar,
@@ -302,19 +308,22 @@ SELECT
   END AS percentual_climatizacao
 FROM public.escolas;
 
-CREATE OR REPLACE VIEW public.vw_chamados_sem_anexo AS
+CREATE OR REPLACE VIEW public.vw_chamados_sem_anexo 
+WITH (security_invoker = true) AS
 SELECT c.id_chamado, c.unidade_escolar, c.status_atual, c.prioridade
 FROM public.chamados c
 LEFT JOIN public.anexos_chamado a ON c.id_chamado = a.id_chamado
-WHERE a.id IS NULL AND c.status_atual NOT IN ('10 - Concluído', '11 - Encerrado');
+WHERE a.id IS NULL AND c.status_atual NOT IN ('10 - Concluído', '11 - Encerrado', 'Suspenso / pendente');
 
-CREATE OR REPLACE VIEW public.vw_chamados_sem_movimentacao AS
+CREATE OR REPLACE VIEW public.vw_chamados_sem_movimentacao 
+WITH (security_invoker = true) AS
 SELECT id_chamado, unidade_escolar, status_atual, modificado_em,
        EXTRACT(DAY FROM NOW() - modificado_em)::integer AS dias_sem_movimentacao
 FROM public.chamados
-WHERE status_atual NOT IN ('10 - Concluído', '11 - Encerrado');
+WHERE status_atual NOT IN ('10 - Concluído', '11 - Encerrado', 'Suspenso / pendente');
 
-CREATE OR REPLACE VIEW public.vw_integridade_operacional AS
+CREATE OR REPLACE VIEW public.vw_integridade_operacional 
+WITH (security_invoker = true) AS
 SELECT 'chamado_sem_escola' AS tipo_inconsistencia, c.id_chamado AS ref_id, c.unidade_escolar AS detalhe
 FROM public.chamados c LEFT JOIN public.escolas e ON c.designacao = e.designacao WHERE e.designacao IS NULL
 UNION ALL
