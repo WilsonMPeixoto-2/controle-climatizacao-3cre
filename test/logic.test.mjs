@@ -19,6 +19,7 @@ import {
   normalizeString, aggregateBairroStats,
   CLOSED_STATUSES, SLA_WARN_DAYS, SLA_SEVERE_DAYS,
   AGE_WARN_DAYS, AGE_SEVERE_DAYS, SECTORS,
+  severidadeInatividade, ordenarPorUrgencia,
 } from '../src/lib/logic.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -317,7 +318,39 @@ test('aggregateBairroStats trata chamados sem escola correspondente com fallback
 });
 
 // ===========================================================================
+section('Melhorias P0 (M-01: severidadeInatividade / M-02: ordenarPorUrgencia)');
+
+test('M-01: severidadeInatividade classifica corretamente as faixas', () => {
+  assert.equal(severidadeInatividade(148).nivel, 'CRITICO');
+  assert.equal(severidadeInatividade(74).nivel, 'CRITICO');
+  assert.equal(severidadeInatividade(60).nivel, 'CRITICO');
+  assert.equal(severidadeInatividade(59).nivel, 'ALTO');
+  assert.equal(severidadeInatividade(15).nivel, 'ALTO');
+  assert.equal(severidadeInatividade(14).nivel, 'ATENCAO');
+  assert.equal(severidadeInatividade(7).nivel, 'ATENCAO');
+  assert.equal(severidadeInatividade(6).nivel, 'OK');
+  assert.equal(severidadeInatividade(0).nivel, 'OK');
+});
+
+test('M-02: ordenarPorUrgencia ordena chamados de forma determinista e estavel', () => {
+  const refDate = new Date('2026-05-30T12:00:00');
+  const tickets = [
+    { id_chamado: 'T-A', criado_em: '2026-04-30T12:00:00', modificado_em: '2026-05-20T12:00:00' }, // 10 parado, 30 aberto
+    { id_chamado: 'T-B', criado_em: '2026-04-20T12:00:00', modificado_em: '2026-05-20T12:00:00' }, // 10 parado, 40 aberto
+    { id_chamado: 'T-C', criado_em: '2026-04-10T12:00:00', modificado_em: '2026-05-15T12:00:00' }, // 15 parado, 50 aberto
+    { id_chamado: 'T-D', criado_em: '2026-04-30T12:00:00', modificado_em: '2026-05-20T12:00:00' }  // 10 parado, 30 aberto
+  ];
+  
+  const sorted = ordenarPorUrgencia(tickets, refDate);
+  assert.equal(sorted[0].id_chamado, 'T-C', '1º deve ser T-C (15 dias inativo)');
+  assert.equal(sorted[1].id_chamado, 'T-B', '2º deve ser T-B (10 dias inativo, 40 dias aberto)');
+  assert.equal(sorted[2].id_chamado, 'T-A', '3º deve ser T-A (10 dias inativo, 30 dias aberto, id T-A)');
+  assert.equal(sorted[3].id_chamado, 'T-D', '4º deve ser T-D (10 dias inativo, 30 dias aberto, id T-D)');
+});
+
+// ===========================================================================
 console.log(`\n${'='.repeat(48)}`);
 console.log(`RESULTADO: ${passed} passaram, ${failed} falharam`);
 console.log('='.repeat(48));
 if (failed > 0) process.exit(1);
+

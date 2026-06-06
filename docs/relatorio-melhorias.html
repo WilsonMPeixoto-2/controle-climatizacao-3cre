@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório Final — Gestão de Climatização Escolar (GOP/3ª CRE)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBFAF8; --surface:#FFFFFF; --surface-2:#F4F1EC;
+    --ink:#14181F; --ink-2:#4A5160; --ink-3:#737B89; --linha:#E7E3DC;
+    --teal:#0E9E90; --azul:#1F6FEB;
+    --ambar:#B5710A; --vermelho:#C5303A; --roxo:#6D40C9; --verde:#16864A;
+    --ambar-bg:#FBF1DD; --vermelho-bg:#FBE6E7; --roxo-bg:#EFE8FB; --verde-bg:#E3F3E9; --azul-bg:#E5EEFC; --teal-bg:#E0F2EF;
+    --fonte-display:"Fraunces", Georgia, "Times New Roman", serif;
+    --fonte-ui:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --fonte-mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --raio:14px; --sombra:0 1px 2px rgba(20,24,31,.04), 0 8px 28px -16px rgba(20,24,31,.18);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--fonte-ui); font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:880px; margin:0 auto; padding:0 22px 120px}
+
+  header.capa{padding:64px 22px 40px; max-width:880px; margin:0 auto; border-bottom:1px solid var(--linha);}
+  .eyebrow{font-family:var(--fonte-mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--teal); font-weight:600; margin:0 0 18px;}
+  h1{font-family:var(--fonte-display); font-weight:600; font-size:clamp(2.1rem,6vw,3.4rem); line-height:1.03; letter-spacing:-.015em; margin:0 0 18px; max-width:17ch;}
+  h1 em{font-style:italic; color:var(--teal)}
+  .lede{font-size:1.06rem; color:var(--ink-2); max-width:62ch; margin:0 0 26px}
+  .meta{display:flex; flex-wrap:wrap; gap:8px 0; border-top:1px solid var(--linha); border-bottom:1px solid var(--linha); padding:14px 0; margin-top:6px;}
+  .meta div{flex:1 1 160px; min-width:140px}
+  .meta dt{font-family:var(--fonte-mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3)}
+  .meta dd{margin:2px 0 0; font-size:.92rem; font-weight:500}
+
+  section{padding-top:54px}
+  .num{font-family:var(--fonte-mono); font-size:.78rem; color:var(--teal); font-weight:600; letter-spacing:.05em;}
+  h2{font-family:var(--fonte-display); font-weight:600; font-size:clamp(1.55rem,4vw,2.1rem); letter-spacing:-.01em; line-height:1.12; margin:6px 0 18px; max-width:24ch;}
+  h3{font-family:var(--fonte-ui); font-weight:700; font-size:1.1rem; margin:30px 0 8px; letter-spacing:-.005em;}
+  .sub{font-family:var(--fonte-mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin:22px 0 8px}
+  p{margin:0 0 14px}
+  a{color:var(--azul)}
+  strong{font-weight:600}
+  ul,ol{margin:0 0 14px; padding-left:1.2em}
+  li{margin:5px 0}
+  .small{font-size:.86rem; color:var(--ink-3)}
+
+  .sev{display:inline-flex; align-items:center; gap:6px; font-family:var(--fonte-mono); font-size:.64rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:999px; line-height:1.4; white-space:nowrap;}
+  .sev::before{content:""; width:7px; height:7px; border-radius:50%}
+  .sev.p0{background:var(--vermelho-bg); color:var(--vermelho)} .sev.p0::before{background:var(--vermelho)}
+  .sev.p1{background:var(--ambar-bg); color:var(--ambar)} .sev.p1::before{background:var(--ambar)}
+  .sev.p2{background:var(--azul-bg); color:var(--azul)} .sev.p2::before{background:var(--azul)}
+  .sev.p3{background:var(--surface-2); color:var(--ink-3)} .sev.p3::before{background:var(--ink-3)}
+  .tag{display:inline-block; font-family:var(--fonte-mono); font-size:.62rem; letter-spacing:.06em; padding:2px 8px; border-radius:6px; font-weight:600; border:1px solid var(--linha); color:var(--ink-2)}
+  .tag.d1{background:var(--teal-bg); border-color:#BFE4DE; color:#0B7F73}
+  .tag.d2{background:var(--roxo-bg); border-color:#DDD0F6; color:#5B33B0}
+
+  .card{background:var(--surface); border:1px solid var(--linha); border-radius:var(--raio); padding:20px 22px; margin:14px 0; box-shadow:var(--sombra);}
+  .melhoria{border-left:4px solid var(--linha)}
+  .melhoria.p0{border-left-color:var(--vermelho)}
+  .melhoria.p1{border-left-color:var(--ambar)}
+  .melhoria.p2{border-left-color:var(--azul)}
+  .melhoria.p3{border-left-color:var(--ink-3)}
+  .melhoria .topo{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:10px}
+  .melhoria .id{font-family:var(--fonte-mono); font-size:.74rem; color:var(--ink-3); font-weight:600}
+  .melhoria .titulo{font-weight:700; font-size:1.06rem; flex-basis:100%; margin-top:2px}
+  .bloco-rot{font-family:var(--fonte-mono); font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin:6px 0 3px}
+  .melhoria p{margin:0 0 8px}
+
+  .swatches{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin:18px 0}
+  .sw{border:1px solid var(--linha); border-radius:10px; overflow:hidden; background:var(--surface)}
+  .sw .chip{height:54px}
+  .sw .info{padding:8px 10px}
+  .sw .nome{font-weight:600; font-size:.82rem}
+  .sw .hex{font-family:var(--fonte-mono); font-size:.72rem; color:var(--ink-3)}
+  .sw .uso{font-size:.72rem; color:var(--ink-2); margin-top:2px}
+
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:.88rem}
+  th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--linha); vertical-align:top}
+  th{font-family:var(--fonte-mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+  tbody tr:last-child td{border-bottom:0}
+
+  pre{background:#0E1626; color:#E6EDF8; border-radius:12px; padding:16px 18px; overflow-x:auto; font-family:var(--fonte-mono); font-size:.81rem; line-height:1.6; margin:12px 0 14px; border:1px solid #1B2740;}
+  pre .c{color:#7E8AA3} pre .k{color:#7CC4FF} pre .s{color:#9BE3B4} pre .f{color:#F2C97D}
+  code:not(pre code){font-family:var(--fonte-mono); font-size:.86em; background:var(--surface-2); padding:1px 6px; border-radius:6px; color:var(--ink);}
+  .ac{font-size:.84rem; color:var(--ink-2); background:var(--surface-2); border-radius:8px; padding:9px 12px; margin:6px 0 2px}
+  .ac strong{color:var(--ink)}
+
+  .callout{border-radius:12px; padding:16px 18px; margin:16px 0; font-size:.94rem; border:1px solid}
+  .callout.bom{background:var(--verde-bg); border-color:#BFE3CC}
+  .callout.escopo{background:var(--azul-bg); border-color:#C5DAF8}
+  .callout .rot{font-weight:700; font-size:.8rem; letter-spacing:.04em; text-transform:uppercase; display:block; margin-bottom:8px}
+  .callout.bom .rot{color:var(--verde)} .callout.escopo .rot{color:var(--azul)}
+
+  nav.toc{margin:34px 0 0; border:1px solid var(--linha); border-radius:var(--raio); padding:8px 4px; background:var(--surface)}
+  nav.toc ol{list-style:none; margin:0; padding:0; counter-reset:t}
+  nav.toc li{counter-increment:t}
+  nav.toc a{display:flex; gap:12px; padding:9px 16px; text-decoration:none; color:var(--ink); border-radius:8px; font-size:.92rem;}
+  nav.toc a:hover{background:var(--surface-2)}
+  nav.toc a::before{content:counter(t,decimal-leading-zero); font-family:var(--fonte-mono); font-size:.78rem; color:var(--teal); font-weight:600}
+
+  .rodape{margin-top:60px; padding-top:22px; border-top:1px solid var(--linha); font-size:.84rem; color:var(--ink-3)}
+</style>
+</head>
+<body>
+
+<header class="capa">
+  <p class="eyebrow">Relatório Final Consolidado · SME/RJ · 3ª CRE</p>
+  <h1>Análise final do sistema de <em>Gestão de Climatização Escolar</em></h1>
+  <p class="lede">Consolidação de duas avaliações independentes — uma de design e usabilidade mobile, outra de engenharia de informação — em um único documento com pontos positivos a preservar e melhorias detalhadas, cada uma com problema, impacto e forma de correção.</p>
+  <dl class="meta">
+    <div><dt>Aplicação</dt><dd>controle-climatizacao-3cre.vercel.app</dd></div>
+    <div><dt>Base do exame</dt><dd>Capturas (claro/escuro) + 2 relatórios</dd></div>
+    <div><dt>Data de referência</dt><dd>06/06/2026</dd></div>
+    <div><dt>Trilhas</dt><dd>D1 Mobile/UX · D2 Lógica/Dados/A11y</dd></div>
+  </dl>
+  <nav class="toc" aria-label="Sumário">
+    <ol>
+      <li><a href="#veredito">Veredito geral</a></li>
+      <li><a href="#positivos">Pontos positivos a preservar</a></li>
+      <li><a href="#matriz">Matriz de melhorias</a></li>
+      <li><a href="#melhorias">Melhorias detalhadas</a></li>
+      <li><a href="#plano">Plano de execução (Bloco D)</a></li>
+      <li><a href="#escopo">Nota de escopo</a></li>
+    </ol>
+  </nav>
+</header>
+
+<div class="wrap">
+
+<!-- ===== 1. VEREDITO ===== -->
+<section id="veredito">
+  <p class="num">01</p>
+  <h2>Veredito geral</h2>
+  <p>O sistema já se apresenta como um produto administrativo maduro: identidade visual própria, sistema de cores estruturado, fluxos bem segmentados (registro, ficha, comunicações, lista) e uma leitura operacional automática que responde diretamente às perguntas de monitoramento da GOP. O modo escuro tem qualidade de painel executivo; o modo claro é limpo e adequado ao trabalho institucional cotidiano.</p>
+  <p>As melhorias necessárias não são de beleza, e sim de duas naturezas complementares: <strong>conforto e densidade no celular</strong> (as telas com tabela, modal e comunicações ainda seguem lógica de desktop em largura estreita) e <strong>precisão da informação</strong> (priorização, ordenação e consistência de dados que sustentam a confiança na leitura gerencial). Resolvidas essas duas frentes, o acabamento passa de “muito bom” a “excelente”, sem alterar a lógica central do sistema.</p>
+</section>
+
+<!-- ===== 2. POSITIVOS ===== -->
+<section id="positivos">
+  <p class="num">02</p>
+  <h2>Pontos positivos a preservar</h2>
+  <p>Itens validados pelas duas avaliações. Devem ser mantidos como estão e protegidos de regressões durante os ajustes.</p>
+  <div class="callout bom">
+    <span class="rot">Forças confirmadas</span>
+    <ul style="margin:0">
+      <li><strong>Identidade e sistema de design.</strong> Marca “GC”, paleta primária azul-ciano com teal de apoio, cores semânticas de status, sombras, raios e tipografia coerentes — não há mais aparência de protótipo.</li>
+      <li><strong>Resumo operacional automático</strong> no topo do painel, entregando de imediato ativos, prioridades, inatividade e bairros foco, além dos chamados a priorizar.</li>
+      <li><strong>Separação semântica de cor</strong> entre SLA (inatividade) e antiguidade — evita que tudo vire vermelho ou laranja; é boa decisão de design informacional.</li>
+      <li><strong>Mapa de contexto</strong> (OpenStreetMap/CARTO, 26 bairros) com nota honesta de que não localiza unidades individualmente — um dos pontos altos visuais, sem prometer integração inexistente.</li>
+      <li><strong>Minutas de e-mail por etapa do POP</strong>, com variáveis preenchidas, prévia documental e estado vazio correto.</li>
+      <li><strong>Registrar chamado</strong> em três seções (Identificação · Especificações técnicas · Triagem), com autopreenchimento de Designação e Código SICI a partir da escola — fonte única de identidade.</li>
+      <li><strong>Ficha/modal de gestão</strong> com dupla face administrativa × técnica, linha do tempo, documentos e exportação CSV; visual forte no desktop.</li>
+      <li><strong>Dossiê da escola</strong> apontado como um dos melhores fluxos de navegação.</li>
+      <li><strong>Data de referência dinâmica</strong> coerente com os contadores de dias em aberto/sem movimentação.</li>
+      <li><strong>Lista de chamados</strong> funcional no desktop: filtros, busca, abas por setor e exportação.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 3. MATRIZ ===== -->
+<section id="matriz">
+  <p class="num">03</p>
+  <h2>Matriz de melhorias</h2>
+  <p>Visão consolidada, por severidade e trilha. <span class="tag d1">D1 Mobile/UX</span> &nbsp; <span class="tag d2">D2 Lógica/Dados/A11y</span></p>
+  <table>
+    <thead><tr><th>ID</th><th>Melhoria</th><th>Sev.</th><th>Trilha</th></tr></thead>
+    <tbody>
+      <tr><td>M-01</td><td>Níveis de severidade (148 ≠ 74 dias)</td><td><span class="sev p0">P0</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-02</td><td>Ordenação única de urgência entre as duas listas</td><td><span class="sev p0">P0</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-03</td><td>Normalizar categorias de responsabilidade</td><td><span class="sev p1">P1</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-04</td><td>Lista de chamados em cards no mobile</td><td><span class="sev p1">P1</span></td><td><span class="tag d1">D1</span></td></tr>
+      <tr><td>M-05</td><td>Comunicações empilhada no mobile</td><td><span class="sev p1">P1</span></td><td><span class="tag d1">D1</span></td></tr>
+      <tr><td>M-06</td><td>“Visão de Metas” sem rolagem interna</td><td><span class="sev p1">P1</span></td><td><span class="tag d1">D1</span></td></tr>
+      <tr><td>M-07</td><td>“O que exige ação agora”: agrupar e ordenar</td><td><span class="sev p1">P1</span></td><td><span class="tag d1">D1</span> <span class="tag d2">D2</span></td></tr>
+      <tr><td>M-08</td><td>Reagrupar KPIs em duas famílias rotuladas</td><td><span class="sev p1">P1</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-09</td><td>Acessibilidade de cor (legenda, daltonismo, contraste)</td><td><span class="sev p2">P2</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-10</td><td>Cabeçalho mobile compacto</td><td><span class="sev p2">P2</span></td><td><span class="tag d1">D1</span></td></tr>
+      <tr><td>M-11</td><td>Abas internas no modal (mobile)</td><td><span class="sev p2">P2</span></td><td><span class="tag d1">D1</span></td></tr>
+      <tr><td>M-12</td><td>Legibilidade: tamanho de fonte no mobile</td><td><span class="sev p2">P2</span></td><td><span class="tag d1">D1</span></td></tr>
+      <tr><td>M-13</td><td>Fonte da interface em campos e minutas</td><td><span class="sev p2">P2</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-14</td><td>Tokens de design e tema claro como padrão</td><td><span class="sev p2">P2</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-15</td><td>Sincronizar “Alterado/Última movimentação”</td><td><span class="sev p3">P3</span></td><td><span class="tag d2">D2</span></td></tr>
+      <tr><td>M-16</td><td>Coluna “Tipo Demanda” compacta</td><td><span class="sev p3">P3</span></td><td><span class="tag d1">D1</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===== 4. MELHORIAS DETALHADAS ===== -->
+<section id="melhorias">
+  <p class="num">04</p>
+  <h2>Melhorias detalhadas</h2>
+  <p class="small">Código <strong>proposto e ilustrativo</strong>, alinhado à arquitetura React 19 + Vite com lógica pura em <code>src/lib/logic.js</code> e testes em <code>test/logic.test.mjs</code>; adapte seletores e classes à camada de estilo real.</p>
+
+  <!-- M-01 -->
+  <div class="card melhoria p0">
+    <div class="topo"><span class="id">M-01</span><span class="sev p0">P0</span><span class="tag d2">D2</span><span class="titulo">Níveis de severidade — distinguir 148 de 74 dias</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>No bloco “O que exige ação agora”, todos os cartões usam o mesmo selo <strong>ATENÇÃO</strong> e a mesma cor, mesmo o chamado GOP-AR-2026-0002 estando há <strong>148 dias</strong> sem movimentação — o dobro dos demais (74 dias).</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>A ausência de um nível “Crítico” achata visualmente justamente o caso mais grave. A inteligência operacional deixa de orientar a ação: o gestor não distingue, num relance, o urgente do recorrente.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Criar uma função pura que classifica a inatividade em faixas, reaproveitando os limiares já adotados (âmbar a partir de 7 dias, vermelho a partir de 15) e acrescentando um teto “Crítico” a partir de 60 dias. O selo do cartão passa a refletir o nível retornado.</p>
+<pre><span class="c">// src/lib/logic.js</span>
+<span class="k">export function</span> <span class="f">severidadeInatividade</span>(dias) {
+  <span class="k">if</span> (dias &gt;= <span class="s">60</span>) <span class="k">return</span> { nivel: <span class="s">'CRITICO'</span>, rotulo: <span class="s">'Crítico — revisar caso'</span>, token: <span class="s">'vermelho'</span> };
+  <span class="k">if</span> (dias &gt;= <span class="s">15</span>) <span class="k">return</span> { nivel: <span class="s">'ALTO'</span>,    rotulo: <span class="s">'Vermelho'</span>,            token: <span class="s">'vermelho'</span> };
+  <span class="k">if</span> (dias &gt;= <span class="s">7</span>)  <span class="k">return</span> { nivel: <span class="s">'ATENCAO'</span>, rotulo: <span class="s">'Âmbar'</span>,               token: <span class="s">'ambar'</span> };
+  <span class="k">return</span> { nivel: <span class="s">'OK'</span>, rotulo: <span class="s">'Em dia'</span>, token: <span class="s">'verde'</span> };
+}</pre>
+<pre><span class="c">// test/logic.test.mjs</span>
+assert.equal(<span class="f">severidadeInatividade</span>(<span class="s">148</span>).nivel, <span class="s">'CRITICO'</span>);
+assert.equal(<span class="f">severidadeInatividade</span>(<span class="s">74</span>).nivel,  <span class="s">'CRITICO'</span>);
+assert.equal(<span class="f">severidadeInatividade</span>(<span class="s">16</span>).nivel,  <span class="s">'ALTO'</span>);
+assert.equal(<span class="f">severidadeInatividade</span>(<span class="s">8</span>).nivel,   <span class="s">'ATENCAO'</span>);
+assert.equal(<span class="f">severidadeInatividade</span>(<span class="s">3</span>).nivel,   <span class="s">'OK'</span>);</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> o cartão de 148 dias exibe selo “Crítico” em vermelho, visualmente distinto dos cartões de 74 dias.</div>
+  </div>
+
+  <!-- M-02 -->
+  <div class="card melhoria p0">
+    <div class="topo"><span class="id">M-02</span><span class="sev p0">P0</span><span class="tag d2">D2</span><span class="titulo">Ordenação única de urgência entre as duas listas</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>“O que exige ação agora” (ordem observada: 0006, 0010, 0002, 0012, 0014) e “Acompanhamento Prioritário” (0002, 0014, 0012, 0010, 0006) mostram os mesmos chamados in <strong>ordens diferentes</strong>. Apenas o acompanhamento ordena corretamente por tempo.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Duas listas de prioridade que se contradizem corroem a confiança na “verdade” do painel — o usuário não sabe qual obedecer. É um defeito de lógica, não de estética.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Centralizar a regra de ordenação em uma função única e aplicá-la nas duas seções: mais tempo sem movimentação primeiro, desempate por tempo total em aberto e, por fim, por código (ordem estável).</p>
+<pre><span class="c">// src/lib/logic.js</span>
+<span class="k">export function</span> <span class="f">ordenarPorUrgencia</span>(chamados) {
+  <span class="k">return</span> [...chamados].<span class="f">sort</span>((a, b) =&gt;
+    (b.diasSemMovimentacao - a.diasSemMovimentacao)  <span class="c">// 1º mais parado</span>
+    || (b.diasEmAberto - a.diasEmAberto)             <span class="c">// 2º mais antigo</span>
+    || a.codigo.<span class="f">localeCompare</span>(b.codigo)           <span class="c">// 3º estável</span>
+  );
+}</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> as duas seções exibem 0002 (148 d) no topo e a mesma sequência subsequente.</div>
+  </div>
+
+  <!-- M-03 -->
+  <div class="card melhoria p1">
+    <div class="topo"><span class="id">M-03</span><span class="sev p1">P1</span><span class="tag d2">D2</span><span class="titulo">Normalizar categorias de responsabilidade</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>“Unidade Escolar / GIN” (7) e “GIN / Unidade Escolar” (7) aparecem como categorias separadas no gráfico de responsabilidade.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Se representam o mesmo conceito, há inconsistência de normalização na origem — exatamente o ruído que o projeto combate ao buscar a verdade na fonte. O total por setor pode não fechar com o número de chamados.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Primeiro <strong>investigar</strong> se são o mesmo conceito. Se sim, normalizar com um mapa de equivalências; se forem distintos (por exemplo, indicando quem age primeiro), renomear de forma inequívoca. Tratar como etapa de ETL/auditoria sobre os dados.</p>
+<pre><span class="c">// src/lib/logic.js</span>
+<span class="k">const</span> ALIASES_SETOR = {
+  <span class="s">'unidade escolar / gin'</span>: <span class="s">'GIN / Unidade Escolar'</span>,
+  <span class="s">'gin / unidade escolar'</span>: <span class="s">'GIN / Unidade Escolar'</span>,
+};
+<span class="k">export function</span> <span class="f">normalizarSetorResponsavel</span>(valor) {
+  <span class="k">const</span> chave = (valor ?? <span class="s">''</span>).<span class="f">trim</span>().<span class="f">toLowerCase</span>();
+  <span class="k">return</span> ALIASES_SETOR[chave] ?? (valor ?? <span class="s">''</span>).<span class="f">trim</span>();
+}</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> o gráfico não exibe duas categorias semanticamente iguais; o somatório por setor fecha com o total de chamados.</div>
+  </div>
+
+  <!-- M-04 -->
+  <div class="card melhoria p1">
+    <div class="topo"><span class="id">M-04</span><span class="sev p1">P1</span><span class="tag d1">D1</span><span class="titulo">Lista de chamados em cards no mobile</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>A tabela larga funciona no desktop, mas no celular exige leitura lateral e trunca nomes de escola e local.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>É o maior ganho de usabilidade mobile disponível: tabela em tela estreita nunca é a melhor experiência. A lista é uma tela de uso frequente em campo.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Abaixo de um ponto de quebra (≈ 768px), substituir a tabela por uma lista de cards verticais com os campos essenciais empilhados e a ação principal. Mantém a tabela no desktop.</p>
+<pre><span class="c">// Renderização condicional por largura (adapte à sua stack)</span>
+<span class="k">const</span> ehMobile = <span class="f">useMediaQuery</span>(<span class="s">'(max-width: 768px)'</span>);
+<span class="k">return</span> ehMobile
+  ? &lt;ListaCards chamados={chamados} /&gt;
+  : &lt;TabelaChamados chamados={chamados} /&gt;;</pre>
+<pre><span class="c">// Card de chamado (mobile)</span>
+&lt;<span class="k">article</span> className=<span class="s">"chamado-card"</span>&gt;
+  &lt;<span class="k">header</span>&gt;
+    &lt;span className=<span class="s">"codigo"</span>&gt;{c.codigo}&lt;/span&gt;
+    &lt;SeloPrioridade nivel={c.prioridade} /&gt;
+  &lt;/<span class="k">header</span>&gt;
+  &lt;<span class="k">h4</span>&gt;{c.unidadeEscolar}&lt;/<span class="k">h4</span>&gt;
+  &lt;<span class="k">dl</span>&gt;
+    &lt;div&gt;&lt;dt&gt;Status&lt;/dt&gt;&lt;dd&gt;{c.status}&lt;/dd&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;dt&gt;Sem movimentação&lt;/dt&gt;&lt;dd&gt;{c.diasSemMovimentacao} dias&lt;/dd&gt;&lt;/div&gt;
+  &lt;/<span class="k">dl</span>&gt;
+  &lt;<span class="k">button</span> onClick={() =&gt; <span class="f">abrir</span>(c.codigo)}&gt;Abrir chamado&lt;/<span class="k">button</span>&gt;
+&lt;/<span class="k">article</span>&gt;</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> no mobile, nenhum dado essencial é truncado e cada chamado é acionável sem rolagem horizontal.</div>
+  </div>
+
+  <!-- M-05 -->
+  <div class="card melhoria p1">
+    <div class="topo"><span class="id">M-05</span><span class="sev p1">P1</span><span class="tag d1">D1</span><span class="titulo">Comunicações empilhada no mobile</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>A aba de Comunicações mantém duas colunas lado a lado em largura estreita — bonita, mas com textos pequenos e prévia desconfortável de ler.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>É a tela mais “desktopizada” no celular. A leitura da minuta, que será copiada para o e-mail, precisa de conforto.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>No mobile, empilhar na ordem do fluxo: (1) seletor de chamado, (2) modelos, (3) prévia, (4) botão copiar — com a coluna passando a 100% de largura via grid responsivo.</p>
+<pre><span class="c">/* comunicacoes.css */</span>
+.comunicacoes { display:grid; grid-template-columns: 1fr 1.4fr; gap:20px; }
+@media (max-width: 768px) {
+  .comunicacoes { grid-template-columns: 1fr; }   <span class="c">/* empilha */</span>
+  .comunicacoes .previa { order: 3; }
+  .comunicacoes .copiar { order: 4; }
+}</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> no celular, prévia e modelos ocupam largura total, com texto legível e na ordem do fluxo.</div>
+  </div>
+
+  <!-- M-06 -->
+  <div class="card melhoria p1">
+    <div class="topo"><span class="id">M-06</span><span class="sev p1">P1</span><span class="tag d1">D1</span><span class="titulo">“Visão de Metas” sem rolagem interna</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>O card de metas tem barra de rolagem interna, o que comprime o conteúdo e esconde categorias como “9 - Aguardando aparelho/instalação” e “GIN”.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Dá a sensação de conteúdo “preso” e oculta dados relevantes para a leitura consolidada.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Remover o <code>overflow</code> interno e deixar o card crescer naturalmente, ou dividir em dois cards independentes: “Status das demandas” e “Responsabilidade (último setor)”. A divisão é a opção mais limpa.</p>
+<pre><span class="c">/* antes: max-height + overflow escondia barras */</span>
+.card-metas .lista-barras { max-height: 240px; overflow-y: auto; }  <span class="c">/* remover */</span>
+<span class="c">/* depois: dois cards, altura natural, todas as categorias visíveis */</span></pre>
+    <div class="ac"><strong>Critério de aceite:</strong> todas as categorias de status e responsabilidade ficam visíveis sem rolagem dentro do card.</div>
+  </div>
+
+  <!-- M-07 -->
+  <div class="card melhoria p1">
+    <div class="topo"><span class="id">M-07</span><span class="sev p1">P1</span><span class="tag d1">D1</span><span class="tag d2">D2</span><span class="titulo">“O que exige ação agora”: agrupar e ordenar</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>A seção repete vários cartões quase idênticos (“Atualizar andamento”) e, somado a isso, está fora da ordem de urgência (ver M-02).</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Volume visual repetitivo sem hierarquia reduz a inteligência operacional da seção e duplica o que o “Acompanhamento Prioritário” já faz.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Unir as duas correções: ordenar pela função única (M-02) e <strong>agrupar</strong> o excedente em uma síntese, diferenciando os papéis das duas seções — “ação agora” como top destacado e acionável, “acompanhamento” como lista completa.</p>
+<pre><span class="c">// Síntese sugerida no topo do bloco</span>
+5 chamados sem movimentação recente
+Mais crítico: GOP-AR-2026-0002 — 148 dias  [Abrir]
+Demais: 0006, 0010, 0012, 0014 — 74 dias   [Ver lista filtrada]</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> o caso mais grave aparece destacado no topo; os demais são agrupados; a ordem coincide com o acompanhamento.</div>
+  </div>
+
+  <!-- M-08 -->
+  <div class="card melhoria p1">
+    <div class="topo"><span class="id">M-08</span><span class="sev p1">P1</span><span class="tag d2">D2</span><span class="titulo">Reagrupar os KPIs em duas famílias rotuladas</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>Os seis cartões-indicador são visualmente idênticos e enfileirados, mas “+7 / +15 dias” medem <strong>inatividade (SLA)</strong> e “+30 / +60 dias” medem <strong>antiguidade (tempo total em aberto)</strong>.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>A fileira uniforme sugere um único contador progressivo, quando são duas leituras distintas. A separação semântica de cor que já existe (boa decisão) fica subaproveitada na ausência de agrupamento.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Dividir os seis cartões em dois grupos com subtítulo próprio, preservando as cores (âmbar/vermelho para inatividade; roxo para antiguidade).</p>
+<pre><span class="c">// painel.jsx (estrutura)</span>
+&lt;<span class="k">section</span> aria-label=<span class="s">"Inatividade (SLA)"</span>&gt;
+  &lt;<span class="k">h3</span>&gt;Inatividade — sem movimentação&lt;/<span class="k">h3</span>&gt;
+  &lt;Indicador token=<span class="s">"ambar"</span>    rotulo=<span class="s">"+7 dias"</span>  valor={i7}  /&gt;
+  &lt;Indicador token=<span class="s">"vermelho"</span> rotulo=<span class="s">"+15 dias"</span> valor={i15} /&gt;
+&lt;/<span class="k">section</span>&gt;
+&lt;<span class="k">section</span> aria-label=<span class="s">"Antiguidade (tempo total em aberto)"</span>&gt;
+  &lt;<span class="k">h3</span>&gt;Antiguidade — tempo total em aberto&lt;/<span class="k">h3</span>&gt;
+  &lt;Indicador token=<span class="s">"roxo"</span> rotulo=<span class="s">"+30 dias"</span> valor={a30} /&gt;
+  &lt;Indicador token=<span class="s">"roxo"</span> rotulo=<span class="s">"+60 dias"</span> valor={a60} /&gt;
+&lt;/<span class="k">section</span>&gt;</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> as duas famílias têm rótulo próprio; nenhum usuário confunde inatividade com antiguidade.</div>
+  </div>
+
+  <!-- M-09 -->
+  <div class="card melhoria p2">
+    <div class="topo"><span class="id">M-09</span><span class="sev p2">P2</span><span class="tag d2">D2</span><span class="titulo">Acessibilidade de cor — legenda, daltonismo e contraste</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>Três frentes: as barras coloridas na borda esquerda das linhas não têm legenda; “Triagem/Vistoria” e “Concluído” usam tons de verde próximos (significados opostos); e textos em âmbar sobre fundo claro têm contraste limítrofe.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Informação codificada só por cor exclui usuários com daltonismo e qualquer pessoa sem a chave de leitura. Contraste abaixo de WCAG AA (4,5:1) prejudica a legibilidade.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Adotar um componente de legenda que <strong>sempre</strong> acompanha a cor de um rótulo textual; diferenciar o matiz de “Triagem” (ex.: teal) do verde de “Concluído”; e ajustar os tons âmbar/vermelho conforme a paleta de tokens (M-14), já calibrada para contraste no claro.</p>
+<pre><span class="c">// src/components/Legenda.jsx</span>
+<span class="k">export function</span> <span class="f">Legenda</span>({ itens }) {
+  <span class="k">return</span> (
+    &lt;<span class="k">ul</span> className=<span class="s">"legenda"</span> role=<span class="s">"list"</span>&gt;
+      {itens.<span class="f">map</span>(({ rotulo, cor }) =&gt; (
+        &lt;<span class="k">li</span> key={rotulo}&gt;
+          &lt;<span class="k">span</span> className=<span class="s">"legenda__cor"</span> style={{ background: cor }} aria-hidden=<span class="s">"true"</span> /&gt;
+          &lt;<span class="k">span</span>&gt;{rotulo}&lt;/<span class="k">span</span>&gt;
+        &lt;/<span class="k">li</span>&gt;
+      ))}
+    &lt;/<span class="k">ul</span>&gt;
+  );
+}</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> toda cor de estado vem com rótulo; verdes de início e fim são distinguíveis; textos críticos passam em contraste AA.</div>
+  </div>
+
+  <!-- M-10 -->
+  <div class="card melhoria p2">
+    <div class="topo"><span class="id">M-10</span><span class="sev p2">P2</span><span class="tag d1">D1</span><span class="titulo">Cabeçalho mobile compacto</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>No celular, o topo (marca, navegação, bloco de autoria/contato, título, botões) ocupa muita altura antes do conteúdo principal.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>O usuário rola bastante até chegar à função principal — sensação de “topo pesado”, agravada pela barra do navegador móvel.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Em telas pequenas, manter visíveis o essencial (título, alternador de tema e “Registrar chamado”) e recolher o bloco de autoria/contato em um menu/acordeão. Reduzir paddings verticais do cabeçalho no mobile.</p>
+<pre><span class="c">/* cabecalho.css */</span>
+@media (max-width: 768px) {
+  .cabecalho .autoria-contato { display: none; }      <span class="c">/* mover para menu "Sobre" */</span>
+  .cabecalho { padding-block: 12px; }
+  .cabecalho .acoes { position: sticky; top: 0; }      <span class="c">/* ação sempre ao alcance */</span>
+}</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> no mobile, o conteúdo principal aparece com mínima rolagem; ação e tema permanecem acessíveis.</div>
+  </div>
+
+  <!-- M-11 -->
+  <div class="card melhoria p2">
+    <div class="topo"><span class="id">M-11</span><span class="sev p2">P2</span><span class="tag d1">D1</span><span class="titulo">Abas internas no modal (mobile)</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>O modal de edição reúne muitas funções (administrativo, técnico, documentos, linha do tempo, observações) e fica denso no celular.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Edição de chamado é ação complexa, mais adequada a desktop; no mobile, a leitura e rolagem exigem atenção. Não é crítico, mas reduz conforto.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>No mobile, segmentar o conteúdo do modal em abas: <strong>Dados</strong>, <strong>Documentos</strong>, <strong>Histórico</strong> e <strong>Observações</strong>, exibindo uma por vez. No desktop, manter a visão completa em duas colunas.</p>
+    <div class="ac"><strong>Critério de aceite:</strong> no celular, cada aba cabe sem rolagem excessiva; nenhuma função some.</div>
+  </div>
+
+  <!-- M-12 -->
+  <div class="card melhoria p2">
+    <div class="topo"><span class="id">M-12</span><span class="sev p2">P2</span><span class="tag d1">D1</span><span class="titulo">Legibilidade — tamanho de fonte no mobile</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>No celular, alguns textos ficam pequenos demais: autoria/contato, subtítulos, labels, tabela, prévia de e-mail e linha do tempo do modal.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>É o principal limite de legibilidade mobile hoje — afeta diretamente o uso em campo.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Definir um piso de tamanho para textos de apoio no mobile (≈ 0,9rem) e ampliar labels e células ao migrar a lista para cards (M-04). A solução não é “aumentar tudo”, e sim ajustar por contexto de tela.</p>
+    <div class="ac"><strong>Critério de aceite:</strong> nenhum texto funcional fica abaixo do piso definido em telas pequenas.</div>
+  </div>
+
+  <!-- M-13 -->
+  <div class="card melhoria p2">
+    <div class="topo"><span class="id">M-13</span><span class="sev p2">P2</span><span class="tag d2">D2</span><span class="titulo">Fonte da interface em campos e minutas</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>Campos de texto, observações e a prévia de e-mail usam fonte monoespaçada, enquanto o restante da interface é sans-serif.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Quebra a unidade visual institucional e pode sugerir “texto bruto” ou formatação que não corresponde à do e-mail final.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Restringir a monoespaçada a conteúdo de natureza “código” (identificadores de chamado, JSON) e padronizar formulários e minutas com a fonte da interface.</p>
+<pre><span class="c">/* global.css */</span>
+input, textarea, select { font-family: <span class="k">var</span>(--fonte-ui); font-size: <span class="s">0.95rem</span>; }
+code, pre, .codigo-chamado { font-family: <span class="k">var</span>(--fonte-mono); }</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> nenhum campo de formulário ou minuta usa monoespaçada; identificadores técnicos permanecem em mono.</div>
+  </div>
+
+  <!-- M-14 -->
+  <div class="card melhoria p2">
+    <div class="topo"><span class="id">M-14</span><span class="sev p2">P2</span><span class="tag d2">D2</span><span class="titulo">Tokens de design e tema claro como padrão</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>A paleta já existe, mas convém consolidá-la em tokens centrais. Além disso, as avaliações divergem sobre o tema padrão.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Tokens impedem desvios futuros de cor. Quanto ao tema: ambas as leituras concordam que o claro serve melhor à rotina; logo, para uma ferramenta de uso diário, o claro deve ser o estado inicial, com o escuro — visualmente mais forte — disponível para apresentação e impacto.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Centralizar as cores em variáveis e definir o claro como padrão, persistindo a preferência do usuário quando ele optar pelo escuro.</p>
+<pre><span class="c">/* tokens.css — claro como padrão */</span>
+<span class="k">:root</span> {
+  --bg:#FBFAF8; --surface:#FFFFFF; --ink:#14181F; --ink-2:#4A5160; --linha:#E7E3DC;
+  --teal:#0E9E90; --azul:#1F6FEB;
+  --ambar:#B5710A; --vermelho:#C5303A; --roxo:#6D40C9; --verde:#16864A;
+}
+[data-theme=<span class="s">"escuro"</span>] {
+  --bg:#0B1220; --surface:#111A2B; --ink:#E8EDF5; --ink-2:#9FB0C9; --linha:#1E2A40;
+  --ambar:#F0A93B; --vermelho:#F07178; --roxo:#A78BFA; --verde:#34D399;
+}</pre>
+    <div class="ac"><strong>Critério de aceite:</strong> primeiro acesso abre em claro; a escolha persiste; nenhum valor de cor fica fora dos tokens.</div>
+  </div>
+
+  <!-- M-15 -->
+  <div class="card melhoria p3">
+    <div class="topo"><span class="id">M-15</span><span class="sev p3">P3</span><span class="tag d2">D2</span><span class="titulo">Sincronizar “Alterado / Última movimentação”</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>Na ficha do 0002, a observação cita um evento de 14/04/2026, enquanto “Alterado” permanece 09/01/2026.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Se a data de alteração não acompanha o último toque real, o contador de dias e a narrativa do chamado podem divergir, enfraquecendo a confiança no histórico.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Garantir que “Alterado/Última movimentação” seja atualizado a cada registro relevante (inclusive observações), servindo de base única para o cálculo de inatividade.</p>
+    <div class="ac"><strong>Critério de aceite:</strong> a data de alteração reflete o evento mais recente do chamado; o contador deriva dela.</div>
+  </div>
+
+  <!-- M-16 -->
+  <div class="card melhoria p3">
+    <div class="topo"><span class="id">M-16</span><span class="sev p3">P3</span><span class="tag d1">D1</span><span class="titulo">Coluna “Tipo Demanda” compacta</span></div>
+    <div class="bloco-rot">O problema</div>
+    <p>A coluna repete “Substituição/Instalação de Aparelho” em quase todas as linhas, quebrando em duas linhas no celular.</p>
+    <div class="bloco-rot">Por que importa</div>
+    <p>Consome largura útil que faria falta para Unidade Escolar e Local — especialmente no mobile.</p>
+    <div class="bloco-rot">Como corrigir</div>
+    <p>Substituir o texto longo por uma etiqueta compacta ou ícone com rótulo curto, liberando espaço. Naturalmente resolvido ao migrar a lista para cards (M-04).</p>
+    <div class="ac"><strong>Critério de aceite:</strong> o tipo de demanda é identificável sem ocupar duas linhas por registro.</div>
+  </div>
+</section>
+
+<!-- ===== 5. PLANO ===== -->
+<section id="plano">
+  <p class="num">05</p>
+  <h2>Plano de execução — Bloco D</h2>
+  <p>Como há pouca sobreposição entre as trilhas, elas podem ser executadas em paralelo e revisadas em conjunto. Sugestão de ordem por severidade, mantendo o padrão de blocos rotulados e aplicação manual via <code>git apply</code>.</p>
+
+  <p class="sub">Etapa 1 — correções P0 (lógica)</p>
+  <ul>
+    <li><strong>M-01</strong> severidade por inatividade · <strong>M-02</strong> ordenação única. Ambas em <code>logic.js</code>, com testes em <code>logic.test.mjs</code> e referência fixa para determinismo.</li>
+  </ul>
+
+  <p class="sub">Etapa 2 — P1 mobile (D1) e dados/semântica (D2)</p>
+  <ul>
+    <li><strong>D1:</strong> M-04 lista em cards · M-05 Comunicações empilhada · M-06 metas sem rolagem · M-07 ação agrupada.</li>
+    <li><strong>D2:</strong> M-03 normalização de setor · M-08 famílias de KPI.</li>
+  </ul>
+
+  <p class="sub">Etapa 3 — P2 acabamento</p>
+  <ul>
+    <li>M-09 acessibilidade de cor · M-10 cabeçalho mobile · M-11 abas no modal · M-12 fonte mobile · M-13 fonte de campos · M-14 tokens e tema claro padrão.</li>
+  </ul>
+
+  <p class="sub">Etapa 4 — P3 refinos</p>
+  <ul>
+    <li>M-15 sincronizar data de alteração · M-16 coluna de tipo compacta.</li>
+  </ul>
+
+  <p class="small">Cada item entra com seu critério de aceite. As melhorias D2 já têm patch proposto; as D1 são diretrizes de implementação para execução assistida, com pontos de quebra e ordem de empilhamento definidos.</p>
+</section>
+
+<!-- ===== 6. ESCOPO ===== -->
+<section id="escopo">
+  <p class="num">06</p>
+  <h2>Nota de escopo</h2>
+  <div class="callout escopo">
+    <span class="rot">Dentro do escopo da GOP</span>
+    <p style="margin:0">Todas as melhorias permanecem no registro e monitoramento de demandas. Nenhuma introduz autenticação, gestão de inventário, controle de estoque, automação de execução ou módulos de BI. São aprimoramentos de <strong>conforto mobile, clareza visual, semântica de informação, consistência de dados e acessibilidade</strong> sobre o que já existe — preservando a opção estratégica de simplicidade e durabilidade da ferramenta como recurso compartilhado da equipe.</p>
+  </div>
+</section>
+
+<div class="rodape">
+  <p>Relatório final consolidado a partir de duas avaliações independentes e das capturas da aplicação (modo claro e escuro), data de referência 06/06/2026. Trechos de código são propostas a integrar e testar na base atual; diretrizes mobile pressupõem ponto de quebra de referência em 768px, ajustável.</p>
+</div>
+
+</div>
+</body>
+</html>

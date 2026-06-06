@@ -45,7 +45,8 @@ import {
   searchSchools,
   stageGroupCounts,
   SECTORS,
-  aggregateBairroStats
+  aggregateBairroStats,
+  severidadeInatividade
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
@@ -1045,14 +1046,26 @@ export default function App() {
               let tagText = 'Pendência';
               let tagClass = 'tag-primary';
 
+              const inactDays = calcInactivityDays(item.ticket, todayRef());
               if (item.type === 'attachment') {
                 borderCol = 'var(--color-red)';
                 tagText = 'Urgente';
                 tagClass = 'tag-danger';
               } else if (item.type === 'stuck') {
-                borderCol = 'var(--color-amber)';
-                tagText = 'Atenção';
-                tagClass = 'tag-warning';
+                const sev = severidadeInatividade(inactDays);
+                if (sev.nivel === 'CRITICO') {
+                  borderCol = 'var(--color-red)';
+                  tagText = 'Crítico — revisar caso';
+                  tagClass = 'tag-danger';
+                } else if (sev.nivel === 'ALTO') {
+                  borderCol = 'var(--color-red)';
+                  tagText = 'Alto risco';
+                  tagClass = 'tag-danger';
+                } else {
+                  borderCol = 'var(--color-amber)';
+                  tagText = 'Atenção';
+                  tagClass = 'tag-warning';
+                }
               } else if (item.type === 'cto') {
                 borderCol = 'var(--color-blue)';
                 tagText = 'Comunicar CTO';

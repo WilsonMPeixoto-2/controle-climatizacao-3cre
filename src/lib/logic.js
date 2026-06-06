@@ -137,6 +137,40 @@ export function ageLevel(ticket, ref = new Date()) {
   return 'ok';
 }
 
+/**
+ * Classifica a inatividade em faixas para distinguir os níveis de urgência.
+ * Adiciona o nível "Crítico" para demandas paradas há mais de 60 dias.
+ */
+export function severidadeInatividade(dias) {
+  if (dias >= 60) return { nivel: 'CRITICO', rotulo: 'Crítico — revisar caso', token: 'vermelho' };
+  if (dias >= 15) return { nivel: 'ALTO',    rotulo: 'Vermelho',            token: 'vermelho' };
+  if (dias >= 7)  return { nivel: 'ATENCAO', rotulo: 'Âmbar',               token: 'ambar' };
+  return { nivel: 'OK', rotulo: 'Em dia', token: 'verde' };
+}
+
+/**
+ * Compara dois chamados por urgência (estável e determinista).
+ * 1º Inatividade decrescente -> 2º Antiguidade decrescente -> 3º Ordem alfabética de ID de chamado
+ */
+export function compararUrgencia(a, b, ref = new Date()) {
+  const aInactivity = inactivityDays(a, ref);
+  const bInactivity = inactivityDays(b, ref);
+  const aAge = ageDays(a, ref);
+  const bAge = ageDays(b, ref);
+  
+  return (bInactivity - aInactivity)
+    || (bAge - aAge)
+    || (a.id_chamado || '').localeCompare(b.id_chamado || '');
+}
+
+/**
+ * Centraliza a regra de ordenação por urgência de chamados (estável e determinista).
+ */
+export function ordenarPorUrgencia(tickets, ref = new Date()) {
+  return [...tickets].sort((a, b) => compararUrgencia(a, b, ref));
+}
+
+
 // ---------------------------------------------------------------------------
 // Métricas agregadas (Painel)
 // ---------------------------------------------------------------------------
@@ -179,10 +213,10 @@ export function computeMetrics(tickets, ref = new Date()) {
 
 /** Ranking dos N chamados ativos mais parados (maior inatividade primeiro). */
 export function stuckRanking(tickets, ref = new Date(), n = 5) {
-  return tickets
-    .filter((t) => !isClosed(t) && !isSuspended(t))
+  const active = tickets.filter((t) => !isClosed(t) && !isSuspended(t));
+  const sorted = ordenarPorUrgencia(active, ref);
+  return sorted
     .map((t) => ({ ...t, inactivityDays: inactivityDays(t, ref), ageDays: ageDays(t, ref) }))
-    .sort((a, b) => b.inactivityDays - a.inactivityDays)
     .slice(0, n);
 }
 

@@ -9,6 +9,7 @@ import {
   isClosed,
   isSuspended,
   inactivityDays,
+  compararUrgencia,
   aggregateBairroStats,
   normalizePriority
 } from './logic.js';
@@ -231,8 +232,8 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
     }
   }
 
-  // Retorna no máximo as 5 ações mais urgentes baseadas no score recalculado
+  // Retorna no máximo as 5 ações mais urgentes baseadas na ordenação centralizada de urgência
   return items
-    .sort((a, b) => b.score - a.score || a.ticket.id_chamado.localeCompare(b.ticket.id_chamado))
+    .sort((a, b) => compararUrgencia(a.ticket, b.ticket, ref))
     .slice(0, 5);
 }
