@@ -1,31 +1,34 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Carregar variáveis do .env
-const envPath = path.resolve('.env');
-let envContent = '';
-try {
-  envContent = fs.readFileSync(envPath, 'utf8');
-} catch (e) {
-  console.warn('Alerta: Não foi possível ler o arquivo .env diretamente. Usando variáveis de ambiente.');
-}
-
+// Carregar variáveis do .env e .env.local
 const env = {};
-envContent.split('\n').forEach(line => {
-  const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
-  if (match) {
-    let value = match[2] || '';
-    if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-    if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
-    env[match[1]] = value.trim();
+const loadEnvFile = (filename) => {
+  const envPath = path.resolve(filename);
+  try {
+    const content = fs.readFileSync(envPath, 'utf8');
+    content.split('\n').forEach(line => {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        let value = match[2] || '';
+        if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+        if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+        env[match[1]] = value.trim();
+      }
+    });
+  } catch {
+    // O arquivo pode não existir, o que é esperado se as variáveis vierem do ambiente
   }
-});
+};
+
+loadEnvFile('.env');
+loadEnvFile('.env.local');
 
 const supabaseUrl = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = env.VITE_SUPABASE_KEY || process.env.VITE_SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Erro: VITE_SUPABASE_URL ou VITE_SUPABASE_KEY não configurados no .env');
+  console.error('Erro: VITE_SUPABASE_URL ou VITE_SUPABASE_KEY não configurados em .env ou .env.local');
   process.exit(1);
 }
 
