@@ -232,8 +232,36 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
     }
   }
 
-  // Retorna no máximo as 5 ações mais urgentes baseadas na ordenação centralizada de urgência
-  return items
-    .sort((a, b) => compararUrgencia(a.ticket, b.ticket, ref))
-    .slice(0, 5);
+  // Ordena os itens pela urgência de seus chamados
+  items.sort((a, b) => compararUrgencia(a.ticket, b.ticket, ref));
+
+  // Agrupa chamados parados (stuck) se houver mais de um (M-04)
+  const stuckItems = items.filter((x) => x.type === 'stuck');
+  if (stuckItems.length > 1) {
+    const remainingStuck = stuckItems.slice(1);
+    const remainingIds = new Set(remainingStuck.map((x) => x.id));
+    
+    // Remove os outros itens de inatividade
+    const filteredItems = items.filter((x) => !remainingIds.has(x.id));
+    
+    const count = remainingStuck.length;
+    const listNames = remainingStuck.map((x) => x.ticket.id_chamado).join(', ');
+    
+    // Insere o card agrupador
+    filteredItems.push({
+      id: 'stuck-group-aggregated',
+      ticket: remainingStuck[0].ticket, // chamado representante para fins de ordenação
+      type: 'stuck-group',
+      title: `${count} outras demandas sem movimentação`,
+      description: `Outros casos parados há mais de 15 dias: ${listNames}.`,
+      actionLabel: 'Ver todos',
+      score: remainingStuck[0].score
+    });
+    
+    // Re-ordena o resultado final
+    filteredItems.sort((a, b) => compararUrgencia(a.ticket, b.ticket, ref));
+    return filteredItems.slice(0, 5);
+  }
+
+  return items.slice(0, 5);
 }

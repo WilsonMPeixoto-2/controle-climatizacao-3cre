@@ -557,7 +557,7 @@ try {
     unidade_escolar: `Escola ${i}`
   }));
   const limitedActions = getActionItems(manyTickets, mockSchools, [], testRefDate);
-  printResult('8.5. Limitação estrita do painel para no máximo 5 ações prioritárias', limitedActions.length === 5);
+  printResult('8.5. Limitação estrita do painel para no máximo 5 ações prioritárias com agrupamento', limitedActions.length === 2 && limitedActions[1].id === 'stuck-group-aggregated');
 
   const noActions = getActionItems([], mockSchools, [], testRefDate);
   printResult('8.6. Retorno de lista vazia quando não há pendências pendentes', noActions.length === 0);

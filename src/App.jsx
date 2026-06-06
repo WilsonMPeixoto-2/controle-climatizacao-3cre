@@ -1066,6 +1066,10 @@ export default function App() {
                   tagText = 'Atenção';
                   tagClass = 'tag-warning';
                 }
+              } else if (item.type === 'stuck-group') {
+                borderCol = 'var(--color-red)';
+                tagText = 'Inatividade';
+                tagClass = 'tag-danger';
               } else if (item.type === 'cto') {
                 borderCol = 'var(--color-blue)';
                 tagText = 'Comunicar CTO';
@@ -1161,7 +1165,14 @@ export default function App() {
                     <button
                       className="btn-task-action"
                       onClick={() => {
-                        if (item.type === 'cto' || item.type === 'school') {
+                        if (item.type === 'stuck-group') {
+                          setActiveListsView('inactive15');
+                          setCurrentTab('tickets');
+                          setTimeout(() => {
+                            const el = document.getElementById('lists-section');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }, 50);
+                        } else if (item.type === 'cto' || item.type === 'school') {
                           goToCommunicationForTicket(item.ticket, item.type);
                         } else {
                           openTicketEdit(item.ticket);
@@ -2136,103 +2147,127 @@ export default function App() {
               <IconInfo style={{ width: '14px', height: '14px', color: 'var(--primary)' }} />
               <span>Clique em um indicador para filtrar a lista de chamados abaixo.</span>
             </p>
-            <div className="card-grid">
-              <div
-                className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
-                onClick={() => setActiveListsView('all')}
-                style={{ '--card-accent': 'var(--primary)' }}
-              >
-                <div className="stat-header">
-                  <span>Chamados Registrados</span>
-                  <div className="stat-icon">
-                    <IconFolder />
-                  </div>
-                </div>
-                <div className="stat-number">{totalTickets}</div>
-                <div className="stat-description">Total histórico importado</div>
+            <div className="kpi-group-container" style={{ marginBottom: '24px' }}>
+              <div className="kpi-group-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
+                <IconFolder style={{ width: '16px', height: '16px', color: 'var(--primary)' }} />
+                <span>Volume Geral</span>
               </div>
-
-              <div
-                className={`stat-card ${activeListsView === 'active' ? 'active' : ''}`}
-                onClick={() => setActiveListsView('active')}
-                style={{ '--card-accent': 'var(--color-blue)' }}
-              >
-                <div className="stat-header">
-                  <span>Chamados Ativos</span>
-                  <div className="stat-icon">
-                    <IconRefresh />
+              <div className="card-grid volume-grid">
+                <div
+                  className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
+                  onClick={() => setActiveListsView('all')}
+                  style={{ '--card-accent': 'var(--primary)' }}
+                >
+                  <div className="stat-header">
+                    <span>Chamados Registrados</span>
+                    <div className="stat-icon">
+                      <IconFolder />
+                    </div>
                   </div>
+                  <div className="stat-number">{totalTickets}</div>
+                  <div className="stat-description">Total histórico importado</div>
                 </div>
-                <div className="stat-number">{openTickets}</div>
-                <div className="stat-description">Demandas em triagem ou andamento</div>
+
+                <div
+                  className={`stat-card ${activeListsView === 'active' ? 'active' : ''}`}
+                  onClick={() => setActiveListsView('active')}
+                  style={{ '--card-accent': 'var(--color-blue)' }}
+                >
+                  <div className="stat-header">
+                    <span>Chamados Ativos</span>
+                    <div className="stat-icon">
+                      <IconRefresh />
+                    </div>
+                  </div>
+                  <div className="stat-number">{openTickets}</div>
+                  <div className="stat-description">Demandas em triagem ou andamento</div>
+                </div>
               </div>
+            </div>
 
-              <div
-                className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
-                onClick={() => setActiveListsView('inactive7')}
-                style={{ '--card-accent': 'var(--color-amber)' }}
-              >
-                <div className="stat-header">
-                  <span>Em Aberto +7 Dias</span>
-                  <div className="stat-icon">
-                    <IconWarning />
-                  </div>
-                </div>
-                <div className="stat-number" style={{ color: 'var(--color-amber)' }}>
-                  {inactivePlus7}
-                </div>
-                <div className="stat-description">Sem movimentação (Alerta Âmbar)</div>
+            <div className="kpi-group-container" style={{ marginBottom: '36px' }}>
+              <div className="kpi-group-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
+                <IconClock style={{ width: '16px', height: '16px', color: 'var(--primary)' }} />
+                <span>Prazos e Gestão de Risco</span>
               </div>
+              <div className="kpi-subgroups-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="kpi-subgroup-column">
+                  <h5 className="kpi-subgroup-title" style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-light)', marginBottom: '12px' }}>Sem Movimentação Recente (Inércia)</h5>
+                  <div className="card-grid subgroup-cards" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div
+                      className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
+                      onClick={() => setActiveListsView('inactive7')}
+                      style={{ '--card-accent': 'var(--color-amber)' }}
+                    >
+                      <div className="stat-header">
+                        <span>Em Aberto +7 Dias</span>
+                        <div className="stat-icon">
+                          <IconWarning />
+                        </div>
+                      </div>
+                      <div className="stat-number" style={{ color: 'var(--color-amber)' }}>
+                        {inactivePlus7}
+                      </div>
+                      <div className="stat-description">Sem movimentação (Alerta Âmbar)</div>
+                    </div>
 
-              <div
-                className={`stat-card ${activeListsView === 'inactive15' ? 'active' : ''}`}
-                onClick={() => setActiveListsView('inactive15')}
-                style={{ '--card-accent': 'var(--color-red)' }}
-              >
-                <div className="stat-header">
-                  <span>Em Aberto +15 Dias</span>
-                  <div className="stat-icon">
-                    <IconSiren />
+                    <div
+                      className={`stat-card ${activeListsView === 'inactive15' ? 'active' : ''}`}
+                      onClick={() => setActiveListsView('inactive15')}
+                      style={{ '--card-accent': 'var(--color-red)' }}
+                    >
+                      <div className="stat-header">
+                        <span>Em Aberto +15 Dias</span>
+                        <div className="stat-icon">
+                          <IconSiren />
+                        </div>
+                      </div>
+                      <div className="stat-number" style={{ color: 'var(--color-red)' }}>
+                        {inactivePlus15}
+                      </div>
+                      <div className="stat-description">Sem movimentação (Alerta Vermelho)</div>
+                    </div>
                   </div>
                 </div>
-                <div className="stat-number" style={{ color: 'var(--color-red)' }}>
-                  {inactivePlus15}
-                </div>
-                <div className="stat-description">Sem movimentação (Alerta Vermelho)</div>
-              </div>
 
-              <div
-                className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
-                onClick={() => setActiveListsView('age30')}
-                style={{ '--card-accent': 'var(--color-age-warn)' }}
-              >
-                <div className="stat-header">
-                  <span>Em Aberto +30 Dias</span>
-                  <div className="stat-icon">
-                    <IconClock />
+                <div className="kpi-subgroup-column">
+                  <h5 className="kpi-subgroup-title" style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-light)', marginBottom: '12px' }}>Tempo Total em Aberto (Antiguidade)</h5>
+                  <div className="card-grid subgroup-cards" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div
+                      className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
+                      onClick={() => setActiveListsView('age30')}
+                      style={{ '--card-accent': 'var(--color-age-warn)' }}
+                    >
+                      <div className="stat-header">
+                        <span>Em Aberto +30 Dias</span>
+                        <div className="stat-icon">
+                          <IconClock />
+                        </div>
+                      </div>
+                      <div className="stat-number" style={{ color: 'var(--color-age-warn)' }}>
+                        {agePlus30}
+                      </div>
+                      <div className="stat-description">Tempo total em aberto (Antiguidade)</div>
+                    </div>
+
+                    <div
+                      className={`stat-card ${activeListsView === 'age60' ? 'active' : ''}`}
+                      onClick={() => setActiveListsView('age60')}
+                      style={{ '--card-accent': 'var(--color-age-severe)' }}
+                    >
+                      <div className="stat-header">
+                        <span>Em Aberto +60 Dias</span>
+                        <div className="stat-icon">
+                          <IconCalendar />
+                        </div>
+                      </div>
+                      <div className="stat-number" style={{ color: 'var(--color-age-severe)' }}>
+                        {agePlus60}
+                      </div>
+                      <div className="stat-description">Antiguidade crítica (revisar caso)</div>
+                    </div>
                   </div>
                 </div>
-                <div className="stat-number" style={{ color: 'var(--color-age-warn)' }}>
-                  {agePlus30}
-                </div>
-                <div className="stat-description">Tempo total em aberto (Antiguidade)</div>
-              </div>
-
-              <div
-                className={`stat-card ${activeListsView === 'age60' ? 'active' : ''}`}
-                onClick={() => setActiveListsView('age60')}
-                style={{ '--card-accent': 'var(--color-age-severe)' }}
-              >
-                <div className="stat-header">
-                  <span>Em Aberto +60 Dias</span>
-                  <div className="stat-icon">
-                    <IconCalendar />
-                  </div>
-                </div>
-                <div className="stat-number" style={{ color: 'var(--color-age-severe)' }}>
-                  {agePlus60}
-                </div>
-                <div className="stat-description">Antiguidade crítica (revisar caso)</div>
               </div>
             </div>
 
@@ -2545,7 +2580,10 @@ export default function App() {
                       <div className="mini-progress-list">
                         {(() => {
                           const sectorCounts = tickets.reduce((acc, t) => {
-                            const sec = t.setor_responsavel || 'Não especificado';
+                            let sec = t.setor_responsavel || 'Não especificado';
+                            if (sec === 'Unidade Escolar / GIN') {
+                              sec = 'GIN / Unidade Escolar';
+                            }
                             acc[sec] = (acc[sec] || 0) + 1;
                             return acc;
                           }, {});
@@ -2753,7 +2791,7 @@ export default function App() {
 
         {/* Tickets Tab (Lists Mirror) */}
         {currentTab === 'tickets' && (
-          <div className="dashboard-section" style={{ padding: '24px' }}>
+          <div id="lists-section" className="dashboard-section" style={{ padding: '24px' }}>
             <div
               className="section-header"
               style={{ marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}
@@ -3061,7 +3099,7 @@ export default function App() {
                         onClick={() => openTicketEdit(t)}
                         style={{ cursor: 'pointer' }}
                       >
-                        <td style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
+                        <td data-label="Código" style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>{t.id_chamado}</span>
                             {(() => {
@@ -3093,6 +3131,7 @@ export default function App() {
                           </div>
                         </td>
                         <td
+                          data-label="Unidade Escolar"
                           style={{
                             maxWidth: '240px',
                             overflow: 'hidden',
@@ -3104,10 +3143,10 @@ export default function App() {
                         >
                           {t.unidade_escolar}
                         </td>
-                        <td>{t.tipo_demanda}</td>
-                        <td>{t.local_demanda}</td>
-                        <td style={{ fontWeight: '700' }}>{t.setor_responsavel}</td>
-                        <td>
+                        <td data-label="Tipo Demanda">{t.tipo_demanda}</td>
+                        <td data-label="Local">{t.local_demanda}</td>
+                        <td data-label="Responsável" style={{ fontWeight: '700' }}>{t.setor_responsavel}</td>
+                        <td data-label="Status Atual">
                           <span
                             className="badge badge-status"
                             style={getStatusStyle(t.status_atual)}
@@ -3115,13 +3154,13 @@ export default function App() {
                             {t.status_atual}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Prioridade">
                           <span className={`badge badge-priority-${t.prioridade.toLowerCase()}`}>
                             {t.prioridade}
                           </span>
                         </td>
-                        <td style={{ fontWeight: '700' }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <td data-label="Modificado Em" style={{ fontWeight: '700' }}>
+                          <div style={{ display: 'flex', alignItems: 'center' }} title={hasPulse ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})` : ''}>
                             {hasPulse && (
                               <span
                                 className={`sla-pulse ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
@@ -3130,7 +3169,7 @@ export default function App() {
                             {formatDateBrazilian(t.modificado_em)}
                           </div>
                         </td>
-                        <td>
+                        <td data-label="Aptidão">
                           <span
                             className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}
                           >
