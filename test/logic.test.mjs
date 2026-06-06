@@ -110,7 +110,7 @@ test('chamado encerrado nunca dispara antiguidade', () => {
 section('Métricas agregadas (computeMetrics) sobre dados reais');
 
 const m = computeMetrics(db.chamados, REF);
-test('total = 28 chamados reais', () => assert.equal(m.total, 28));
+test('total = 30 chamados reais', () => assert.equal(m.total, 30));
 test('aberto + concluído = total', () => assert.equal(m.open + m.closed, m.total));
 test('contagem de concluídos confere com varredura direta', () => {
   const closed = db.chamados.filter(isClosed).length;
@@ -172,9 +172,9 @@ test('sectorSummary: aberto + concluído = total do setor', () => {
     assert.equal(sm.open + sm.closed, sm.total, `setor ${s}`);
   }
 });
-test('GOP tem 11 chamados nos dados reais (dono isolado)', () => {
+test('GOP tem 13 chamados nos dados reais (dono isolado)', () => {
   const gop = db.chamados.filter(t => t.setor_responsavel === 'GOP').length;
-  assert.equal(gop, 11);
+  assert.equal(gop, 13);
   // filterBySector deve incluir ao menos esses 11
   assert.ok(filterBySector(db.chamados, 'GOP').length >= 11);
 });
@@ -268,11 +268,11 @@ const sg = stageGroupCounts(db.chamados);
 test('soma dos grupos = total de chamados', () => {
   assert.equal(sg.triagem + sg.orcamento + sg.execucao + sg.concluido, db.chamados.length);
 });
-test('contagens reais batem com os dados (3/10/4/11)', () => {
-  assert.equal(sg.triagem, 3);
+test('contagens reais batem com os dados (1/10/10/9)', () => {
+  assert.equal(sg.triagem, 1);
   assert.equal(sg.orcamento, 10);
-  assert.equal(sg.execucao, 4);
-  assert.equal(sg.concluido, 11);
+  assert.equal(sg.execucao, 10);
+  assert.equal(sg.concluido, 9);
 });
 test('concluído inclui encerrados e suspensos (independe de data)', () => {
   assert.equal(stageGroup({ status_atual: '10 - Concluído' }), 'concluido');

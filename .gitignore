@@ -37,4 +37,5 @@ recovered_steps.json
 
 # Supabase CLI temp files
 supabase/.temp/
+.supabase/
 
