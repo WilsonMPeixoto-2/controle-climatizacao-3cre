@@ -1,11 +1,6 @@
 const BUCKET = 'gop-anexos';
 
-const ALLOWED_TYPES = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const ALLOWED_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
@@ -36,7 +31,7 @@ export async function uploadTicketAttachment(supabaseClient, ticket, file, descr
     .upload(storagePath, file, {
       cacheControl: '3600',
       upsert: false,
-      contentType: file.type,
+      contentType: file.type
     });
 
   if (uploadError) throw uploadError;
@@ -51,7 +46,7 @@ export async function uploadTicketAttachment(supabaseClient, ticket, file, descr
     nome_original: file.name,
     mime_type: file.type,
     tamanho_bytes: file.size,
-    descricao,
+    descricao
   };
 
   const { data, error } = await supabaseClient
@@ -110,10 +105,13 @@ export async function deleteTicketAttachment(supabaseClient, attachment) {
       .remove([attachment.storage_path]);
 
     if (storageError) {
-      console.warn("Aviso: Falha ao remover arquivo físico do Storage após remoção lógica:", storageError);
+      console.warn(
+        'Aviso: Falha ao remover arquivo físico do Storage após remoção lógica:',
+        storageError
+      );
     }
   } catch (err) {
-    console.warn("Aviso: Exceção ao remover arquivo físico do Storage:", err);
+    console.warn('Aviso: Exceção ao remover arquivo físico do Storage:', err);
   }
 
   return true;

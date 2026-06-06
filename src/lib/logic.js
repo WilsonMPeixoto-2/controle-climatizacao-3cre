@@ -24,7 +24,9 @@ export const SUSPENDED_STATUSES = ['Suspenso / pendente'];
  * Trata variações de acento, caixa e espaços extras.
  */
 export function normalizePriority(pri) {
-  const p = String(pri || '').trim().toLowerCase();
+  const p = String(pri || '')
+    .trim()
+    .toLowerCase();
   if (p === 'crítica' || p === 'critica') return 'Crítica';
   if (p === 'alta') return 'Alta';
   if (p === 'média' || p === 'media') return 'Média';
@@ -33,7 +35,7 @@ export function normalizePriority(pri) {
 }
 
 /** Limiares do Alerta de SLA (inércia: dias SEM movimentação). */
-export const SLA_WARN_DAYS = 7;   // âmbar
+export const SLA_WARN_DAYS = 7; // âmbar
 export const SLA_SEVERE_DAYS = 15; // vermelho
 
 /**
@@ -42,7 +44,7 @@ export const SLA_SEVERE_DAYS = 15; // vermelho
  * (SLA verde) e, ainda assim, estar aberto há tempo demais (antiguidade alta).
  * Tons de roxo, conforme o Excel. Faixas calibradas para o ritmo do POP-002/25.
  */
-export const AGE_WARN_DAYS = 30;   // roxo claro — em aberto há mais de 1 mês
+export const AGE_WARN_DAYS = 30; // roxo claro — em aberto há mais de 1 mês
 export const AGE_SEVERE_DAYS = 60; // roxo intenso — em aberto há mais de 2 meses
 
 // ---------------------------------------------------------------------------
@@ -141,10 +143,18 @@ export function ageLevel(ticket, ref = new Date()) {
 
 export function computeMetrics(tickets, ref = new Date()) {
   const total = tickets.length;
-  let open = 0, slaWarn = 0, slaSevere = 0, ageWarn = 0, ageSevere = 0, closed = 0;
+  let open = 0,
+    slaWarn = 0,
+    slaSevere = 0,
+    ageWarn = 0,
+    ageSevere = 0,
+    closed = 0;
 
   for (const t of tickets) {
-    if (isClosed(t) || isSuspended(t)) { closed++; continue; }
+    if (isClosed(t) || isSuspended(t)) {
+      closed++;
+      continue;
+    }
     open++;
     const s = slaLevel(t, ref);
     if (s === 'severe') slaSevere++;
@@ -160,18 +170,18 @@ export function computeMetrics(tickets, ref = new Date()) {
     closed,
     // SLA (inércia)
     inactivePlus7: slaWarn + slaSevere, // âmbar OU pior
-    inactivePlus15: slaSevere,          // vermelho
+    inactivePlus15: slaSevere, // vermelho
     // Antiguidade (tempo em aberto)
-    agePlus30: ageWarn + ageSevere,     // roxo claro OU pior
-    agePlus60: ageSevere,               // roxo intenso
+    agePlus30: ageWarn + ageSevere, // roxo claro OU pior
+    agePlus60: ageSevere // roxo intenso
   };
 }
 
 /** Ranking dos N chamados ativos mais parados (maior inatividade primeiro). */
 export function stuckRanking(tickets, ref = new Date(), n = 5) {
   return tickets
-     .filter(t => !isClosed(t) && !isSuspended(t))
-    .map(t => ({ ...t, inactivityDays: inactivityDays(t, ref), ageDays: ageDays(t, ref) }))
+    .filter((t) => !isClosed(t) && !isSuspended(t))
+    .map((t) => ({ ...t, inactivityDays: inactivityDays(t, ref), ageDays: ageDays(t, ref) }))
     .sort((a, b) => b.inactivityDays - a.inactivityDays)
     .slice(0, n);
 }
@@ -201,7 +211,7 @@ export function stageGroup(ticket) {
 /** Contagem de chamados por grupo de etapa. A soma é sempre tickets.length. */
 export function stageGroupCounts(tickets) {
   const g = { triagem: 0, orcamento: 0, execucao: 0, concluido: 0 };
-  for (const t of (Array.isArray(tickets) ? tickets : [])) g[stageGroup(t)]++;
+  for (const t of Array.isArray(tickets) ? tickets : []) g[stageGroup(t)]++;
   return g;
 }
 
@@ -221,20 +231,23 @@ export function ticketInSector(ticket, sector) {
   const resp = ticket?.setor_responsavel || '';
   if (sector === 'GOP') {
     // GOP é frequentemente o dono isolado; trata tanto "GOP" exato quanto composto.
-    return resp.split('/').map(s => s.trim()).includes('GOP');
+    return resp
+      .split('/')
+      .map((s) => s.trim())
+      .includes('GOP');
   }
   return resp.includes(sector);
 }
 
 export function filterBySector(tickets, sector) {
-  return tickets.filter(t => ticketInSector(t, sector));
+  return tickets.filter((t) => ticketInSector(t, sector));
 }
 
 /** Indicadores próprios de uma visão de setor (para o cabeçalho da aba). */
 export function sectorSummary(tickets, sector, ref = new Date()) {
   const subset = filterBySector(tickets, sector);
-  const open = subset.filter(t => !isClosed(t) && !isSuspended(t)).length;
-  const stuck = subset.filter(t => slaLevel(t, ref) !== 'ok').length;
+  const open = subset.filter((t) => !isClosed(t) && !isSuspended(t)).length;
+  const stuck = subset.filter((t) => slaLevel(t, ref) !== 'ok').length;
   return { sector, total: subset.length, open, closed: subset.length - open, stuck };
 }
 
@@ -260,7 +273,7 @@ export function suggestedActionColor(school) {
   const need = Number(school.necessidade_aparelhos) || 0;
 
   // Sinais textuais explícitos têm prioridade (robustez a dados legados).
-  if (txt.includes('confirma')) return 'red';      // "Solicitar confirmação à unidade"
+  if (txt.includes('confirma')) return 'red'; // "Solicitar confirmação à unidade"
   if (txt.includes('instal') || txt.includes('necessidade')) return 'amber';
 
   if (!confirmed) return 'red';
@@ -287,14 +300,25 @@ export function isTruthyFlag(v) {
  */
 export function searchSchools(schools, query, limit = 8) {
   const list = Array.isArray(schools) ? schools : [];
-  const q = String(query || '').trim().toLowerCase();
+  const q = String(query || '')
+    .trim()
+    .toLowerCase();
   if (!q) return list.slice(0, limit);
   return list
-    .filter(s =>
-      String(s.unidade_escolar || '').toLowerCase().includes(q) ||
-      String(s.designacao || '').toLowerCase().includes(q) ||
-      String(s.sici || '').toLowerCase().includes(q) ||
-      String(s.bairro || '').toLowerCase().includes(q)
+    .filter(
+      (s) =>
+        String(s.unidade_escolar || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(s.designacao || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(s.sici || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(s.bairro || '')
+          .toLowerCase()
+          .includes(q)
     )
     .slice(0, limit);
 }
@@ -319,7 +343,6 @@ export function compileEmailTemplate(templateText, ticket, dateRef = new Date())
     .replace(/{PROXIMA_PROVIDENCIA}/g, ticket.proxima_providencia ?? '')
     .replace(/{DESIGNACAO}/g, ticket.designacao ?? '');
 }
-
 
 // ---------------------------------------------------------------------------
 // Normalização e Agregação por Bairro
@@ -439,4 +462,3 @@ export function aggregateBairroStats(tickets, schools, ref = new Date()) {
   }
   return result;
 }
-

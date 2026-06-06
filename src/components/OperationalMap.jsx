@@ -4,7 +4,14 @@ import 'leaflet/dist/leaflet.css';
 import creBairros from '../data/cre-bairros.geo.json';
 import { normalizeString, aggregateBairroStats } from '../lib/logic.js';
 
-const TOP6 = ['inhauma', 'engenho de dentro', 'lins de vasconcelos', 'piedade', 'engenho novo', 'bonsucesso'];
+const TOP6 = [
+  'inhauma',
+  'engenho de dentro',
+  'lins de vasconcelos',
+  'piedade',
+  'engenho novo',
+  'bonsucesso'
+];
 
 // Função pura de estilo coroplético baseada no tema e nas estatísticas
 function getBairroStyle(feature, theme, stats) {
@@ -78,11 +85,18 @@ function getBairroStyle(feature, theme, stats) {
     weight: weight,
     opacity: isDark ? 0.95 : 0.85, // strokeOpacity: 0.85 no light mode para contornos nítidos e limpos
     fillColor: fillColor,
-    fillOpacity: fillOpacity,
+    fillOpacity: fillOpacity
   };
 }
 
-export default function OperationalMap({ tickets, schools, selectedSchool, theme, onSelectBairro, focusedBairro }) {
+export default function OperationalMap({
+  tickets,
+  schools,
+  selectedSchool,
+  theme,
+  onSelectBairro,
+  focusedBairro
+}) {
   const elRef = useRef(null);
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -104,7 +118,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       doubleClickZoom: true, // Habilitado para zoom com duplo clique
       boxZoom: true,
       dragging: true,
-      attributionControl: true,
+      attributionControl: true
     });
     mapRef.current = map;
 
@@ -117,7 +131,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
     const tileLayer = L.tileLayer(tileUrl, {
       subdomains: 'abcd',
       maxZoom: 19,
-      attribution: '© OpenStreetMap · © CARTO',
+      attribution: '© OpenStreetMap · © CARTO'
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
@@ -128,7 +142,12 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       onEachFeature: (f, l) => {
         const nm = f.properties?.NOME || '';
         const normalized = normalizeString(nm);
-        const bairroData = stats[normalized] || { escolas_cadastradas: 0, chamados_ativos: 0, criticos: 0, atencao: 0 };
+        const bairroData = stats[normalized] || {
+          escolas_cadastradas: 0,
+          chamados_ativos: 0,
+          criticos: 0,
+          atencao: 0
+        };
 
         // Guarda referência do layer para foco futuro
         layersRef.current[normalized] = l;
@@ -143,9 +162,13 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
             <div class="map-tooltip-row" style="color: var(--color-amber); font-weight: bold;"><span>Atenção:</span> <strong>${bairroData.atencao}</strong></div>
           </div>
         `;
-        
+
         // Todos os bairros mostram o tooltip dinâmico no hover com estatísticas
-        l.bindTooltip(tooltipHtml, { sticky: true, direction: 'auto', className: 'cre-tooltip-custom' });
+        l.bindTooltip(tooltipHtml, {
+          sticky: true,
+          direction: 'auto',
+          className: 'cre-tooltip-custom'
+        });
 
         // Para os TOP 6 bairros, cria um marcador invisível não-interativo no centro do polígono para exibir o nome permanentemente
         if (TOP6.includes(normalized)) {
@@ -158,7 +181,11 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
             }),
             interactive: false // Não intercepta cliques ou hovers
           });
-          labelMarker.bindTooltip(nm, { permanent: true, direction: 'center', className: 'cre-label' });
+          labelMarker.bindTooltip(nm, {
+            permanent: true,
+            direction: 'center',
+            className: 'cre-label'
+          });
           labelMarker.addTo(map);
           labelMarkersRef.current.push(labelMarker);
         }
@@ -179,7 +206,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
             onSelectBairro(normalized);
           }
         });
-      },
+      }
     }).addTo(map);
     geoJsonRef.current = geoJson;
 
@@ -193,7 +220,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
           mapRef.current.invalidateSize();
         }
       } catch (e) {
-        console.warn("Leaflet: Erro ao invalidar tamanho no timeout:", e);
+        console.warn('Leaflet: Erro ao invalidar tamanho no timeout:', e);
       }
     }, 80);
 
@@ -206,7 +233,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
             mapRef.current.invalidateSize();
           }
         } catch (e) {
-          console.warn("Leaflet: Erro ao invalidar tamanho no ResizeObserver:", e);
+          console.warn('Leaflet: Erro ao invalidar tamanho no ResizeObserver:', e);
         }
       });
       resizeObserver.observe(elRef.current);
@@ -226,7 +253,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
         } catch {
           // Silencioso
         }
-        
+
         // 2. Limpa marcadores permanentes de bairros e desvincula seus tooltips
         labelMarkersRef.current.forEach((m) => {
           try {
@@ -258,7 +285,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
         try {
           mapRef.current.remove();
         } catch (e) {
-          console.warn("Leaflet: Erro ao remover mapa no cleanup:", e);
+          console.warn('Leaflet: Erro ao remover mapa no cleanup:', e);
         }
       }
       mapRef.current = null;
@@ -291,7 +318,12 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       if (!f) return;
       const nm = f.properties?.NOME || '';
       const normalized = normalizeString(nm);
-      const bairroData = stats[normalized] || { escolas_cadastradas: 0, chamados_ativos: 0, criticos: 0, atencao: 0 };
+      const bairroData = stats[normalized] || {
+        escolas_cadastradas: 0,
+        chamados_ativos: 0,
+        criticos: 0,
+        atencao: 0
+      };
 
       // Tooltip dinâmico rico atualizado
       const tooltipHtml = `
@@ -305,7 +337,11 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
       `;
 
       l.unbindTooltip();
-      l.bindTooltip(tooltipHtml, { sticky: true, direction: 'auto', className: 'cre-tooltip-custom' });
+      l.bindTooltip(tooltipHtml, {
+        sticky: true,
+        direction: 'auto',
+        className: 'cre-tooltip-custom'
+      });
 
       // Atualiza os event listeners locais para refletir os novos dados
       l.off('mouseover');
@@ -324,7 +360,14 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
 
   // 4. Efeito de Realce e Foco por Polígono da Escola Selecionada (Consulta Rápida)
   useEffect(() => {
-    if (!mapRef.current || !geoJsonRef.current || !selectedSchool || !elRef.current?.isConnected || !mapRef.current._loaded) return;
+    if (
+      !mapRef.current ||
+      !geoJsonRef.current ||
+      !selectedSchool ||
+      !elRef.current?.isConnected ||
+      !mapRef.current._loaded
+    )
+      return;
 
     try {
       const schoolBairro = selectedSchool.bairro;
@@ -339,7 +382,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
           try {
             geoJsonRef.current.resetStyle(lyr);
           } catch (err) {
-            console.warn("Leaflet: erro ao resetar estilo da camada", err);
+            console.warn('Leaflet: erro ao resetar estilo da camada', err);
           }
         });
 
@@ -347,20 +390,27 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
         layer.setStyle({
           weight: 3.5,
           color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
-          fillOpacity: 0.35,
+          fillOpacity: 0.35
         });
 
         // Dá zoom e centraliza nos limites do polígono geográfico (Sem geocodificar coordenadas da escola)
         mapRef.current.fitBounds(layer.getBounds(), { padding: [40, 40] });
       }
     } catch (e) {
-      console.warn("Leaflet: Erro no realce da escola selecionada:", e);
+      console.warn('Leaflet: Erro no realce da escola selecionada:', e);
     }
   }, [selectedSchool]);
 
   // 5. Efeito de Foco Territorial por Clique no Card Lateral de Detalhes
   useEffect(() => {
-    if (!mapRef.current || !geoJsonRef.current || !focusedBairro || !elRef.current?.isConnected || !mapRef.current._loaded) return;
+    if (
+      !mapRef.current ||
+      !geoJsonRef.current ||
+      !focusedBairro ||
+      !elRef.current?.isConnected ||
+      !mapRef.current._loaded
+    )
+      return;
 
     try {
       const normalized = focusedBairro.name;
@@ -372,7 +422,7 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
           try {
             geoJsonRef.current.resetStyle(lyr);
           } catch (err) {
-            console.warn("Leaflet: erro ao resetar estilo da camada", err);
+            console.warn('Leaflet: erro ao resetar estilo da camada', err);
           }
         });
 
@@ -380,23 +430,23 @@ export default function OperationalMap({ tickets, schools, selectedSchool, theme
         layer.setStyle({
           weight: 3.5,
           color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
-          fillOpacity: 0.35,
+          fillOpacity: 0.35
         });
 
         // Dá zoom e centraliza nos limites do polígono geográfico de forma suave (flyToBounds)
         mapRef.current.flyToBounds(layer.getBounds(), { padding: [40, 40], duration: 1.2 });
       }
     } catch (e) {
-      console.warn("Leaflet: Erro no foco territorial do bairro:", e);
+      console.warn('Leaflet: Erro no foco territorial do bairro:', e);
     }
   }, [focusedBairro]);
 
   return (
-    <div 
-      ref={elRef} 
-      className="op-map" 
-      role="img" 
-      aria-label="Mapa Operacional por bairro da 3ª CRE. Exibe a severidade acumulada e os chamados agregados de cada bairro atendido." 
+    <div
+      ref={elRef}
+      className="op-map"
+      role="img"
+      aria-label="Mapa Operacional por bairro da 3ª CRE. Exibe a severidade acumulada e os chamados agregados de cada bairro atendido."
     />
   );
 }

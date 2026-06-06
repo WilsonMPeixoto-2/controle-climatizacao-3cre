@@ -34,3 +34,7 @@ dist-ssr
 test-results/
 playwright-report/
 recovered_steps.json
+
+# Supabase CLI temp files
+supabase/.temp/
+
