@@ -41,3 +41,36 @@ Nesta etapa, implementamos as melhorias de inteligência operacional prioritári
 5. **Validação & Testes:**
    * Escrevemos testes unitários específicos em [`test/logic.test.mjs`](file:///C:/Users/okidata/.gemini/antigravity-ide/scratch/controle-climatizacao-3cre/test/logic.test.mjs) validando o comportamento correto das funções de severidade e ordenação.
    * Todos os testes unitários e de integração passaram perfeitamente. O linter e build de produção Vite também foram executados com sucesso.
+
+---
+
+## Fase 3: Usabilidade, Layout Mobile e Acessibilidade (M-03 a M-14)
+
+Concluímos a consolidação de todas as melhorias visuais e de design recomendadas no relatório de usabilidade:
+
+1. **Dashboard Gerencial e KPIs por Famílias (M-03, M-04, M-06):**
+   * Separamos os cards de indicadores do Dashboard em duas seções semânticas: **Volume Geral de Demandas** (Registrados e Ativos) e **Prazo e Gestão de Risco** (divididos em subgrupos de *Inatividade* e *Antiguidade*).
+   * Tratamos cliques nos cards de ação imediata (como chamados parados) para efetuar rolagem automática até a tabela de listagem geral com o filtro ativado.
+   * Eliminamos rolagens internas verticais nos cards gerenciais, permitindo fluxo natural de visualização.
+
+2. **Normalização de Dados e Tipografia (M-05, M-10):**
+   * Agregamos dinamicamente as categorias de responsabilidade `Unidade Escolar / GIN` sob a rubrica normalizada `GIN / Unidade Escolar` nos gráficos do painel.
+   * Substituímos a tipografia monoespaçada no compositor e na minuta de e-mail pela fonte sem-serifa padrão (`Outfit`/`Inter`), mantendo monoespaçado apenas para códigos, identificadores e logs.
+
+3. **Responsividade Mobile Completa (M-07, M-08, M-09):**
+   * Convertemos a tabela principal de chamados em um layout responsivo de cartões verticais dinâmicos no mobile via regras de `@media` e atributos `data-label`.
+   * Empilhamos verticalmente as seções do compositor de comunicações (minutas, templates e seleção) em telas pequenas.
+   * Compactamos os paddings e margens do cabeçalho principal em dispositivos móveis.
+
+4. **Acessibilidade Cromática e Legendas Textuais (M-11, M-12, M-13):**
+   * Adicionamos um painel completo de **Legendas de Prazos e Status** ([App.jsx](file:///C:/Users/okidata/.gemini/antigravity-ide/scratch/controle-climatizacao-3cre/src/App.jsx)) explicando os códigos visuais de bordas de severidade e cores de status (Etapas POP).
+   * Criamos tags textuais explícitas de alerta (`lists-alert-tag`) integradas diretamente na coluna `Modificado Em` de cada linha (ex. `Inércia: 18 dias`, `Aberto +60 dias`), evitando que a informação seja percebida exclusivamente por cor.
+   * Revisamos e consolidamos a paleta de contrastes de alertas de inércia (âmbar e vermelho) em conformidade com as diretrizes WCAG AA.
+
+5. **Tema de Primeiro Acesso e Persistência (M-14):**
+   * Ajustamos o tema de primeiro acesso sem preferência salva para carregar por padrão no **Tema Escuro (Dark)** conforme a especificação visual institucional do projeto, garantindo a persistência das escolhas do usuário (claro/escuro) no `localStorage`.
+
+6. **Validação & Testes:**
+   * Validamos a aderência à sintaxe ES6 de todos os scripts auxiliares para sanear avisos de linter.
+   * Executamos o pipeline completo local com `npm run build` (linter, 85 testes unitários/smoke no backend local e 3 testes de interface E2E do Playwright), obtendo sucesso e 100% de cobertura operacional nas regras do frontend.
+
