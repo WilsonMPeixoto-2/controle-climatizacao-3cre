@@ -261,6 +261,17 @@ test('entrada inválida (não-array) não quebra', () => {
   assert.deepEqual(searchSchools(null, 'x'), []);
   assert.deepEqual(searchSchools(undefined, ''), []);
 });
+test('busca é tolerante a acentos (normalização de string)', () => {
+  // Buscar 'Inhauma' (sem acento) deve encontrar registros do bairro 'Inhaúma' (com acento)
+  const r1 = searchSchools(db.escolas, 'Inhauma', 100);
+  assert.ok(r1.length > 0);
+  assert.ok(r1.every(s => normalizeString(s.bairro).includes('inhauma')));
+
+  // Buscar 'meier' (sem acento) deve encontrar 'Méier' (com acento)
+  const r2 = searchSchools(db.escolas, 'meier', 100);
+  assert.ok(r2.length > 0);
+  assert.ok(r2.every(s => normalizeString(s.bairro).includes('meier') || normalizeString(s.unidade_escolar).includes('meier')));
+});
 
 // ===========================================================================
 section('Grupos de etapa (stageGroupCounts) — legenda do Mapa Operacional');

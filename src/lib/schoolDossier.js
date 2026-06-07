@@ -5,7 +5,7 @@
  * da Unidade Escolar no Controle de Climatização GOP / 3ª CRE.
  */
 
-import { isClosed, isSuspended, inactivityDays, normalizePriority } from './logic.js';
+import { isClosed, isSuspended, inactivityDays, normalizePriority, isTruthyFlag } from './logic.js';
 
 /**
  * Calcula o percentual de climatização das salas de aula.
@@ -57,10 +57,10 @@ export function getSchoolClimateStatus(
   const hasActiveTickets = activeTickets.length > 0;
 
   // b) Não confirmado pela unidade
-  const notConfirmed = school.confirmado_pela_unidade !== 'Sim';
+  const notConfirmed = !isTruthyFlag(school.confirmado_pela_unidade);
 
   // c) Não validado pela GOP
-  const notValidated = school.validado_pela_gop !== 'Sim';
+  const notValidated = !isTruthyFlag(school.validado_pela_gop);
 
   // d) Há salas sem aparelho
   const hasRoomsWithoutAppliances = Number(school.salas_sem_aparelho || 0) > 0;
@@ -129,12 +129,12 @@ export function getSchoolClimateReason(
   }
 
   // b) Não confirmado pela unidade
-  if (school.confirmado_pela_unidade !== 'Sim') {
+  if (!isTruthyFlag(school.confirmado_pela_unidade)) {
     return 'Dados cadastrais ainda não confirmados pela unidade escolar.';
   }
 
   // c) Não validado pela GOP
-  if (school.validado_pela_gop !== 'Sim') {
+  if (!isTruthyFlag(school.validado_pela_gop)) {
     return 'Dados cadastrais sob auditoria da GOP pendentes de validação técnica.';
   }
 

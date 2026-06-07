@@ -157,6 +157,35 @@ try {
   const r11 = getSchoolClimateReason(null, [], 80, refDate);
   printResult('6.11. Reason: Unidade nula ou inválida', r11 === 'Nenhuma unidade escolar selecionada.');
 
+  // Teste 7: Precedência do Motivo de Climatização (Combinação de Múltiplos Gatilhos)
+  // Caso 7.1: Gatilho Crítico de chamado + Gatilho Crítico de Cobertura + Gatilho Atenção de Não Validada
+  const schoolMultiCrit = {
+    ...schoolModel,
+    validado_pela_gop: 'Não' // Atenção
+  };
+  const ticketsMultiCrit = [{ prioridade: 'Crítica', status_atual: '1 - Recebido', data_solicitacao: '2026-06-01T12:00:00Z' }];
+  const statusMultiCrit = getSchoolClimateStatus(schoolMultiCrit, ticketsMultiCrit, 25, refDate); // Cobertura 25% (Crítica)
+  const reasonMultiCrit = getSchoolClimateReason(schoolMultiCrit, ticketsMultiCrit, 25, refDate);
+  printResult('7.1. Precedência: Status deve ser Crítico sob múltiplos gatilhos', statusMultiCrit === 'critica');
+  printResult(
+    '7.2. Precedência: Motivo deve relatar chamado prioritário (primeiro na ordem de precedência)',
+    reasonMultiCrit === 'Possui chamado de manutenção ativo com prioridade Crítica ou Alta.'
+  );
+
+  // Caso 7.2: Apenas múltiplos gatilhos de Atenção (Não confirmado pela unidade + salas sem aparelho + cobertura abaixo da meta)
+  const schoolMultiAtt = {
+    ...schoolModel,
+    confirmado_pela_unidade: 'Não', // Atenção
+    salas_sem_aparelho: 3 // Atenção
+  };
+  const statusMultiAtt = getSchoolClimateStatus(schoolMultiAtt, [], 60, refDate); // Cobertura 60% (Atenção)
+  const reasonMultiAtt = getSchoolClimateReason(schoolMultiAtt, [], 60, refDate);
+  printResult('7.3. Precedência: Status deve ser Atenção sob múltiplos gatilhos de Atenção', statusMultiAtt === 'atencao');
+  printResult(
+    '7.4. Precedência: Motivo deve relatar dados não confirmados (primeiro na ordem de precedência)',
+    reasonMultiAtt === 'Dados cadastrais ainda não confirmados pela unidade escolar.'
+  );
+
   console.log('\n\x1b[32m%s\x1b[0m', '================================================');
   console.log('\x1b[32m%s\x1b[0m', '🎉 RESULTADO: TODOS OS TESTES DO DOSSIÊ PASSARAM! ');
   console.log('\x1b[32m%s\x1b[0m', '================================================');

@@ -344,7 +344,7 @@ export default function App() {
     rich = rich.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     // Converter quebras de linha em tags <br/> para HTML
-    rich = rich.replace(/\n/g, '<br/>').replace(/\n/g, '<br/>');
+    rich = rich.replace(/\n/g, '<br/>');
 
     if (!ticket) {
       return <div dangerouslySetInnerHTML={{ __html: rich }} />;
@@ -1392,6 +1392,12 @@ export default function App() {
         });
       }
     });
+
+    if (logsGerados.length === 0) {
+      triggerToast('Nenhuma alteração identificada.', 'info');
+      setShowEditModal(false);
+      return;
+    }
 
     const updatedRecord = {
       ...editingTicket,

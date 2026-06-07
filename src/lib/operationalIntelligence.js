@@ -233,7 +233,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
   }
 
   // Ordena os itens pela urgência de seus chamados
-  items.sort((a, b) => compararUrgencia(a.ticket, b.ticket, ref));
+  items.sort((a, b) => (b.score - a.score) || compararUrgencia(a.ticket, b.ticket, ref));
 
   // Agrupa chamados parados (stuck) se houver mais de um (M-04)
   const stuckItems = items.filter((x) => x.type === 'stuck');
@@ -259,7 +259,7 @@ export function getActionItems(tickets, schools, allAttachments = [], ref = new 
     });
     
     // Re-ordena o resultado final
-    filteredItems.sort((a, b) => compararUrgencia(a.ticket, b.ticket, ref));
+    filteredItems.sort((a, b) => (b.score - a.score) || compararUrgencia(a.ticket, b.ticket, ref));
     return filteredItems.slice(0, 5);
   }
 

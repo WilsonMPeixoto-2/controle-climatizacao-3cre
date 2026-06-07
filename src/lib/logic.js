@@ -347,25 +347,15 @@ export function isTruthyFlag(v) {
  */
 export function searchSchools(schools, query, limit = 8) {
   const list = Array.isArray(schools) ? schools : [];
-  const q = String(query || '')
-    .trim()
-    .toLowerCase();
+  const q = normalizeString(query);
   if (!q) return list.slice(0, limit);
   return list
     .filter(
       (s) =>
-        String(s.unidade_escolar || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(s.designacao || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(s.sici || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(s.bairro || '')
-          .toLowerCase()
-          .includes(q)
+        normalizeString(s.unidade_escolar).includes(q) ||
+        normalizeString(s.designacao).includes(q) ||
+        normalizeString(s.sici).includes(q) ||
+        normalizeString(s.bairro).includes(q)
     )
     .slice(0, limit);
 }
