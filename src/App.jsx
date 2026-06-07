@@ -21,12 +21,12 @@ import {
   Compass,
   MapPin,
   Copy,
-  Settings,
   Cloud,
   User,
   Database,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  Settings
 } from 'lucide-react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
@@ -616,10 +616,11 @@ export default function App() {
             buildEmailDraft(emailTemplatesData, ticketsData || initialTickets, '', 0)
           );
         }
+        triggerToast('Base online carregada com sucesso!', 'success');
       } else {
         setSyncStatusText('Conectado (Tabelas vazias)');
+        triggerToast('Conectado à nuvem, mas a base está vazia. Usando dados locais.', 'info');
       }
-      triggerToast('Base online carregada com sucesso!');
     } catch (err) {
       console.error('Supabase Error:', err);
       setCloudConnected(false);

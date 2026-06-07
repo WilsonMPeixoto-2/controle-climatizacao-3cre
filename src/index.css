@@ -390,6 +390,7 @@ html:not(.dark-theme) body::after {
   margin-left: 280px;
   padding: 48px;
   min-width: 0;
+  max-width: 1440px;
 }
 
 /* Top Header Actions */
@@ -3533,9 +3534,19 @@ html:not(.dark-theme) .dossier-status-banner strong {
     max-height: 280px !important;
   }
   
+  /* Melhora alvos de toque dos botões na tabela mobile */
+  .lists-table td button,
+  .lists-table td a.ticket-id-link {
+    padding: 8px 12px !important;
+    font-size: 12.5px !important;
+    margin: 4px 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  
   /* M-09: Cabeçalho mobile compacto */
   .main-content {
-    padding: 24px 16px !important;
+    padding: 24px 12px !important;
   }
   .main-header {
     flex-direction: column !important;
