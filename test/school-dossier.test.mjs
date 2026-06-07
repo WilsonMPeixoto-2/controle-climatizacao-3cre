@@ -1,7 +1,8 @@
 import {
   calculateCoveragePercent,
   getSchoolClimateStatus,
-  getSchoolDossierData
+  getSchoolDossierData,
+  getSchoolClimateReason
 } from '../src/lib/schoolDossier.js';
 
 function printResult(name, passed, details = '') {
@@ -121,6 +122,40 @@ try {
   printResult('5.3. Agregado: Contagem correta de ativos críticos/altos', dossier.criticalCount === 1); // TKT-30 é Alta, TKT-20 é Concluído
   printResult('5.4. Agregado: Identifica o último andamento consolidado (anotação local)', dossier.latestUpdate.description === 'Nota de vistoria do engenheiro');
   printResult('5.5. Agregado: Identifica o chamado ativo mais antigo', dossier.oldestActiveTicket.id_chamado === 'TKT-30'); // TKT-30 criado em 20/05, TKT-10 em 02/06
+
+  // Teste 6: Motivo de Criticidade do Dossiê (Exatamente 11 casos)
+  const r1 = getSchoolClimateReason(schoolModel, ticketsCrit, 80, refDate);
+  printResult('6.1. Reason: Chamado ativo prioridade Crítica/Alta', r1 === 'Possui chamado de manutenção ativo com prioridade Crítica ou Alta.');
+
+  const r2 = getSchoolClimateReason(schoolModel, [], 25, refDate);
+  printResult('6.2. Reason: Cobertura crítica < 30%', r2 === 'Percentual de salas climatizadas inferior a 30% (cobertura crítica).');
+
+  const r3 = getSchoolClimateReason(schoolNeed, ticketsStuck, 80, refDate);
+  printResult('6.3. Reason: Necessidade > 0 + chamado inativo há +15 dias', r3 === 'Necessidade de aparelhos pendente com chamado de manutenção inativo por mais de 15 dias.');
+
+  const r4 = getSchoolClimateReason(schoolModel, ticketsCommon, 80, refDate);
+  printResult('6.4. Reason: Chamado ativo de prioridade Média', r4 === 'Possui chamado de manutenção ativo sob análise.');
+
+  const r5 = getSchoolClimateReason(schoolNotConf, [], 80, refDate);
+  printResult('6.5. Reason: Dados não confirmados pela unidade', r5 === 'Dados cadastrais ainda não confirmados pela unidade escolar.');
+
+  const r6 = getSchoolClimateReason(schoolNotVal, [], 80, refDate);
+  printResult('6.6. Reason: Dados não validados pela GOP', r6 === 'Dados cadastrais sob auditoria da GOP pendentes de validação técnica.');
+
+  const r7 = getSchoolClimateReason(schoolNoAir, [], 80, refDate);
+  printResult('6.7. Reason: Há salas sem aparelho', r7 === 'Presença de salas de aula sem aparelhos de climatização instalados.');
+
+  const r8 = getSchoolClimateReason(schoolNeedOnly, [], 80, refDate);
+  printResult('6.8. Reason: Há necessidade estimada de aparelhos', r8 === 'Necessidade de novos aparelhos estimada pendente de atendimento.');
+
+  const r9 = getSchoolClimateReason(schoolModel, [], 65, refDate);
+  printResult('6.9. Reason: Cobertura de climatização < 70%', r9 === 'Percentual de salas climatizadas abaixo da meta recomendada de 70%.');
+
+  const r10 = getSchoolClimateReason(schoolModel, [], 80, refDate);
+  printResult('6.10. Reason: Situação Regular', r10 === 'Unidade atende a todos os critérios de climatização estabelecidos.');
+
+  const r11 = getSchoolClimateReason(null, [], 80, refDate);
+  printResult('6.11. Reason: Unidade nula ou inválida', r11 === 'Nenhuma unidade escolar selecionada.');
 
   console.log('\n\x1b[32m%s\x1b[0m', '================================================');
   console.log('\x1b[32m%s\x1b[0m', '🎉 RESULTADO: TODOS OS TESTES DO DOSSIÊ PASSARAM! ');

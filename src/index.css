@@ -2144,9 +2144,14 @@ html:not(.dark-theme) .leaflet-bar a {
     scroll-behavior: auto !important;
   }
   .sla-pulse-amber,
-  .sla-pulse-red {
-    animation: none;
-    box-shadow: none;
+  .sla-pulse-red,
+  .sla-pulse-active {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  .main-content > div {
+    animation: none !important;
+    transform: none !important;
   }
 }
 
@@ -3580,4 +3585,417 @@ html:not(.dark-theme) .dossier-status-banner strong {
 
 textarea {
   font-family: var(--font-sans) !important;
+}
+
+/* ==========================================================================
+   REF_VISUAL: Refinamentos Estéticos Premium e Design de Interface (UI)
+   ========================================================================== */
+
+/* 1. Indicador de Rolagem Lateral na Tabela (Fade Mask) */
+.lists-table-wrapper {
+  position: relative;
+}
+
+.lists-table-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--bg-app));
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity 0.25s ease;
+  z-index: 3;
+}
+
+/* 2. Customização dos Controles de Zoom do Leaflet */
+.leaflet-bar {
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-xs) !important;
+  box-shadow: var(--shadow-sm) !important;
+  overflow: hidden;
+  background-color: var(--bg-card) !important;
+}
+
+.leaflet-bar a {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: var(--transition) !important;
+}
+
+.leaflet-bar a:last-child {
+  border-bottom: none !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: var(--primary-light) !important;
+  color: var(--primary) !important;
+}
+
+.leaflet-bar a:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: -2px;
+}
+
+/* 3. Animação de Pulsar Suave na Fila de Ações do Dashboard */
+.sla-pulse-active {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  animation: softPulse 2.2s infinite;
+}
+
+.sla-pulse-active.sla-pulse-red {
+  background-color: var(--color-red);
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  animation: softPulseRed 2.2s infinite;
+}
+
+.sla-pulse-active.sla-pulse-amber {
+  background-color: var(--color-amber);
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  animation: softPulseAmber 2.2s infinite;
+}
+
+@keyframes softPulseRed {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.65);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes softPulseAmber {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.65);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+/* 4. Estilização Elegante dos Rótulos de Campos Desabilitados e Read-Only */
+.form-control:disabled,
+.form-control[readonly] {
+  background-color: rgba(148, 163, 184, 0.06) !important;
+  color: var(--text-light) !important;
+  border: 1px dashed var(--border-color) !important;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+/* 5. Suavização nas Trocas de Abas (Transição de Conteúdo) */
+.main-content > div {
+  animation: tabTransition 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tabTransition {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   FASE 2: Layouts Separados de Lista Desktop e Cards Mobile
+   ========================================================================== */
+
+/* Desktop view (default) */
+.lists-table-desktop-view {
+  display: block;
+}
+.lists-table-mobile-view {
+  display: none;
+}
+
+/* Estilos de Expansão Desktop */
+.btn-chevron-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--text-light);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.btn-chevron-expand:hover {
+  background-color: var(--bg-app-lighter, #1e293b);
+  color: var(--primary) !important;
+}
+.btn-chevron-expand[aria-expanded="true"] {
+  color: var(--primary) !important;
+  transform: rotate(0deg);
+}
+.row-expanded-parent {
+  background-color: var(--bg-app-lighter, #1e293b) !important;
+}
+.detail-row td {
+  border-top: none !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 0 !important;
+}
+.detail-grid {
+  padding: 16px 20px;
+  background-color: rgba(30, 41, 59, 0.5);
+  border-bottom-left-radius: var(--radius-xs);
+  border-bottom-right-radius: var(--radius-xs);
+  border-top: 1px dashed var(--border-color);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detail-item-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+.detail-item-value {
+  font-size: 13px;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+/* Mobile View (Responsivo) */
+@media (max-width: 768px) {
+  .lists-table-desktop-view {
+    display: none !important;
+  }
+  .lists-table-mobile-view {
+    display: block !important;
+  }
+
+  /* Estilização dos Cards Mobile */
+  .mobile-ticket-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--border-color);
+    border-radius: var(--radius-xs);
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .mobile-ticket-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Bordas coloridas por SLA no Card */
+  .mobile-ticket-card.lists-row-severe {
+    border-left: 4px solid var(--color-red) !important;
+  }
+  .mobile-ticket-card.lists-row-warning {
+    border-left: 4px solid var(--color-amber) !important;
+  }
+  .mobile-ticket-card.lists-row-age-severe {
+    border-left: 4px solid var(--color-age-severe) !important;
+  }
+  .mobile-ticket-card.lists-row-age-warning {
+    border-left: 4px solid var(--color-age-warn) !important;
+  }
+
+  .card-header-mobile {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .card-title-id {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-id {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+  .attachment-badge-mobile {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: rgba(59, 130, 246, 0.15);
+    color: var(--primary);
+  }
+  .card-school-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .card-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .card-date-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: var(--text-light);
+  }
+
+  /* Banners de Alerta dentro do Card */
+  .card-alert-banner {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  .card-action-mobile {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+  .btn-mobile-details {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+  .btn-mobile-details:hover {
+    background-color: var(--primary-light);
+  }
+
+  .card-details-expanded {
+    background-color: var(--bg-app-lighter, #1e293b);
+    border-radius: var(--radius-xs);
+    padding: 12px;
+    margin-top: 12px;
+    border: 1px dashed var(--border-color);
+    animation: slideDownFade 0.2s ease forwards;
+  }
+  .details-expanded-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Esconder a tabela no mobile */
+  .lists-table-desktop-view {
+    display: none !important;
+  }
+}
+
+/* Print Overrides */
+@media print {
+  .btn-chevron-expand,
+  .btn-mobile-details,
+  .card-action-mobile,
+  .lists-table-mobile-view {
+    display: none !important;
+  }
+  .detail-row {
+    display: table-row !important;
+  }
+  .detail-grid {
+    background: none !important;
+    border: 1px solid #000 !important;
+  }
+}
+
+/* ==========================================================================
+   FASE 3: Shimmer Skeleton para Carregamento Inicial
+   ========================================================================== */
+
+.skeleton-container {
+  animation: tabTransition 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.skeleton-line,
+.skeleton-card {
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--bg-app) 25%,
+    rgba(148, 163, 184, 0.08) 50%,
+    var(--bg-app) 75%
+  );
+  background-size: 400% 100%;
+  animation: shimmerPulse 1.8s ease-in-out infinite;
+}
+
+.skeleton-line.short {
+  width: 45%;
+}
+
+.skeleton-card {
+  border: 1px solid var(--border-color);
+}
+
+@keyframes shimmerPulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  .skeleton-card {
+    animation: none;
+    background: var(--bg-app);
+  }
 }

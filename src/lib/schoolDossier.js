@@ -87,6 +87,77 @@ export function getSchoolClimateStatus(
 }
 
 /**
+ * Retorna a descrição técnica do motivo climático com base nos mesmos gatilhos de status climático.
+ */
+export function getSchoolClimateReason(
+  school,
+  activeTickets,
+  coveragePercent,
+  refDate = new Date()
+) {
+  if (!school) return 'Nenhuma unidade escolar selecionada.';
+
+  // 1. Gatilhos de Situação Crítica
+  // a) Chamado ativo prioritário
+  const hasCriticalActiveTicket = activeTickets.some((t) => {
+    const p = normalizePriority(t.prioridade);
+    return p === 'Crítica' || p === 'Alta';
+  });
+  if (hasCriticalActiveTicket) {
+    return 'Possui chamado de manutenção ativo com prioridade Crítica ou Alta.';
+  }
+
+  // b) Cobertura crítica
+  if (coveragePercent !== null && coveragePercent < 30) {
+    return 'Percentual de salas climatizadas inferior a 30% (cobertura crítica).';
+  }
+
+  // c) Chamado travado com necessidade
+  const hasStuckActiveTicketWithNeed =
+    Number(school.necessidade_aparelhos || 0) > 0 &&
+    activeTickets.some((t) => {
+      return inactivityDays(t, refDate) >= 15;
+    });
+  if (hasStuckActiveTicketWithNeed) {
+    return 'Necessidade de aparelhos pendente com chamado de manutenção inativo por mais de 15 dias.';
+  }
+
+  // 2. Gatilhos de Situação Em Atenção
+  // a) Chamado ativo sob análise
+  if (activeTickets.length > 0) {
+    return 'Possui chamado de manutenção ativo sob análise.';
+  }
+
+  // b) Não confirmado pela unidade
+  if (school.confirmado_pela_unidade !== 'Sim') {
+    return 'Dados cadastrais ainda não confirmados pela unidade escolar.';
+  }
+
+  // c) Não validado pela GOP
+  if (school.validado_pela_gop !== 'Sim') {
+    return 'Dados cadastrais sob auditoria da GOP pendentes de validação técnica.';
+  }
+
+  // d) Salas sem aparelho
+  if (Number(school.salas_sem_aparelho || 0) > 0) {
+    return 'Presença de salas de aula sem aparelhos de climatização instalados.';
+  }
+
+  // e) Necessidade de aparelhos
+  if (Number(school.necessidade_aparelhos || 0) > 0) {
+    return 'Necessidade de novos aparelhos estimada pendente de atendimento.';
+  }
+
+  // f) Cobertura abaixo da meta
+  if (coveragePercent !== null && coveragePercent < 70) {
+    return 'Percentual de salas climatizadas abaixo da meta recomendada de 70%.';
+  }
+
+  // 3. Situação Regular
+  return 'Unidade atende a todos os critérios de climatização estabelecidos.';
+}
+
+/**
  * Agrega e calcula todos os dados necessários para o Dossiê Executivo da escola.
  */
 export function getSchoolDossierData({
@@ -109,6 +180,7 @@ export function getSchoolDossierData({
 
   const coveragePercent = calculateCoveragePercent(school);
   const status = getSchoolClimateStatus(school, activeTickets, coveragePercent, refDate);
+  const reason = getSchoolClimateReason(school, activeTickets, coveragePercent, refDate);
 
   // Encontra o último andamento (evento mais recente da escola no histórico ou anotações)
   const dbEvents = history.filter((h) => h.designacao === school.designacao);
@@ -132,6 +204,7 @@ export function getSchoolDossierData({
   return {
     coveragePercent,
     status,
+    reason,
     activeCount: activeTickets.length,
     closedCount: closedTickets.length,
     criticalCount: criticalTickets.length,

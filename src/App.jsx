@@ -26,7 +26,9 @@ import {
   Database,
   Activity,
   CheckCircle2,
-  Settings
+  Settings,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
@@ -121,6 +123,8 @@ const IconActivity = () => <Activity size={18} strokeWidth={2.2} />;
 const IconCheckCircle = () => <CheckCircle2 size={18} strokeWidth={2.2} />;
 const IconFileText = () => <FileText size={18} strokeWidth={2.2} />;
 const IconUser = () => <User size={18} strokeWidth={2.2} />;
+const IconChevronRight = ({ size = 18 }) => <ChevronRight size={size} strokeWidth={2.2} />;
+const IconChevronDown = ({ size = 18 }) => <ChevronDown size={size} strokeWidth={2.2} />;
 
 const EmptyState = ({ iconType, title, description, style = {} }) => {
   const renderIcon = () => {
@@ -234,7 +238,8 @@ export default function App() {
     key: import.meta.env.VITE_SUPABASE_KEY || localStorage.getItem('supabase_key') || ''
   }));
 
-  // App states
+  // App states — isInitialLoad só inicia como true quando há credenciais de nuvem disponíveis
+  const [isInitialLoad, setIsInitialLoad] = useState(() => !!(initialCloudConfig.url && initialCloudConfig.key));
   const [currentTab, setCurrentTab] = useState(() => {
     try {
       const savedTab = sessionStorage.getItem('gop_current_tab');
@@ -311,6 +316,7 @@ export default function App() {
   const [filterPriority, setFilterPriority] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [emailTab, setEmailTab] = useState('preview');
+  const [expandedTicketId, setExpandedTicketId] = useState(null);
 
   // Controle de comentários do histórico
   const [newTicketComment, setNewTicketComment] = useState('');
@@ -585,6 +591,7 @@ export default function App() {
   // 2. Initialize Supabase Connection
   const initializeSupabase = async (url, key) => {
     setCloudLoading(true);
+    setIsInitialLoad(true);
     setSyncStatusText('Conectando à nuvem...');
     try {
       const client = createClient(url, key);
@@ -656,6 +663,7 @@ export default function App() {
       triggerToast('Erro ao carregar dados online. Usando base local.');
     } finally {
       setCloudLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
@@ -1136,19 +1144,27 @@ export default function App() {
                       justifyContent: 'space-between'
                     }}
                   >
-                    <span
-                      className={`task-tag ${tagClass}`}
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: '800',
-                        textTransform: 'uppercase',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        letterSpacing: '0.4px'
-                      }}
-                    >
-                      {tagText}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {['attachment', 'stuck', 'stuck-group'].includes(item.type) && (
+                        <span
+                          className={`sla-pulse-active ${item.type === 'stuck' && borderCol === 'var(--color-amber)' ? 'sla-pulse-amber' : 'sla-pulse-red'}`}
+                          style={{ flexShrink: 0 }}
+                        />
+                      )}
+                      <span
+                        className={`task-tag ${tagClass}`}
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: '800',
+                          textTransform: 'uppercase',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          letterSpacing: '0.4px'
+                        }}
+                      >
+                        {tagText}
+                      </span>
+                    </div>
                     <span
                       className="task-ticket-id"
                       onClick={() => openTicketEdit(item.ticket)}
@@ -2170,7 +2186,19 @@ export default function App() {
               atenção da GOP.
             </p>
 
-            {renderOperationalSummary()}
+            {isInitialLoad ? (
+              <div className="skeleton-container" style={{ padding: '24px 0' }}>
+                <div className="skeleton-line short" style={{ height: '32px', marginBottom: '16px' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
+                  <div className="skeleton-card" style={{ height: '120px' }} />
+                  <div className="skeleton-card" style={{ height: '120px' }} />
+                  <div className="skeleton-card" style={{ height: '120px' }} />
+                </div>
+                <div className="skeleton-card" style={{ height: '350px' }} />
+              </div>
+            ) : (
+              <>
+                {renderOperationalSummary()}
 
             {/* Stat row */}
             <p
@@ -2756,7 +2784,7 @@ export default function App() {
                               }}
                             >
                               <span
-                                className={`sla-pulse ${isSevere ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
+                                className={`sla-pulse-active ${isSevere ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
                               />
                               <span
                                 style={{
@@ -2824,8 +2852,10 @@ export default function App() {
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
+      </div>
+    )}
 
         {/* Tickets Tab (Lists Mirror) */}
         {currentTab === 'tickets' && (
@@ -3159,146 +3189,300 @@ export default function App() {
             </div>
 
             {/* Lists grid table */}
-            <div className="lists-table-wrapper">
-              <table className="lists-table">
-                <thead>
-                  <tr>
-                    {renderSortableHeader('Código', 'id_chamado')}
-                    {renderSortableHeader('Unidade Escolar', 'unidade_escolar')}
-                    <th>Tipo Demanda</th>
-                    <th>Local</th>
-                    {renderSortableHeader('Responsável', 'setor_responsavel')}
-                    <th>Status Atual</th>
-                    {renderSortableHeader('Prioridade', 'prioridade')}
-                    {renderSortableHeader('Modificado Em', 'modificado_em')}
-                    <th>Aptidão</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {getFilteredTickets().map((t) => {
-                    const rowClass = getTicketInactivityClass(t);
-                    const days = getInactivityDays(t.modificado_em);
-                    const hasPulse = !isInactive(t) && days >= SLA_WARN_DAYS;
-                    return (
-                      <tr
-                        key={t.id_chamado}
-                        className={rowClass}
-                        onClick={() => openTicketEdit(t)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <td data-label="Código" style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>{t.id_chamado}</span>
-                            {(() => {
-                              const count = allAttachments.filter(
-                                (a) => a.id_chamado === t.id_chamado
-                              ).length;
-                              if (count > 0) {
-                                return (
-                                  <span
-                                    style={{
-                                      fontSize: '11px',
-                                      fontWeight: '800',
-                                      padding: '2px 6px',
-                                      borderRadius: '4px',
-                                      backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                                      color: 'var(--primary)',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '3px'
-                                    }}
-                                    title={`${count} documento(s) anexo(s)`}
-                                  >
-                                    📎 {count}
-                                  </span>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        </td>
-                        <td
-                          data-label="Unidade Escolar"
-                          style={{
-                            maxWidth: '240px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            fontWeight: '700'
-                          }}
-                          title={t.unidade_escolar}
-                        >
-                          {t.unidade_escolar}
-                        </td>
-                        <td data-label="Tipo Demanda">{t.tipo_demanda}</td>
-                        <td data-label="Local">{t.local_demanda}</td>
-                        <td data-label="Responsável" style={{ fontWeight: '700' }}>{t.setor_responsavel}</td>
-                        <td data-label="Status Atual">
-                          <span
-                            className="badge badge-status"
-                            style={getStatusStyle(t.status_atual)}
+            <div className="lists-table-desktop-view">
+              <div className="lists-table-wrapper">
+                <table className="lists-table">
+                  <thead>
+                    <tr>
+                      {renderSortableHeader('Código', 'id_chamado')}
+                      {renderSortableHeader('Unidade Escolar', 'unidade_escolar')}
+                      <th>Status Atual</th>
+                      {renderSortableHeader('Prioridade', 'prioridade')}
+                      {renderSortableHeader('Modificado Em', 'modificado_em')}
+                      <th style={{ textAlign: 'center', width: '80px' }}>Detalhes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getFilteredTickets().map((t) => {
+                      const rowClass = getTicketInactivityClass(t);
+                      const days = getInactivityDays(t.modificado_em);
+                      const hasPulse = !isInactive(t) && days >= SLA_WARN_DAYS;
+                      const isExpanded = expandedTicketId === t.id_chamado;
+                      return (
+                        <tr key={t.id_chamado} style={{ display: 'table-row-group' }}>
+                          <tr
+                            className={`${rowClass} ${isExpanded ? 'row-expanded-parent' : ''}`}
+                            onClick={() => openTicketEdit(t)}
+                            style={{ cursor: 'pointer', display: 'table-row' }}
                           >
-                            {t.status_atual}
-                          </span>
-                        </td>
-                        <td data-label="Prioridade">
-                          <span className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}>
-                            {t.prioridade}
-                          </span>
-                        </td>
-                        <td data-label="Modificado Em" style={{ fontWeight: '700' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} title={hasPulse ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})` : ''}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              {hasPulse && (
-                                <span
-                                  className={`sla-pulse ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
-                                />
-                              )}
-                              <span>{formatDateBrazilian(t.modificado_em)}</span>
-                            </div>
-                            {(() => {
-                              const sla = slaLevel(t, todayRef());
-                              const age = ageLevel(t, todayRef());
-                              if (sla === 'severe') {
-                                return <span className="lists-alert-tag alert-tag-severe">Inércia: {days} dias</span>;
-                              }
-                              if (sla === 'warning') {
-                                return <span className="lists-alert-tag alert-tag-warning">Inércia: {days} dias</span>;
-                              }
-                              if (age === 'severe') {
-                                return <span className="lists-alert-tag alert-tag-age-severe">Aberto +60 dias</span>;
-                              }
-                              if (age === 'warning') {
-                                return <span className="lists-alert-tag alert-tag-age-warn">Aberto +30 dias</span>;
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        </td>
-                        <td data-label="Aptidão">
-                          <span
-                            className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}
-                          >
-                            {t.resultado_aptidao}
-                          </span>
+                            <td data-label="Código" style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>{t.id_chamado}</span>
+                                {(() => {
+                                  const count = allAttachments.filter(
+                                    (a) => a.id_chamado === t.id_chamado
+                                  ).length;
+                                  if (count > 0) {
+                                    return (
+                                      <span
+                                        style={{
+                                          fontSize: '11px',
+                                          fontWeight: '800',
+                                          padding: '2px 6px',
+                                          borderRadius: '4px',
+                                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                                          color: 'var(--primary)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px'
+                                        }}
+                                        title={`${count} documento(s) anexo(s)`}
+                                      >
+                                        📎 {count}
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            </td>
+                            <td
+                              data-label="Unidade Escolar"
+                              style={{
+                                maxWidth: '240px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                fontWeight: '700'
+                              }}
+                              title={t.unidade_escolar}
+                            >
+                              {t.unidade_escolar}
+                            </td>
+                            <td data-label="Status Atual">
+                              <span
+                                className="badge badge-status"
+                                style={getStatusStyle(t.status_atual)}
+                              >
+                                {t.status_atual}
+                              </span>
+                            </td>
+                            <td data-label="Prioridade">
+                              <span className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}>
+                                {t.prioridade}
+                              </span>
+                            </td>
+                            <td data-label="Modificado Em" style={{ fontWeight: '700' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} title={hasPulse ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})` : ''}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {hasPulse && (
+                                    <span
+                                      className={`sla-pulse-active ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
+                                    />
+                                  )}
+                                  <span>{formatDateBrazilian(t.modificado_em)}</span>
+                                </div>
+                                {(() => {
+                                  const sla = slaLevel(t, todayRef());
+                                  const age = ageLevel(t, todayRef());
+                                  if (sla === 'severe') {
+                                    return <span className="lists-alert-tag alert-tag-severe">Inércia: {days} dias</span>;
+                                  }
+                                  if (sla === 'warning') {
+                                    return <span className="lists-alert-tag alert-tag-warning">Inércia: {days} dias</span>;
+                                  }
+                                  if (age === 'severe') {
+                                    return <span className="lists-alert-tag alert-tag-age-severe">Aberto +60 dias</span>;
+                                  }
+                                  if (age === 'warning') {
+                                    return <span className="lists-alert-tag alert-tag-age-warn">Aberto +30 dias</span>;
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                              <button
+                                type="button"
+                                className="btn-chevron-expand"
+                                aria-expanded={isExpanded}
+                                aria-label={isExpanded ? 'Ocultar detalhes' : 'Expandir detalhes'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedTicketId(isExpanded ? null : t.id_chamado);
+                                }}
+                              >
+                                {isExpanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+                              </button>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr className="detail-row" onClick={(e) => e.stopPropagation()} style={{ display: 'table-row' }}>
+                              <td colSpan="6" style={{ padding: '0', border: 'none' }}>
+                                <div className="detail-grid">
+                                  <div className="detail-item">
+                                    <span className="detail-item-label">Tipo Demanda</span>
+                                    <span className="detail-item-value">{t.tipo_demanda || '-'}</span>
+                                  </div>
+                                  <div className="detail-item">
+                                    <span className="detail-item-label">Local</span>
+                                    <span className="detail-item-value">{t.local_demanda || '-'}</span>
+                                  </div>
+                                  <div className="detail-item">
+                                    <span className="detail-item-label">Responsável</span>
+                                    <span className="detail-item-value">{t.setor_responsavel || '-'}</span>
+                                  </div>
+                                  <div className="detail-item">
+                                    <span className="detail-item-label">Aptidão</span>
+                                    <span className="detail-item-value">
+                                      <span className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}>
+                                        {t.resultado_aptidao || '-'}
+                                      </span>
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tr>
+                      );
+                    })}
+                    {getFilteredTickets().length === 0 && (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '30px 10px' }}>
+                          <EmptyState
+                            iconType="search"
+                            title="Nenhum chamado encontrado"
+                            description="Ajuste os filtros ou pesquise por escola, bairro, status ou ID do chamado."
+                            style={{ margin: '0 auto', maxWidth: '480px' }}
+                          />
                         </td>
                       </tr>
-                    );
-                  })}
-                  {getFilteredTickets().length === 0 && (
-                    <tr>
-                      <td colSpan="9" style={{ padding: '30px 10px' }}>
-                        <EmptyState
-                          iconType="search"
-                          title="Nenhum chamado encontrado"
-                          description="Ajuste os filtros ou pesquise por escola, bairro, status ou ID do chamado."
-                          style={{ margin: '0 auto', maxWidth: '480px' }}
-                        />
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="lists-table-mobile-view">
+              {getFilteredTickets().map((t) => {
+                const rowClass = getTicketInactivityClass(t);
+                const days = getInactivityDays(t.modificado_em);
+                const hasPulse = !isInactive(t) && days >= SLA_WARN_DAYS;
+                const isExpanded = expandedTicketId === t.id_chamado;
+                return (
+                  <div
+                    key={t.id_chamado}
+                    className={`mobile-ticket-card ${rowClass} ${isExpanded ? 'card-expanded' : ''}`}
+                    onClick={() => openTicketEdit(t)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="card-header-mobile">
+                      <div className="card-title-id">
+                        <span className="card-id">{t.id_chamado}</span>
+                        {(() => {
+                          const count = allAttachments.filter(
+                            (a) => a.id_chamado === t.id_chamado
+                          ).length;
+                          if (count > 0) {
+                            return (
+                              <span className="attachment-badge-mobile">
+                                📎 {count}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                      <span className="badge badge-status" style={getStatusStyle(t.status_atual)}>
+                        {t.status_atual}
+                      </span>
+                    </div>
+                    <div className="card-school-name">{t.unidade_escolar}</div>
+                    <div className="card-meta-row">
+                      <span className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}>
+                        {t.prioridade}
+                      </span>
+                      <div className="card-date-info">
+                        {hasPulse && (
+                          <span className={`sla-pulse-active ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`} />
+                        )}
+                        <span>{formatDateBrazilian(t.modificado_em)}</span>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const sla = slaLevel(t, todayRef());
+                      const age = ageLevel(t, todayRef());
+                      if (sla === 'severe') {
+                        return <div className="card-alert-banner alert-tag-severe">Inércia: {days} dias</div>;
+                      }
+                      if (sla === 'warning') {
+                        return <div className="card-alert-banner alert-tag-warning">Inércia: {days} dias</div>;
+                      }
+                      if (age === 'severe') {
+                        return <div className="card-alert-banner alert-tag-age-severe">Aberto +60 dias</div>;
+                      }
+                      if (age === 'warning') {
+                        return <div className="card-alert-banner alert-tag-age-warn">Aberto +30 dias</div>;
+                      }
+                      return null;
+                    })()}
+
+                    <div className="card-action-mobile">
+                      <button
+                        type="button"
+                        className="btn-mobile-details"
+                        aria-expanded={isExpanded}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedTicketId(isExpanded ? null : t.id_chamado);
+                        }}
+                      >
+                        {isExpanded ? 'Ocultar detalhes' : 'Ver detalhes'}
+                        <span style={{ marginLeft: '4px', display: 'inline-flex', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                          ▾
+                        </span>
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="card-details-expanded" onClick={(e) => e.stopPropagation()}>
+                        <div className="details-expanded-grid">
+                          <div className="detail-item">
+                            <span className="detail-item-label">Tipo Demanda</span>
+                            <span className="detail-item-value">{t.tipo_demanda || '-'}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-item-label">Local</span>
+                            <span className="detail-item-value">{t.local_demanda || '-'}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-item-label">Responsável</span>
+                            <span className="detail-item-value">{t.setor_responsavel || '-'}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-item-label">Aptidão</span>
+                            <span className="detail-item-value">
+                              <span className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}>
+                                {t.resultado_aptidao || '-'}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {getFilteredTickets().length === 0 && (
+                <EmptyState
+                  iconType="search"
+                  title="Nenhum chamado encontrado"
+                  description="Ajuste os filtros ou pesquise por escola, bairro, status ou ID do chamado."
+                  style={{ margin: '20px auto', maxWidth: '480px' }}
+                />
+              )}
             </div>
           </div>
         )}
@@ -3769,8 +3953,7 @@ export default function App() {
                                   Situação Crítica
                                 </strong>
                                 <span style={{ fontSize: '13px', opacity: 0.9 }}>
-                                  Unidade possui chamados críticos em aberto ou baixa cobertura de
-                                  climatização. Exige intervenção imediata.
+                                  {dossier.reason || 'Unidade possui chamados críticos em aberto ou baixa cobertura de climatização. Exige intervenção imediata.'}
                                 </span>
                               </div>
                             </div>
@@ -3801,8 +3984,7 @@ export default function App() {
                                   Em Atenção
                                 </strong>
                                 <span style={{ fontSize: '13px', opacity: 0.9 }}>
-                                  Dados pendentes de validação ou demandas ativas de menor
-                                  severidade em andamento.
+                                  {dossier.reason || 'Dados pendentes de validação ou demandas ativas de menor severidade em andamento.'}
                                 </span>
                               </div>
                             </div>
@@ -3833,8 +4015,7 @@ export default function App() {
                                   Situação Regular
                                 </strong>
                                 <span style={{ fontSize: '13px', opacity: 0.9 }}>
-                                  Infraestrutura validada, dados confirmados e sem chamados em
-                                  aberto.
+                                  {dossier.reason || 'Infraestrutura validada, dados confirmados e sem chamados em aberto.'}
                                 </span>
                               </div>
                             </div>
@@ -5282,7 +5463,7 @@ export default function App() {
                         >
                           <IconMail /> {tp.tipo}
                         </div>
-                        <div className="template-item-meta">Etapa POP: {tp.etapa}</div>
+                        <div className="template-item-meta">Passo {tp.etapa}</div>
                       </div>
                     ))}
                   </div>
