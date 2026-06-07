@@ -23,8 +23,10 @@ import {
   Copy,
   Settings,
   Cloud,
-  Sparkles,
-  User
+  User,
+  Database,
+  Activity,
+  CheckCircle2
 } from 'lucide-react';
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
@@ -103,8 +105,10 @@ const IconFocus = () => <Compass size={18} strokeWidth={2.2} />;
 const IconPin = () => <MapPin size={18} strokeWidth={2.2} />;
 const IconCopy = () => <Copy size={18} strokeWidth={2.2} />;
 const IconSettings = () => <Settings size={18} strokeWidth={2.2} />;
+const IconDatabase = () => <Database size={18} strokeWidth={2.2} />;
+const IconActivity = () => <Activity size={18} strokeWidth={2.2} />;
+const IconCheckCircle = () => <CheckCircle2 size={18} strokeWidth={2.2} />;
 const IconFileText = () => <FileText size={18} strokeWidth={2.2} />;
-const IconSparkles = () => <Sparkles size={18} strokeWidth={2.2} />;
 const IconUser = () => <User size={18} strokeWidth={2.2} />;
 
 const EmptyState = ({ iconType, title, description, style = {} }) => {
@@ -942,9 +946,9 @@ export default function App() {
         <div className="summary-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span className="summary-icon" style={{ display: 'inline-flex' }}>
-              <IconSparkles />
+              <IconActivity />
             </span>
-            <h3 className="summary-title">Resumo operacional de hoje</h3>
+            <h3 className="summary-title">Resumo operacional</h3>
           </div>
           <span className="summary-badge-editorial">Leitura Operacional</span>
         </div>
@@ -1215,7 +1219,7 @@ export default function App() {
                 className="task-empty-icon"
                 style={{ display: 'inline-flex', color: 'var(--primary)' }}
               >
-                <IconSparkles />
+                <IconCheckCircle />
               </div>
               <div
                 className="task-empty-title"
@@ -1999,7 +2003,7 @@ export default function App() {
                   }
                 }}
               >
-                <IconSettings />
+                <IconDatabase />
                 <span>Administração dos Dados</span>
               </button>
             </li>
@@ -5386,7 +5390,7 @@ export default function App() {
             >
               <div>
                 <h3>
-                  <IconSettings /> Administração dos Dados
+                  <IconDatabase /> Administração dos Dados
                 </h3>
                 <p
                   style={{
@@ -5656,7 +5660,7 @@ CREATE TABLE IF NOT EXISTS historico (
                       gap: '6px'
                     }}
                   >
-                    <IconSettings /> Atualização Administrativa da GOP
+                    <IconDatabase /> Atualização Administrativa da GOP
                   </h4>
 
                   {!supabaseClient && (
