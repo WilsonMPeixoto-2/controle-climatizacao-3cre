@@ -46,7 +46,8 @@ import {
   stageGroupCounts,
   SECTORS,
   aggregateBairroStats,
-  severidadeInatividade
+  severidadeInatividade,
+  normalizeSector
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
@@ -2580,10 +2581,7 @@ export default function App() {
                       <div className="mini-progress-list">
                         {(() => {
                           const sectorCounts = tickets.reduce((acc, t) => {
-                            let sec = t.setor_responsavel || 'Não especificado';
-                            if (sec === 'Unidade Escolar / GIN') {
-                              sec = 'GIN / Unidade Escolar';
-                            }
+                            const sec = normalizeSector(t.setor_responsavel || 'Não especificado');
                             acc[sec] = (acc[sec] || 0) + 1;
                             return acc;
                           }, {});
