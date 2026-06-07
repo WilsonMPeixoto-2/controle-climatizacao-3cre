@@ -1383,6 +1383,42 @@ html:not(.dark-theme) body::after {
   gap: 24px;
 }
 
+.email-flow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.email-flow-step {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  background: var(--bg-card);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.email-flow-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  margin-bottom: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.email-flow-step strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 13px;
+}
+
 .template-list {
   display: flex;
   flex-direction: column;
@@ -3587,6 +3623,12 @@ textarea {
   font-family: var(--font-sans) !important;
 }
 
+@media (max-width: 768px) {
+  .email-flow-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ==========================================================================
    REF_VISUAL: Refinamentos Estéticos Premium e Design de Interface (UI)
    ========================================================================== */
@@ -3767,9 +3809,20 @@ textarea {
   border-bottom-right-radius: var(--radius-xs);
   border-top: 1px dashed var(--border-color);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 16px;
+  align-items: center;
   animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.detail-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.detail-action .btn {
+  white-space: nowrap;
 }
 
 @keyframes slideDownFade {
@@ -3925,6 +3978,13 @@ textarea {
     border: 1px dashed var(--border-color);
     animation: slideDownFade 0.2s ease forwards;
   }
+
+  .btn-open-ticket-mobile {
+    width: 100%;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
   .details-expanded-grid {
     display: grid;
     grid-template-columns: 1fr;

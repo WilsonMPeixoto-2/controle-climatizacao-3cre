@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -3209,7 +3209,7 @@ export default function App() {
                       const hasPulse = !isInactive(t) && days >= SLA_WARN_DAYS;
                       const isExpanded = expandedTicketId === t.id_chamado;
                       return (
-                        <tr key={t.id_chamado} style={{ display: 'table-row-group' }}>
+                        <Fragment key={t.id_chamado}>
                           <tr
                             className={`${rowClass} ${isExpanded ? 'row-expanded-parent' : ''}`}
                             onClick={() => openTicketEdit(t)}
@@ -3340,11 +3340,20 @@ export default function App() {
                                       </span>
                                     </span>
                                   </div>
+                                  <div className="detail-action">
+                                    <button
+                                      type="button"
+                                      className="btn btn-secondary"
+                                      onClick={() => openTicketEdit(t)}
+                                    >
+                                      <IconFileText /> Abrir Ficha do Chamado
+                                    </button>
+                                  </div>
                                 </div>
                               </td>
                             </tr>
                           )}
-                        </tr>
+                        </Fragment>
                       );
                     })}
                     {getFilteredTickets().length === 0 && (
@@ -3470,6 +3479,13 @@ export default function App() {
                             </span>
                           </div>
                         </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-open-ticket-mobile"
+                          onClick={() => openTicketEdit(t)}
+                        >
+                          <IconFileText /> Abrir Ficha do Chamado
+                        </button>
                       </div>
                     )}
                   </div>
@@ -5420,6 +5436,21 @@ export default function App() {
               </div>
             </div>
 
+            <div className="email-flow-steps" aria-label="Fluxo de geração da minuta">
+              <div className="email-flow-step">
+                <span>Passo 1</span>
+                <strong>Selecionar chamado</strong>
+              </div>
+              <div className="email-flow-step">
+                <span>Passo 2</span>
+                <strong>Escolher modelo</strong>
+              </div>
+              <div className="email-flow-step">
+                <span>Passo 3</span>
+                <strong>Revisar e copiar</strong>
+              </div>
+            </div>
+
             <div className="email-composer-layout">
               {/* Left Column: Selector */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -5463,7 +5494,7 @@ export default function App() {
                         >
                           <IconMail /> {tp.tipo}
                         </div>
-                        <div className="template-item-meta">Passo {tp.etapa}</div>
+                        <div className="template-item-meta">Etapa operacional: {tp.etapa}</div>
                       </div>
                     ))}
                   </div>
