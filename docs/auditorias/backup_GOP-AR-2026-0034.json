@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-06-07T15:57:24.673Z",
+  "ticket": {
+    "id_chamado": "GOP-AR-2026-0034",
+    "unidade_escolar": "Escola Teste Auditoria Antigravity",
+    "designacao": "312001",
+    "data_solicitacao": "2026-06-07T07:39:41.156+00:00",
+    "local_demanda": "Sala de Teste Integrado",
+    "tipo_demanda": "Instalação",
+    "status_atual": "2 - Em vistoria técnica",
+    "setor_responsavel": "GOP",
+    "proxima_providencia": "Aguardar vistoria do auditor",
+    "ultima_movimentacao": null,
+    "informacao_validada": null,
+    "prioridade": "Média",
+    "comunicacao_cto": "Não",
+    "observacoes": "Texto de observação atualizado via RPC transacional",
+    "resultado_aptidao": null,
+    "criado_em": "2026-06-07T07:39:41.632116+00:00",
+    "modificado_em": "2026-06-07T07:39:41.632116+00:00",
+    "tipo_aparelho": "Split",
+    "btu_existente": null,
+    "btu_pretendido": null
+  },
+  "historico": [
+    {
+      "id_evento": "EVT-TEST-ZJDQ1ZZ",
+      "data": "2026-06-07T07:39:41.199+00:00",
+      "id_chamado": "GOP-AR-2026-0034",
+      "designacao": "312001",
+      "unidade_escolar": "Escola Teste Auditoria Antigravity",
+      "marco_relevante": "Vistoria técnica agendada pelo auditor Antigravity",
+      "setor": "GOP",
+      "responsavel_registro": "Auditor Antigravity",
+      "observacao": "Evento criado durante auditoria automatizada rígida"
+    }
+  ]
+}

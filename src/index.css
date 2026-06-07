@@ -1022,7 +1022,8 @@ html:not(.dark-theme) body::after {
   white-space: nowrap;
 }
 
-.badge-priority-critica {
+.badge-priority-critica,
+.badge-priority-crítica {
   background-color: var(--color-red-tint);
   color: var(--color-red);
 }
@@ -1030,7 +1031,8 @@ html:not(.dark-theme) body::after {
   background-color: var(--color-orange-tint);
   color: var(--color-orange);
 }
-.badge-priority-media {
+.badge-priority-media,
+.badge-priority-média {
   background-color: var(--color-amber-tint);
   color: var(--color-amber);
 }
@@ -3109,6 +3111,9 @@ html:not(.dark-theme) .main-portal-title {
     width: auto;
     padding: 8px 12px;
     font-size: 13px;
+  }
+  .sidebar-item span {
+    display: inline !important;
   }
   .sidebar-footer {
     display: none;

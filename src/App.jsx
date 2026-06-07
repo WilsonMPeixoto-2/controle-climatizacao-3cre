@@ -35,8 +35,7 @@ import {
   formatDateBrazilian as fmtDateBR,
   inactivityDays as calcInactivityDays,
   ageDays as calcAgeDays,
-  isClosed,
-  isSuspended,
+  isInactive,
   slaLevel,
   ageLevel,
   computeMetrics,
@@ -49,7 +48,11 @@ import {
   SECTORS,
   aggregateBairroStats,
   severidadeInatividade,
-  normalizeSector
+  normalizeSector,
+  SLA_WARN_DAYS,
+  SLA_SEVERE_DAYS,
+  AGE_WARN_DAYS,
+  AGE_SEVERE_DAYS
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
@@ -67,6 +70,14 @@ import {
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
 // e antiguidade são derivados em ./lib/logic.js a partir desta referência.
 const todayRef = () => new Date();
+
+const normalizePriorityClass = (priority) => {
+  if (!priority) return '';
+  return priority
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+};
 
 const initialTickets = dbData?.chamados || [];
 const initialSchools = dbData?.escolas || [];
@@ -240,7 +251,14 @@ export default function App() {
       return initialTickets;
     }
   });
-  const [schools, setSchools] = useState(initialSchools);
+  const [schools, setSchools] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gop_schools');
+      return saved ? JSON.parse(saved) : initialSchools;
+    } catch {
+      return initialSchools;
+    }
+  });
   const [history, setHistory] = useState(() => {
     try {
       const saved = localStorage.getItem('gop_history');
@@ -250,10 +268,14 @@ export default function App() {
     }
   });
 
-  // Persistir chamados e histórico localmente para offline/local-fallback
+  // Persistir chamados, escolas e histórico localmente para offline/local-fallback
   useEffect(() => {
     localStorage.setItem('gop_tickets', JSON.stringify(tickets));
   }, [tickets]);
+
+  useEffect(() => {
+    localStorage.setItem('gop_schools', JSON.stringify(schools));
+  }, [schools]);
 
   useEffect(() => {
     localStorage.setItem('gop_history', JSON.stringify(history));
@@ -584,23 +606,29 @@ export default function App() {
         setSchools(schoolsData);
 
         // Load tickets
-        const { data: ticketsData } = await client
+        const { data: ticketsData, error: ticketsError } = await client
           .from('chamados')
           .select('*')
           .order('id_chamado', { ascending: false });
 
+        if (ticketsError) throw ticketsError;
         if (ticketsData) setTickets(ticketsData);
 
         // Load timeline history
-        const { data: historyData } = await client
+        const { data: historyData, error: historyError } = await client
           .from('historico')
           .select('*')
           .order('data', { ascending: false });
 
+        if (historyError) throw historyError;
         if (historyData) setHistory(historyData);
 
         // Load all attachments
-        const { data: attachmentsData } = await client.from('anexos_chamado').select('*');
+        const { data: attachmentsData, error: attachmentsError } = await client
+          .from('anexos_chamado')
+          .select('*');
+
+        if (attachmentsError) throw attachmentsError;
         if (attachmentsData) setAllAttachments(attachmentsData);
 
         // Load e-mail templates from Supabase so the app uses the curated online models.
@@ -791,29 +819,24 @@ export default function App() {
       result = filterBySector(result, 'CTO');
     } else if (activeListsView === 'stuck' || activeListsView === 'inactive7') {
       result = result.filter(
-        (t) => !isClosed(t) && !isSuspended(t) && calcInactivityDays(t, todayRef()) >= 7
+        (t) => !isInactive(t) && calcInactivityDays(t, todayRef()) >= SLA_WARN_DAYS
       );
     } else if (activeListsView === 'inactive15') {
       result = result.filter(
-        (t) => !isClosed(t) && !isSuspended(t) && calcInactivityDays(t, todayRef()) >= 15
+        (t) => !isInactive(t) && calcInactivityDays(t, todayRef()) >= SLA_SEVERE_DAYS
       );
     } else if (activeListsView === 'age30') {
       result = result.filter(
-        (t) => !isClosed(t) && !isSuspended(t) && calcAgeDays(t, todayRef()) >= 30
+        (t) => !isInactive(t) && calcAgeDays(t, todayRef()) >= AGE_WARN_DAYS
       );
     } else if (activeListsView === 'age60') {
       result = result.filter(
-        (t) => !isClosed(t) && !isSuspended(t) && calcAgeDays(t, todayRef()) >= 60
+        (t) => !isInactive(t) && calcAgeDays(t, todayRef()) >= AGE_SEVERE_DAYS
       );
     } else if (activeListsView === 'active') {
-      result = result.filter((t) => !isClosed(t) && !isSuspended(t));
+      result = result.filter((t) => !isInactive(t));
     } else if (activeListsView === 'closed') {
-      result = result.filter(
-        (t) =>
-          t.status_atual === '10 - Concluído' ||
-          t.status_atual === '11 - Encerrado' ||
-          t.status_atual === 'Suspenso / pendente'
-      );
+      result = result.filter((t) => isInactive(t));
     }
 
     // Filtro rápido de prioridade
@@ -1938,6 +1961,8 @@ export default function App() {
               <button
                 className={`sidebar-item ${currentTab === 'dashboard' ? 'active' : ''}`}
                 onClick={() => setCurrentTab('dashboard')}
+                aria-label="Painel Executivo"
+                title="Painel Executivo"
               >
                 <IconDashboard />
                 <span>Painel Executivo</span>
@@ -1947,6 +1972,8 @@ export default function App() {
               <button
                 className={`sidebar-item ${currentTab === 'tickets' ? 'active' : ''}`}
                 onClick={() => setCurrentTab('tickets')}
+                aria-label="Lista de chamados"
+                title="Lista de chamados"
               >
                 <IconList />
                 <span>Lista de chamados</span>
@@ -1956,6 +1983,8 @@ export default function App() {
               <button
                 className={`sidebar-item ${currentTab === 'lookup' ? 'active' : ''}`}
                 onClick={() => setCurrentTab('lookup')}
+                aria-label="Consulta por Escola"
+                title="Consulta por Escola"
               >
                 <IconSearch />
                 <span>Consulta por Escola</span>
@@ -1965,6 +1994,8 @@ export default function App() {
               <button
                 className={`sidebar-item ${currentTab === 'form' ? 'active' : ''}`}
                 onClick={() => setCurrentTab('form')}
+                aria-label="Registrar chamado"
+                title="Registrar chamado"
               >
                 <IconForm />
                 <span>Registrar chamado</span>
@@ -1974,6 +2005,8 @@ export default function App() {
               <button
                 className={`sidebar-item ${currentTab === 'email' ? 'active' : ''}`}
                 onClick={() => setCurrentTab('email')}
+                aria-label="Comunicações"
+                title="Comunicações"
               >
                 <IconMail />
                 <span>Comunicações</span>
@@ -1989,7 +2022,7 @@ export default function App() {
                       setCurrentTab('cloud');
                     } else {
                       const pass = window.prompt(
-                        'Digite a chave de acesso administrativo (Padrão: GOP-ADMIN-3CRE):'
+                        'Digite a chave de acesso administrativo:'
                       );
                       if (pass === 'GOP-ADMIN-3CRE') {
                         sessionStorage.setItem('gop_admin_authenticated', 'true');
@@ -2003,6 +2036,8 @@ export default function App() {
                     setCurrentTab('cloud');
                   }
                 }}
+                aria-label="Administração dos Dados"
+                title="Administração dos Dados"
               >
                 <IconDatabase />
                 <span>Administração dos Dados</span>
@@ -2445,7 +2480,7 @@ export default function App() {
                                     <div className="bairro-ticket-meta">
                                       <span className="bairro-ticket-code">{tk.id_chamado}</span>
                                       <span
-                                        className={`badge badge-priority-${tk.prioridade.toLowerCase()}`}
+                                        className={`badge badge-priority-${normalizePriorityClass(tk.prioridade)}`}
                                         style={{ fontSize: '8px', padding: '0px 4px' }}
                                       >
                                         {tk.prioridade}
@@ -3143,8 +3178,7 @@ export default function App() {
                   {getFilteredTickets().map((t) => {
                     const rowClass = getTicketInactivityClass(t);
                     const days = getInactivityDays(t.modificado_em);
-                    const closed = ['10 - Concluído', '11 - Encerrado', 'Suspenso / pendente'];
-                    const hasPulse = !closed.includes(t.status_atual) && days >= 7;
+                    const hasPulse = !isInactive(t) && days >= SLA_WARN_DAYS;
                     return (
                       <tr
                         key={t.id_chamado}
@@ -3208,7 +3242,7 @@ export default function App() {
                           </span>
                         </td>
                         <td data-label="Prioridade">
-                          <span className={`badge badge-priority-${t.prioridade.toLowerCase()}`}>
+                          <span className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}>
                             {t.prioridade}
                           </span>
                         </td>
@@ -4306,7 +4340,7 @@ export default function App() {
                                     return null;
                                   })()}
                                   <span
-                                    className={`badge badge-priority-${t.prioridade.toLowerCase()}`}
+                                    className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}
                                     style={{ fontSize: '9px', padding: '1px 4px' }}
                                   >
                                     {t.prioridade}
@@ -5594,11 +5628,12 @@ CREATE TABLE IF NOT EXISTS historico (
             if (!isSavingTicket && !isSavingHistory) setShowEditModal(false);
           }}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className="modal-header">
               <div>
                 <h2
                   className="modal-title-group"
+                  id="modal-title"
                   style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
                   <IconList />

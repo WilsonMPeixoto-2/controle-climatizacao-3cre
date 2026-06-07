@@ -6,7 +6,7 @@ test.describe('GOP Clima E2E tests', () => {
     await page.goto('/');
 
     // Verifica que o painel principal foi renderizado com a leitura operacional de hoje
-    await expect(page.locator('text=Resumo operacional de hoje')).toBeVisible();
+    await expect(page.locator('text=Resumo operacional')).toBeVisible();
     await expect(page.locator('text=O que exige ação agora')).toBeVisible();
   });
 
