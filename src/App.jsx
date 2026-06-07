@@ -266,9 +266,9 @@ export default function App() {
   const [theme, setTheme] = useState(() => {
     try {
       const savedTheme = localStorage.getItem('gop_theme');
-      return VALID_THEMES.includes(savedTheme) ? savedTheme : 'light';
+      return VALID_THEMES.includes(savedTheme) ? savedTheme : 'dark';
     } catch {
-      return 'light';
+      return 'dark';
     }
   }); // 'dark' or 'light'
 
