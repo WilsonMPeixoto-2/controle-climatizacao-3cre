@@ -34,6 +34,19 @@ export function normalizePriority(pri) {
   return pri || '';
 }
 
+/**
+ * Normaliza o nome do setor responsável para comparação e exibição estável.
+ * Trata variantes como "Unidade Escolar / GIN" unificando para "GIN / Unidade Escolar".
+ */
+export function normalizeSector(sector) {
+  const sec = String(sector || '').trim();
+  if (sec === 'Unidade Escolar / GIN') {
+    return 'GIN / Unidade Escolar';
+  }
+  return sec;
+}
+
+
 /** Limiares do Alerta de SLA (inércia: dias SEM movimentação). */
 export const SLA_WARN_DAYS = 7; // âmbar
 export const SLA_SEVERE_DAYS = 15; // vermelho

@@ -303,10 +303,15 @@ SELECT
   salas_sem_aparelho,
   necessidade_aparelhos,
   CASE 
-    WHEN qtd_salas_de_aula > 0 THEN ROUND((aparelhos_em_sala::numeric / qtd_salas_de_aula::numeric) * 100, 2)
-    ELSE 0
-  END AS percentual_climatizacao
+    WHEN qtd_salas_de_aula > 0 THEN LEAST(100::numeric, ROUND((aparelhos_em_sala::numeric / qtd_salas_de_aula::numeric) * 100, 2))
+    ELSE 0::numeric
+  END AS percentual_climatizacao,
+  CASE 
+    WHEN qtd_salas_de_aula > 0 THEN ROUND((aparelhos_em_sala::numeric / qtd_salas_de_aula::numeric), 2)
+    ELSE 0::numeric
+  END AS densidade_aparelhos_sala
 FROM public.escolas;
+
 
 CREATE OR REPLACE VIEW public.vw_chamados_sem_anexo 
 WITH (security_invoker = true) AS
