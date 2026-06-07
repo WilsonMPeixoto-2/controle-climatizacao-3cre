@@ -1988,7 +1988,7 @@ export default function App() {
                       setCurrentTab('cloud');
                     } else {
                       const pass = window.prompt(
-                        'Digite a chave de acesso administrativo para acessar as configurações de dados:'
+                        'Digite a chave de acesso administrativo (Padrão: GOP-ADMIN-3CRE):'
                       );
                       if (pass === 'GOP-ADMIN-3CRE') {
                         sessionStorage.setItem('gop_admin_authenticated', 'true');
