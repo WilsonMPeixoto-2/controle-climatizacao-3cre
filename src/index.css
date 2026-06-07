@@ -741,6 +741,146 @@ html:not(.dark-theme) body::after {
   border-radius: 50%;
 }
 
+/* Legendas textuais explicativas próximas às cores de status (M-11) */
+.lists-legend-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.legend-section {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.legend-section-title {
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.legend-items {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-main);
+}
+
+.legend-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.legend-indicator.border-severe {
+  border-left: 4px solid var(--color-red);
+  background-color: var(--color-red-tint);
+}
+
+.legend-indicator.border-warning {
+  border-left: 4px solid var(--color-amber);
+  background-color: var(--color-amber-tint);
+}
+
+.legend-indicator.border-age-severe {
+  border-left: 4px solid var(--color-age-severe);
+  background-color: var(--color-age-severe-tint);
+}
+
+.legend-indicator.border-age-warning {
+  border-left: 4px solid var(--color-age-warn);
+  background-color: var(--color-age-warn-tint);
+}
+
+.legend-badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-badge-dot.bg-triagem {
+  background-color: hsl(214, 90%, 52%);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+}
+
+.legend-badge-dot.bg-orcamento {
+  background-color: hsl(38, 92%, 44%);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+.legend-badge-dot.bg-adequacao {
+  background-color: hsl(20, 90%, 50%);
+  border: 1px solid rgba(249, 115, 22, 0.5);
+}
+
+.legend-badge-dot.bg-execucao {
+  background-color: hsl(175, 80%, 35%);
+  border: 1px solid rgba(13, 148, 136, 0.5);
+}
+
+.legend-badge-dot.bg-concluido {
+  background-color: hsl(142, 72%, 36%);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+/* Tags de alerta nas linhas da tabela (M-11) */
+.lists-alert-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  max-width: fit-content;
+  white-space: nowrap;
+}
+
+.alert-tag-severe {
+  background-color: var(--color-red-tint);
+  color: var(--color-red);
+  border: 1px solid var(--color-red);
+}
+
+.alert-tag-warning {
+  background-color: var(--color-amber-tint);
+  color: var(--color-amber);
+  border: 1px solid var(--color-amber);
+}
+
+.alert-tag-age-severe {
+  background-color: var(--color-age-severe-tint);
+  color: var(--color-age-severe);
+  border: 1px solid var(--color-age-severe);
+}
+
+.alert-tag-age-warn {
+  background-color: var(--color-age-warn-tint);
+  color: var(--color-age-warn);
+  border: 1px solid var(--color-age-warn);
+}
+
 /* Lists Mirror Table Visual Enhancements */
 .lists-table-wrapper {
   overflow-x: auto;

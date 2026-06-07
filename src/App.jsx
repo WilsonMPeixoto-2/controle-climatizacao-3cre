@@ -266,9 +266,9 @@ export default function App() {
   const [theme, setTheme] = useState(() => {
     try {
       const savedTheme = localStorage.getItem('gop_theme');
-      return VALID_THEMES.includes(savedTheme) ? savedTheme : 'dark';
+      return VALID_THEMES.includes(savedTheme) ? savedTheme : 'light';
     } catch {
-      return 'dark';
+      return 'light';
     }
   }); // 'dark' or 'light'
 
@@ -3070,6 +3070,56 @@ export default function App() {
                 );
               })()}
 
+            {/* Legend Panel for status colors and row borders (M-11) */}
+            <div className="lists-legend-panel">
+              <div className="legend-section">
+                <span className="legend-section-title">🕒 Prazos (Bordas e Alertas):</span>
+                <div className="legend-items">
+                  <div className="legend-item">
+                    <span className="legend-indicator border-severe"></span>
+                    <span>Inércia Crítica (parado +15 dias)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-indicator border-warning"></span>
+                    <span>Inércia Alerta (parado +7 dias)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-indicator border-age-severe"></span>
+                    <span>Antiguidade Crítica (aberto +60 dias)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-indicator border-age-warning"></span>
+                    <span>Antiguidade Alerta (aberto +30 dias)</span>
+                  </div>
+                </div>
+              </div>
+              <div className="legend-section">
+                <span className="legend-section-title">📋 Status (Etapas POP):</span>
+                <div className="legend-items">
+                  <div className="legend-item">
+                    <span className="legend-badge-dot bg-triagem"></span>
+                    <span>Triagem (1-3)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-badge-dot bg-orcamento"></span>
+                    <span>Orçamento (4-5)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-badge-dot bg-adequacao"></span>
+                    <span>Adequação (6)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-badge-dot bg-execucao"></span>
+                    <span>Execução (7-9)</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-badge-dot bg-concluido"></span>
+                    <span>Concluído (10-11)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Lists grid table */}
             <div className="lists-table-wrapper">
               <table className="lists-table">
@@ -3160,13 +3210,32 @@ export default function App() {
                           </span>
                         </td>
                         <td data-label="Modificado Em" style={{ fontWeight: '700' }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }} title={hasPulse ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})` : ''}>
-                            {hasPulse && (
-                              <span
-                                className={`sla-pulse ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
-                              />
-                            )}
-                            {formatDateBrazilian(t.modificado_em)}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} title={hasPulse ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})` : ''}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {hasPulse && (
+                                <span
+                                  className={`sla-pulse ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
+                                />
+                              )}
+                              <span>{formatDateBrazilian(t.modificado_em)}</span>
+                            </div>
+                            {(() => {
+                              const sla = slaLevel(t, todayRef());
+                              const age = ageLevel(t, todayRef());
+                              if (sla === 'severe') {
+                                return <span className="lists-alert-tag alert-tag-severe">Inércia: {days} dias</span>;
+                              }
+                              if (sla === 'warning') {
+                                return <span className="lists-alert-tag alert-tag-warning">Inércia: {days} dias</span>;
+                              }
+                              if (age === 'severe') {
+                                return <span className="lists-alert-tag alert-tag-age-severe">Aberto +60 dias</span>;
+                              }
+                              if (age === 'warning') {
+                                return <span className="lists-alert-tag alert-tag-age-warn">Aberto +30 dias</span>;
+                              }
+                              return null;
+                            })()}
                           </div>
                         </td>
                         <td data-label="Aptidão">
