@@ -351,12 +351,6 @@ export default function App() {
   const [syncStatusText, setSyncStatusText] = useState('Local (db.json)');
   const [cloudLoading, setCloudLoading] = useState(false);
   const [supabaseClient, setSupabaseClient] = useState(null);
-  
-  // Auth & Session states
-  const [session, setSession] = useState(null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   // Estados de controle para arquivos e uploads reais
   const [ticketAttachments, setTicketAttachments] = useState([]);
@@ -561,12 +555,15 @@ export default function App() {
     }
   };
 
-  // 2. Load Supabase Data on successful auth
-  const loadSupabaseData = async (client) => {
+  // 2. Initialize Supabase Connection
+  const initializeSupabase = async (url, key) => {
     setCloudLoading(true);
-    setSyncStatusText('Carregando dados...');
+    setSyncStatusText('Conectando à nuvem...');
     try {
-      // Load schools
+      const client = createClient(url, key);
+      setSupabaseClient(client);
+
+      // Verify connection by loading schools
       const { data: schoolsData, error: schoolsError } = await client
         .from('escolas')
         .select('*')
@@ -574,6 +571,7 @@ export default function App() {
 
       if (schoolsError) throw schoolsError;
 
+      // If schools table exists, load cloud datasets
       setCloudConnected(true);
       setSyncStatusText('Base online ativa');
 
@@ -600,7 +598,7 @@ export default function App() {
         const { data: attachmentsData } = await client.from('anexos_chamado').select('*');
         if (attachmentsData) setAllAttachments(attachmentsData);
 
-        // Load templates
+        // Load e-mail templates from Supabase so the app uses the curated online models.
         const { data: emailTemplatesData, error: emailTemplatesError } = await client
           .from('modelos_email')
           .select('*')
@@ -616,79 +614,14 @@ export default function App() {
       } else {
         setSyncStatusText('Conectado (Tabelas vazias)');
       }
-      triggerToast('Dados carregados com sucesso!', 'success');
+      triggerToast('Base online carregada com sucesso!');
     } catch (err) {
-      console.error('Supabase load error:', err);
-      triggerToast('Erro de permissão ou conexão ao carregar dados.', 'error');
-    } finally {
-      setCloudLoading(false);
-    }
-  };
-
-  // 3. Initialize Supabase Connection
-  const initializeSupabase = async (url, key) => {
-    setCloudLoading(true);
-    setSyncStatusText('Conectando à nuvem...');
-    try {
-      const client = createClient(url, key);
-      setSupabaseClient(client);
-
-      // Check current auth session
-      const { data: { session: activeSession }, error: authError } = await client.auth.getSession();
-      if (authError) throw authError;
-
-      setSession(activeSession);
-
-      // Listen to auth changes
-      client.auth.onAuthStateChange((_event, currentSession) => {
-        setSession(currentSession);
-        if (currentSession) {
-          loadSupabaseData(client);
-        } else {
-          setCloudConnected(false);
-          setSyncStatusText('Aguardando autenticação');
-          setSchools(dbData.escolas || []);
-          setTickets(dbData.chamados || []);
-          setHistory(dbData.historico || []);
-          setAllAttachments([]);
-          setEmailTemplates(dbData.modelos_email || []);
-        }
-      });
-
-      if (activeSession) {
-        await loadSupabaseData(client);
-      } else {
-        setSyncStatusText('Aguardando autenticação');
-        setCloudLoading(false);
-      }
-    } catch (err) {
-      console.error('Supabase Init Error:', err);
+      console.error('Supabase Error:', err);
       setCloudConnected(false);
       setSyncStatusText('Erro de conexão - Modo Local');
-      triggerToast('Erro de conexão com a nuvem. Usando base local.', 'error');
-      setCloudLoading(false);
-    }
-  };
-
-  // 4. Handle email/password login
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (isAuthenticating || !supabaseClient) return;
-    setIsAuthenticating(true);
-    try {
-      const { error } = await supabaseClient.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword
-      });
-      if (error) throw error;
-      triggerToast('Autenticado com sucesso!', 'success');
-      setLoginEmail('');
-      setLoginPassword('');
-    } catch (err) {
-      console.error('Login Error:', err);
-      triggerToast(err.message || 'Falha ao autenticar. Verifique seus dados.', 'error');
+      triggerToast('Erro ao carregar dados online. Usando base local.');
     } finally {
-      setIsAuthenticating(false);
+      setCloudLoading(false);
     }
   };
 
@@ -721,7 +654,6 @@ export default function App() {
     setSupabaseKey('');
     setCloudConnected(false);
     setSupabaseClient(null);
-    setSession(null);
     setSyncStatusText('Local (db.json)');
 
     // Reload local files
@@ -1931,95 +1863,6 @@ export default function App() {
     );
   };
 
-  if (supabaseClient && !session) {
-    return (
-      <div className="login-page-container">
-        {toastMessage && (
-          <div
-            role="status"
-            aria-live="polite"
-            style={{
-              position: 'fixed',
-              bottom: '24px',
-              right: '24px',
-              backgroundColor:
-                toastType === 'error'
-                  ? 'hsl(350, 72%, 44%)'
-                  : 'hsl(150, 55%, 30%)',
-              color: '#fff',
-              padding: '12px 20px',
-              borderRadius: 'var(--radius-xs)',
-              boxShadow: 'var(--shadow-lg)',
-              zIndex: '200',
-              fontWeight: '700',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span>{toastMessage}</span>
-          </div>
-        )}
-        <div className="login-card">
-          <div className="login-header">
-            <div className="login-logo">GC</div>
-            <h1 className="login-title">Gestão de Climatização</h1>
-            <p className="login-subtitle">GOP / 3ª CRE — SME/RJ</p>
-          </div>
-          <form onSubmit={handleLogin} className="login-form">
-            <div className="login-form-group">
-              <label className="login-label" htmlFor="login-email">
-                E-mail
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                className="form-control"
-                placeholder="exemplo@gop3cre.gov.br"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                required
-                disabled={isAuthenticating}
-              />
-            </div>
-            <div className="login-form-group">
-              <label className="login-label" htmlFor="login-password">
-                Senha
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                className="form-control"
-                placeholder="••••••••"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                required
-                disabled={isAuthenticating}
-              />
-            </div>
-            <button type="submit" className="login-button" disabled={isAuthenticating}>
-              {isAuthenticating ? (
-                <span>Autenticando...</span>
-              ) : (
-                'Acessar Sistema'
-              )}
-            </button>
-          </form>
-          <div className="login-footer">
-            <button
-              type="button"
-              className="login-local-bypass"
-              onClick={handleDisconnectCloud}
-              disabled={isAuthenticating}
-            >
-              Voltar ao Modo Local (Somente Leitura)
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="app-container">
       {/* Toast Notification */}
@@ -2257,43 +2100,6 @@ export default function App() {
             </p>
           </div>
           <div className="header-actions">
-            {session && (
-              <div className="user-profile-header" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 12px',
-                borderRadius: 'var(--radius-xs)',
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                fontSize: '12px',
-                color: 'var(--text-main)',
-                fontWeight: '500'
-              }}>
-                <User size={14} style={{ color: 'var(--primary)' }} />
-                <span>{session.user.email}</span>
-                <button
-                  onClick={async () => {
-                    if (supabaseClient) {
-                      await supabaseClient.auth.signOut();
-                    }
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--color-red)',
-                    cursor: 'pointer',
-                    fontWeight: '700',
-                    padding: '2px 4px',
-                    marginLeft: '8px',
-                    fontSize: '11px'
-                  }}
-                  title="Sair do sistema"
-                >
-                  Sair
-                </button>
-              </div>
-            )}
             <button
               className="btn btn-secondary theme-toggle-header"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

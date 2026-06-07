@@ -71,33 +71,6 @@ Concluímos a consolidação de todas as melhorias visuais e de design recomenda
    * Ajustamos o tema de primeiro acesso sem preferência salva para carregar por padrão no **Tema Escuro (Dark)** conforme a especificação visual institucional do projeto, garantindo a persistência das escolhas do usuário (claro/escuro) no `localStorage`.
 
 6. **Validação & Testes:**
-    * Validamos a aderência à sintaxe ES6 de todos os scripts auxiliares para sanear avisos de linter.
-    * Executamos o pipeline completo local com `npm run build` (linter, 85 testes unitários/smoke no backend local e 3 testes de interface E2E do Playwright), obtendo sucesso e 100% de cobertura operacional nas regras do frontend.
+   * Validamos a aderência à sintaxe ES6 de todos os scripts auxiliares para sanear avisos de linter.
+   * Executamos o pipeline completo local com `npm run build` (linter, 85 testes unitários/smoke no backend local e 3 testes de interface E2E do Playwright), obtendo sucesso e 100% de cobertura operacional nas regras do frontend.
 
----
-
-## Fase 4: Autenticação, RLS e Enrijecimento de Segurança
-
-Nesta fase final, implementamos o controle de acesso restrito e governança de segurança do banco de dados remoto e da interface web:
-
-1. **Autenticação Supabase Auth Integrada:**
-   * Desenvolvemos uma interface premium de autenticação (Login Card) com visual glassmorphism moderno, blur refinado e micro-animações sob HSL.
-   * Adicionamos controle de sessão ativa via `auth.getSession()` e escuta dinâmica em tempo real com `onAuthStateChange`.
-   * Bloqueamos a exibição dos dados e dashboard gerencial caso o usuário não possua sessão autenticada ativa, exibindo a tela de login como barreira primária.
-   * Implementamos bypass seguro para "Voltar ao Modo Local (Somente Leitura)" caso o usuário opte por rodar a aplicação localmente sem banco conectado.
-   * Inserimos informações do perfil conectado e botão de Logout ("Sair") integrado de forma limpa na barra lateral superior da aplicação.
-
-2. **Políticas de Segurança Row Level Security (RLS) no Supabase:**
-   * Criamos a migração [20260606223400_security_hardening.sql](file:///C:/Users/okidata/.gemini/antigravity-ide/scratch/controle-climatizacao-3cre/supabase/migrations/20260606223400_security_hardening.sql).
-   * Habilitamos RLS em todas as tabelas centrais do banco (`escolas`, `modelos_email`, `chamados`, `historico`, `anexos_chamado`), revogando políticas de acesso público (`anon`) e permitindo operações exclusivamente para usuários autenticados (`TO authenticated`).
-   * Aplicamos RLS restritivo no Supabase Storage (bucket `gop-anexos` e subdiretório `chamados`), permitindo leitura, upload e exclusão física apenas para a role `authenticated`.
-
-3. **Governança de Funções `SECURITY DEFINER`:**
-   * Revogamos privilégios de execução direta na função automática `generate_next_id_chamado()`, limitando-a para a trigger interna do banco.
-   * Restringimos a execução da RPC `save_ticket_with_history(...)` apenas para a role `authenticated`.
-
-4. **Seeding de Administrador de Acesso:**
-   * Garantimos a criação do usuário administrador no Supabase Auth (`admin@gop3cre.gov.br`) com a senha padrão criptografada de forma segura (`gop-clima-admin`) na tabela `auth.users` e no catálogo `auth.identities`.
-
-5. **Validação & Testes:**
-   * Executamos os 85 testes unitários e smoke localmente com sucesso absoluto, além de validar o build em produção Vite e linter sem qualquer erro.
