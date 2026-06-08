@@ -5,7 +5,7 @@
  * da Unidade Escolar no Controle de Climatização GOP / 3ª CRE.
  */
 
-import { isClosed, isSuspended, inactivityDays, normalizePriority, isTruthyFlag } from './logic.js';
+import { isClosed, isSuspended, inactivityDays, normalizePriority, isTruthyFlag, matchesSchool } from './logic.js';
 
 /**
  * Calcula o percentual de climatização das salas de aula.
@@ -169,7 +169,7 @@ export function getSchoolDossierData({
 }) {
   if (!school) return null;
 
-  const schoolTickets = tickets.filter((t) => t.designacao === school.designacao);
+  const schoolTickets = tickets.filter((t) => matchesSchool(t, school));
   const activeTickets = schoolTickets.filter((t) => !isClosed(t) && !isSuspended(t));
   const closedTickets = schoolTickets.filter((t) => isClosed(t) || isSuspended(t));
 
@@ -183,7 +183,7 @@ export function getSchoolDossierData({
   const reason = getSchoolClimateReason(school, activeTickets, coveragePercent, refDate);
 
   // Encontra o último andamento (evento mais recente da escola no histórico ou anotações)
-  const dbEvents = history.filter((h) => h.designacao === school.designacao);
+  const dbEvents = history.filter((h) => matchesSchool(h, school));
   const localList = schoolLogs[school.designacao] || [];
 
   const allEvents = [

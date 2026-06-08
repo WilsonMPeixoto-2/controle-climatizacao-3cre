@@ -4,6 +4,7 @@ import {
   getSchoolDossierData,
   getSchoolClimateReason
 } from '../src/lib/schoolDossier.js';
+import { matchesSchool } from '../src/lib/logic.js';
 
 function printResult(name, passed, details = '') {
   const badge = passed ? '\x1b[32m[PASSED]\x1b[0m' : '\x1b[31m[FAILED]\x1b[0m';
@@ -184,6 +185,76 @@ try {
   printResult(
     '7.4. Precedência: Motivo deve relatar dados não confirmados (primeiro na ordem de precedência)',
     reasonMultiAtt === 'Dados cadastrais ainda não confirmados pela unidade escolar.'
+  );
+
+  // Teste 8: Unificação do "matching" escola↔(chamado/histórico) — fecha os 2 ALTO
+  // Causa-raiz: designacao é NULLABLE; o dossiê usava match estrito de designacao,
+  // a timeline usava designacao OU unidade_escolar. matchesSchool unifica ambos
+  // (normalizeString: sem acento + minúsculo) → mesma verdade nos dois blocos.
+
+  // 8.1–8.5: matchesSchool em isolamento
+  const escolaMatch = { designacao: 'EM 05.14.001', unidade_escolar: 'Escola Municipal Willy Brandt' };
+  printResult(
+    '8.1. matchesSchool: casa por designacao idêntica',
+    matchesSchool({ designacao: 'EM 05.14.001', unidade_escolar: null }, escolaMatch) === true
+  );
+  printResult(
+    '8.2. matchesSchool: casa por unidade_escolar quando designacao é nula (NULLABLE)',
+    matchesSchool({ designacao: null, unidade_escolar: 'Escola Municipal Willy Brandt' }, escolaMatch) === true
+  );
+  printResult(
+    '8.3. matchesSchool: tolerante a acento e caixa (normalizeString)',
+    matchesSchool({ unidade_escolar: 'CRECHE SÃO JOÃO' }, { unidade_escolar: 'creche sao joao' }) === true
+  );
+  printResult(
+    '8.4. matchesSchool: não casa quando nada bate',
+    matchesSchool({ designacao: 'OUTRA', unidade_escolar: 'Outra Escola' }, escolaMatch) === false
+  );
+  printResult(
+    '8.5. matchesSchool: guarda nulos/registro vazio',
+    matchesSchool(null, escolaMatch) === false && matchesSchool({}, escolaMatch) === false
+  );
+
+  // 8.6–8.7: regressão dos 2 ALTO no dossiê — chamado/evento só com unidade_escolar
+  const schoolNullDesig = {
+    designacao: 'EM 05.14.001',
+    unidade_escolar: 'Escola Municipal Willy Brandt',
+    qtd_salas_de_aula: 10,
+    aparelhos_em_sala: 8,
+    confirmado_pela_unidade: 'Sim',
+    validado_pela_gop: 'Sim',
+    necessidade_aparelhos: 0
+  };
+  const dossieMatch = getSchoolDossierData({
+    school: schoolNullDesig,
+    tickets: [
+      {
+        designacao: null,
+        unidade_escolar: 'Escola Municipal Willy Brandt',
+        id_chamado: 'TKT-NULLD',
+        status_atual: '1 - Recebido',
+        prioridade: 'Média',
+        data_solicitacao: '2026-06-01T12:00:00Z'
+      }
+    ],
+    history: [
+      {
+        designacao: null,
+        unidade_escolar: 'Escola Municipal Willy Brandt',
+        data: '2026-06-04T10:00:00Z',
+        marco_relevante: 'Evento só com unidade_escolar'
+      }
+    ],
+    schoolLogs: {},
+    refDate
+  });
+  printResult(
+    '8.6. ALTO#2: chamado com designacao nula entra no dossiê (activeCount)',
+    dossieMatch.activeCount === 1
+  );
+  printResult(
+    '8.7. ALTO#1: evento só com unidade_escolar conta como Último Andamento',
+    dossieMatch.latestUpdate && dossieMatch.latestUpdate.description === 'Evento só com unidade_escolar'
   );
 
   console.log('\n\x1b[32m%s\x1b[0m', '================================================');

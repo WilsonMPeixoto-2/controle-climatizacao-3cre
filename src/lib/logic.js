@@ -276,14 +276,13 @@ export const SECTORS = ['GOP', 'GIN', 'CPS', 'CTO'];
 /** Um chamado "pertence" a um setor se o nome aparece em `setor_responsavel`. */
 export function ticketInSector(ticket, sector) {
   const resp = ticket?.setor_responsavel || '';
-  if (sector === 'GOP') {
-    // GOP é frequentemente o dono isolado; trata tanto "GOP" exato quanto composto.
-    return resp
-      .split('/')
-      .map((s) => s.trim())
-      .includes('GOP');
-  }
-  return resp.includes(sector);
+  // Tokeniza por '/' e compara o token EXATO (para todos os setores), evitando
+  // falso-positivo por substring (ex.: 'CTO-NORTE' não casaria 'CTO'; 'GINASIO'
+  // não casaria 'GIN'). Mantém o casamento de valores compostos como 'GIN / CPS'.
+  return resp
+    .split('/')
+    .map((s) => s.trim())
+    .includes(sector);
 }
 
 export function filterBySector(tickets, sector) {
@@ -396,6 +395,24 @@ export function normalizeString(str) {
     .replace(/\s+/g, ' ')
     .toLowerCase()
     .trim();
+}
+
+/**
+ * Cruza um registro (chamado OU evento de histórico) a uma escola usando a MESMA
+ * regra leniente e normalizada do resto do sistema: igualdade de designação OU de
+ * nome da unidade, sem acento/caixa/espaço. Evita que uma designação nula ou com
+ * grafia divergente faça o registro sumir do dossiê — alinhado a aggregateBairroStats
+ * e à Linha do Tempo do App. (Compara designação só quando ambas existem, para que
+ * dois registros com designação vazia NÃO casem por engano.)
+ */
+export function matchesSchool(record, school) {
+  if (!record || !school) return false;
+  const recD = normalizeString(record.designacao);
+  const schD = normalizeString(school.designacao);
+  if (recD && schD && recD === schD) return true;
+  const recU = normalizeString(record.unidade_escolar);
+  const schU = normalizeString(school.unidade_escolar);
+  return Boolean(recU && schU && recU === schU);
 }
 
 /**
