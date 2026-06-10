@@ -722,7 +722,7 @@ export default function App() {
 
   // Upload local db.json items to Supabase
   const handleSyncLocalToCloud = async () => {
-    triggerToast('Ação desativada em produção para segurança dos dados.', 'error');
+    triggerToast('A sincronização local para a nuvem está desativada por segurança.', 'error');
   };
 
   // Date Formatting Helpers — delega ao módulo de lógica (fonte única da verdade)
@@ -5808,7 +5808,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         className="btn btn-secondary"
                         onClick={handleSyncLocalToCloud}
                         disabled={true}
-                        title="Desativado em produção por segurança."
+                        title="Sincronização local para nuvem desativada por segurança."
                       >
                         <IconRefresh />
                         <span>Enviar base local (Desativado)</span>
@@ -5992,7 +5992,6 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         <option value="GIN / Unidade Escolar">GIN / Unidade Escolar</option>
                         <option value="CPS / Unidade Escolar">CPS / Unidade Escolar</option>
                         <option value="GIN / CPS">GIN / CPS</option>
-                        <option value="Unidade Escolar / GIN">Unidade Escolar / GIN</option>
                         <option value="COMP">COMP</option>
                         <option value="GMP">GMP</option>
                       </select>

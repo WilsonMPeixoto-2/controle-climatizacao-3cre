@@ -39,3 +39,5 @@ recovered_steps.json
 supabase/.temp/
 .supabase/
 
+# Auditorias Locais Temp Files
+docs/auditorias/**/vite-dev.pid
