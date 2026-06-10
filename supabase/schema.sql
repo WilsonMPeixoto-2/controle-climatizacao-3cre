@@ -1,10 +1,20 @@
 -- schema.sql — Estrutura do banco de dados (Supabase / PostgreSQL)
 -- Controle de Climatização — GOP / 3ª CRE — SME-RJ
 --
--- Como usar: abra o painel do Supabase → SQL Editor → New Query →
--- cole este arquivo inteiro → Run. Depois execute o seed.sql para a carga inicial.
+-- ATENÇÃO — NÃO EXECUTAR INTEGRALMENTE EM PRODUÇÃO
 --
--- Idempotente: CREATE TABLE IF NOT EXISTS pode ser reexecutado sem erro.
+-- Este arquivo é uma referência histórica/consolidada da estrutura do banco.
+-- Ele NÃO deve ser copiado e executado integralmente no Supabase ativo sem revisão técnica.
+--
+-- O arquivo contém comandos de RLS, CREATE POLICY e permissões públicas antigas,
+-- incluindo policies de DELETE para a role anon em tabelas e objetos de Storage.
+-- Essas permissões NÃO estão aprovadas para reaplicação automática.
+--
+-- Qualquer alteração real no banco de produção deve ser feita exclusivamente por
+-- migrations incrementais, revisadas, com escopo delimitado e aprovação manual.
+--
+-- Em especial, não reativar RLS, não criar policies e não conceder DELETE público
+-- para anon a partir deste arquivo.
 
 -- ---------------------------------------------------------------------------
 -- 0. Extensões PostgreSQL
