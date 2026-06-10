@@ -51,6 +51,7 @@ import {
   aggregateBairroStats,
   severidadeInatividade,
   normalizeSector,
+  matchesSchool,
   SLA_WARN_DAYS,
   SLA_SEVERE_DAYS,
   AGE_WARN_DAYS,
@@ -619,7 +620,13 @@ export default function App() {
           .order('id_chamado', { ascending: false });
 
         if (ticketsError) throw ticketsError;
-        if (ticketsData) setTickets(ticketsData);
+        if (ticketsData) {
+          const normalized = ticketsData.map(t => ({
+            ...t,
+            setor_responsavel: normalizeSector(t.setor_responsavel)
+          }));
+          setTickets(normalized);
+        }
 
         // Load timeline history
         const { data: historyData, error: historyError } = await client
@@ -659,6 +666,7 @@ export default function App() {
     } catch (err) {
       console.error('Supabase Error:', err);
       setCloudConnected(false);
+      setSupabaseClient(null);
       setSyncStatusText('Erro de conexão - Modo Local');
       triggerToast('Erro ao carregar dados online. Usando base local.');
     } finally {
@@ -700,7 +708,11 @@ export default function App() {
 
     // Reload local files
     if (dbData) {
-      setTickets(dbData.chamados || []);
+      const normalized = (dbData.chamados || []).map(t => ({
+        ...t,
+        setor_responsavel: normalizeSector(t.setor_responsavel)
+      }));
+      setTickets(normalized);
       setSchools(dbData.escolas || []);
       setHistory(dbData.historico || []);
       setAllAttachments([]);
@@ -710,42 +722,7 @@ export default function App() {
 
   // Upload local db.json items to Supabase
   const handleSyncLocalToCloud = async () => {
-    if (!supabaseClient) {
-      triggerToast('Conecte-se ao Supabase primeiro!');
-      return;
-    }
-    const confirmation = window.prompt(
-      "CUIDADO: Esta ação substituirá TODOS os dados de Escolas, Chamados e Histórico na base online do Supabase com os dados locais. Digite 'ENVIAR BASE LOCAL' para confirmar:"
-    );
-    if (confirmation !== 'ENVIAR BASE LOCAL') {
-      triggerToast('Sincronização cancelada.', 'info');
-      return;
-    }
-    setCloudLoading(true);
-    setSyncStatusText('Sincronizando tabelas...');
-    try {
-      triggerToast(`Sincronizando escolas (${schools.length} registros)...`);
-      const { error: escErr } = await supabaseClient.from('escolas').upsert(schools);
-      if (escErr) throw escErr;
-
-      triggerToast(`Sincronizando chamados (${tickets.length} registros)...`);
-      const { error: chErr } = await supabaseClient.from('chamados').upsert(tickets);
-      if (chErr) throw chErr;
-
-      triggerToast('Sincronizando histórico de eventos...');
-      const { error: histErr } = await supabaseClient.from('historico').upsert(history);
-      if (histErr) throw histErr;
-
-      setSyncStatusText('Base online ativa');
-      triggerToast('Banco de dados local sincronizado e salvo na nuvem!');
-    } catch (err) {
-      console.error(err);
-      triggerToast(
-        `Erro na sincronização: ${err.message}. Verifique se criou as tabelas no SQL Editor.`
-      );
-    } finally {
-      setCloudLoading(false);
-    }
+    triggerToast('Ação desativada em produção para segurança dos dados.', 'error');
   };
 
   // Date Formatting Helpers — delega ao módulo de lógica (fonte única da verdade)
@@ -1296,7 +1273,7 @@ export default function App() {
     try {
       const nowIso = new Date().toISOString().substring(0, 19);
       const newEvent = {
-        id_evento: `EV-MANUAL-${Date.now()}`,
+        id_evento: `EV-MANUAL-${crypto.randomUUID()}`,
         data: nowIso,
         id_chamado: editingTicket.id_chamado,
         designacao: editingTicket.designacao,
@@ -1404,9 +1381,9 @@ export default function App() {
       modificado_em: nowIso
     };
 
-    const novosEventos = logsGerados.map((log, index) => {
+    const novosEventos = logsGerados.map((log) => {
       return {
-        id_evento: `EV-${Date.now()}-${index}`,
+        id_evento: `EV-${crypto.randomUUID()}`,
         data: nowIso,
         id_chamado: editingTicket.id_chamado,
         designacao: editingTicket.designacao,
@@ -1521,7 +1498,7 @@ export default function App() {
 
           // 2. Criar e inserir o evento inicial do histórico referenciando o id_chamado retornado
           const initialEvent = {
-            id_evento: `EV-${String(Date.now()).slice(-5)}`, // ID robusto baseado em timestamp para evitar conflitos
+            id_evento: `EV-${crypto.randomUUID()}`, // ID robusto para evitar conflitos de chaves primarias
             data: nowIso,
             id_chamado: dbRecord.id_chamado,
             designacao: formSelectedSchool.designacao,
@@ -1580,7 +1557,7 @@ export default function App() {
         };
 
         finalEventRecord = {
-          id_evento: `EV-${String(history.length + 1).padStart(5, '0')}`,
+          id_evento: `EV-${crypto.randomUUID()}`,
           data: nowIso,
           id_chamado: generatedId,
           designacao: formSelectedSchool.designacao,
@@ -1629,10 +1606,11 @@ export default function App() {
 
   // Interactive SVG circular metrics computations for school detail
   const renderCircularCoverage = (school) => {
-    if (!school || school.qtd_salas_de_aula === 0) return null;
+    const totalSalas = Number(school?.qtd_salas_de_aula);
+    if (!school || !(totalSalas > 0)) return null;
     const coverage = Math.min(
       100,
-      Math.round((school.aparelhos_em_sala / school.qtd_salas_de_aula) * 100)
+      Math.round((Number(school.aparelhos_em_sala || 0) / totalSalas) * 100)
     );
 
     // SVG circle attributes
@@ -4698,11 +4676,7 @@ export default function App() {
                         <div className="timeline">
                           {(() => {
                             const dbEvents = history
-                              .filter(
-                                (h) =>
-                                  h.designacao === selectedSchool.designacao ||
-                                  h.unidade_escolar === selectedSchool.unidade_escolar
-                              )
+                              .filter((h) => matchesSchool(h, selectedSchool))
                               .map((h) => {
                                 let docMeta = null;
                                 let isDocument = false;
@@ -5767,6 +5741,9 @@ CREATE TABLE IF NOT EXISTS chamados (
   data_solicitacao TIMESTAMPTZ,
   local_demanda TEXT,
   tipo_demanda TEXT,
+  tipo_aparelho TEXT DEFAULT 'Split',
+  btu_existente TEXT,
+  btu_pretendido TEXT,
   status_atual TEXT,
   setor_responsavel TEXT,
   proxima_providencia TEXT,
@@ -5791,6 +5768,21 @@ CREATE TABLE IF NOT EXISTS historico (
   setor TEXT,
   responsavel_registro TEXT,
   observacao TEXT
+);
+
+-- 4. Tabela de Anexos
+CREATE TABLE IF NOT EXISTS anexos_chamado (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id_chamado TEXT REFERENCES chamados(id_chamado) ON DELETE CASCADE,
+  designacao TEXT REFERENCES escolas(designacao) ON DELETE CASCADE,
+  unidade_escolar TEXT,
+  bucket TEXT DEFAULT 'gop-anexos',
+  storage_path TEXT UNIQUE,
+  nome_original TEXT,
+  mime_type TEXT,
+  tamanho_bytes BIGINT,
+  descricao TEXT,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
 );`}
                       </pre>
                     </details>
@@ -5815,12 +5807,11 @@ CREATE TABLE IF NOT EXISTS historico (
                       <button
                         className="btn btn-secondary"
                         onClick={handleSyncLocalToCloud}
-                        disabled={cloudLoading}
+                        disabled={true}
+                        title="Desativado em produção por segurança."
                       >
                         <IconRefresh />
-                        <span>
-                          {cloudLoading ? 'Processando...' : 'Enviar base local para a base online'}
-                        </span>
+                        <span>Enviar base local (Desativado)</span>
                       </button>
                       <button
                         className="btn btn-secondary btn-danger"
@@ -6000,6 +5991,8 @@ CREATE TABLE IF NOT EXISTS historico (
                         <option value="Unidade Escolar">Unidade Escolar</option>
                         <option value="GIN / Unidade Escolar">GIN / Unidade Escolar</option>
                         <option value="CPS / Unidade Escolar">CPS / Unidade Escolar</option>
+                        <option value="GIN / CPS">GIN / CPS</option>
+                        <option value="Unidade Escolar / GIN">Unidade Escolar / GIN</option>
                         <option value="COMP">COMP</option>
                         <option value="GMP">GMP</option>
                       </select>

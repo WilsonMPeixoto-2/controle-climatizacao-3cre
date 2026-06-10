@@ -226,7 +226,7 @@ BEGIN
 
   SELECT COUNT(*) INTO v_historico_sem_chamado 
   FROM public.historico h LEFT JOIN public.chamados c ON h.id_chamado = c.id_chamado 
-  WHERE c.id_chamado IS NULL;
+  WHERE c.id_chamado IS NULL AND h.designacao IS NULL;
 
   SELECT COUNT(*) INTO v_anexos_sem_chamado 
   FROM public.anexos_chamado a LEFT JOIN public.chamados c ON a.id_chamado = c.id_chamado 
@@ -333,7 +333,7 @@ SELECT 'chamado_sem_escola' AS tipo_inconsistencia, c.id_chamado AS ref_id, c.un
 FROM public.chamados c LEFT JOIN public.escolas e ON c.designacao = e.designacao WHERE e.designacao IS NULL
 UNION ALL
 SELECT 'historico_sem_chamado' AS tipo_inconsistencia, h.id_evento AS ref_id, h.observacao AS detalhe
-FROM public.historico h LEFT JOIN public.chamados c ON h.id_chamado = c.id_chamado WHERE c.id_chamado IS NULL
+FROM public.historico h LEFT JOIN public.chamados c ON h.id_chamado = c.id_chamado WHERE c.id_chamado IS NULL AND h.designacao IS NULL
 UNION ALL
 SELECT 'anexo_sem_chamado' AS tipo_inconsistencia, a.id::text AS ref_id, a.nome_original AS detalhe
 FROM public.anexos_chamado a LEFT JOIN public.chamados c ON a.id_chamado = c.id_chamado WHERE c.id_chamado IS NULL

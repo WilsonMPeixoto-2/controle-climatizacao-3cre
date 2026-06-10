@@ -1,0 +1,6419 @@
+[
+  {
+    "name": "desktop-dark-dashboard",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 3713
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Resumo operacional",
+      "Mapa Operacional",
+      "Visão de Metas & Conclusões",
+      "O que exige ação agora",
+      "Acompanhamento Prioritário de Demandas"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 146
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Ver todos",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 78
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "op-map leaflet-container leaflet-touch leaflet-fade-anim leaflet-grab leaflet-to",
+        "text": "BONSUCESSO INHAÚMA ENGENHO NOVO LINS DE VASCONCELOS ENGENHO DE DENTRO PIEDADE + − Leaflet ",
+        "cw": 1004,
+        "sw": 1120,
+        "ch": 478,
+        "sh": 613,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "status-name",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 150,
+        "sw": 192,
+        "ch": 18,
+        "sh": 18,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "status-name",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 150,
+        "sw": 180,
+        "ch": 18,
+        "sh": 18,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "div",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 229,
+        "sw": 402,
+        "ch": 21,
+        "sh": 21,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "div",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 229,
+        "sw": 285,
+        "ch": 21,
+        "sh": 21,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "desktop-dark-mapa",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 3717
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Resumo operacional",
+      "Mapa Operacional",
+      "Visão de Metas & Conclusões",
+      "O que exige ação agora",
+      "Acompanhamento Prioritário de Demandas"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 146
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 24,
+        "width": 24
+      },
+      {
+        "text": "",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 22,
+        "width": 22
+      },
+      {
+        "text": "",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 24,
+        "width": 24
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Ver todos",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 78
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "op-map leaflet-container leaflet-touch leaflet-fade-anim leaflet-grab leaflet-to",
+        "text": "BONSUCESSO INHAÚMA ENGENHO NOVO LINS DE VASCONCELOS ENGENHO DE DENTRO PIEDADE PILARES Esco",
+        "cw": 582,
+        "sw": 909,
+        "ch": 478,
+        "sh": 613,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "status-name",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 150,
+        "sw": 192,
+        "ch": 18,
+        "sh": 18,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "status-name",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 150,
+        "sw": 180,
+        "ch": 18,
+        "sh": 18,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "div",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 229,
+        "sw": 402,
+        "ch": 21,
+        "sh": 21,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "div",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 229,
+        "sw": 285,
+        "ch": 21,
+        "sh": 21,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "desktop-dark-lista",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 3061
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Lista de chamados"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "10 - Concluído",
+        "cls": "badge badge-status",
+        "bg": "rgba(16, 185, 129, 0.08)",
+        "color": "rgb(26, 158, 74)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Alta",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta parcialmente",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "2 - Em vistoria técnica",
+        "cls": "badge badge-status",
+        "bg": "rgba(14, 165, 233, 0.08)",
+        "color": "rgb(13, 162, 231)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "9 - Aguardando aparelho/instalação",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 146
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "📥 Exportar Lista (CSV)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "height": 31,
+        "width": 176
+      },
+      {
+        "text": "Todos os Chamados (30)",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Com o GOP",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 102
+      },
+      {
+        "text": "Com a CPS",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 99
+      },
+      {
+        "text": "Com a GIN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 96
+      },
+      {
+        "text": "Com a CTO",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 100
+      },
+      {
+        "text": "Sem Atualização +7d (7)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 175
+      },
+      {
+        "text": "Concluídos/Encerrados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "lists-table-wrapper",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 1012,
+        "sw": 1608,
+        "ch": 2429,
+        "sh": 2429,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Visitação",
+        "cw": 240,
+        "sw": 264,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Tânia Cristina Moreira",
+        "cw": 240,
+        "sw": 402,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal Geralda de Jesus Aleixo",
+        "cw": 240,
+        "sw": 294,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 240,
+        "sw": 466,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Educandário de Santa Cruz",
+        "cw": 240,
+        "sw": 432,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 240,
+        "sw": 340,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Brigadeiro Faria Lima",
+        "cw": 240,
+        "sw": 278,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Cívico Militar Carioca",
+        "cw": 240,
+        "sw": 276,
+        "ch": 94,
+        "sh": 94,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Henrique Foréis",
+        "cw": 240,
+        "sw": 361,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Especial Municipal Doutor Ulisses Pernambucano",
+        "cw": 240,
+        "sw": 385,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal José de Vieira da Silva",
+        "cw": 240,
+        "sw": 284,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Marechal Carlos Machado Bittencourt",
+        "cw": 240,
+        "sw": 379,
+        "ch": 94,
+        "sh": 94,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Presidente Kennedy",
+        "cw": 240,
+        "sw": 387,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "desktop-dark-registro",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 1123
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Registrar chamado"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 146
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "Cancelar",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 105
+      },
+      {
+        "text": "Registrar Demanda",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 198
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "select",
+        "cls": "form-control",
+        "text": "Substituição/Instalação de Aparelho Nova Instalação Substituição de Aparelho Manutenção Co",
+        "cw": 208,
+        "sw": 240,
+        "ch": 40,
+        "sh": 40,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      }
+    ]
+  },
+  {
+    "name": "desktop-dark-modal",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 3061
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Lista de chamados",
+      "Ficha do Chamado GOP-AR-2026-0001"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "10 - Concluído",
+        "cls": "badge badge-status",
+        "bg": "rgba(16, 185, 129, 0.08)",
+        "color": "rgb(26, 158, 74)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Alta",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta parcialmente",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "2 - Em vistoria técnica",
+        "cls": "badge badge-status",
+        "bg": "rgba(14, 165, 233, 0.08)",
+        "color": "rgb(13, 162, 231)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "9 - Aguardando aparelho/instalação",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 146
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "📥 Exportar Lista (CSV)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "height": 31,
+        "width": 176
+      },
+      {
+        "text": "Todos os Chamados (30)",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Com o GOP",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 102
+      },
+      {
+        "text": "Com a CPS",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 99
+      },
+      {
+        "text": "Com a GIN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 96
+      },
+      {
+        "text": "Com a CTO",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 100
+      },
+      {
+        "text": "Sem Atualização +7d (7)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 175
+      },
+      {
+        "text": "Concluídos/Encerrados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 28,
+        "width": 28
+      },
+      {
+        "text": "",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 30,
+        "width": 30
+      },
+      {
+        "text": "Registrar",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 91
+      },
+      {
+        "text": "Minutar E-mail",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 166
+      },
+      {
+        "text": "Fechar",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 92
+      },
+      {
+        "text": "Salvar Alterações",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 187
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "lists-table-wrapper",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 1012,
+        "sw": 1608,
+        "ch": 2429,
+        "sh": 2429,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Visitação",
+        "cw": 240,
+        "sw": 264,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Tânia Cristina Moreira",
+        "cw": 240,
+        "sw": 402,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal Geralda de Jesus Aleixo",
+        "cw": 240,
+        "sw": 294,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 240,
+        "sw": 466,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Educandário de Santa Cruz",
+        "cw": 240,
+        "sw": 432,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 240,
+        "sw": 340,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Brigadeiro Faria Lima",
+        "cw": 240,
+        "sw": 278,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Cívico Militar Carioca",
+        "cw": 240,
+        "sw": 276,
+        "ch": 94,
+        "sh": 94,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Henrique Foréis",
+        "cw": 240,
+        "sw": 361,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Especial Municipal Doutor Ulisses Pernambucano",
+        "cw": 240,
+        "sw": 385,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal José de Vieira da Silva",
+        "cw": 240,
+        "sw": 284,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Marechal Carlos Machado Bittencourt",
+        "cw": 240,
+        "sw": 379,
+        "ch": 94,
+        "sh": 94,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Presidente Kennedy",
+        "cw": 240,
+        "sw": 387,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "desktop-dark-dossie",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 2783
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Dossiê da Escola",
+      "Ações Rápidas",
+      "Status de Climatização",
+      "PREFEITURA DA CIDADE DO RIO DE JANEIRO",
+      "Dossiê Técnico-Executivo da Unidade Escolar",
+      "Escola Municipal Eurico Vilela",
+      "Infraestrutura de Climatização",
+      "Chamados e Demandas Vinculadas",
+      "Laudos e Evidências Técnicas",
+      "Linha do Tempo e Nota Histórica",
+      "Anotações Técnicas (Registro Interno GOP)"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 146
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "Registrar chamado para esta unidade",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 38,
+        "width": 509
+      },
+      {
+        "text": "Ver chamados desta unidade",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 38,
+        "width": 509
+      },
+      {
+        "text": "🖨️ Exportar Ficha (PDF)",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 35,
+        "width": 185
+      },
+      {
+        "text": "Salvar Anotação",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 33,
+        "width": 135
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "7 - Adequação em execução",
+        "cw": 132,
+        "sw": 174,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "desktop-dark-comunicacoes",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 1000
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Comunicações"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 40,
+        "width": 146
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "VISUALIZAÇÃO FORMATADA",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(24, 165, 242)",
+        "height": 46,
+        "width": 294
+      },
+      {
+        "text": "EDITAR TEXTO DO E-MAIL",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 46,
+        "width": 294
+      },
+      {
+        "text": "Copiar E-mail",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 160
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "desktop-light-dashboard",
+    "themeClass": "",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 1000
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Comunicações"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 40,
+        "width": 158
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "VISUALIZAÇÃO FORMATADA",
+        "bg": "rgba(255, 255, 255, 0.94)",
+        "color": "rgb(24, 165, 242)",
+        "height": 46,
+        "width": 294
+      },
+      {
+        "text": "EDITAR TEXTO DO E-MAIL",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(101, 115, 134)",
+        "height": 46,
+        "width": 294
+      },
+      {
+        "text": "Copiar E-mail",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 160
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "desktop-light-lista",
+    "themeClass": "",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 3061
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Lista de chamados"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "10 - Concluído",
+        "cls": "badge badge-status",
+        "bg": "rgba(16, 185, 129, 0.08)",
+        "color": "rgb(26, 158, 74)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(26, 158, 74, 0.12)",
+        "color": "rgb(21, 121, 58)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Alta",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(233, 86, 12, 0.13)",
+        "color": "rgb(179, 58, 15)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Apta parcialmente",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "2 - Em vistoria técnica",
+        "cls": "badge badge-status",
+        "bg": "rgba(14, 165, 233, 0.08)",
+        "color": "rgb(13, 162, 231)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "9 - Aguardando aparelho/instalação",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(26, 158, 74, 0.12)",
+        "color": "rgb(21, 121, 58)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 40,
+        "width": 158
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "📥 Exportar Lista (CSV)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "height": 31,
+        "width": 176
+      },
+      {
+        "text": "Todos os Chamados (30)",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Com o GOP",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 102
+      },
+      {
+        "text": "Com a CPS",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 99
+      },
+      {
+        "text": "Com a GIN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 96
+      },
+      {
+        "text": "Com a CTO",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 100
+      },
+      {
+        "text": "Sem Atualização +7d (7)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 175
+      },
+      {
+        "text": "Concluídos/Encerrados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 172
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "lists-table-wrapper",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 1012,
+        "sw": 1610,
+        "ch": 2429,
+        "sh": 2429,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Visitação",
+        "cw": 240,
+        "sw": 264,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Tânia Cristina Moreira",
+        "cw": 240,
+        "sw": 402,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal Geralda de Jesus Aleixo",
+        "cw": 240,
+        "sw": 294,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 240,
+        "sw": 466,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Educandário de Santa Cruz",
+        "cw": 240,
+        "sw": 432,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 240,
+        "sw": 340,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Brigadeiro Faria Lima",
+        "cw": 240,
+        "sw": 278,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Cívico Militar Carioca",
+        "cw": 240,
+        "sw": 276,
+        "ch": 94,
+        "sh": 94,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Henrique Foréis",
+        "cw": 240,
+        "sw": 361,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Especial Municipal Doutor Ulisses Pernambucano",
+        "cw": 240,
+        "sw": 385,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal José de Vieira da Silva",
+        "cw": 240,
+        "sw": 284,
+        "ch": 78,
+        "sh": 78,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Marechal Carlos Machado Bittencourt",
+        "cw": 240,
+        "sw": 379,
+        "ch": 94,
+        "sh": 94,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Presidente Kennedy",
+        "cw": 240,
+        "sw": 387,
+        "ch": 72,
+        "sh": 72,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "desktop-light-registro",
+    "themeClass": "",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 1123
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Registrar chamado"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 40,
+        "width": 158
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "Cancelar",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 40,
+        "width": 105
+      },
+      {
+        "text": "Registrar Demanda",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 198
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "select",
+        "cls": "form-control",
+        "text": "Substituição/Instalação de Aparelho Nova Instalação Substituição de Aparelho Manutenção Co",
+        "cw": 208,
+        "sw": 240,
+        "ch": 40,
+        "sh": 40,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      }
+    ]
+  },
+  {
+    "name": "desktop-light-dossie",
+    "themeClass": "",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 2783
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Dossiê da Escola",
+      "Ações Rápidas",
+      "Status de Climatização",
+      "PREFEITURA DA CIDADE DO RIO DE JANEIRO",
+      "Dossiê Técnico-Executivo da Unidade Escolar",
+      "Escola Municipal Eurico Vilela",
+      "Infraestrutura de Climatização",
+      "Chamados e Demandas Vinculadas",
+      "Laudos e Evidências Técnicas",
+      "Linha do Tempo e Nota Histórica",
+      "Anotações Técnicas (Registro Interno GOP)"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 40,
+        "width": 158
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "Registrar chamado para esta unidade",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 38,
+        "width": 509
+      },
+      {
+        "text": "Ver chamados desta unidade",
+        "bg": "rgba(255, 255, 255, 0.94)",
+        "color": "rgb(26, 35, 51)",
+        "height": 38,
+        "width": 509
+      },
+      {
+        "text": "🖨️ Exportar Ficha (PDF)",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 35,
+        "width": 185
+      },
+      {
+        "text": "Salvar Anotação",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 33,
+        "width": 135
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "7 - Adequação em execução",
+        "cw": 132,
+        "sw": 174,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "desktop-light-comunicacoes",
+    "themeClass": "",
+    "body": {
+      "width": 1440,
+      "viewport": 1440,
+      "height": 1000
+    },
+    "main": {
+      "sw": 1160,
+      "cw": 1160
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Comunicações"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 43,
+        "width": 231
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 42,
+        "width": 231
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 40,
+        "width": 158
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 197
+      },
+      {
+        "text": "VISUALIZAÇÃO FORMATADA",
+        "bg": "rgba(255, 255, 255, 0.94)",
+        "color": "rgb(24, 165, 242)",
+        "height": 46,
+        "width": 294
+      },
+      {
+        "text": "EDITAR TEXTO DO E-MAIL",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(101, 115, 134)",
+        "height": 46,
+        "width": 294
+      },
+      {
+        "text": "Copiar E-mail",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 40,
+        "width": 160
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "mobile-dark-dashboard",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 6311
+    },
+    "main": {
+      "sw": 594,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Resumo operacional",
+      "Mapa Operacional",
+      "Visão de Metas & Conclusões",
+      "O que exige ação agora",
+      "Acompanhamento Prioritário de Demandas"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 171
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 146
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Ver todos",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 78
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      },
+      {
+        "text": "Abrir chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 26,
+        "width": 107
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "main",
+        "cls": "main-content",
+        "text": "Gestão de Climatização Escolar Gerência de Operações · Coordenadoria Regional de Educação ",
+        "cw": 390,
+        "sw": 594,
+        "ch": 5885,
+        "sh": 5885,
+        "overflowX": "hidden",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "div",
+        "cls": "",
+        "text": "Veja a situação geral dos chamados, os alertas de prazo e os casos que precisam de atenção",
+        "cw": 366,
+        "sw": 582,
+        "ch": 5694,
+        "sh": 5694,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "div",
+        "cls": "op-map leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-",
+        "text": "BONSUCESSO INHAÚMA ENGENHO NOVO LINS DE VASCONCELOS ENGENHO DE DENTRO PIEDADE + − Leaflet ",
+        "cw": 306,
+        "sw": 462,
+        "ch": 478,
+        "sh": 554,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "div",
+        "cls": "dashboard-layout",
+        "text": "Visão de Metas & Conclusões CONSOLIDADO GERAL 30 TOTAL Chamados Ativos: 21 (70%) Concluído",
+        "cw": 366,
+        "sw": 582,
+        "ch": 2780,
+        "sh": 2780,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "div",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 377,
+        "sw": 402,
+        "ch": 21,
+        "sh": 21,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  },
+  {
+    "name": "mobile-dark-lista",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 16121
+    },
+    "main": {
+      "sw": 390,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Lista de chamados"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "10 - Concluído",
+        "cls": "badge badge-status",
+        "bg": "rgba(16, 185, 129, 0.08)",
+        "color": "rgb(26, 158, 74)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Alta",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta parcialmente",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "2 - Em vistoria técnica",
+        "cls": "badge badge-status",
+        "bg": "rgba(14, 165, 233, 0.08)",
+        "color": "rgb(13, 162, 231)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "9 - Aguardando aparelho/instalação",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 157
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 188
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 146
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "📥 Exportar Lista (CSV)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "height": 31,
+        "width": 176
+      },
+      {
+        "text": "Todos os Chamados (30)",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Com o GOP",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 102
+      },
+      {
+        "text": "Com a CPS",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 99
+      },
+      {
+        "text": "Com a GIN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 96
+      },
+      {
+        "text": "Com a CTO",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 100
+      },
+      {
+        "text": "Sem Atualização +7d (7)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 175
+      },
+      {
+        "text": "Concluídos/Encerrados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "view-tabs",
+        "text": "Todos os Chamados (30) Com o GOP Com a CPS Com a GIN Com a CTO Sem Atualização +7d (7) Con",
+        "cw": 316,
+        "sw": 948,
+        "ch": 42,
+        "sh": 42,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "div",
+        "cls": "lists-table-wrapper",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14688,
+        "sh": 14688,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "table",
+        "cls": "lists-table",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14672,
+        "sh": 14672,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tbody",
+        "cls": "",
+        "text": "GOP-AR-2026-0001 Escola Municipal Professor Visitação Substituição/Instalação de Aparelho ",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14672,
+        "sh": 14672,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Visitação",
+        "cw": 240,
+        "sw": 363,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Bento Ribeiro",
+        "cw": 240,
+        "sw": 327,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "4 - Aguardando orçamento",
+        "cw": 285,
+        "sw": 301,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Tânia Cristina Moreira",
+        "cw": 240,
+        "sw": 493,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "CIEP Procópio Ferreira",
+        "cw": 240,
+        "sw": 280,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal Geralda de Jesus Aleixo",
+        "cw": 240,
+        "sw": 391,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "4 - Aguardando orçamento",
+        "cw": 285,
+        "sw": 301,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-severe",
+        "text": "GOP-AR-2026-0006 Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco Substit",
+        "cw": 309,
+        "sw": 340,
+        "ch": 469,
+        "sh": 469,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 240,
+        "sw": 553,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Educandário de Santa Cruz",
+        "cw": 240,
+        "sw": 521,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-age-severe",
+        "text": "GOP-AR-2026-0008 Escola Municipal Nereu Sampaio Substituição/Instalação de Aparelho 6,12,1",
+        "cw": 309,
+        "sw": 340,
+        "ch": 469,
+        "sh": 469,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Nereu Sampaio",
+        "cw": 240,
+        "sw": 337,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal José Veríssimo",
+        "cw": 240,
+        "sw": 334,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-severe",
+        "text": "GOP-AR-2026-0010 Escola Municipal Professor Augusto Paulino Filho Substituição/Instalação ",
+        "cw": 309,
+        "sw": 340,
+        "ch": 469,
+        "sh": 469,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 240,
+        "sw": 434,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Isabel Mendes",
+        "cw": 240,
+        "sw": 331,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      }
+    ]
+  },
+  {
+    "name": "mobile-dark-registro",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 2179
+    },
+    "main": {
+      "sw": 390,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Registrar chamado"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 157
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 171
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 189
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 146
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Cancelar",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 56,
+        "width": 105
+      },
+      {
+        "text": "Registrar Demanda",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 56,
+        "width": 193
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "mobile-dark-modal",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 16121
+    },
+    "main": {
+      "sw": 390,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Lista de chamados",
+      "Ficha do Chamado GOP-AR-2026-0001"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "10 - Concluído",
+        "cls": "badge badge-status",
+        "bg": "rgba(16, 185, 129, 0.08)",
+        "color": "rgb(26, 158, 74)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Alta",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(244, 106, 37, 0.18)",
+        "color": "rgb(245, 122, 61)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta parcialmente",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "2 - Em vistoria técnica",
+        "cls": "badge badge-status",
+        "bg": "rgba(14, 165, 233, 0.08)",
+        "color": "rgb(13, 162, 231)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "9 - Aguardando aparelho/instalação",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(54, 201, 108, 0.16)",
+        "color": "rgb(74, 207, 123)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(246, 168, 35, 0.18)",
+        "color": "rgb(241, 167, 39)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(239, 57, 87, 0.18)",
+        "color": "rgb(238, 88, 113)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 157
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 188
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 146
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "📥 Exportar Lista (CSV)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "height": 31,
+        "width": 176
+      },
+      {
+        "text": "Todos os Chamados (30)",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Com o GOP",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 102
+      },
+      {
+        "text": "Com a CPS",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 99
+      },
+      {
+        "text": "Com a GIN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 96
+      },
+      {
+        "text": "Com a CTO",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 100
+      },
+      {
+        "text": "Sem Atualização +7d (7)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 175
+      },
+      {
+        "text": "Concluídos/Encerrados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 28,
+        "width": 28
+      },
+      {
+        "text": "",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 30,
+        "width": 22
+      },
+      {
+        "text": "Registrar",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 91
+      },
+      {
+        "text": "Minutar E-mail",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 56,
+        "width": 121
+      },
+      {
+        "text": "Fechar",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 56,
+        "width": 92
+      },
+      {
+        "text": "Salvar Alterações",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 56,
+        "width": 142
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "view-tabs",
+        "text": "Todos os Chamados (30) Com o GOP Com a CPS Com a GIN Com a CTO Sem Atualização +7d (7) Con",
+        "cw": 316,
+        "sw": 948,
+        "ch": 42,
+        "sh": 42,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "div",
+        "cls": "lists-table-wrapper",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14688,
+        "sh": 14688,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "table",
+        "cls": "lists-table",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14672,
+        "sh": 14672,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tbody",
+        "cls": "",
+        "text": "GOP-AR-2026-0001 Escola Municipal Professor Visitação Substituição/Instalação de Aparelho ",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14672,
+        "sh": 14672,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Visitação",
+        "cw": 240,
+        "sw": 363,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Bento Ribeiro",
+        "cw": 240,
+        "sw": 327,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "4 - Aguardando orçamento",
+        "cw": 285,
+        "sw": 301,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Tânia Cristina Moreira",
+        "cw": 240,
+        "sw": 493,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "CIEP Procópio Ferreira",
+        "cw": 240,
+        "sw": 280,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal Geralda de Jesus Aleixo",
+        "cw": 240,
+        "sw": 391,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "4 - Aguardando orçamento",
+        "cw": 285,
+        "sw": 301,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-severe",
+        "text": "GOP-AR-2026-0006 Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco Substit",
+        "cw": 309,
+        "sw": 340,
+        "ch": 469,
+        "sh": 469,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 240,
+        "sw": 553,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Educandário de Santa Cruz",
+        "cw": 240,
+        "sw": 521,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-age-severe",
+        "text": "GOP-AR-2026-0008 Escola Municipal Nereu Sampaio Substituição/Instalação de Aparelho 6,12,1",
+        "cw": 309,
+        "sw": 340,
+        "ch": 469,
+        "sh": 469,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Nereu Sampaio",
+        "cw": 240,
+        "sw": 337,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal José Veríssimo",
+        "cw": 240,
+        "sw": 334,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-severe",
+        "text": "GOP-AR-2026-0010 Escola Municipal Professor Augusto Paulino Filho Substituição/Instalação ",
+        "cw": 309,
+        "sw": 340,
+        "ch": 469,
+        "sh": 469,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 240,
+        "sw": 434,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Isabel Mendes",
+        "cw": 240,
+        "sw": 331,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      }
+    ]
+  },
+  {
+    "name": "mobile-dark-comunicacoes",
+    "themeClass": "dark-theme",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 1795
+    },
+    "main": {
+      "sw": 390,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(212, 32%, 7%)",
+      "bgCard": "rgba(17, 24, 39, 0.8)",
+      "textMain": "hsl(210, 20%, 96%)",
+      "textLight": "hsl(214, 14%, 70%)",
+      "border": "rgba(255, 255, 255, 0.08)",
+      "amber": "hsl(38, 88%, 55%)",
+      "orange": "hsl(20, 90%, 60%)",
+      "red": "hsl(350, 82%, 64%)",
+      "green": "hsl(142, 58%, 55%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Comunicações"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 157
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 171
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(24, 165, 242, 0.14)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 159
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(191, 198, 207)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Claro",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(243, 245, 247)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "VISUALIZAÇÃO FORMATADA",
+        "bg": "rgba(17, 24, 39, 0.8)",
+        "color": "rgb(24, 165, 242)",
+        "height": 65,
+        "width": 153
+      },
+      {
+        "text": "EDITAR TEXTO DO E-MAIL",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(168, 177, 189)",
+        "height": 65,
+        "width": 153
+      },
+      {
+        "text": "Copiar E-mail",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 83,
+        "width": 114
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "mobile-light-dashboard",
+    "themeClass": "",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 1795
+    },
+    "main": {
+      "sw": 390,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Comunicações"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 157
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 171
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 159
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "VISUALIZAÇÃO FORMATADA",
+        "bg": "rgba(255, 255, 255, 0.94)",
+        "color": "rgb(24, 165, 242)",
+        "height": 65,
+        "width": 153
+      },
+      {
+        "text": "EDITAR TEXTO DO E-MAIL",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(101, 115, 134)",
+        "height": 65,
+        "width": 153
+      },
+      {
+        "text": "Copiar E-mail",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 83,
+        "width": 114
+      }
+    ],
+    "overflow": []
+  },
+  {
+    "name": "mobile-light-lista",
+    "themeClass": "",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 16241
+    },
+    "main": {
+      "sw": 390,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Lista de chamados"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "10 - Concluído",
+        "cls": "badge badge-status",
+        "bg": "rgba(16, 185, 129, 0.08)",
+        "color": "rgb(26, 158, 74)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(26, 158, 74, 0.12)",
+        "color": "rgb(21, 121, 58)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Alta",
+        "cls": "badge badge-priority-alta",
+        "bg": "rgba(233, 86, 12, 0.13)",
+        "color": "rgb(179, 58, 15)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "4 - Aguardando orçamento",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Apta parcialmente",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "2 - Em vistoria técnica",
+        "cls": "badge badge-status",
+        "bg": "rgba(14, 165, 233, 0.08)",
+        "color": "rgb(13, 162, 231)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "9 - Aguardando aparelho/instalação",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Apta",
+        "cls": "badge badge-valid-sim",
+        "bg": "rgba(26, 158, 74, 0.12)",
+        "color": "rgb(21, 121, 58)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      },
+      {
+        "text": "5 - Orçamento em análise/decisão",
+        "cls": "badge badge-status",
+        "bg": "rgba(245, 158, 11, 0.08)",
+        "color": "rgb(215, 140, 9)"
+      },
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "Não apta",
+        "cls": "badge badge-valid-nao",
+        "bg": "rgba(226, 18, 53, 0.12)",
+        "color": "rgb(172, 21, 47)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 157
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 188
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 146
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "📥 Exportar Lista (CSV)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "height": 31,
+        "width": 176
+      },
+      {
+        "text": "Todos os Chamados (30)",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 34,
+        "width": 180
+      },
+      {
+        "text": "Com o GOP",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 102
+      },
+      {
+        "text": "Com a CPS",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 99
+      },
+      {
+        "text": "Com a GIN",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 96
+      },
+      {
+        "text": "Com a CTO",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 100
+      },
+      {
+        "text": "Sem Atualização +7d (7)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 175
+      },
+      {
+        "text": "Concluídos/Encerrados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 172
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "div",
+        "cls": "view-tabs",
+        "text": "Todos os Chamados (30) Com o GOP Com a CPS Com a GIN Com a CTO Sem Atualização +7d (7) Con",
+        "cw": 316,
+        "sw": 948,
+        "ch": 42,
+        "sh": 42,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "div",
+        "cls": "lists-table-wrapper",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14808,
+        "sh": 14808,
+        "overflowX": "auto",
+        "overflowY": "auto"
+      },
+      {
+        "tag": "table",
+        "cls": "lists-table",
+        "text": "CÓDIGO ↑ UNIDADE ESCOLAR ↕ TIPO DEMANDA LOCAL RESPONSÁVEL ↕ STATUS ATUAL PRIORIDADE ↕ MODI",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14792,
+        "sh": 14792,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tbody",
+        "cls": "",
+        "text": "GOP-AR-2026-0001 Escola Municipal Professor Visitação Substituição/Instalação de Aparelho ",
+        "cw": 314,
+        "sw": 344,
+        "ch": 14792,
+        "sh": 14792,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Visitação",
+        "cw": 240,
+        "sw": 363,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Bento Ribeiro",
+        "cw": 240,
+        "sw": 327,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "4 - Aguardando orçamento",
+        "cw": 285,
+        "sw": 301,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Tânia Cristina Moreira",
+        "cw": 240,
+        "sw": 493,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "CIEP Procópio Ferreira",
+        "cw": 240,
+        "sw": 280,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Creche Municipal Geralda de Jesus Aleixo",
+        "cw": 240,
+        "sw": 391,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "4 - Aguardando orçamento",
+        "cw": 285,
+        "sw": 301,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-severe",
+        "text": "GOP-AR-2026-0006 Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco Substit",
+        "cw": 309,
+        "sw": 340,
+        "ch": 473,
+        "sh": 473,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Padre Nelson Carlos Del Mônaco",
+        "cw": 240,
+        "sw": 553,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Espaço de Desenvolvimento Infantil Educandário de Santa Cruz",
+        "cw": 240,
+        "sw": 521,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-age-severe",
+        "text": "GOP-AR-2026-0008 Escola Municipal Nereu Sampaio Substituição/Instalação de Aparelho 6,12,1",
+        "cw": 309,
+        "sw": 340,
+        "ch": 473,
+        "sh": 473,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Nereu Sampaio",
+        "cw": 240,
+        "sw": 337,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "9 - Aguardando aparelho/instalação",
+        "cw": 198,
+        "sw": 223,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal José Veríssimo",
+        "cw": 240,
+        "sw": 334,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "tr",
+        "cls": "lists-row-severe",
+        "text": "GOP-AR-2026-0010 Escola Municipal Professor Augusto Paulino Filho Substituição/Instalação ",
+        "cw": 309,
+        "sw": 340,
+        "ch": 473,
+        "sh": 473,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Professor Augusto Paulino Filho",
+        "cw": 240,
+        "sw": 434,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 285,
+        "sw": 328,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "5 - Orçamento em análise/decisão",
+        "cw": 198,
+        "sw": 210,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "Escola Municipal Isabel Mendes",
+        "cw": 240,
+        "sw": 331,
+        "ch": 41,
+        "sh": 41,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      },
+      {
+        "tag": "td",
+        "cls": "",
+        "text": "7 - Adequação em execução",
+        "cw": 285,
+        "sw": 305,
+        "ch": 49,
+        "sh": 49,
+        "overflowX": "visible",
+        "overflowY": "visible"
+      }
+    ]
+  },
+  {
+    "name": "mobile-light-dossie",
+    "themeClass": "",
+    "body": {
+      "width": 390,
+      "viewport": 390,
+      "height": 4506
+    },
+    "main": {
+      "sw": 390,
+      "cw": 390
+    },
+    "colors": {
+      "primary": "hsl(201, 89%, 52%)",
+      "secondary": "hsl(175, 80%, 35%)",
+      "bgApp": "hsl(210, 32%, 97%)",
+      "bgCard": "rgba(255, 255, 255, 0.94)",
+      "textMain": "hsl(217, 33%, 15%)",
+      "textLight": "hsl(215, 14%, 46%)",
+      "border": "rgba(100, 116, 139, 0.22)",
+      "amber": "hsl(35, 88%, 32%)",
+      "orange": "hsl(16, 85%, 38%)",
+      "red": "hsl(350, 78%, 38%)",
+      "green": "hsl(142, 70%, 28%)"
+    },
+    "headings": [
+      "Gestão de Climatização Escolar",
+      "Dossiê da Escola",
+      "Ações Rápidas",
+      "Status de Climatização",
+      "PREFEITURA DA CIDADE DO RIO DE JANEIRO",
+      "Dossiê Técnico-Executivo da Unidade Escolar",
+      "Escola Municipal Eurico Vilela",
+      "Infraestrutura de Climatização",
+      "Chamados e Demandas Vinculadas",
+      "Laudos e Evidências Técnicas",
+      "Linha do Tempo e Nota Histórica",
+      "Anotações Técnicas (Registro Interno GOP)"
+    ],
+    "nav": [
+      {
+        "text": "Painel Executivo",
+        "innerText": "Painel Executivo",
+        "aria": "Painel Executivo",
+        "title": "Painel Executivo"
+      },
+      {
+        "text": "Lista de chamados",
+        "innerText": "Lista de chamados",
+        "aria": "Lista de chamados",
+        "title": "Lista de chamados"
+      },
+      {
+        "text": "Consulta por Escola",
+        "innerText": "Consulta por Escola",
+        "aria": "Consulta por Escola",
+        "title": "Consulta por Escola"
+      },
+      {
+        "text": "Registrar chamado",
+        "innerText": "Registrar chamado",
+        "aria": "Registrar chamado",
+        "title": "Registrar chamado"
+      },
+      {
+        "text": "Comunicações",
+        "innerText": "Comunicações",
+        "aria": "Comunicações",
+        "title": "Comunicações"
+      },
+      {
+        "text": "Administração dos Dados",
+        "innerText": "Administração dos Dados",
+        "aria": "Administração dos Dados",
+        "title": "Administração dos Dados"
+      }
+    ],
+    "badges": [
+      {
+        "text": "Média",
+        "cls": "badge badge-priority-media",
+        "bg": "rgba(215, 140, 9, 0.14)",
+        "color": "rgb(153, 94, 10)"
+      },
+      {
+        "text": "7 - Adequação em execução",
+        "cls": "badge badge-status",
+        "bg": "rgba(13, 148, 136, 0.08)",
+        "color": "rgb(18, 161, 149)"
+      }
+    ],
+    "buttons": [
+      {
+        "text": "Painel Executivo",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 157
+      },
+      {
+        "text": "Lista de chamados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 171
+      },
+      {
+        "text": "Consulta por Escola",
+        "bg": "rgb(236, 248, 254)",
+        "color": "rgb(24, 165, 242)",
+        "height": 34,
+        "width": 196
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 172
+      },
+      {
+        "text": "Comunicações",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 146
+      },
+      {
+        "text": "Administração dos Dados",
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(68, 84, 105)",
+        "height": 34,
+        "width": 214
+      },
+      {
+        "text": "Modo Escuro",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 36,
+        "width": 178
+      },
+      {
+        "text": "Registrar chamado para esta unidade",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 38,
+        "width": 308
+      },
+      {
+        "text": "Ver chamados desta unidade",
+        "bg": "rgba(255, 255, 255, 0.94)",
+        "color": "rgb(26, 35, 51)",
+        "height": 38,
+        "width": 308
+      },
+      {
+        "text": "🖨️ Exportar Ficha (PDF)",
+        "bg": "rgba(255, 255, 255, 0.96)",
+        "color": "rgb(26, 35, 51)",
+        "height": 35,
+        "width": 185
+      },
+      {
+        "text": "Salvar Anotação",
+        "bg": "rgb(24, 165, 242)",
+        "color": "rgb(255, 255, 255)",
+        "height": 33,
+        "width": 135
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "span",
+        "cls": "badge badge-status",
+        "text": "7 - Adequação em execução",
+        "cw": 99,
+        "sw": 174,
+        "ch": 27,
+        "sh": 27,
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    ]
+  }
+]
