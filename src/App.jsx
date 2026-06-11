@@ -2974,6 +2974,7 @@ export default function App() {
                 <div className="filter-select-wrapper">
                   <span className="filter-label">Prioridade:</span>
                   <select
+                    aria-label="Filtro de prioridade"
                     className="form-control select-filter"
                     value={filterPriority}
                     onChange={(e) => setFilterPriority(e.target.value)}
@@ -2996,6 +2997,7 @@ export default function App() {
                 <div className="filter-select-wrapper">
                   <span className="filter-label">Status:</span>
                   <select
+                    aria-label="Filtro de status"
                     className="form-control select-filter"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
