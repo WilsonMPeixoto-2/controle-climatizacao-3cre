@@ -499,7 +499,7 @@ export default function OperationalMap({
   return (
     <div
       ref={elRef}
-      className="operational-map"
+      className="op-map"
       role="img"
       aria-label="Mapa Operacional por bairro da 3ª CRE. Exibe a severidade e os chamados agregados."
     />

@@ -4055,61 +4055,6 @@ textarea {
   0% {
     background-position: 200% 0;
   }
-  .lists-table-desktop-view {
-    display: none !important;
-  }
-}
-
-/* Print Overrides */
-@media print {
-  .btn-chevron-expand,
-  .btn-mobile-details,
-  .card-action-mobile,
-  .lists-table-mobile-view {
-    display: none !important;
-  }
-  .detail-row {
-    display: table-row !important;
-  }
-  .detail-grid {
-    background: none !important;
-    border: 1px solid #000 !important;
-  }
-}
-
-/* ==========================================================================
-   FASE 3: Shimmer Skeleton para Carregamento Inicial
-   ========================================================================== */
-
-.skeleton-container {
-  animation: tabTransition 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.skeleton-line,
-.skeleton-card {
-  border-radius: var(--radius-xs);
-  background: linear-gradient(
-    90deg,
-    var(--bg-app) 25%,
-    rgba(148, 163, 184, 0.08) 50%,
-    var(--bg-app) 75%
-  );
-  background-size: 400% 100%;
-  animation: shimmerPulse 1.8s ease-in-out infinite;
-}
-
-.skeleton-line.short {
-  width: 45%;
-}
-
-.skeleton-card {
-  border: 1px solid var(--border-color);
-}
-
-@keyframes shimmerPulse {
-  0% {
-    background-position: 200% 0;
-  }
   100% {
     background-position: -200% 0;
   }

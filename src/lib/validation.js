@@ -18,12 +18,18 @@ const sectorValidator = z.preprocess(
 );
 
 const priorityValidator = z.preprocess(
-  (value) => normalizePriority(value),
+  (value) => {
+    if (value === undefined || value === null || String(value).trim() === '') return '';
+    return normalizePriority(value);
+  },
   z.string().refine((val) => PRIORITY_LIST.includes(val), { message: 'Escolha a prioridade.' })
 );
 
 const aptidaoValidator = z.preprocess(
-  (value) => normalizeAptidao(value),
+  (value) => {
+    if (value === undefined || value === null || String(value).trim() === '') return '';
+    return normalizeAptidao(value);
+  },
   z.string().refine((val) => APTIDAO_LIST.includes(val), { message: 'Informe a aptidão técnica.' })
 );
 
