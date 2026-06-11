@@ -420,6 +420,7 @@ export default function App() {
     initialSelectedSchool?.unidade_escolar || ''
   );
   const [selectedSchool, setSelectedSchool] = useState(initialSelectedSchool);
+  const [timelineFilter, setTimelineFilter] = useState('all'); // 'all' | 'notes' | 'system'
   const [showLookupSuggestions, setShowLookupSuggestions] = useState(false);
 
   // Tickets tab states
@@ -528,6 +529,12 @@ export default function App() {
   ) => {
     setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, ticketId, templateIndex));
   };
+
+  // Reseta o filtro do histórico quando a escola selecionada muda
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTimelineFilter('all');
+  }, [selectedSchool]);
 
   // Handle dark/light theme classes on body
   useEffect(() => {
@@ -4421,11 +4428,37 @@ export default function App() {
                             style={{
                               fontSize: '13.5px',
                               fontWeight: '800',
-                              color: 'var(--text-main)'
+                              color: 'var(--text-main)',
+                              display: 'block',
+                              marginBottom: dossier.oldestActiveTicket ? '12px' : '0'
                             }}
                           >
                             {selectedSchool.acao_sugerida}
                           </span>
+                          {dossier.oldestActiveTicket && (
+                            <button
+                              className="btn-email-shortcut no-print"
+                              onClick={() => goToCommunicationForTicket(dossier.oldestActiveTicket, 'school')}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 14px',
+                                backgroundColor: 'var(--primary)',
+                                color: 'var(--text-on-primary)',
+                                border: 'none',
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                transition: 'var(--transition)',
+                                width: '100%',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Mail size={14} /> Minutar E-mail de Pendência
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -4787,8 +4820,44 @@ export default function App() {
 
                       {/* Bloco de Histórico (Linha do Tempo) */}
                       <div className="dashboard-section dossier-section">
-                        <div className="section-header">
-                          <h3>Linha do Tempo e Nota Histórica</h3>
+                        <div
+                          className="section-header"
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                            marginBottom: '16px'
+                          }}
+                        >
+                          <h3 style={{ margin: 0 }}>Linha do Tempo e Nota Histórica</h3>
+                          <div className="timeline-filters no-print" style={{ display: 'flex', gap: '6px' }}>
+                            {[
+                              { id: 'all', label: 'Todos' },
+                              { id: 'notes', label: 'Notas Técnicas' },
+                              { id: 'system', label: 'Histórico do Sistema' }
+                            ].map((opt) => (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => setTimelineFilter(opt.id)}
+                                style={{
+                                  padding: '5px 12px',
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  borderRadius: '20px',
+                                  border: '1px solid var(--border-color)',
+                                  backgroundColor: timelineFilter === opt.id ? 'var(--primary)' : 'var(--bg-app)',
+                                  color: timelineFilter === opt.id ? 'var(--text-on-primary)' : 'var(--text-light)',
+                                  cursor: 'pointer',
+                                  transition: 'var(--transition)'
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
                         <div className="timeline">
@@ -4848,17 +4917,33 @@ export default function App() {
                               (a, b) => new Date(b.data) - new Date(a.data)
                             );
 
-                            if (integrated.length === 0) {
+                            const filteredEvents = integrated.filter((ev) => {
+                              if (timelineFilter === 'notes') {
+                                return ev.tipo === 'comentario_local' || (ev.tipo === 'historico_db' && ev.autor !== 'Sistema');
+                              }
+                              if (timelineFilter === 'system') {
+                                return ev.tipo === 'historico_db' && ev.autor === 'Sistema';
+                              }
+                              return true;
+                            });
+
+                            if (filteredEvents.length === 0) {
                               return (
                                 <EmptyState
                                   iconType="history"
                                   title="Sem registros no histórico"
-                                  description="Nenhum marco de evento registrado no histórico para esta unidade."
+                                  description={
+                                    timelineFilter === 'notes'
+                                      ? "Nenhuma nota técnica registrada para esta unidade."
+                                      : timelineFilter === 'system'
+                                        ? "Nenhum histórico do sistema registrado para esta unidade."
+                                        : "Nenhum marco de evento registrado no histórico para esta unidade."
+                                  }
                                 />
                               );
                             }
 
-                            return integrated.map((ev) => (
+                            return filteredEvents.map((ev) => (
                               <div
                                 key={ev.id}
                                 className="timeline-event"
