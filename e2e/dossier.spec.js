@@ -64,4 +64,42 @@ test.describe('GOP Clima E2E tests', () => {
       await expect(htmlElement).not.toHaveClass(/dark-theme/);
     }
   });
+
+  test('deve exibir estimativa financeira, atalho de e-mail e filtros de timeline no dossiê', async ({ page }) => {
+    await page.goto('/');
+
+    // Clica na aba Consulta por Escola
+    await page.click('button:has-text("Consulta por Escola")');
+
+    // Pesquisa e seleciona a escola "Chanceler Willy Brandt"
+    const searchInput = page.locator('input[placeholder="Nome ou designação..."]');
+    await searchInput.fill('Chanceler Willy Brandt');
+    const suggestionItem = page.locator('.suggestion-item', { hasText: 'Chanceler Willy Brandt' });
+    await suggestionItem.waitFor({ state: 'visible' });
+    await suggestionItem.click();
+
+    // 1. Verifica a exibição da estimativa referencial e da nota legal
+    await expect(page.locator('text=Estimativa referencial preliminar, não orçamentária:')).toBeVisible();
+    await expect(page.locator('text=Valor meramente referencial para triagem gerencial')).toBeVisible();
+
+    // 2. Se houver atalho de e-mail de pendência (porque o CIEP Chanceler Willy Brandt tem chamados ativos)
+    const emailBtn = page.locator('.btn-email-shortcut');
+    if (await emailBtn.count() > 0) {
+      await emailBtn.click();
+      // Deve ter trocado para a aba de e-mail
+      await expect(page.locator('textarea')).toBeVisible();
+      // Volta para a aba Consulta por Escola
+      await page.click('button:has-text("Consulta por Escola")');
+    }
+
+    // 3. Verifica os botões de filtro na linha do tempo
+    await expect(page.locator('button:has-text("Todos")')).toBeVisible();
+    await expect(page.locator('button:has-text("Notas Técnicas")')).toBeVisible();
+    await expect(page.locator('button:has-text("Histórico do Sistema")')).toBeVisible();
+
+    // Clica em Notas Técnicas e verifica o comportamento
+    await page.click('button:has-text("Notas Técnicas")');
+    // Clica em Histórico do Sistema
+    await page.click('button:has-text("Histórico do Sistema")');
+  });
 });

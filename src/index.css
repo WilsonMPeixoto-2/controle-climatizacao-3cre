@@ -3087,6 +3087,14 @@ html:not(.dark-theme) .main-portal-title {
     border-left-color: #059669 !important;
   }
 
+  /* Estimativa Financeira */
+  body.printing-school-dossier .school-dossier-print-scope .dossier-financial-estimate,
+  .school-dossier-print-scope .dossier-financial-estimate {
+    background-color: #fcf8f2 !important; /* warm tint */
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #c2410c !important; /* Laranja escuro WCAG para print */
+  }
+
   /* Prioridades de chamados */
   body.printing-school-dossier .school-dossier-print-scope .badge-priority-alta,
   body.printing-school-dossier .school-dossier-print-scope .badge-priority-crítica,
