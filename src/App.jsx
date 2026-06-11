@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, useRef } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -46,9 +46,7 @@ import {
   sectorSummary,
   compileEmailTemplate,
   searchSchools,
-  stageGroupCounts,
   SECTORS,
-  aggregateBairroStats,
   severidadeInatividade,
   normalizeSector,
   matchesSchool,
@@ -577,6 +575,9 @@ export default function App() {
       setTicketAttachments((prev) => [anexo, ...prev]);
       setSchoolAttachments((prev) => [anexo, ...prev]);
       setAllAttachments((prev) => [anexo, ...prev]);
+      if (anexo && anexo._historyEvent) {
+        setHistory((prev) => [anexo._historyEvent, ...prev]);
+      }
       triggerToast('Arquivo enviado com sucesso!', 'success');
     } catch (err) {
       console.error('Erro no upload do anexo:', err);
@@ -592,10 +593,13 @@ export default function App() {
       return;
 
     try {
-      await deleteTicketAttachment(supabaseClient, attachment);
+      const deleteEvent = await deleteTicketAttachment(supabaseClient, attachment);
       setTicketAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
       setSchoolAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
       setAllAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
+      if (deleteEvent && typeof deleteEvent === 'object') {
+        setHistory((prev) => [deleteEvent, ...prev]);
+      }
       triggerToast('Arquivo excluído com sucesso!', 'success');
     } catch (err) {
       console.error('Erro ao excluir anexo:', err);
@@ -792,7 +796,6 @@ export default function App() {
 
   // Metric Computations — centralizadas no módulo de lógica (data dinâmica)
   const metrics = computeMetrics(tickets, todayRef());
-  const stageCounts = stageGroupCounts(tickets);
   const totalTickets = metrics.total;
   const openTickets = metrics.open;
   const inactivePlus7 = metrics.inactivePlus7; // SLA âmbar ou pior
@@ -1504,21 +1507,9 @@ export default function App() {
 
       if (supabaseClient) {
         try {
-          // 1. Inserir chamado no Supabase (o trigger irá gerar o id_chamado) e recuperar o registro inserido
-          const { data: dbRecord, error: tkErr } = await supabaseClient
-            .from('chamados')
-            .insert(ticketRecord)
-            .select('*')
-            .single();
-
-          if (tkErr) throw tkErr;
-          finalTicketRecord = dbRecord;
-
-          // 2. Criar e inserir o evento inicial do histórico referenciando o id_chamado retornado
           const initialEvent = {
             id_evento: `EV-${crypto.randomUUID()}`, // ID robusto para evitar conflitos de chaves primarias
             data: nowIso,
-            id_chamado: dbRecord.id_chamado,
             designacao: formSelectedSchool.designacao,
             unidade_escolar: formSelectedSchool.unidade_escolar,
             marco_relevante: newTicket.status_atual,
@@ -1527,27 +1518,23 @@ export default function App() {
             observacao: `Abertura oficial do chamado. Demanda cadastrada para o local: ${newTicket.local_demanda}.`
           };
 
-          const { error: evErr } = await supabaseClient.from('historico').insert(initialEvent);
-          if (evErr) {
-            // Rollback transacional compensatório: removemos o chamado recém-criado para evitar registro órfão
-            console.error(
-              'Falha ao registrar histórico inicial. Executando rollback (deleção) do chamado...',
-              evErr
-            );
-            const { error: rollbackErr } = await supabaseClient
-              .from('chamados')
-              .delete()
-              .eq('id_chamado', dbRecord.id_chamado);
-            if (rollbackErr) {
-              console.error(
-                'ERRO GRAVE: Falha ao executar rollback (deleção) no Supabase:',
-                rollbackErr
-              );
+          // 1. Gravação pessimista transacional via RPC no Supabase
+          const { data: dbRecord, error: rpcErr } = await supabaseClient.rpc(
+            'create_ticket_with_history',
+            {
+              p_ticket: ticketRecord,
+              p_event: initialEvent
             }
-            throw evErr;
-          }
+          );
 
-          finalEventRecord = initialEvent;
+          if (rpcErr) throw rpcErr;
+          finalTicketRecord = dbRecord;
+
+          // Atualiza o evento final com o id_chamado gerado no banco de dados
+          finalEventRecord = {
+            ...initialEvent,
+            id_chamado: dbRecord.id_chamado
+          };
         } catch (err) {
           console.error('Cloud insert failed:', err);
           triggerToast(

@@ -78,6 +78,26 @@ function createMockSupabase(opts = {}) {
           })
         })
       },
+      rpc: async (name, args) => {
+        if (name === 'create_attachment_with_history') {
+          if (opts.insertFails) return { data: null, error: new Error('DB insert failed') };
+          ops.inserts++;
+          const newRecord = {
+            id: ++idCounter,
+            criado_em: new Date().toISOString(),
+            ...args.p_attachment
+          };
+          db.push(newRecord);
+          return { data: newRecord, error: null };
+        }
+        if (name === 'delete_attachment_with_history') {
+          ops.deletes++;
+          const idx = db.findIndex(r => r.id === args.p_attachment_id);
+          if (idx !== -1) db.splice(idx, 1);
+          return { data: null, error: null };
+        }
+        return { data: null, error: new Error(`Unknown RPC ${name}`) };
+      },
       from: (table) => ({
         insert: (record) => ({
           select: () => ({

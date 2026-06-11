@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import polylabel from 'polylabel';
 import creBairros from '../data/cre-bairros.geo.json';
 import { normalizeString } from '../lib/logic.js';
 import { topRiskBairros } from '../lib/mapRisk.js';
@@ -73,6 +74,29 @@ function rotuloNivel(nivel) {
   }
 }
 
+// Ponto ótimo de rótulo ("pole of inaccessibility") — sempre DENTRO do polígono,
+// mesmo em formas côncavas ou em "L", onde o centro do bounding box cai fora.
+function labelPointFor(layer) {
+  const gj = layer.feature?.geometry;
+  try {
+    if (gj?.type === 'Polygon') {
+      const p = polylabel(gj.coordinates, 0.0001);
+      return L.latLng(p[1], p[0]);
+    }
+    if (gj?.type === 'MultiPolygon') {
+      let best = null;
+      for (const poly of gj.coordinates) {
+        const p = polylabel(poly, 0.0001);
+        if (!best || p.distance > best.distance) best = p;
+      }
+      if (best) return L.latLng(best[1], best[0]);
+    }
+  } catch {
+    // cai no fallback geométrico abaixo
+  }
+  return layer.getBounds().getCenter();
+}
+
 export default function OperationalMap({
   selectedSchool,
   theme,
@@ -103,7 +127,7 @@ export default function OperationalMap({
     for (const [bairroNorm, b] of topRiskBairros(risk, 3)) {
       const layer = layersRef.current[bairroNorm];
       if (!layer) continue;
-      const center = layer.getBounds().getCenter();
+      const center = labelPointFor(layer);
       const html = `
         <div class="map-toplabel nivel-${b.nivel}">
           <span class="map-toplabel-nome">${b.nome_exibicao}</span>
@@ -367,6 +391,7 @@ export default function OperationalMap({
     });
 
     renderTopLabels(); // rótulos acompanham os dados (criação e atualização)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [risk, theme]);
 
   // 4. Efeito de Realce e Foco por Polígono da Escola Selecionada (Consulta Rápida)

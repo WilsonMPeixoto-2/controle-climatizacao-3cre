@@ -261,6 +261,19 @@ try {
         })
       })
     },
+    rpc: async (name, args) => {
+      if (name === 'create_attachment_with_history') {
+        const newRecord = { id: mockDb.length + 1, criado_em: new Date().toISOString(), ...args.p_attachment };
+        mockDb.push(newRecord);
+        return { data: newRecord, error: null };
+      }
+      if (name === 'delete_attachment_with_history') {
+        const idx = mockDb.findIndex(r => r.id === args.p_attachment_id);
+        if (idx !== -1) mockDb.splice(idx, 1);
+        return { data: null, error: null };
+      }
+      return { data: null, error: new Error(`Unknown RPC ${name}`) };
+    },
     from: (table) => ({
       insert: (record) => ({
         select: () => ({
