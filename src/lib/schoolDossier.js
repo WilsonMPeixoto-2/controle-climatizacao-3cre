@@ -7,6 +7,20 @@
 
 import { isClosed, isSuspended, inactivityDays, normalizePriority, isTruthyFlag, matchesSchool } from './logic.js';
 
+export const EQUIPMENT_REFERENCE_COST = 3000;
+export const ELECTRICAL_ADAPTATION_REFERENCE_COST = 2000;
+
+/**
+ * Calcula o investimento referencial preliminar (não-orçamentário) da escola.
+ */
+export function calculateEstimatedInvestment(school) {
+  if (!school) return 0;
+  const necessidade = Number(school.necessidade_aparelhos || 0);
+  const semAparelho = Number(school.salas_sem_aparelho || 0);
+
+  return (necessidade * EQUIPMENT_REFERENCE_COST) + (semAparelho * ELECTRICAL_ADAPTATION_REFERENCE_COST);
+}
+
 /**
  * Calcula o percentual de climatização das salas de aula.
  * Retorna null se não houver salas cadastradas ou se o total de salas for zero.
@@ -201,6 +215,8 @@ export function getSchoolDossierData({
         )[0]
       : null;
 
+  const investmentEstimate = calculateEstimatedInvestment(school);
+
   return {
     coveragePercent,
     status,
@@ -211,6 +227,7 @@ export function getSchoolDossierData({
     latestUpdate,
     oldestActiveTicket,
     activeTickets,
-    schoolTickets
+    schoolTickets,
+    investmentEstimate
   };
 }

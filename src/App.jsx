@@ -4336,6 +4336,57 @@ export default function App() {
                           </div>
                         </div>
 
+                        {/* Quadro Financeiro Referencial */}
+                        <div
+                          className="dossier-financial-estimate"
+                          style={{
+                            marginTop: '20px',
+                            padding: '16px',
+                            borderRadius: 'var(--radius-xs)',
+                            backgroundColor: 'var(--bg-app)',
+                            border: '1px solid var(--border-color)',
+                            borderLeft: '4px solid var(--color-orange)'
+                          }}
+                        >
+                          <strong
+                            style={{
+                              fontSize: '11px',
+                              display: 'block',
+                              marginBottom: '6px',
+                              textTransform: 'uppercase',
+                              color: 'var(--text-light)',
+                              letterSpacing: '0.5px'
+                            }}
+                          >
+                            💰 Estimativa referencial preliminar, não orçamentária:
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '20px',
+                              fontWeight: '900',
+                              color: 'var(--color-orange)',
+                              display: 'block',
+                              marginBottom: '6px'
+                            }}
+                          >
+                            {dossier.investmentEstimate.toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            })}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              color: 'var(--text-muted)',
+                              lineHeight: '1.4',
+                              display: 'block',
+                              fontWeight: '500'
+                            }}
+                          >
+                            * Valor meramente referencial para triagem gerencial. Não substitui orçamento, pesquisa de preços, projeto elétrico ou processo de contratação.
+                          </span>
+                        </div>
+
                         {/* POP Action */}
                         <div
                           className={`dossier-pop-action status-${dossier.status}`}
