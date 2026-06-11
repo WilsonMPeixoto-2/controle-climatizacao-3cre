@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import polylabel from 'polylabel';
 import creBairros from '../data/cre-bairros.geo.json';
-import { normalizeString } from '../lib/logic.js';
+import { normalizeString, escapeHtml } from '../lib/logic.js';
 import { topRiskBairros } from '../lib/mapRisk.js';
 
 /**
@@ -128,9 +128,10 @@ export default function OperationalMap({
       const layer = layersRef.current[bairroNorm];
       if (!layer) continue;
       const center = labelPointFor(layer);
+      const isCritico = b.nivel === 'critico';
       const html = `
-        <div class="map-toplabel nivel-${b.nivel}">
-          <span class="map-toplabel-nome">${b.nome_exibicao}</span>
+        <div class="map-toplabel nivel-${b.nivel} ${isCritico ? 'cre-glow-pulse' : ''}">
+          <span class="map-toplabel-nome">${escapeHtml(b.nome_exibicao)}</span>
           <span class="map-toplabel-meta">${rotuloNivel(b.nivel)} · ${b.chamados_ativos} ativos</span>
         </div>`;
       const marker = L.marker(center, {
@@ -323,19 +324,41 @@ export default function OperationalMap({
         temCritico: false
       };
 
+      const escapedNm = escapeHtml(nm);
       const normais = Math.max(0, b.chamados_ativos - b.criticos - b.atencao);
       const pct = (x) => (b.chamados_ativos ? Math.round((x / b.chamados_ativos) * 100) : 0);
+
+      let ofensoresHtml = '';
+      if (b.topOfensores && b.topOfensores.length > 0) {
+        ofensoresHtml = `
+          <div class="map-tooltip-ofensores">
+            <div class="map-tooltip-ofensores-title">Principais Ofensores:</div>
+            ${b.topOfensores
+              .map(
+                (o) => `
+              <div class="map-tooltip-ofensor-item">
+                <span class="ofensor-id">${escapeHtml(o.id_chamado)}</span> · 
+                <span class="ofensor-school">${escapeHtml(o.unidade_escolar)}</span> 
+                <span class="ofensor-days">(${o.inactivityDays}d)</span>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `;
+      }
 
       // Tooltip dinâmico rico atualizado
       const tooltipHtml = `
         <div class="map-tooltip map-tooltip-v2">
           <div class="map-tooltip-head">
-            <span class="map-tooltip-title">${nm}</span>
+            <span class="map-tooltip-title">${escapedNm}</span>
             <span class="map-nivel-badge nivel-${b.nivel}">${rotuloNivel(b.nivel)}</span>
           </div>
-          <div class="map-tooltip-row"><span>Escolas</span><strong>${b.escolas_cadastradas}</strong></div>
-          <div class="map-tooltip-row"><span>Chamados ativos</span><strong>${b.chamados_ativos}</strong></div>
-          <div class="map-tooltip-row"><span>Densidade por escola</span><strong>${b.densidade.toFixed(2)}</strong></div>
+          <div class="map-tooltip-row"><span>Risco Territorial (IRT)</span><strong>${b.risco.toFixed(1)}</strong></div>
+          <div class="map-tooltip-row"><span>Escolas Cadastradas</span><strong>${b.escolas_cadastradas}</strong></div>
+          <div class="map-tooltip-row"><span>Chamados Ativos</span><strong>${b.chamados_ativos}</strong></div>
+          <div class="map-tooltip-row"><span>Densidade por Escola</span><strong>${b.densidade.toFixed(2)}</strong></div>
           ${
             b.chamados_ativos > 0
               ? `<div class="map-compbar" role="img"
@@ -351,6 +374,7 @@ export default function OperationalMap({
                  </div>`
               : ''
           }
+          ${ofensoresHtml}
         </div>
       `;
 
@@ -382,6 +406,7 @@ export default function OperationalMap({
       if (!el) return;
       const b = risk[norm];
       el.classList.toggle('is-critico', Boolean(b && b.temCritico));
+      el.classList.toggle('cre-glow-pulse-poly', Boolean(b && b.nivel === 'critico'));
       el.setAttribute(
         'aria-label',
         b
