@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "db:types": "supabase gen types typescript --project-id wmnzcujojlygkcszocwb > src/types/supabase.ts",
-    "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/school-dossier.test.mjs && node test/smoke.test.mjs",
+    "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/school-dossier.test.mjs && node test/smoke.test.mjs && node test/map-risk.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "preview": "vite preview"

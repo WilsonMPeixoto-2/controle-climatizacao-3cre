@@ -1,101 +1,84 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import creBairros from '../data/cre-bairros.geo.json';
-import { normalizeString, aggregateBairroStats } from '../lib/logic.js';
+import { normalizeString } from '../lib/logic.js';
+import { topRiskBairros } from '../lib/mapRisk.js';
 
-const TOP6 = [
-  'inhauma',
-  'engenho de dentro',
-  'lins de vasconcelos',
-  'piedade',
-  'engenho novo',
-  'bonsucesso'
-];
-
-// Função pura de estilo coroplético baseada no tema e nas estatísticas
-function getBairroStyle(feature, theme, stats) {
-  const nm = feature.properties?.NOME || '';
-  const normalized = normalizeString(nm);
-  const bairroData = stats[normalized];
-  const isDark = theme === 'dark';
-
-  let color;
-  let fillColor;
-  let fillOpacity;
-  let weight;
-
-  if (isDark) {
-    color = 'rgba(148, 163, 184, 0.4)';
-    fillColor = 'hsl(215, 12%, 40%)';
-    fillOpacity = 0.08;
-    weight = 1.2;
-
-    if (bairroData && bairroData.chamados_ativos > 0) {
-      if (bairroData.criticos > 0) {
-        color = 'hsl(350, 80%, 55%)';
-        fillColor = 'hsl(350, 75%, 48%)';
-        fillOpacity = 0.26;
-        weight = 1.6;
-      } else if (bairroData.atencao > 0) {
-        color = 'hsl(38, 95%, 52%)';
-        fillColor = 'hsl(38, 92%, 48%)';
-        fillOpacity = 0.22;
-        weight = 1.5;
-      } else {
-        color = 'hsl(201, 85%, 55%)';
-        fillColor = 'hsl(201, 80%, 48%)';
-        fillOpacity = 0.18;
-        weight = 1.4;
-      }
-    }
-  } else {
-    // Tema Claro: Paleta Premium Cartográfica Translúcida de Alta Fidelidade (Estilo Editorial)
-    // Contornos dinâmicos para limites nítidos e ricos entre os bairros (exatamente como no Dark Mode)
-    fillOpacity = 0.45; // Translúcido para ver as ruas e detalhes sob os polígonos
-
-    if (bairroData && bairroData.chamados_ativos > 0) {
-      if (bairroData.criticos > 0) {
-        color = '#D98287'; // Borda vermelha fosca sólida
-        fillColor = '#FCE8E6'; // Vermelho translúcido muito suave
-        weight = 1.6;
-      } else if (bairroData.atencao > 0) {
-        color = '#D8B85A'; // Borda amarela fosca sólida
-        fillColor = '#FDF6E2'; // Amarelo translúcido muito suave
-        weight = 1.4;
-      } else {
-        color = '#7DAFCC'; // Borda azul fosca sólida
-        fillColor = '#EBF3F9'; // Azul translúcido muito suave
-        weight = 1.3;
-      }
-    } else if (bairroData && bairroData.escolas_cadastradas > 0) {
-      color = '#6EAD7A'; // Borda verde fosca sólida ("Em dia")
-      fillColor = '#EEF7F0'; // Verde translúcido muito suave
-      weight = 1.2;
-    } else {
-      color = 'rgba(148, 163, 184, 0.45)'; // Contorno cinza-azulado levíssimo
-      fillColor = 'transparent'; // Sem preenchimento para visual cartográfico limpo
-      fillOpacity = 0;
-      weight = 0.85;
-    }
+/**
+ * Paleta IRT — espelha os tokens --map-risk-* do index.css.
+ * (Leaflet pinta SVG por atributo; valores concretos por tema, AA verificado.)
+ */
+const RISK_PAINT = {
+  dark: {
+    critico:       { stroke: 'hsl(350, 85%, 62%)', fill: 'hsl(349, 75%, 50%)' },
+    alto:          { stroke: 'hsl(22, 90%, 58%)',  fill: 'hsl(22, 85%, 50%)'  },
+    moderado:      { stroke: 'hsl(38, 95%, 52%)',  fill: 'hsl(38, 92%, 48%)'  },
+    vigilancia:    { stroke: 'hsl(201, 85%, 55%)', fill: 'hsl(201, 80%, 48%)' },
+    'em-dia':      { stroke: 'hsla(160, 35%, 55%, .55)', fill: 'hsl(160, 30%, 40%)' },
+    'sem-cobertura': { stroke: 'rgba(148,163,184,.35)', fill: 'transparent' }
+  },
+  light: {
+    critico:       { stroke: '#C2434E', fill: '#F6D9D8' },
+    alto:          { stroke: '#CC7A3D', fill: '#FBE9DC' },
+    moderado:      { stroke: '#D8B85A', fill: '#FDF6E2' },
+    vigilancia:    { stroke: '#7DAFCC', fill: '#EBF3F9' },
+    'em-dia':      { stroke: '#6EAD7A', fill: '#EEF7F0' },
+    'sem-cobertura': { stroke: 'rgba(148,163,184,.45)', fill: 'transparent' }
   }
+};
+
+/** Opacidade do preenchimento por banda de pressão (volume), por tema. */
+const FILL_BY_PRESSURE = {
+  dark:  { 0: 0.08, 1: 0.18, 2: 0.27, 3: 0.36 },
+  light: { 0: 0,    1: 0.34, 2: 0.48, 3: 0.62 }
+};
+
+function getBairroStyle(feature, theme, risk) {
+  const nm = feature.properties?.NOME || '';
+  const b = risk[normalizeString(nm)];
+  const isDark = theme === 'dark';
+  const paint = RISK_PAINT[isDark ? 'dark' : 'light'];
+
+  const nivel = b ? b.nivel : 'sem-cobertura';
+  const pressao = b ? b.pressao : 0;
+  const p = paint[nivel] || paint['sem-cobertura'];
+
+  // Em-dia/sem-cobertura mantêm a base leve atual; níveis ativos escalam por pressão
+  const fillOpacity =
+    nivel === 'em-dia'
+      ? (isDark ? 0.10 : 0.45)
+      : FILL_BY_PRESSURE[isDark ? 'dark' : 'light'][pressao];
+
+  // Borda: presença de crítico é um canal próprio, independente da cor
+  const weight = b && b.temCritico ? 2.4 : nivel === 'alto' ? 1.7 : nivel === 'sem-cobertura' ? 0.85 : 1.3;
 
   return {
-    color: color,
-    weight: weight,
-    opacity: isDark ? 0.95 : 0.85, // strokeOpacity: 0.85 no light mode para contornos nítidos e limpos
-    fillColor: fillColor,
-    fillOpacity: fillOpacity
+    color: p.stroke,
+    weight,
+    opacity: isDark ? 0.95 : 0.85,
+    fillColor: p.fill,
+    fillOpacity
   };
 }
 
+function rotuloNivel(nivel) {
+  switch (nivel) {
+    case 'critico': return 'Crítico';
+    case 'alto': return 'Alto';
+    case 'moderado': return 'Moderado';
+    case 'vigilancia': return 'Vigilância';
+    case 'em-dia': return 'Em dia';
+    default: return 'Sem cobertura';
+  }
+}
+
 export default function OperationalMap({
-  tickets,
-  schools,
   selectedSchool,
   theme,
   onSelectBairro,
-  focusedBairro
+  focusedBairro,
+  risk
 }) {
   const elRef = useRef(null);
   const mapRef = useRef(null);
@@ -104,7 +87,35 @@ export default function OperationalMap({
   const layersRef = useRef({});
   const labelMarkersRef = useRef([]);
 
-  const stats = useMemo(() => aggregateBairroStats(tickets, schools), [tickets, schools]);
+  // Rótulos permanentes dinâmicos: os 3 bairros de maior risco (nível alto/crítico)
+  function renderTopLabels() {
+    if (!mapRef.current) return;
+    labelMarkersRef.current.forEach((m) => {
+      try {
+        m.unbindTooltip();
+        m.remove();
+      } catch {
+        // Silencioso
+      }
+    });
+    labelMarkersRef.current = [];
+
+    for (const [bairroNorm, b] of topRiskBairros(risk, 3)) {
+      const layer = layersRef.current[bairroNorm];
+      if (!layer) continue;
+      const center = layer.getBounds().getCenter();
+      const html = `
+        <div class="map-toplabel nivel-${b.nivel}">
+          <span class="map-toplabel-nome">${b.nome_exibicao}</span>
+          <span class="map-toplabel-meta">${rotuloNivel(b.nivel)} · ${b.chamados_ativos} ativos</span>
+        </div>`;
+      const marker = L.marker(center, {
+        interactive: false,
+        icon: L.divIcon({ className: 'map-toplabel-wrap', html, iconSize: null })
+      }).addTo(mapRef.current);
+      labelMarkersRef.current.push(marker);
+    }
+  }
 
   // 2. Efeito de Inicialização do Mapa (Roda apenas uma vez no mount)
   useEffect(() => {
@@ -114,8 +125,8 @@ export default function OperationalMap({
       center: [-22.88, -43.28], // Zona Norte fallback
       zoom: 12,
       zoomControl: true,
-      scrollWheelZoom: true, // Habilitado para zoom fluido com a roda do mouse
-      doubleClickZoom: true, // Habilitado para zoom com duplo clique
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
       boxZoom: true,
       dragging: true,
       attributionControl: true
@@ -138,69 +149,31 @@ export default function OperationalMap({
     // Instancia camada GeoJSON
     const geoJson = L.geoJSON(creBairros, {
       className: 'cre-glow',
-      style: (f) => getBairroStyle(f, theme, stats),
+      style: (f) => getBairroStyle(f, theme, risk),
       onEachFeature: (f, l) => {
         const nm = f.properties?.NOME || '';
         const normalized = normalizeString(nm);
-        const bairroData = stats[normalized] || {
-          escolas_cadastradas: 0,
-          chamados_ativos: 0,
-          criticos: 0,
-          atencao: 0
-        };
 
         // Guarda referência do layer para foco futuro
         layersRef.current[normalized] = l;
 
-        // Tooltip dinâmico rico no hover
-        const tooltipHtml = `
-          <div class="map-tooltip">
-            <div class="map-tooltip-title">${nm}</div>
-            <div class="map-tooltip-row"><span>Escolas:</span> <strong>${bairroData.escolas_cadastradas}</strong></div>
-            <div class="map-tooltip-row"><span>Chamados Ativos:</span> <strong>${bairroData.chamados_ativos}</strong></div>
-            <div class="map-tooltip-row" style="color: var(--color-red); font-weight: bold;"><span>Críticos:</span> <strong>${bairroData.criticos}</strong></div>
-            <div class="map-tooltip-row" style="color: var(--color-amber); font-weight: bold;"><span>Atenção:</span> <strong>${bairroData.atencao}</strong></div>
-          </div>
-        `;
-
-        // Todos os bairros mostram o tooltip dinâmico no hover com estatísticas
-        l.bindTooltip(tooltipHtml, {
-          sticky: true,
-          direction: 'auto',
-          className: 'cre-tooltip-custom'
-        });
-
-        // Para os TOP 6 bairros, cria um marcador invisível não-interativo no centro do polígono para exibir o nome permanentemente
-        if (TOP6.includes(normalized)) {
-          const center = l.getBounds().getCenter();
-          const labelMarker = L.marker(center, {
-            icon: L.divIcon({
-              className: 'cre-marker-hidden',
-              html: '',
-              iconSize: [0, 0]
-            }),
-            interactive: false // Não intercepta cliques ou hovers
+        // Estrutura estática (não depende de dados): registrada UMA vez, no add.
+        // O aria-label dinâmico e a classe is-critico vivem no useEffect reativo.
+        l.on('add', () => {
+          const el = l.getElement && l.getElement();
+          if (!el) return;
+          el.setAttribute('tabindex', '0');
+          el.setAttribute('role', 'button');
+          el.classList.add('bairro-focavel');
+          L.DomEvent.on(el, 'keydown', (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault();
+              if (onSelectBairro) onSelectBairro(normalized);
+            }
           });
-          labelMarker.bindTooltip(nm, {
-            permanent: true,
-            direction: 'center',
-            className: 'cre-label'
-          });
-          labelMarker.addTo(map);
-          labelMarkersRef.current.push(labelMarker);
-        }
-
-        // Interação hover local (alteração visual)
-        l.on('mouseover', () => {
-          const currentStyle = getBairroStyle(f, theme, stats);
-          l.setStyle({ fillOpacity: currentStyle.fillOpacity + 0.12 });
-        });
-        l.on('mouseout', () => {
-          const currentStyle = getBairroStyle(f, theme, stats);
-          l.setStyle({ fillOpacity: currentStyle.fillOpacity });
         });
 
-        // Evento de Clique: aciona o callback somente leitura no App.jsx
+        // Evento de Clique: aciona o callback no App.jsx
         l.on('click', () => {
           if (onSelectBairro) {
             onSelectBairro(normalized);
@@ -211,7 +184,7 @@ export default function OperationalMap({
     geoJsonRef.current = geoJson;
 
     map.fitBounds(geoJson.getBounds(), { padding: [22, 22] });
-    map.setMaxBounds(geoJson.getBounds().pad(2.5)); // Limites expandidos
+    map.setMaxBounds(geoJson.getBounds().pad(2.5));
 
     // Corrige renderizações tardias do container CSS com segurança
     const t = setTimeout(() => {
@@ -245,7 +218,6 @@ export default function OperationalMap({
       }
       clearTimeout(t);
       if (mapRef.current) {
-        // 1. Fecha tooltip do mapa de forma segura
         try {
           if (mapRef.current.closeTooltip) {
             mapRef.current.closeTooltip();
@@ -254,7 +226,6 @@ export default function OperationalMap({
           // Silencioso
         }
 
-        // 2. Limpa marcadores permanentes de bairros e desvincula seus tooltips
         labelMarkersRef.current.forEach((m) => {
           try {
             m.unbindTooltip();
@@ -265,7 +236,6 @@ export default function OperationalMap({
         });
         labelMarkersRef.current = [];
 
-        // 3. Limpa listeners e tooltips do GeoJSON de forma isolada
         try {
           if (geoJsonRef.current) {
             geoJsonRef.current.eachLayer((l) => {
@@ -281,7 +251,6 @@ export default function OperationalMap({
           // Silencioso
         }
 
-        // 4. Remove o mapa do DOM de forma prioritária
         try {
           mapRef.current.remove();
         } catch (e) {
@@ -294,7 +263,7 @@ export default function OperationalMap({
       layersRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Inicialização estrita de ciclo único!
+  }, []);
 
   // 3. Efeito Reativo de Atualização de Dados e Tema (In-place sem destruir o mapa)
   useEffect(() => {
@@ -310,29 +279,54 @@ export default function OperationalMap({
     }
 
     // Atualiza os estilos de cada polígono GeoJSON
-    geoJsonRef.current.setStyle((f) => getBairroStyle(f, theme, stats));
+    geoJsonRef.current.setStyle((f) => getBairroStyle(f, theme, risk));
 
-    // Atualiza os tooltips e comportamentos hover reativos de cada polígono
+    // Atualiza os tooltips, aria-labels, classes is-critico e comportamentos hover
     geoJsonRef.current.eachLayer((l) => {
       const f = l.feature;
       if (!f) return;
       const nm = f.properties?.NOME || '';
       const normalized = normalizeString(nm);
-      const bairroData = stats[normalized] || {
+      const b = risk[normalized] || {
+        nome_exibicao: nm,
         escolas_cadastradas: 0,
         chamados_ativos: 0,
         criticos: 0,
-        atencao: 0
+        atencao: 0,
+        risco: 0,
+        nivel: 'sem-cobertura',
+        densidade: 0,
+        temCritico: false
       };
+
+      const normais = Math.max(0, b.chamados_ativos - b.criticos - b.atencao);
+      const pct = (x) => (b.chamados_ativos ? Math.round((x / b.chamados_ativos) * 100) : 0);
 
       // Tooltip dinâmico rico atualizado
       const tooltipHtml = `
-        <div class="map-tooltip">
-          <div class="map-tooltip-title">${nm}</div>
-          <div class="map-tooltip-row"><span>Escolas:</span> <strong>${bairroData.escolas_cadastradas}</strong></div>
-          <div class="map-tooltip-row"><span>Chamados Ativos:</span> <strong>${bairroData.chamados_ativos}</strong></div>
-          <div class="map-tooltip-row" style="color: var(--color-red); font-weight: bold;"><span>Críticos:</span> <strong>${bairroData.criticos}</strong></div>
-          <div class="map-tooltip-row" style="color: var(--color-amber); font-weight: bold;"><span>Atenção:</span> <strong>${bairroData.atencao}</strong></div>
+        <div class="map-tooltip map-tooltip-v2">
+          <div class="map-tooltip-head">
+            <span class="map-tooltip-title">${nm}</span>
+            <span class="map-nivel-badge nivel-${b.nivel}">${rotuloNivel(b.nivel)}</span>
+          </div>
+          <div class="map-tooltip-row"><span>Escolas</span><strong>${b.escolas_cadastradas}</strong></div>
+          <div class="map-tooltip-row"><span>Chamados ativos</span><strong>${b.chamados_ativos}</strong></div>
+          <div class="map-tooltip-row"><span>Densidade por escola</span><strong>${b.densidade.toFixed(2)}</strong></div>
+          ${
+            b.chamados_ativos > 0
+              ? `<div class="map-compbar" role="img"
+                    aria-label="Composição: ${b.criticos} críticos, ${b.atencao} em atenção, ${normais} regulares">
+                   <span class="seg seg-criticos" style="width:${pct(b.criticos)}%"></span>
+                   <span class="seg seg-atencao" style="width:${pct(b.atencao)}%"></span>
+                   <span class="seg seg-normais" style="width:${pct(normais)}%"></span>
+                 </div>
+                 <div class="map-compbar-caption">
+                   <em class="c-crit">${b.criticos} crít.</em> ·
+                   <em class="c-aten">${b.atencao} atenção</em> ·
+                   <em class="c-norm">${normais} regulares</em>
+                 </div>`
+              : ''
+          }
         </div>
       `;
 
@@ -348,15 +342,32 @@ export default function OperationalMap({
       l.off('mouseout');
 
       l.on('mouseover', () => {
-        const currentStyle = getBairroStyle(f, theme, stats);
+        const currentStyle = getBairroStyle(f, theme, risk);
         l.setStyle({ fillOpacity: currentStyle.fillOpacity + 0.12 });
       });
       l.on('mouseout', () => {
-        const currentStyle = getBairroStyle(f, theme, stats);
+        const currentStyle = getBairroStyle(f, theme, risk);
         l.setStyle({ fillOpacity: currentStyle.fillOpacity });
       });
     });
-  }, [stats, theme]);
+
+    // Ponto único de sincronização do estado visual derivado de dados:
+    // classes + aria-label
+    Object.entries(layersRef.current).forEach(([norm, layer]) => {
+      const el = layer.getElement && layer.getElement();
+      if (!el) return;
+      const b = risk[norm];
+      el.classList.toggle('is-critico', Boolean(b && b.temCritico));
+      el.setAttribute(
+        'aria-label',
+        b
+          ? `${b.nome_exibicao}: nível ${rotuloNivel(b.nivel)}, ${b.chamados_ativos} chamados ativos, ${b.criticos} críticos`
+          : 'Bairro sem cobertura cadastrada'
+      );
+    });
+
+    renderTopLabels(); // rótulos acompanham os dados (criação e atualização)
+  }, [risk, theme]);
 
   // 4. Efeito de Realce e Foco por Polígono da Escola Selecionada (Consulta Rápida)
   useEffect(() => {
@@ -377,7 +388,6 @@ export default function OperationalMap({
       const layer = layersRef.current[normalized];
 
       if (layer && mapRef.current && geoJsonRef.current) {
-        // Reseta os estilos anteriores de todas as camadas
         geoJsonRef.current.eachLayer((lyr) => {
           try {
             geoJsonRef.current.resetStyle(lyr);
@@ -386,14 +396,12 @@ export default function OperationalMap({
           }
         });
 
-        // Aplica realce estrito no polígono do bairro
         layer.setStyle({
           weight: 3.5,
-          color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
+          color: 'hsl(175, 80%, 40%)',
           fillOpacity: 0.35
         });
 
-        // Dá zoom e centraliza nos limites do polígono geográfico (Sem geocodificar coordenadas da escola)
         mapRef.current.fitBounds(layer.getBounds(), { padding: [40, 40] });
       }
     } catch (e) {
@@ -417,7 +425,6 @@ export default function OperationalMap({
       const layer = layersRef.current[normalized];
 
       if (layer && mapRef.current && geoJsonRef.current) {
-        // Reseta os estilos anteriores de todas as camadas
         geoJsonRef.current.eachLayer((lyr) => {
           try {
             geoJsonRef.current.resetStyle(lyr);
@@ -426,14 +433,12 @@ export default function OperationalMap({
           }
         });
 
-        // Aplica realce estrito no polígono do bairro
         layer.setStyle({
           weight: 3.5,
-          color: 'hsl(175, 80%, 40%)', // Realce verde-água brilhante
+          color: 'hsl(175, 80%, 40%)',
           fillOpacity: 0.35
         });
 
-        // Dá zoom e centraliza nos limites do polígono geográfico de forma suave (flyToBounds)
         mapRef.current.flyToBounds(layer.getBounds(), { padding: [40, 40], duration: 1.2 });
       }
     } catch (e) {
@@ -444,9 +449,9 @@ export default function OperationalMap({
   return (
     <div
       ref={elRef}
-      className="op-map"
+      className="operational-map"
       role="img"
-      aria-label="Mapa Operacional por bairro da 3ª CRE. Exibe a severidade acumulada e os chamados agregados de cada bairro atendido."
+      aria-label="Mapa Operacional por bairro da 3ª CRE. Exibe a severidade e os chamados agregados."
     />
   );
 }

@@ -59,6 +59,8 @@ import {
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
+import { computeBairroRisk } from './lib/mapRisk.js';
+import MapLegend from './components/MapLegend.jsx';
 import { getOperationalSummary, getActionItems } from './lib/operationalIntelligence.js';
 import { getSchoolDossierData } from './lib/schoolDossier.js';
 import {
@@ -232,6 +234,17 @@ const IconInfo = (props) => <AlertTriangle {...props} size={18} strokeWidth={2.2
 const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'email', 'cloud'];
 const VALID_THEMES = ['dark', 'light'];
 
+function rotuloNivel(nivel) {
+  switch (nivel) {
+    case 'critico': return 'Crítico';
+    case 'alto': return 'Alto';
+    case 'moderado': return 'Moderado';
+    case 'vigilancia': return 'Vigilância';
+    case 'em-dia': return 'Em dia';
+    default: return 'Sem cobertura';
+  }
+}
+
 export default function App() {
   const dossierRef = useRef(null);
   const [initialCloudConfig] = useState(() => ({
@@ -377,6 +390,7 @@ export default function App() {
   };
   const [selectedBairroNormalized, setSelectedBairroNormalized] = useState(null);
   const [focusedBairro, setFocusedBairro] = useState(null);
+  const [vistaTerritorio, setVistaTerritorio] = useState('mapa'); // 'mapa' | 'lista'
 
   // Cloud (Supabase) integration states
   const [supabaseUrl, setSupabaseUrl] = useState(initialCloudConfig.url);
@@ -788,6 +802,10 @@ export default function App() {
 
   const summary = getOperationalSummary(tickets, schools, allAttachments, todayRef());
   const actionItems = getActionItems(tickets, schools, allAttachments, todayRef());
+  const territorialRisk = useMemo(
+    () => computeBairroRisk(tickets, schools, { attachments: allAttachments, ref: todayRef() }),
+    [tickets, schools, allAttachments]
+  );
 
   // Tickets views filters
   const getFilteredTickets = () => {
@@ -2324,7 +2342,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Mapa Operacional — área de atuação da 3ª CRE (substitui os cards de Etapas e Setor) */}
+            {/* Mapa Operacional — área de atuação da 3ª CRE */}
             <div className="dashboard-section op-panel">
               <div
                 className="section-header"
@@ -2351,51 +2369,129 @@ export default function App() {
                     Área de atuação da 3ª CRE · Zona Norte
                   </span>
                 </div>
-                <span
-                  className="map-instruction"
-                  style={{
-                    fontSize: '12.5px',
-                    color: 'var(--primary)',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    backgroundColor: 'var(--primary-light)',
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    border: '1px solid var(--border-hover)'
-                  }}
-                >
-                  <IconInfo style={{ width: '13px', height: '13px', flexShrink: 0 }} />
-                  Clique em um bairro para ver escolas e chamados ativos.
-                </span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <div className="territorio-toggle" role="tablist" aria-label="Visualização do território">
+                    <button
+                      role="tab"
+                      aria-selected={vistaTerritorio === 'mapa'}
+                      className={vistaTerritorio === 'mapa' ? 'is-active' : ''}
+                      onClick={() => setVistaTerritorio('mapa')}
+                    >
+                      Mapa
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={vistaTerritorio === 'lista'}
+                      className={vistaTerritorio === 'lista' ? 'is-active' : ''}
+                      onClick={() => setVistaTerritorio('lista')}
+                    >
+                      Lista
+                    </button>
+                  </div>
+
+                  <span
+                    className="map-instruction"
+                    style={{
+                      fontSize: '12.5px',
+                      color: 'var(--primary)',
+                      fontWeight: '700',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      backgroundColor: 'var(--primary-light)',
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      border: '1px solid var(--border-hover)'
+                    }}
+                  >
+                    <IconInfo style={{ width: '13px', height: '13px', flexShrink: 0 }} />
+                    {vistaTerritorio === 'mapa'
+                      ? 'Clique em um bairro para ver escolas e chamados ativos.'
+                      : 'Selecione uma linha para detalhar o bairro.'}
+                  </span>
+                </div>
               </div>
 
               <div
                 className={`map-and-details-container ${selectedBairroNormalized ? 'has-details' : ''}`}
               >
-                <OperationalMap
-                  tickets={tickets}
-                  schools={schools}
-                  selectedSchool={selectedSchool}
-                  theme={theme}
-                  onSelectBairro={setSelectedBairroNormalized}
-                  focusedBairro={focusedBairro}
-                />
+                {vistaTerritorio === 'mapa' ? (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <OperationalMap
+                      selectedSchool={selectedSchool}
+                      theme={theme}
+                      onSelectBairro={setSelectedBairroNormalized}
+                      focusedBairro={focusedBairro}
+                      risk={territorialRisk}
+                    />
+                    <MapLegend risk={territorialRisk} />
+                  </div>
+                ) : (
+                  <div className="territorio-tabela-wrapper" style={{ flex: 1, overflowX: 'auto', background: 'var(--surface)', borderRadius: '14px', border: '1px solid var(--border-color)', padding: '16px' }}>
+                    <table className="territorio-tabela">
+                      <caption className="sr-only">Bairros por risco territorial</caption>
+                      <thead>
+                        <tr>
+                          <th>Bairro</th>
+                          <th>Nível</th>
+                          <th>Risco</th>
+                          <th>Ativos</th>
+                          <th>Críticos</th>
+                          <th>Escolas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(territorialRisk)
+                          .filter(([, b]) => b.chamados_ativos > 0)
+                          .sort((a, b) => b[1].risco - a[1].risco)
+                          .map(([key, b]) => (
+                            <tr
+                              key={key}
+                              className={selectedBairroNormalized === key ? 'is-selected' : ''}
+                              onClick={() => setSelectedBairroNormalized(key)}
+                              tabIndex={0}
+                              onKeyDown={(ev) => {
+                                if (ev.key === 'Enter' || ev.key === ' ') {
+                                  ev.preventDefault();
+                                  setSelectedBairroNormalized(key);
+                                }
+                              }}
+                            >
+                              <td>{b.nome_exibicao}</td>
+                              <td>
+                                <span className={`map-nivel-badge nivel-${b.nivel}`}>
+                                  {rotuloNivel(b.nivel)}
+                                </span>
+                              </td>
+                              <td style={{ fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}>
+                                {b.risco.toFixed(1)}
+                              </td>
+                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.chamados_ativos}</td>
+                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.criticos}</td>
+                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.escolas_cadastradas}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 {selectedBairroNormalized &&
                   (() => {
-                    const stats = aggregateBairroStats(tickets, schools);
-                    const bData = stats[selectedBairroNormalized];
+                    const bData = territorialRisk[selectedBairroNormalized];
                     if (!bData) return null;
                     return (
-                      <div className="bairro-details-card animate-slide-in">
+                      <div className="bairro-details-card bairro-details-card-v2 animate-slide-in">
                         <div className="bairro-card-header">
-                          <div className="bairro-card-title-group">
+                          <div className="bairro-card-title-group" style={{ flexWrap: 'wrap', gap: '8px' }}>
                             <span className="bairro-header-pin-icon">
                               <IconPin />
                             </span>
                             <h4>{bData.nome_exibicao}</h4>
+                            <span className={`map-nivel-badge nivel-${bData.nivel}`} style={{ marginLeft: '4px' }}>
+                              {rotuloNivel(bData.nivel)}
+                            </span>
                             <button
                               className="btn-focus-bairro-small"
                               onClick={() =>
@@ -2413,13 +2509,12 @@ export default function App() {
                               className="btn-copy-summary"
                               onClick={() =>
                                 handleCopySummary(
-                                  `Bairro: ${bData.nome_exibicao}\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nEm Atenção: ${bData.atencao}`,
+                                  `Bairro: ${bData.nome_exibicao}\nRisco: ${bData.risco} (${rotuloNivel(bData.nivel)})\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nDensidade: ${bData.densidade}`,
                                   'bairro'
                                 )
                               }
                               title="Copiar resumo gerencial do bairro"
                               aria-label="Copiar resumo gerencial do bairro"
-                              style={{ marginLeft: '4px' }}
                             >
                               <IconCopy />
                             </button>
@@ -2433,38 +2528,88 @@ export default function App() {
                             <IconClose />
                           </button>
                         </div>
-                        <div className="bairro-card-body">
-                          <div className="bairro-stat-row">
-                            <span>Escolas Cadastradas:</span>
-                            <span className="bairro-stat-badge">{bData.escolas_cadastradas}</span>
-                          </div>
-                          <div className="bairro-stat-row">
-                            <span>Chamados Ativos:</span>
-                            <span
-                              className={`bairro-stat-badge ${bData.chamados_ativos > 0 ? 'bairro-stat-badge-active' : ''}`}
-                            >
-                              {bData.chamados_ativos}
-                            </span>
-                          </div>
-                          <div className="bairro-stat-row">
-                            <span>Críticos:</span>
-                            <span
-                              className={`bairro-stat-badge ${bData.criticos > 0 ? 'bairro-stat-badge-critical' : ''}`}
-                            >
-                              {bData.criticos}
-                            </span>
-                          </div>
-                          <div className="bairro-stat-row">
-                            <span>Em Atenção:</span>
-                            <span
-                              className={`bairro-stat-badge ${bData.atencao > 0 ? 'bairro-stat-badge-warning' : ''}`}
-                            >
-                              {bData.atencao}
-                            </span>
+                        <div className="bairro-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          
+                          {/* Score e Nível */}
+                          <div className="bairro-irt-box" style={{ padding: '12px', borderRadius: '10px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div>
+                              <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '700', opacity: 0.75 }}>Índice de Risco (IRT)</div>
+                              <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-muted)' }}>Média dos piores casos</div>
+                            </div>
+                            <div style={{ fontSize: '22px', fontWeight: '800', color: bData.nivel === 'critico' ? 'var(--map-risk-critico, #C2434E)' : bData.nivel === 'alto' ? 'var(--map-risk-alto, #CC7A3D)' : 'var(--text-main)' }}>
+                              {bData.risco.toFixed(1)}
+                            </div>
                           </div>
 
-                          <div className="bairro-tickets-section">
-                            <h5>Chamados Ativos no Bairro ({bData.chamados_lista.length}):</h5>
+                          {/* Grid de Microcards */}
+                          <div className="bairro-microcards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Escolas</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.escolas_cadastradas}</span>
+                            </div>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Ativos</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.chamados_ativos}</span>
+                            </div>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Críticos</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800', color: bData.criticos > 0 ? 'var(--color-red)' : 'inherit' }}>{bData.criticos}</span>
+                            </div>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Densidade</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.densidade.toFixed(2)}</span>
+                            </div>
+                          </div>
+
+                          {/* Seção Principais Ofensores */}
+                          {bData.topOfensores && bData.topOfensores.length > 0 && (
+                            <div className="bairro-ofensores-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                              <h5 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                                Principais Ofensores
+                              </h5>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {bData.topOfensores.map((o) => {
+                                  const rawTicket = tickets.find((t) => String(t.id_chamado) === String(o.id_chamado));
+                                  return (
+                                    <div
+                                      key={o.id_chamado}
+                                      className="ofensor-card"
+                                      style={{
+                                        padding: '10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-color)',
+                                        background: 'var(--bg-app)',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '2px',
+                                        transition: 'var(--transition)'
+                                      }}
+                                      onClick={() => rawTicket && openTicketEdit(rawTicket)}
+                                      title={`Editar chamado ${o.id_chamado}`}
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main)' }}>{o.id_chamado}</span>
+                                        <span style={{ fontSize: '11px', fontWeight: '700', color: o.score >= 75 ? 'var(--color-red)' : 'var(--color-amber)' }}>{o.score} pts</span>
+                                      </div>
+                                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {o.unidade_escolar}
+                                      </div>
+                                      <div style={{ fontSize: '10.5px', color: 'var(--text-light)', fontStyle: 'italic' }}>
+                                        Inativo há {o.inactivityDays} dias
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Seção Lista Completa */}
+                          <div className="bairro-tickets-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                            <h5 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                              Todos os Chamados Ativos ({bData.chamados_lista.length})
+                            </h5>
                             <div className="bairro-tickets-list">
                               {bData.chamados_lista.map((tk) => {
                                 const statusNorm = tk.status_atual || '';
@@ -2482,11 +2627,13 @@ export default function App() {
                                   accentClass = 'accent-amber';
                                 }
 
+                                const rawTicket = tickets.find((t) => String(t.id_chamado) === String(tk.id_chamado));
+
                                 return (
                                   <div
                                     key={tk.id_chamado}
                                     className={`bairro-ticket-item ${accentClass}`}
-                                    onClick={() => openTicketEdit(tk)}
+                                    onClick={() => openTicketEdit(rawTicket || tk)}
                                     title={`Editar chamado ${tk.id_chamado}`}
                                   >
                                     <div className="bairro-ticket-meta">
@@ -2518,42 +2665,6 @@ export default function App() {
                     );
                   })()}
               </div>
-
-              <div className="op-legend">
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--secondary)', color: 'var(--secondary)' }}
-                  />
-                  Triagem / Vistoria <b>{stageCounts.triagem}</b>
-                </span>
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--color-amber)', color: 'var(--color-amber)' }}
-                  />
-                  Orçamento <b>{stageCounts.orcamento}</b>
-                </span>
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--primary)', color: 'var(--primary)' }}
-                  />
-                  Em execução <b>{stageCounts.execucao}</b>
-                </span>
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--color-green)', color: 'var(--color-green)' }}
-                  />
-                  Concluído <b>{stageCounts.concluido}</b>
-                </span>
-              </div>
-              <p className="op-foot">
-                Mapa-base real (© OpenStreetMap · CARTO) com os 26 bairros da 3ª CRE destacados. As
-                contagens por etapa refletem os chamados do sistema. Mapa de contexto da área de
-                atuação — não localiza unidades individualmente.
-              </p>
             </div>
 
             {/* Layout Grid */}
