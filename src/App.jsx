@@ -72,6 +72,14 @@ import {
   getAttachmentPublicUrl,
   getAttachmentDownloadUrl
 } from './lib/attachments.js';
+import { fetchEscolas } from './services/escolasService.js';
+import { fetchHistorico, insertHistoryEvent } from './services/historicoService.js';
+import {
+  fetchChamados,
+  createTicketWithHistory,
+  updateTicketWithHistory
+} from './services/chamadosService.js';
+
 
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
 // e antiguidade são derivados em ./lib/logic.js a partir desta referência.
@@ -489,9 +497,7 @@ export default function App() {
           observacao: newCommentText
         };
 
-        const { error } = await supabaseClient.from('historico').insert([newHistoryEvent]);
-
-        if (error) throw error;
+        await insertHistoryEvent(supabaseClient, newHistoryEvent);
 
         // Atualiza o estado local do histórico
         setHistory((prev) => [newHistoryEvent, ...prev]);
@@ -620,12 +626,7 @@ export default function App() {
       setSupabaseClient(client);
 
       // Verify connection by loading schools
-      const { data: schoolsData, error: schoolsError } = await client
-        .from('escolas')
-        .select('*')
-        .order('unidade_escolar');
-
-      if (schoolsError) throw schoolsError;
+      const schoolsData = await fetchEscolas(client);
 
       // If schools table exists, load cloud datasets
       setCloudConnected(true);
@@ -635,28 +636,12 @@ export default function App() {
         setSchools(schoolsData);
 
         // Load tickets
-        const { data: ticketsData, error: ticketsError } = await client
-          .from('chamados')
-          .select('*')
-          .order('id_chamado', { ascending: false });
-
-        if (ticketsError) throw ticketsError;
-        if (ticketsData) {
-          const normalized = ticketsData.map(t => ({
-            ...t,
-            setor_responsavel: normalizeSector(t.setor_responsavel)
-          }));
-          setTickets(normalized);
-        }
+        const ticketsData = await fetchChamados(client);
+        setTickets(ticketsData);
 
         // Load timeline history
-        const { data: historyData, error: historyError } = await client
-          .from('historico')
-          .select('*')
-          .order('data', { ascending: false });
-
-        if (historyError) throw historyError;
-        if (historyData) setHistory(historyData);
+        const historyData = await fetchHistorico(client);
+        setHistory(historyData);
 
         // Load all attachments
         const { data: attachmentsData, error: attachmentsError } = await client
@@ -1308,14 +1293,7 @@ export default function App() {
         observacao: commentText.trim()
       };
 
-      const { data: savedEvent, error } = await supabaseClient
-        .from('historico')
-        .insert([newEvent])
-        .select('*')
-        .single();
-
-      if (error) throw error;
-      if (!savedEvent) throw new Error('Nenhum registro retornado pelo banco após salvar.');
+      const savedEvent = await insertHistoryEvent(supabaseClient, newEvent);
 
       setHistory((prev) => [savedEvent, ...prev]);
       triggerToast('Comentário registrado na linha do tempo!', 'success');
@@ -1423,16 +1401,11 @@ export default function App() {
 
     try {
       // 1. Gravação pessimista transacional via RPC no Supabase
-      const { data: savedTicket, error: rpcErr } = await supabaseClient.rpc(
-        'save_ticket_with_history',
-        {
-          p_ticket: updatedRecord,
-          p_events: novosEventos
-        }
+      const savedTicket = await updateTicketWithHistory(
+        supabaseClient,
+        updatedRecord,
+        novosEventos
       );
-
-      if (rpcErr) throw rpcErr;
-      if (!savedTicket) throw new Error('Não foi retornado nenhum registro após salvar.');
 
       // 3. Somente após sucesso na nuvem, atualiza o estado local do frontend
       const updatedTickets = tickets.map((t) => {
@@ -1522,22 +1495,13 @@ export default function App() {
           };
 
           // 1. Gravação pessimista transacional via RPC no Supabase
-          const { data: dbRecord, error: rpcErr } = await supabaseClient.rpc(
-            'create_ticket_with_history',
-            {
-              p_ticket: ticketRecord,
-              p_event: initialEvent
-            }
+          const result = await createTicketWithHistory(
+            supabaseClient,
+            ticketRecord,
+            initialEvent
           );
-
-          if (rpcErr) throw rpcErr;
-          finalTicketRecord = dbRecord;
-
-          // Atualiza o evento final com o id_chamado gerado no banco de dados
-          finalEventRecord = {
-            ...initialEvent,
-            id_chamado: dbRecord.id_chamado
-          };
+          finalTicketRecord = result.ticket;
+          finalEventRecord = result.event;
         } catch (err) {
           console.error('Cloud insert failed:', err);
           triggerToast(
