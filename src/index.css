@@ -3087,6 +3087,14 @@ html:not(.dark-theme) .main-portal-title {
     border-left-color: #059669 !important;
   }
 
+  /* Estimativa Financeira */
+  body.printing-school-dossier .school-dossier-print-scope .dossier-financial-estimate,
+  .school-dossier-print-scope .dossier-financial-estimate {
+    background-color: #fcf8f2 !important; /* warm tint */
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #c2410c !important; /* Laranja escuro WCAG para print */
+  }
+
   /* Prioridades de chamados */
   body.printing-school-dossier .school-dossier-print-scope .badge-priority-alta,
   body.printing-school-dossier .school-dossier-print-scope .badge-priority-crítica,
@@ -4059,3 +4067,203 @@ textarea {
     background: var(--bg-app);
   }
 }
+
+/* ============================================================
+   MAPA OPERACIONAL v2 — tokens, tooltip, legenda, rótulos, mobile
+   ============================================================ */
+
+:root {
+  /* Tokens IRT (tema claro) — espelhados em RISK_PAINT no componente */
+  --map-risk-critico: #C2434E;
+  --map-risk-critico-bg: #F6D9D8;
+  --map-risk-alto: #CC7A3D;
+  --map-risk-alto-bg: #FBE9DC;
+  --map-risk-moderado: #B5710A;
+  --map-risk-moderado-bg: #FDF6E2;
+  --map-risk-vigilancia: #2E7FAE;
+  --map-risk-vigilancia-bg: #EBF3F9;
+  --map-risk-emdia: #3E7A4C;
+}
+
+.dark-theme {
+  --map-risk-critico: hsl(350, 85%, 68%);
+  --map-risk-critico-bg: hsla(349, 75%, 50%, 0.22);
+  --map-risk-alto: hsl(22, 90%, 64%);
+  --map-risk-alto-bg: hsla(22, 85%, 50%, 0.20);
+  --map-risk-moderado: hsl(38, 95%, 60%);
+  --map-risk-moderado-bg: hsla(38, 92%, 48%, 0.18);
+  --map-risk-vigilancia: hsl(201, 85%, 62%);
+  --map-risk-vigilancia-bg: hsla(201, 80%, 48%, 0.16);
+  --map-risk-emdia: hsl(160, 35%, 60%);
+}
+
+/* Transições suaves nos polígonos (sem jank: só fill/stroke) */
+.leaflet-overlay-pane svg path {
+  transition: fill-opacity 0.22s ease, stroke-width 0.18s ease;
+}
+
+/* Foco visível por teclado nos polígonos */
+.leaflet-overlay-pane svg path.bairro-focavel:focus-visible {
+  outline: none;
+  filter: drop-shadow(0 0 0 2px var(--map-risk-vigilancia))
+          drop-shadow(0 0 10px hsla(201, 90%, 55%, 0.45));
+}
+
+/* --- Selo de nível (tooltip, legenda, tabela, microcards) --- */
+.map-nivel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.map-nivel-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.map-nivel-badge.nivel-critico    { color: var(--map-risk-critico);    background: var(--map-risk-critico-bg); }
+.map-nivel-badge.nivel-alto       { color: var(--map-risk-alto);       background: var(--map-risk-alto-bg); }
+.map-nivel-badge.nivel-moderado   { color: var(--map-risk-moderado);   background: var(--map-risk-moderado-bg); }
+.map-nivel-badge.nivel-vigilancia { color: var(--map-risk-vigilancia); background: var(--map-risk-vigilancia-bg); }
+.map-nivel-badge.nivel-em-dia     { color: var(--map-risk-emdia); }
+
+/* --- Tooltip v2 --- */
+.map-tooltip-v2 .map-tooltip-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 6px;
+}
+.map-compbar {
+  display: flex; height: 7px; border-radius: 99px; overflow: hidden;
+  margin: 7px 0 3px; background: rgba(148, 163, 184, 0.18);
+}
+.map-compbar .seg { display: block; height: 100%; }
+.map-compbar .seg-criticos { background: var(--map-risk-critico); }
+.map-compbar .seg-atencao  { background: var(--map-risk-moderado); }
+.map-compbar .seg-normais  { background: var(--map-risk-vigilancia); }
+.map-compbar-caption { font-size: 10px; opacity: 0.85; }
+.map-compbar-caption .c-crit { color: var(--map-risk-critico); font-style: normal; }
+.map-compbar-caption .c-aten { color: var(--map-risk-moderado); font-style: normal; }
+.map-compbar-caption .c-norm { color: var(--map-risk-vigilancia); font-style: normal; }
+
+/* --- Rótulos TOP-3 dinâmicos --- */
+.map-toplabel-wrap { background: transparent; border: none; }
+.map-toplabel {
+  transform: translate(-50%, -50%);
+  display: inline-flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 5px 10px; border-radius: 9px;
+  background: var(--bg-card);
+  border: 1px solid var(--map-risk-alto);
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.45);
+  pointer-events: none; white-space: nowrap;
+}
+.map-toplabel.nivel-critico { border-color: var(--map-risk-critico); }
+.map-toplabel-nome { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.map-toplabel-meta { font-size: 9.5px; opacity: 0.8; }
+.map-toplabel.nivel-critico .map-toplabel-nome { color: var(--map-risk-critico); }
+.map-toplabel.nivel-alto .map-toplabel-nome { color: var(--map-risk-alto); }
+
+/* Pulso sutil e respeitoso apenas no rótulo crítico */
+@keyframes toplabel-pulse { 0%,100% { box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.45); } 50% { box-shadow: 0 6px 22px -6px var(--map-risk-critico); } }
+.map-toplabel.nivel-critico { animation: toplabel-pulse 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .map-toplabel.nivel-critico { animation: none; } }
+
+/* --- Legenda --- */
+.map-legend {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 14px; padding: 12px 14px; max-width: 280px;
+}
+.map-legend-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; margin-bottom: 8px; }
+.map-legend-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.map-legend-item { display: grid; grid-template-columns: 14px auto 1fr auto; align-items: center; gap: 8px; font-size: 12.5px; }
+.map-legend-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid currentColor; }
+.map-legend-swatch.nivel-critico    { color: var(--map-risk-critico);    background: var(--map-risk-critico-bg); }
+.map-legend-swatch.nivel-alto       { color: var(--map-risk-alto);       background: var(--map-risk-alto-bg); }
+.map-legend-swatch.nivel-moderado   { color: var(--map-risk-moderado);   background: var(--map-risk-moderado-bg); }
+.map-legend-swatch.nivel-vigilancia { color: var(--map-risk-vigilancia); background: var(--map-risk-vigilancia-bg); }
+.map-legend-qtd { justify-self: end; font-weight: 700; font-variant-numeric: tabular-nums; }
+.map-legend-dica { grid-column: 2 / -1; font-size: 10.5px; opacity: .65; margin-top: -3px; }
+.map-legend-keys { display: grid; gap: 4px; font-size: 11px; opacity: .85; margin-bottom: 8px; }
+.map-legend-key { display: inline-flex; align-items: center; gap: 7px; }
+.map-legend-key .key-borda { width: 18px; height: 0; border-top: 3px solid var(--map-risk-critico); border-radius: 2px; }
+.map-legend-key .key-opacidade {
+  width: 18px; height: 10px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--map-risk-vigilancia-bg), var(--map-risk-vigilancia));
+}
+.map-legend-howto summary { cursor: pointer; font-size: 11.5px; font-weight: 600; }
+.map-legend-howto p { font-size: 11.5px; line-height: 1.5; margin: 6px 0 0; }
+
+/* --- Alternância e tabela territorial --- */
+.territorio-toggle { display: inline-flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2, rgba(148, 163, 184, 0.12)); }
+.territorio-toggle button { border: 0; background: transparent; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; color: var(--text-muted); }
+.territorio-toggle button.is-active { background: var(--bg-card); color: var(--primary); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+
+.territorio-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
+.territorio-tabela th, .territorio-tabela td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+.territorio-tabela tbody tr { cursor: pointer; transition: var(--transition); }
+.territorio-tabela tbody tr:hover, .territorio-tabela tbody tr:focus-visible { background: var(--surface-2, rgba(148, 163, 184, 0.10)); outline: none; }
+.territorio-tabela tbody tr.is-selected { background: var(--primary-light); }
+
+/* --- Mobile --- */
+@media (max-width: 768px) {
+  .op-map, .operational-map, .map-and-details-container .leaflet-container {
+    height: clamp(280px, 42vh, 420px) !important;
+  }
+  .map-and-details-container { flex-direction: column; }
+  .map-legend { max-width: none; }
+  .map-toplabel-meta { display: none; } /* rótulo enxuto em telas pequenas */
+}
+
+/* --- Microcard Leaflet Tooltip & Pulso --- */
+.cre-tooltip-custom .map-tooltip-v2 {
+  min-width: 220px;
+  max-width: 280px;
+  font-family: inherit;
+  font-size: 12.5px;
+}
+.map-tooltip-ofensores {
+  margin-top: 10px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
+}
+.map-tooltip-ofensores-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.map-tooltip-ofensor-item {
+  font-size: 11px;
+  margin-bottom: 2px;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.map-tooltip-ofensor-item .ofensor-id {
+  font-weight: 700;
+  color: var(--primary);
+}
+.map-tooltip-ofensor-item .ofensor-school {
+  font-weight: 500;
+}
+.map-tooltip-ofensor-item .ofensor-days {
+  color: var(--map-risk-critico);
+  font-weight: 600;
+}
+
+@keyframes polygon-pulse {
+  0%, 100% { fill-opacity: 0.18; }
+  50% { fill-opacity: 0.38; }
+}
+.cre-glow-pulse-poly {
+  animation: polygon-pulse 2.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cre-glow-pulse-poly {
+    animation: none;
+  }
+}
+

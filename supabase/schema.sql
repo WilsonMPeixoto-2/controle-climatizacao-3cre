@@ -1,10 +1,20 @@
 -- schema.sql — Estrutura do banco de dados (Supabase / PostgreSQL)
 -- Controle de Climatização — GOP / 3ª CRE — SME-RJ
 --
--- Como usar: abra o painel do Supabase → SQL Editor → New Query →
--- cole este arquivo inteiro → Run. Depois execute o seed.sql para a carga inicial.
+-- ATENÇÃO — NÃO EXECUTAR INTEGRALMENTE EM PRODUÇÃO
 --
--- Idempotente: CREATE TABLE IF NOT EXISTS pode ser reexecutado sem erro.
+-- Este arquivo é uma referência histórica/consolidada da estrutura do banco.
+-- Ele NÃO deve ser copiado e executado integralmente no Supabase ativo sem revisão técnica.
+--
+-- O arquivo contém comandos de RLS, CREATE POLICY e permissões públicas antigas,
+-- incluindo policies de DELETE para a role anon em tabelas e objetos de Storage.
+-- Essas permissões NÃO estão aprovadas para reaplicação automática.
+--
+-- Qualquer alteração real no banco de produção deve ser feita exclusivamente por
+-- migrations incrementais, revisadas, com escopo delimitado e aprovação manual.
+--
+-- Em especial, não reativar RLS, não criar policies e não conceder DELETE público
+-- para anon a partir deste arquivo.
 
 -- ---------------------------------------------------------------------------
 -- 0. Extensões PostgreSQL
@@ -226,7 +236,7 @@ BEGIN
 
   SELECT COUNT(*) INTO v_historico_sem_chamado 
   FROM public.historico h LEFT JOIN public.chamados c ON h.id_chamado = c.id_chamado 
-  WHERE c.id_chamado IS NULL;
+  WHERE c.id_chamado IS NULL AND h.designacao IS NULL;
 
   SELECT COUNT(*) INTO v_anexos_sem_chamado 
   FROM public.anexos_chamado a LEFT JOIN public.chamados c ON a.id_chamado = c.id_chamado 
@@ -333,7 +343,7 @@ SELECT 'chamado_sem_escola' AS tipo_inconsistencia, c.id_chamado AS ref_id, c.un
 FROM public.chamados c LEFT JOIN public.escolas e ON c.designacao = e.designacao WHERE e.designacao IS NULL
 UNION ALL
 SELECT 'historico_sem_chamado' AS tipo_inconsistencia, h.id_evento AS ref_id, h.observacao AS detalhe
-FROM public.historico h LEFT JOIN public.chamados c ON h.id_chamado = c.id_chamado WHERE c.id_chamado IS NULL
+FROM public.historico h LEFT JOIN public.chamados c ON h.id_chamado = c.id_chamado WHERE c.id_chamado IS NULL AND h.designacao IS NULL
 UNION ALL
 SELECT 'anexo_sem_chamado' AS tipo_inconsistencia, a.id::text AS ref_id, a.nome_original AS detalhe
 FROM public.anexos_chamado a LEFT JOIN public.chamados c ON a.id_chamado = c.id_chamado WHERE c.id_chamado IS NULL

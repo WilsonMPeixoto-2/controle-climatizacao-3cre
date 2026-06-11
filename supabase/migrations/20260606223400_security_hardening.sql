@@ -1,0 +1,6 @@
+-- Migration registrada no Supabase em produção como 20260606223400_security_hardening.
+-- O conteúdo original aplicado em produção não está presente no repositório atual.
+-- Este arquivo foi criado apenas para reconciliar o histórico local do Supabase CLI
+-- com a tabela de migrations do banco remoto.
+-- Não contém DDL intencionalmente.
+-- Antes de recriar/alterar policies/RLS, consultar o estado real do banco.

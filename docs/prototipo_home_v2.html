@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Protótipo — Home v2 (herói dividido) · Controle de Climatização 3ª CRE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="cre-geo-data.js"></script>
+<style>
+/* ============================================================
+   TOKENS — fiéis ao src/index.css (azure h201 + teal h175)
+   ============================================================ */
+:root {
+  --primary-h: 201; --primary-s: 89%; --primary-l: 52%;
+  --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  --primary-hover: hsl(var(--primary-h), var(--primary-s), 40%);
+  --primary-light: hsl(var(--primary-h), var(--primary-s), 96%);
+  --primary-glow: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
+  --secondary: hsl(175, 80%, 35%);
+
+  --bg-app: hsl(210, 32%, 97%);
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --bg-card-solid: #ffffff;
+  --border-color: rgba(100, 116, 139, 0.22);
+  --border-hover: rgba(14, 116, 144, 0.34);
+
+  --text-main: hsl(217, 33%, 15%);
+  --text-muted: hsl(215, 21%, 34%);
+  --text-light: hsl(215, 14%, 46%);
+
+  --color-green: hsl(142, 70%, 28%);
+  --color-amber: hsl(35, 88%, 32%);
+  --color-red: hsl(350, 78%, 38%);
+  --color-blue: hsl(214, 85%, 38%);
+  --color-age-warn: hsl(250, 70%, 64%);
+  --color-age-severe: hsl(255, 75%, 56%);
+
+  /* mapa */
+  --map-paper: hsl(204, 40%, 95%);
+  --map-label: hsl(217, 33%, 18%);
+  --map-label-halo: rgba(255,255,255,0.95);
+  --map-crit-line: hsl(350,70%,52%); --map-crit-fill: hsla(350,80%,56%,0.20);
+  --map-aten-line: hsl(35,82%,46%);   --map-aten-fill: hsla(38,90%,55%,0.20);
+  --map-ok-line:   hsl(142,55%,36%);  --map-ok-fill:   hsla(142,60%,45%,0.16);
+  --map-none-line: hsla(210,16%,55%,0.55); --map-none-fill: hsla(210,30%,88%,0.30);
+
+  --radius-xs: 8px; --radius-sm: 14px; --radius-md: 20px; --radius-lg: 28px;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.05), 0 1px 8px rgba(15,23,42,.04);
+  --shadow-md: 0 14px 28px -18px rgba(15,23,42,.22), 0 8px 14px -12px rgba(15,23,42,.16);
+  --shadow-lg: 0 24px 44px -24px rgba(15,23,42,.28);
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+[data-theme="dark"] {
+  --bg-app: hsl(212, 32%, 7%);
+  --bg-card: rgba(17, 24, 39, 0.80);
+  --bg-card-solid: hsl(215, 28%, 12%);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(120, 190, 235, 0.22);
+  --text-main: hsl(210, 20%, 96%);
+  --text-muted: hsl(214, 14%, 78%);
+  --text-light: hsl(214, 14%, 70%);
+  --primary-light: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.14);
+  --color-red: hsl(350, 82%, 64%);
+  --color-blue: hsl(214, 90%, 64%);
+  --color-green: hsl(142, 58%, 55%);
+  --color-amber: hsl(38, 88%, 55%);
+  --color-age-warn: hsl(250, 70%, 73%);
+  --color-age-severe: hsl(255, 72%, 70%);
+
+  --map-paper: hsl(213, 30%, 10%);
+  --map-label: hsl(210, 30%, 94%);
+  --map-label-halo: rgba(2, 6, 14, 0.92);
+  --map-crit-line: hsl(350,82%,64%); --map-crit-fill: hsla(350,78%,56%,0.34);
+  --map-aten-line: hsl(38,88%,60%);   --map-aten-fill: hsla(38,85%,52%,0.30);
+  --map-ok-line:   hsl(142,58%,56%);  --map-ok-fill:   hsla(142,55%,48%,0.26);
+  --map-none-line: hsla(214,20%,58%,0.45); --map-none-fill: hsla(215,18%,42%,0.14);
+
+  --shadow-sm: 0 2px 4px rgba(0,0,0,.15);
+  --shadow-md: 0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg: 0 24px 48px rgba(0,0,0,.55);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans); background-color: var(--bg-app); color: var(--text-main);
+  line-height: 1.45; -webkit-font-smoothing: antialiased; min-height: 100vh; position: relative; overflow-x: hidden;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(1100px 640px at 18% -8%, hsla(var(--primary-h),var(--primary-s),var(--primary-l),.10), transparent 60%),
+    radial-gradient(900px 560px at 100% 0%, hsla(175,80%,40%,.06), transparent 55%);
+}
+.app { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 0 24px 64px; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 0 22px; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 13px; }
+.brand-mark { width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: grid; place-items: center; color: #fff; box-shadow: 0 6px 18px var(--primary-glow); }
+.brand-mark svg { width: 22px; height: 22px; }
+.brand-text b { font-size: 16px; font-weight: 800; letter-spacing: -.3px; display: block; }
+.brand-text span { font-size: 12px; color: var(--text-light); font-weight: 600; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 13.5px; padding: 10px 16px; border-radius: var(--radius-xs); border: 1px solid transparent; transition: all .2s ease; }
+.btn svg { width: 17px; height: 17px; }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 12px var(--primary-glow); }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.btn-ghost { background: var(--bg-card); border-color: var(--border-color); color: var(--text-muted); }
+.btn-ghost:hover { color: var(--primary); border-color: var(--primary); }
+
+.screen-intro { font-size: 14.5px; color: var(--text-muted); max-width: 720px; margin: 4px 0 22px; font-weight: 500; }
+
+/* HERÓI DIVIDIDO */
+.hero { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(300px, 1fr); gap: 22px; align-items: stretch; margin-bottom: 26px; }
+.card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); backdrop-filter: blur(6px); }
+
+.map-panel { display: flex; flex-direction: column; overflow: hidden; }
+.map-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 18px 20px 14px; }
+.map-title h3 { font-size: 16.5px; font-weight: 800; letter-spacing: -.3px; display: flex; align-items: center; gap: 9px; }
+.map-title h3 svg { width: 19px; height: 19px; color: var(--primary); }
+.map-title span { font-size: 12.5px; color: var(--text-light); font-weight: 600; }
+.map-pill { font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-light); border: 1px solid var(--border-hover); padding: 6px 13px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; }
+.map-pill svg { width: 13px; height: 13px; }
+
+.map-canvas { position: relative; height: 472px; margin: 0 14px 14px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); background: var(--map-paper); }
+#leafmap { position: absolute; inset: 0; z-index: 1; }
+.leaflet-container { background: var(--map-paper); font-family: var(--font-sans); }
+.leaflet-control-attribution { font-size: 9.5px; background: rgba(255,255,255,.6); }
+[data-theme="dark"] .leaflet-control-attribution { background: rgba(0,0,0,.45); color: #9fb0c4; }
+[data-theme="dark"] .leaflet-control-attribution a { color: #c4d3e6; }
+
+/* rótulos de bairro com halo (legíveis em qualquer cor/tema) */
+.cre-label.leaflet-tooltip { background: transparent; border: 0; box-shadow: none; padding: 0; color: var(--map-label); font-weight: 700; font-size: 11px; white-space: nowrap; text-shadow: 0 0 3px var(--map-label-halo), 0 0 3px var(--map-label-halo), 0 0 4px var(--map-label-halo); }
+.cre-label.leaflet-tooltip::before { display: none; }
+/* tooltip rico no hover */
+.cre-tooltip-custom.leaflet-tooltip { background: var(--bg-card-solid); border: 1px solid var(--border-color); border-radius: 10px; box-shadow: var(--shadow-md); padding: 0; }
+.cre-tooltip-custom.leaflet-tooltip::before { border-top-color: var(--border-color); }
+.map-tooltip { padding: 9px 12px; min-width: 156px; }
+.map-tooltip-title { font-weight: 800; font-size: 12.5px; margin-bottom: 6px; color: var(--text-main); }
+.map-tooltip-row { display: flex; justify-content: space-between; gap: 16px; font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+.map-tooltip-row strong { color: var(--text-main); }
+
+/* legenda discreta */
+.map-legend { position: absolute; left: 12px; bottom: 12px; z-index: 600; display: flex; flex-direction: column; gap: 5px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-xs); padding: 9px 11px; box-shadow: var(--shadow-sm); backdrop-filter: blur(8px); }
+.legend-row { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.legend-chip { width: 13px; height: 13px; border-radius: 4px; border: 1.6px solid; flex-shrink: 0; }
+.lc-crit { background: var(--map-crit-fill); border-color: var(--map-crit-line); }
+.lc-aten { background: var(--map-aten-fill); border-color: var(--map-aten-line); }
+.lc-ok   { background: var(--map-ok-fill);   border-color: var(--map-ok-line); }
+.lc-none { background: var(--map-none-fill); border-color: var(--map-none-line); }
+
+/* trilha de KPIs */
+.kpi-rail { display: flex; flex-direction: column; gap: 16px; }
+.kpi-group { padding: 16px 16px 18px; }
+.kpi-group-title { display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 13px; }
+.kpi-group-title svg { width: 15px; height: 15px; color: var(--primary); }
+.kpi-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.stat { border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 13px 14px; background: var(--bg-card-solid); position: relative; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; cursor: pointer; }
+.stat::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent, var(--primary)); }
+.stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent, var(--primary)); }
+.stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.stat-top span { font-size: 11.5px; font-weight: 700; color: var(--text-muted); line-height: 1.2; }
+.stat-ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-tint, var(--primary-light)); color: var(--accent, var(--primary)); flex-shrink: 0; }
+.stat-ic svg { width: 15px; height: 15px; }
+.stat-num { font-size: 30px; font-weight: 800; letter-spacing: -1.2px; color: var(--accent, var(--text-main)); line-height: 1; }
+.stat-desc { font-size: 10.5px; color: var(--text-light); margin-top: 5px; font-weight: 500; }
+.kpi-sub { font-size: 11px; font-weight: 700; color: var(--text-light); margin: 2px 0 9px; }
+
+/* resumo operacional */
+.op-summary { padding: 18px 20px; margin-bottom: 24px; }
+.op-head { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+.op-head h3 { font-size: 15.5px; font-weight: 800; letter-spacing: -.3px; }
+.op-head .badge { font-size: 11px; font-weight: 800; color: var(--color-red); background: hsla(350,80%,50%,.12); padding: 3px 9px; border-radius: 20px; }
+.op-list { display: grid; gap: 10px; }
+.op-item { display: flex; align-items: center; gap: 13px; padding: 12px 14px; background: var(--bg-app); border-radius: var(--radius-xs); border: 1px solid var(--border-color); border-left: 4px solid var(--bar, var(--color-amber)); }
+.op-item .op-when { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--bar, var(--color-amber)); white-space: nowrap; }
+.op-item b { font-size: 13.5px; font-weight: 700; }
+.op-item p { font-size: 12px; color: var(--text-light); }
+
+/* donut + lista */
+.lower { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.6fr); gap: 22px; }
+.panel-pad { padding: 18px 20px; }
+.panel-pad h3 { font-size: 15px; font-weight: 800; letter-spacing: -.3px; margin-bottom: 16px; }
+.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.dl-row { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.dl-dot { width: 11px; height: 11px; border-radius: 4px; }
+.dl-row .v { margin-left: auto; font-weight: 800; color: var(--text-main); }
+.tlist { display: grid; gap: 9px; }
+.trow { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 11px 13px; border: 1px solid var(--border-color); border-radius: var(--radius-xs); background: var(--bg-card-solid); }
+.tcode { font-size: 12px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
+.tname { font-size: 13px; font-weight: 600; color: var(--text-main); }
+.tname small { display: block; font-size: 11px; color: var(--text-light); font-weight: 500; }
+.tstatus { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.st-aten { color: var(--color-amber); background: hsla(38,90%,50%,.13); }
+.st-crit { color: var(--color-red); background: hsla(350,80%,50%,.12); }
+.st-ok { color: var(--color-green); background: hsla(142,60%,40%,.13); }
+
+.proto-note { margin-top: 30px; text-align: center; font-size: 12px; color: var(--text-light); font-weight: 600; padding: 12px; border: 1px dashed var(--border-color); border-radius: var(--radius-xs); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.reveal { animation: rise .6s cubic-bezier(.22,.61,.36,1) both; }
+@media (prefers-reduced-motion: reduce) { .reveal { animation: none !important; } }
+
+@media (max-width: 940px) {
+  .hero { grid-template-columns: 1fr; }
+  .lower { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body data-theme="light">
+<div class="app">
+
+  <div class="topbar reveal" style="animation-delay:.02s">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M6 7v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7M9 11h6"/></svg></div>
+      <div class="brand-text"><b>Controle de Climatização</b><span>GOP · 3ª CRE</span></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" id="themeBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M5 5l1.5 1.5M17.5 17.5L19 19M2 12h2M20 12h2M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
+        <span id="themeLabel">Modo Escuro</span>
+      </button>
+      <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Registrar chamado</span></button>
+    </div>
+  </div>
+
+  <p class="screen-intro reveal" style="animation-delay:.06s">Veja a situação geral dos chamados, os alertas de prazo e os casos que precisam de atenção da GOP.</p>
+
+  <section class="hero">
+    <div class="card map-panel reveal" style="animation-delay:.10s">
+      <div class="map-head">
+        <div class="map-title">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></svg> Mapa Operacional</h3>
+          <span>Área de atuação da 3ª CRE · Zona Norte</span>
+        </div>
+        <span class="map-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Clique num bairro para ver escolas e chamados</span>
+      </div>
+      <div class="map-canvas">
+        <div id="leafmap"></div>
+        <div class="map-legend">
+          <div class="legend-row"><span class="legend-chip lc-crit"></span> Crítico</div>
+          <div class="legend-row"><span class="legend-chip lc-aten"></span> Em atenção</div>
+          <div class="legend-row"><span class="legend-chip lc-ok"></span> Em dia</div>
+          <div class="legend-row"><span class="legend-chip lc-none"></span> Sem chamado ativo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-rail">
+      <div class="card kpi-group reveal" style="animation-delay:.16s">
+        <div class="kpi-group-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM4 9h16"/></svg> Volume Geral</div>
+        <div class="kpi-cards">
+          <div class="stat" style="--accent:var(--primary);--accent-tint:var(--primary-light)">
+            <div class="stat-top"><span>Chamados Registrados</span><div class="stat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6l2 2h8v12H4z"/></svg></div></div>
+            <div class="stat-num">30</div><div class="stat-desc">Total histórico</div>
+          </div>
+          <div class="stat" style="--accent:var(--color-blue);--accent-tint:hsla(214,85%,45%,.12)">
+            <div class="stat-top"><span>Chamados Ativos</span><div class="stat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/><path d="M21 3v6h-6"/></svg></div></div>
+            <div class="stat-num">18</div><div class="stat-desc">Em andamento</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card kpi-group reveal" style="animation-delay:.22s">
+        <div class="kpi-group-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Prazos e Gestão de Risco</div>
+        <div class="kpi-sub">Sem movimentação (Inércia)</div>
+        <div class="kpi-cards" style="margin-bottom:14px">
+          <div class="stat" style="--accent:var(--color-amber);--accent-tint:hsla(38,90%,50%,.13)">
+            <div class="stat-top"><span>+7 Dias</span><div class="stat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg></div></div>
+            <div class="stat-num">5</div><div class="stat-desc">Alerta âmbar</div>
+          </div>
+          <div class="stat" style="--accent:var(--color-red);--accent-tint:hsla(350,80%,50%,.12)">
+            <div class="stat-top"><span>+15 Dias</span><div class="stat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.3 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div></div>
+            <div class="stat-num">3</div><div class="stat-desc">Alerta vermelho</div>
+          </div>
+        </div>
+        <div class="kpi-sub">Tempo total em aberto (Antiguidade)</div>
+        <div class="kpi-cards">
+          <div class="stat" style="--accent:var(--color-age-warn);--accent-tint:hsla(250,70%,64%,.14)">
+            <div class="stat-top"><span>+30 Dias</span><div class="stat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div></div>
+            <div class="stat-num">7</div><div class="stat-desc">Antiguidade</div>
+          </div>
+          <div class="stat" style="--accent:var(--color-age-severe);--accent-tint:hsla(255,75%,56%,.14)">
+            <div class="stat-top"><span>+60 Dias</span><div class="stat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 6h14a2 2 0 0 1 2 2v12H3V8a2 2 0 0 1 2-2Z"/></svg></div></div>
+            <div class="stat-num">2</div><div class="stat-desc">Crítica</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card op-summary reveal" style="animation-delay:.28s">
+    <div class="op-head">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>
+      <h3>Casos que precisam de ação</h3><span class="badge">3 prioritários</span>
+    </div>
+    <div class="op-list">
+      <div class="op-item" style="--bar:var(--color-red)"><div><b>GOP-AR-2026-0012 · EM Inhaúma</b><p>Sem movimentação há 21 dias — reabrir contato com GIN.</p></div><span class="op-when">+21 dias parado</span></div>
+      <div class="op-item" style="--bar:var(--color-amber)"><div><b>GOP-AR-2026-0019 · EM Piedade</b><p>Aguardando vistoria — cobrar próxima providência.</p></div><span class="op-when">+9 dias parado</span></div>
+      <div class="op-item" style="--bar:var(--color-age-severe)"><div><b>GOP-AR-2026-0004 · EM Méier</b><p>Em aberto há 64 dias — revisar o caso com a CTO.</p></div><span class="op-when">+64 dias aberto</span></div>
+    </div>
+  </section>
+
+  <section class="lower">
+    <div class="card panel-pad reveal" style="animation-delay:.32s">
+      <h3>Ativos × Concluídos</h3>
+      <div class="donut-wrap">
+        <svg width="150" height="150" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--border-color)" stroke-width="5"/>
+          <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--primary)" stroke-width="5" stroke-dasharray="60 40" stroke-dashoffset="25" stroke-linecap="round" transform="rotate(-90 21 21)"/>
+          <text x="21" y="20" text-anchor="middle" font-size="9" font-weight="800" fill="var(--text-main)">60%</text>
+          <text x="21" y="27" text-anchor="middle" font-size="3.4" font-weight="600" fill="var(--text-light)">ATIVOS</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="dl-row"><span class="dl-dot" style="background:var(--primary)"></span> Ativos <span class="v">18 (60%)</span></div>
+          <div class="dl-row"><span class="dl-dot" style="background:var(--border-color)"></span> Concluídos <span class="v">12 (40%)</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card panel-pad reveal" style="animation-delay:.36s">
+      <h3>Chamados recentes</h3>
+      <div class="tlist">
+        <div class="trow"><span class="tcode">AR-0012</span><span class="tname">EM Inhaúma<small>Manutenção · GIN / Unidade Escolar</small></span><span class="tstatus st-crit">Parado +15d</span></div>
+        <div class="trow"><span class="tcode">AR-0019</span><span class="tname">EM Piedade<small>Vistoria · GOP</small></span><span class="tstatus st-aten">Em análise</span></div>
+        <div class="trow"><span class="tcode">AR-0023</span><span class="tname">EM Cachambi<small>Instalação · CPS</small></span><span class="tstatus st-ok">Em dia</span></div>
+        <div class="trow"><span class="tcode">AR-0004</span><span class="tname">EM Méier<small>Manutenção · CTO</small></span><span class="tstatus st-crit">Antiguidade +60d</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="proto-note">Protótipo de <b>direção visual</b> — herói dividido + mapa real (Leaflet, geografia verdadeira dos 26 bairros) com a paleta/legenda/halo propostos. Dados de severidade ilustrativos.</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  function norm(s){ return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').toLowerCase().trim(); }
+  const CRIT = ['inhauma','meier','piedade'];
+  const ATEN = ['engenho de dentro','lins de vasconcelos','ramos'];
+  const OK   = ['cachambi','todos os santos','engenho novo','bonsucesso'];
+  const KEYLABELS = ['inhauma','meier','engenho de dentro','piedade','bonsucesso','cachambi','lins de vasconcelos','ramos','del castilho','riachuelo'];
+  function classify(nome){ const n=norm(nome); if(CRIT.includes(n))return'crit'; if(ATEN.includes(n))return'aten'; if(OK.includes(n))return'ok'; return'none'; }
+  function mockStats(nome){ const c=classify(nome), len=norm(nome).length;
+    if(c==='crit') return {escolas:3+(len%3), ativos:2, criticos:1, atencao:1};
+    if(c==='aten') return {escolas:2+(len%3), ativos:1, criticos:0, atencao:1};
+    if(c==='ok')   return {escolas:2+(len%2), ativos:1, criticos:0, atencao:0};
+    return {escolas:(len%3), ativos:0, criticos:0, atencao:0};
+  }
+  const PALETTE = {
+    light:{ crit:{l:'hsl(350,70%,52%)',f:'hsla(350,80%,56%,0.22)',w:1.8}, aten:{l:'hsl(35,82%,46%)',f:'hsla(38,90%,55%,0.22)',w:1.5}, ok:{l:'hsl(142,55%,36%)',f:'hsla(142,60%,45%,0.17)',w:1.4}, none:{l:'hsla(210,16%,52%,0.55)',f:'hsla(210,30%,86%,0.28)',w:1.0}, sel:'hsl(201,89%,50%)' },
+    dark: { crit:{l:'hsl(350,82%,64%)',f:'hsla(350,78%,56%,0.36)',w:1.9}, aten:{l:'hsl(38,88%,60%)',f:'hsla(38,85%,52%,0.32)',w:1.6}, ok:{l:'hsl(142,58%,56%)',f:'hsla(142,55%,48%,0.28)',w:1.45}, none:{l:'hsla(214,20%,60%,0.42)',f:'hsla(215,18%,44%,0.14)',w:1.0}, sel:'hsl(201,89%,62%)' }
+  };
+  const TILES = { light:'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', dark:'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png' };
+  function theme(){ return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light'; }
+  function styleFor(f){ const p=PALETTE[theme()][classify(f.properties.NOME)]; return { color:p.l, weight:p.w, opacity: theme()==='dark'?0.95:0.85, fillColor:p.f, fillOpacity:1, lineJoin:'round' }; }
+
+  const map = L.map('leafmap', { zoomControl:true, scrollWheelZoom:false, attributionControl:true });
+  let tile = L.tileLayer(TILES[theme()], { subdomains:'abcd', maxZoom:19, attribution:'© OpenStreetMap · © CARTO' }).addTo(map);
+  const labelMarkers = [];
+
+  const geo = L.geoJSON(window.CRE_GEO, {
+    style: styleFor,
+    onEachFeature: function(f, layer){
+      const nome = f.properties.NOME, s = mockStats(nome);
+      layer.bindTooltip(
+        '<div class="map-tooltip"><div class="map-tooltip-title">'+nome+'</div>'+
+        '<div class="map-tooltip-row"><span>Escolas</span><strong>'+s.escolas+'</strong></div>'+
+        '<div class="map-tooltip-row"><span>Chamados ativos</span><strong>'+s.ativos+'</strong></div>'+
+        '<div class="map-tooltip-row" style="color:var(--color-red)"><span>Críticos</span><strong>'+s.criticos+'</strong></div>'+
+        '<div class="map-tooltip-row" style="color:var(--color-amber)"><span>Atenção</span><strong>'+s.atencao+'</strong></div></div>',
+        { sticky:true, direction:'auto', className:'cre-tooltip-custom' }
+      );
+      if (KEYLABELS.includes(norm(nome))) {
+        const m = L.marker(layer.getBounds().getCenter(), { icon: L.divIcon({ className:'', html:'', iconSize:[0,0] }), interactive:false });
+        m.bindTooltip(nome, { permanent:true, direction:'center', className:'cre-label' });
+        m.addTo(map); labelMarkers.push(m);
+      }
+      layer.on('mouseover', function(){ const p=PALETTE[theme()][classify(nome)]; layer.setStyle({ weight: p.w+1.4, fillColor:p.f }); });
+      layer.on('mouseout',  function(){ geo.resetStyle(layer); });
+      layer.on('click', function(){ geo.setStyle(styleFor); layer.setStyle({ color: PALETTE[theme()].sel, weight:3.4, fillOpacity:1 }); });
+    }
+  }).addTo(map);
+
+  map.fitBounds(geo.getBounds(), { padding:[16,16] });
+  setTimeout(function(){ map.invalidateSize(); map.fitBounds(geo.getBounds(), { padding:[16,16] }); }, 120);
+
+  // tema
+  const btn = document.getElementById('themeBtn'), lbl = document.getElementById('themeLabel');
+  btn.addEventListener('click', function(){
+    const dark = theme()==='dark';
+    document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+    lbl.textContent = dark ? 'Modo Escuro' : 'Modo Claro';
+    tile.setUrl(TILES[theme()]);
+    geo.setStyle(styleFor);
+  });
+</script>
+</body>
+</html>

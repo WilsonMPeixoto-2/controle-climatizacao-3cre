@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "db:types": "supabase gen types typescript --project-id wmnzcujojlygkcszocwb > src/types/supabase.ts",
-    "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/school-dossier.test.mjs && node test/smoke.test.mjs",
+    "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/school-dossier.test.mjs && node test/smoke.test.mjs && node test/map-risk.test.mjs && node test/domain.test.mjs && node test/services.test.mjs && node test/dossier-refinements.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "preview": "vite preview"
@@ -19,12 +19,14 @@
     "@vercel/analytics": "^2.0.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
+    "polylabel": "^2.0.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-to-print": "^3.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@types/react": "^19.2.17",

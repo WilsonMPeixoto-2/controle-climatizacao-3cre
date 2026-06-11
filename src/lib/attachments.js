@@ -36,7 +36,7 @@ export async function uploadTicketAttachment(supabaseClient, ticket, file, descr
 
   if (uploadError) throw uploadError;
 
-  // 2. Gravação do registro de metadados na tabela
+  // 2. Gravação do registro de metadados na tabela via RPC transacional
   const record = {
     id_chamado: ticket.id_chamado,
     designacao: ticket.designacao,
@@ -49,11 +49,25 @@ export async function uploadTicketAttachment(supabaseClient, ticket, file, descr
     descricao
   };
 
-  const { data, error } = await supabaseClient
-    .from('anexos_chamado')
-    .insert(record)
-    .select('*')
-    .single();
+  const historyEvent = {
+    id_evento: `EV-${crypto.randomUUID()}`,
+    data: new Date().toISOString().substring(0, 19),
+    id_chamado: ticket.id_chamado,
+    designacao: ticket.designacao,
+    unidade_escolar: ticket.unidade_escolar,
+    marco_relevante: 'Documento anexado',
+    setor: 'GOP',
+    responsavel_registro: 'GOP / Sistema',
+    observacao: `Arquivo: ${file.name}${descricao ? ` (${descricao})` : ''}`
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    'create_attachment_with_history',
+    {
+      p_attachment: record,
+      p_event: historyEvent
+    }
+  );
 
   // Em caso de falha de gravação de metadados, remove o arquivo físico para evitar "órfãos"
   if (error) {
@@ -61,7 +75,11 @@ export async function uploadTicketAttachment(supabaseClient, ticket, file, descr
     throw error;
   }
 
-  return data;
+  // Anexa o evento gerado de forma compatível
+  return {
+    ...data,
+    _historyEvent: historyEvent
+  };
 }
 
 export async function listTicketAttachments(supabaseClient, idChamado) {
@@ -90,11 +108,26 @@ export async function deleteTicketAttachment(supabaseClient, attachment) {
   if (!supabaseClient) throw new Error('Base online não conectada.');
   if (!attachment) throw new Error('Anexo inválido.');
 
-  // 1. Exclui o registro lógico no banco primeiro para evitar link quebrado no frontend
-  const { error: dbError } = await supabaseClient
-    .from('anexos_chamado')
-    .delete()
-    .eq('id', attachment.id);
+  const deleteEvent = {
+    id_evento: `EV-${crypto.randomUUID()}`,
+    data: new Date().toISOString().substring(0, 19),
+    id_chamado: attachment.id_chamado,
+    designacao: attachment.designacao,
+    unidade_escolar: attachment.unidade_escolar,
+    marco_relevante: 'Documento removido',
+    setor: 'GOP',
+    responsavel_registro: 'GOP / Sistema',
+    observacao: `Arquivo: ${attachment.nome_original}`
+  };
+
+  // 1. Exclui o registro lógico no banco e cria histórico via RPC transacional
+  const { error: dbError } = await supabaseClient.rpc(
+    'delete_attachment_with_history',
+    {
+      p_attachment_id: attachment.id,
+      p_event: deleteEvent
+    }
+  );
 
   if (dbError) throw dbError;
 
@@ -114,7 +147,8 @@ export async function deleteTicketAttachment(supabaseClient, attachment) {
     console.warn('Aviso: Exceção ao remover arquivo físico do Storage:', err);
   }
 
-  return true;
+  // Retorna o log para fins de atualização de estado compatível (truthy)
+  return deleteEvent;
 }
 
 export function getAttachmentPublicUrl(supabaseClient, attachment) {

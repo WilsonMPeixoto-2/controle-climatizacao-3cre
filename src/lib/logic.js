@@ -13,25 +13,25 @@
 // Constantes de domínio
 // ---------------------------------------------------------------------------
 
+import {
+  CLOSED_STATUSES as DOMAIN_CLOSED_STATUSES,
+  SUSPENDED_STATUSES as DOMAIN_SUSPENDED_STATUSES
+} from '../domain/statuses.js';
+import { normalizeSector as domainNormalizeSector } from '../domain/sectors.js';
+import { normalizePriority as domainNormalizePriority } from '../domain/priorities.js';
+
 /** Status que encerram o ciclo de um chamado — excluídos de TODOS os alertas. */
-export const CLOSED_STATUSES = ['10 - Concluído', '11 - Encerrado'];
+export const CLOSED_STATUSES = DOMAIN_CLOSED_STATUSES;
 
 /** Status de suspensão — não é fechado, mas também não dispara alertas de SLA/Antiguidade. */
-export const SUSPENDED_STATUSES = ['Suspenso / pendente'];
+export const SUSPENDED_STATUSES = DOMAIN_SUSPENDED_STATUSES;
 
 /**
  * Normaliza o texto de prioridade para comparação estável.
  * Trata variações de acento, caixa e espaços extras.
  */
 export function normalizePriority(pri) {
-  const p = String(pri || '')
-    .trim()
-    .toLowerCase();
-  if (p === 'crítica' || p === 'critica') return 'Crítica';
-  if (p === 'alta') return 'Alta';
-  if (p === 'média' || p === 'media') return 'Média';
-  if (p === 'baixa') return 'Baixa';
-  return pri || '';
+  return domainNormalizePriority(pri);
 }
 
 /**
@@ -39,12 +39,23 @@ export function normalizePriority(pri) {
  * Trata variantes como "Unidade Escolar / GIN" unificando para "GIN / Unidade Escolar".
  */
 export function normalizeSector(sector) {
-  const sec = String(sector || '').trim();
-  if (sec === 'Unidade Escolar / GIN') {
-    return 'GIN / Unidade Escolar';
-  }
-  return sec;
+  return domainNormalizeSector(sector);
 }
+
+/**
+ * Sanitiza strings dinâmicas de dados livres contra injeções XSS em saídas HTML.
+ */
+export function escapeHtml(unsafe) {
+  if (unsafe === null || unsafe === undefined) return '';
+  return String(unsafe)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+
 
 
 /** Limiares do Alerta de SLA (inércia: dias SEM movimentação). */
@@ -276,14 +287,13 @@ export const SECTORS = ['GOP', 'GIN', 'CPS', 'CTO'];
 /** Um chamado "pertence" a um setor se o nome aparece em `setor_responsavel`. */
 export function ticketInSector(ticket, sector) {
   const resp = ticket?.setor_responsavel || '';
-  if (sector === 'GOP') {
-    // GOP é frequentemente o dono isolado; trata tanto "GOP" exato quanto composto.
-    return resp
-      .split('/')
-      .map((s) => s.trim())
-      .includes('GOP');
-  }
-  return resp.includes(sector);
+  // Tokeniza por '/' e compara o token EXATO (para todos os setores), evitando
+  // falso-positivo por substring (ex.: 'CTO-NORTE' não casaria 'CTO'; 'GINASIO'
+  // não casaria 'GIN'). Mantém o casamento de valores compostos como 'GIN / CPS'.
+  return resp
+    .split('/')
+    .map((s) => s.trim())
+    .includes(sector);
 }
 
 export function filterBySector(tickets, sector) {
@@ -396,6 +406,24 @@ export function normalizeString(str) {
     .replace(/\s+/g, ' ')
     .toLowerCase()
     .trim();
+}
+
+/**
+ * Cruza um registro (chamado OU evento de histórico) a uma escola usando a MESMA
+ * regra leniente e normalizada do resto do sistema: igualdade de designação OU de
+ * nome da unidade, sem acento/caixa/espaço. Evita que uma designação nula ou com
+ * grafia divergente faça o registro sumir do dossiê — alinhado a aggregateBairroStats
+ * e à Linha do Tempo do App. (Compara designação só quando ambas existem, para que
+ * dois registros com designação vazia NÃO casem por engano.)
+ */
+export function matchesSchool(record, school) {
+  if (!record || !school) return false;
+  const recD = normalizeString(record.designacao);
+  const schD = normalizeString(school.designacao);
+  if (recD && schD && recD === schD) return true;
+  const recU = normalizeString(record.unidade_escolar);
+  const schU = normalizeString(school.unidade_escolar);
+  return Boolean(recU && schU && recU === schU);
 }
 
 /**

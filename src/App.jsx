@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, useRef } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -46,11 +46,10 @@ import {
   sectorSummary,
   compileEmailTemplate,
   searchSchools,
-  stageGroupCounts,
   SECTORS,
-  aggregateBairroStats,
   severidadeInatividade,
   normalizeSector,
+  matchesSchool,
   SLA_WARN_DAYS,
   SLA_SEVERE_DAYS,
   AGE_WARN_DAYS,
@@ -58,6 +57,11 @@ import {
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import OperationalMap from './components/OperationalMap.jsx';
+import { computeBairroRisk } from './lib/mapRisk.js';
+import MapLegend from './components/MapLegend.jsx';
+import { STATUSES, STATUS_LIST } from './domain/statuses.js';
+import { SECTORS as DOMAIN_SECTORS, SECTOR_LIST } from './domain/sectors.js';
+import { PRIORITY_LIST } from './domain/priorities.js';
 import { getOperationalSummary, getActionItems } from './lib/operationalIntelligence.js';
 import { getSchoolDossierData } from './lib/schoolDossier.js';
 import {
@@ -68,6 +72,14 @@ import {
   getAttachmentPublicUrl,
   getAttachmentDownloadUrl
 } from './lib/attachments.js';
+import { fetchEscolas } from './services/escolasService.js';
+import { fetchHistorico, insertHistoryEvent } from './services/historicoService.js';
+import {
+  fetchChamados,
+  createTicketWithHistory,
+  updateTicketWithHistory
+} from './services/chamadosService.js';
+
 
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
 // e antiguidade são derivados em ./lib/logic.js a partir desta referência.
@@ -231,6 +243,17 @@ const IconInfo = (props) => <AlertTriangle {...props} size={18} strokeWidth={2.2
 const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'email', 'cloud'];
 const VALID_THEMES = ['dark', 'light'];
 
+function rotuloNivel(nivel) {
+  switch (nivel) {
+    case 'critico': return 'Crítico';
+    case 'alto': return 'Alto';
+    case 'moderado': return 'Moderado';
+    case 'vigilancia': return 'Vigilância';
+    case 'em-dia': return 'Em dia';
+    default: return 'Sem cobertura';
+  }
+}
+
 export default function App() {
   const dossierRef = useRef(null);
   const [initialCloudConfig] = useState(() => ({
@@ -376,6 +399,7 @@ export default function App() {
   };
   const [selectedBairroNormalized, setSelectedBairroNormalized] = useState(null);
   const [focusedBairro, setFocusedBairro] = useState(null);
+  const [vistaTerritorio, setVistaTerritorio] = useState('mapa'); // 'mapa' | 'lista'
 
   // Cloud (Supabase) integration states
   const [supabaseUrl, setSupabaseUrl] = useState(initialCloudConfig.url);
@@ -396,6 +420,7 @@ export default function App() {
     initialSelectedSchool?.unidade_escolar || ''
   );
   const [selectedSchool, setSelectedSchool] = useState(initialSelectedSchool);
+  const [timelineFilter, setTimelineFilter] = useState('all'); // 'all' | 'notes' | 'system'
   const [showLookupSuggestions, setShowLookupSuggestions] = useState(false);
 
   // Tickets tab states
@@ -473,9 +498,7 @@ export default function App() {
           observacao: newCommentText
         };
 
-        const { error } = await supabaseClient.from('historico').insert([newHistoryEvent]);
-
-        if (error) throw error;
+        await insertHistoryEvent(supabaseClient, newHistoryEvent);
 
         // Atualiza o estado local do histórico
         setHistory((prev) => [newHistoryEvent, ...prev]);
@@ -506,6 +529,12 @@ export default function App() {
   ) => {
     setCustomEmailBody(buildEmailDraft(emailTemplates, tickets, ticketId, templateIndex));
   };
+
+  // Reseta o filtro do histórico quando a escola selecionada muda
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTimelineFilter('all');
+  }, [selectedSchool]);
 
   // Handle dark/light theme classes on body
   useEffect(() => {
@@ -562,6 +591,9 @@ export default function App() {
       setTicketAttachments((prev) => [anexo, ...prev]);
       setSchoolAttachments((prev) => [anexo, ...prev]);
       setAllAttachments((prev) => [anexo, ...prev]);
+      if (anexo && anexo._historyEvent) {
+        setHistory((prev) => [anexo._historyEvent, ...prev]);
+      }
       triggerToast('Arquivo enviado com sucesso!', 'success');
     } catch (err) {
       console.error('Erro no upload do anexo:', err);
@@ -577,10 +609,13 @@ export default function App() {
       return;
 
     try {
-      await deleteTicketAttachment(supabaseClient, attachment);
+      const deleteEvent = await deleteTicketAttachment(supabaseClient, attachment);
       setTicketAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
       setSchoolAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
       setAllAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
+      if (deleteEvent && typeof deleteEvent === 'object') {
+        setHistory((prev) => [deleteEvent, ...prev]);
+      }
       triggerToast('Arquivo excluído com sucesso!', 'success');
     } catch (err) {
       console.error('Erro ao excluir anexo:', err);
@@ -598,12 +633,7 @@ export default function App() {
       setSupabaseClient(client);
 
       // Verify connection by loading schools
-      const { data: schoolsData, error: schoolsError } = await client
-        .from('escolas')
-        .select('*')
-        .order('unidade_escolar');
-
-      if (schoolsError) throw schoolsError;
+      const schoolsData = await fetchEscolas(client);
 
       // If schools table exists, load cloud datasets
       setCloudConnected(true);
@@ -613,22 +643,12 @@ export default function App() {
         setSchools(schoolsData);
 
         // Load tickets
-        const { data: ticketsData, error: ticketsError } = await client
-          .from('chamados')
-          .select('*')
-          .order('id_chamado', { ascending: false });
-
-        if (ticketsError) throw ticketsError;
-        if (ticketsData) setTickets(ticketsData);
+        const ticketsData = await fetchChamados(client);
+        setTickets(ticketsData);
 
         // Load timeline history
-        const { data: historyData, error: historyError } = await client
-          .from('historico')
-          .select('*')
-          .order('data', { ascending: false });
-
-        if (historyError) throw historyError;
-        if (historyData) setHistory(historyData);
+        const historyData = await fetchHistorico(client);
+        setHistory(historyData);
 
         // Load all attachments
         const { data: attachmentsData, error: attachmentsError } = await client
@@ -659,6 +679,7 @@ export default function App() {
     } catch (err) {
       console.error('Supabase Error:', err);
       setCloudConnected(false);
+      setSupabaseClient(null);
       setSyncStatusText('Erro de conexão - Modo Local');
       triggerToast('Erro ao carregar dados online. Usando base local.');
     } finally {
@@ -700,7 +721,11 @@ export default function App() {
 
     // Reload local files
     if (dbData) {
-      setTickets(dbData.chamados || []);
+      const normalized = (dbData.chamados || []).map(t => ({
+        ...t,
+        setor_responsavel: normalizeSector(t.setor_responsavel)
+      }));
+      setTickets(normalized);
       setSchools(dbData.escolas || []);
       setHistory(dbData.historico || []);
       setAllAttachments([]);
@@ -710,42 +735,7 @@ export default function App() {
 
   // Upload local db.json items to Supabase
   const handleSyncLocalToCloud = async () => {
-    if (!supabaseClient) {
-      triggerToast('Conecte-se ao Supabase primeiro!');
-      return;
-    }
-    const confirmation = window.prompt(
-      "CUIDADO: Esta ação substituirá TODOS os dados de Escolas, Chamados e Histórico na base online do Supabase com os dados locais. Digite 'ENVIAR BASE LOCAL' para confirmar:"
-    );
-    if (confirmation !== 'ENVIAR BASE LOCAL') {
-      triggerToast('Sincronização cancelada.', 'info');
-      return;
-    }
-    setCloudLoading(true);
-    setSyncStatusText('Sincronizando tabelas...');
-    try {
-      triggerToast(`Sincronizando escolas (${schools.length} registros)...`);
-      const { error: escErr } = await supabaseClient.from('escolas').upsert(schools);
-      if (escErr) throw escErr;
-
-      triggerToast(`Sincronizando chamados (${tickets.length} registros)...`);
-      const { error: chErr } = await supabaseClient.from('chamados').upsert(tickets);
-      if (chErr) throw chErr;
-
-      triggerToast('Sincronizando histórico de eventos...');
-      const { error: histErr } = await supabaseClient.from('historico').upsert(history);
-      if (histErr) throw histErr;
-
-      setSyncStatusText('Base online ativa');
-      triggerToast('Banco de dados local sincronizado e salvo na nuvem!');
-    } catch (err) {
-      console.error(err);
-      triggerToast(
-        `Erro na sincronização: ${err.message}. Verifique se criou as tabelas no SQL Editor.`
-      );
-    } finally {
-      setCloudLoading(false);
-    }
+    triggerToast('A sincronização local para a nuvem está desativada por segurança.', 'error');
   };
 
   // Date Formatting Helpers — delega ao módulo de lógica (fonte única da verdade)
@@ -801,7 +791,6 @@ export default function App() {
 
   // Metric Computations — centralizadas no módulo de lógica (data dinâmica)
   const metrics = computeMetrics(tickets, todayRef());
-  const stageCounts = stageGroupCounts(tickets);
   const totalTickets = metrics.total;
   const openTickets = metrics.open;
   const inactivePlus7 = metrics.inactivePlus7; // SLA âmbar ou pior
@@ -811,6 +800,10 @@ export default function App() {
 
   const summary = getOperationalSummary(tickets, schools, allAttachments, todayRef());
   const actionItems = getActionItems(tickets, schools, allAttachments, todayRef());
+  const territorialRisk = useMemo(
+    () => computeBairroRisk(tickets, schools, { attachments: allAttachments, ref: todayRef() }),
+    [tickets, schools, allAttachments]
+  );
 
   // Tickets views filters
   const getFilteredTickets = () => {
@@ -1296,7 +1289,7 @@ export default function App() {
     try {
       const nowIso = new Date().toISOString().substring(0, 19);
       const newEvent = {
-        id_evento: `EV-MANUAL-${Date.now()}`,
+        id_evento: `EV-MANUAL-${crypto.randomUUID()}`,
         data: nowIso,
         id_chamado: editingTicket.id_chamado,
         designacao: editingTicket.designacao,
@@ -1307,14 +1300,7 @@ export default function App() {
         observacao: commentText.trim()
       };
 
-      const { data: savedEvent, error } = await supabaseClient
-        .from('historico')
-        .insert([newEvent])
-        .select('*')
-        .single();
-
-      if (error) throw error;
-      if (!savedEvent) throw new Error('Nenhum registro retornado pelo banco após salvar.');
+      const savedEvent = await insertHistoryEvent(supabaseClient, newEvent);
 
       setHistory((prev) => [savedEvent, ...prev]);
       triggerToast('Comentário registrado na linha do tempo!', 'success');
@@ -1404,9 +1390,9 @@ export default function App() {
       modificado_em: nowIso
     };
 
-    const novosEventos = logsGerados.map((log, index) => {
+    const novosEventos = logsGerados.map((log) => {
       return {
-        id_evento: `EV-${Date.now()}-${index}`,
+        id_evento: `EV-${crypto.randomUUID()}`,
         data: nowIso,
         id_chamado: editingTicket.id_chamado,
         designacao: editingTicket.designacao,
@@ -1422,16 +1408,11 @@ export default function App() {
 
     try {
       // 1. Gravação pessimista transacional via RPC no Supabase
-      const { data: savedTicket, error: rpcErr } = await supabaseClient.rpc(
-        'save_ticket_with_history',
-        {
-          p_ticket: updatedRecord,
-          p_events: novosEventos
-        }
+      const savedTicket = await updateTicketWithHistory(
+        supabaseClient,
+        updatedRecord,
+        novosEventos
       );
-
-      if (rpcErr) throw rpcErr;
-      if (!savedTicket) throw new Error('Não foi retornado nenhum registro após salvar.');
 
       // 3. Somente após sucesso na nuvem, atualiza o estado local do frontend
       const updatedTickets = tickets.map((t) => {
@@ -1509,21 +1490,9 @@ export default function App() {
 
       if (supabaseClient) {
         try {
-          // 1. Inserir chamado no Supabase (o trigger irá gerar o id_chamado) e recuperar o registro inserido
-          const { data: dbRecord, error: tkErr } = await supabaseClient
-            .from('chamados')
-            .insert(ticketRecord)
-            .select('*')
-            .single();
-
-          if (tkErr) throw tkErr;
-          finalTicketRecord = dbRecord;
-
-          // 2. Criar e inserir o evento inicial do histórico referenciando o id_chamado retornado
           const initialEvent = {
-            id_evento: `EV-${String(Date.now()).slice(-5)}`, // ID robusto baseado em timestamp para evitar conflitos
+            id_evento: `EV-${crypto.randomUUID()}`, // ID robusto para evitar conflitos de chaves primarias
             data: nowIso,
-            id_chamado: dbRecord.id_chamado,
             designacao: formSelectedSchool.designacao,
             unidade_escolar: formSelectedSchool.unidade_escolar,
             marco_relevante: newTicket.status_atual,
@@ -1532,27 +1501,14 @@ export default function App() {
             observacao: `Abertura oficial do chamado. Demanda cadastrada para o local: ${newTicket.local_demanda}.`
           };
 
-          const { error: evErr } = await supabaseClient.from('historico').insert(initialEvent);
-          if (evErr) {
-            // Rollback transacional compensatório: removemos o chamado recém-criado para evitar registro órfão
-            console.error(
-              'Falha ao registrar histórico inicial. Executando rollback (deleção) do chamado...',
-              evErr
-            );
-            const { error: rollbackErr } = await supabaseClient
-              .from('chamados')
-              .delete()
-              .eq('id_chamado', dbRecord.id_chamado);
-            if (rollbackErr) {
-              console.error(
-                'ERRO GRAVE: Falha ao executar rollback (deleção) no Supabase:',
-                rollbackErr
-              );
-            }
-            throw evErr;
-          }
-
-          finalEventRecord = initialEvent;
+          // 1. Gravação pessimista transacional via RPC no Supabase
+          const result = await createTicketWithHistory(
+            supabaseClient,
+            ticketRecord,
+            initialEvent
+          );
+          finalTicketRecord = result.ticket;
+          finalEventRecord = result.event;
         } catch (err) {
           console.error('Cloud insert failed:', err);
           triggerToast(
@@ -1580,7 +1536,7 @@ export default function App() {
         };
 
         finalEventRecord = {
-          id_evento: `EV-${String(history.length + 1).padStart(5, '0')}`,
+          id_evento: `EV-${crypto.randomUUID()}`,
           data: nowIso,
           id_chamado: generatedId,
           designacao: formSelectedSchool.designacao,
@@ -1629,10 +1585,11 @@ export default function App() {
 
   // Interactive SVG circular metrics computations for school detail
   const renderCircularCoverage = (school) => {
-    if (!school || school.qtd_salas_de_aula === 0) return null;
+    const totalSalas = Number(school?.qtd_salas_de_aula);
+    if (!school || !(totalSalas > 0)) return null;
     const coverage = Math.min(
       100,
-      Math.round((school.aparelhos_em_sala / school.qtd_salas_de_aula) * 100)
+      Math.round((Number(school.aparelhos_em_sala || 0) / totalSalas) * 100)
     );
 
     // SVG circle attributes
@@ -2346,7 +2303,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Mapa Operacional — área de atuação da 3ª CRE (substitui os cards de Etapas e Setor) */}
+            {/* Mapa Operacional — área de atuação da 3ª CRE */}
             <div className="dashboard-section op-panel">
               <div
                 className="section-header"
@@ -2373,51 +2330,129 @@ export default function App() {
                     Área de atuação da 3ª CRE · Zona Norte
                   </span>
                 </div>
-                <span
-                  className="map-instruction"
-                  style={{
-                    fontSize: '12.5px',
-                    color: 'var(--primary)',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    backgroundColor: 'var(--primary-light)',
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    border: '1px solid var(--border-hover)'
-                  }}
-                >
-                  <IconInfo style={{ width: '13px', height: '13px', flexShrink: 0 }} />
-                  Clique em um bairro para ver escolas e chamados ativos.
-                </span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <div className="territorio-toggle" role="tablist" aria-label="Visualização do território">
+                    <button
+                      role="tab"
+                      aria-selected={vistaTerritorio === 'mapa'}
+                      className={vistaTerritorio === 'mapa' ? 'is-active' : ''}
+                      onClick={() => setVistaTerritorio('mapa')}
+                    >
+                      Mapa
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={vistaTerritorio === 'lista'}
+                      className={vistaTerritorio === 'lista' ? 'is-active' : ''}
+                      onClick={() => setVistaTerritorio('lista')}
+                    >
+                      Lista
+                    </button>
+                  </div>
+
+                  <span
+                    className="map-instruction"
+                    style={{
+                      fontSize: '12.5px',
+                      color: 'var(--primary)',
+                      fontWeight: '700',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      backgroundColor: 'var(--primary-light)',
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      border: '1px solid var(--border-hover)'
+                    }}
+                  >
+                    <IconInfo style={{ width: '13px', height: '13px', flexShrink: 0 }} />
+                    {vistaTerritorio === 'mapa'
+                      ? 'Clique em um bairro para ver escolas e chamados ativos.'
+                      : 'Selecione uma linha para detalhar o bairro.'}
+                  </span>
+                </div>
               </div>
 
               <div
                 className={`map-and-details-container ${selectedBairroNormalized ? 'has-details' : ''}`}
               >
-                <OperationalMap
-                  tickets={tickets}
-                  schools={schools}
-                  selectedSchool={selectedSchool}
-                  theme={theme}
-                  onSelectBairro={setSelectedBairroNormalized}
-                  focusedBairro={focusedBairro}
-                />
+                {vistaTerritorio === 'mapa' ? (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <OperationalMap
+                      selectedSchool={selectedSchool}
+                      theme={theme}
+                      onSelectBairro={setSelectedBairroNormalized}
+                      focusedBairro={focusedBairro}
+                      risk={territorialRisk}
+                    />
+                    <MapLegend risk={territorialRisk} />
+                  </div>
+                ) : (
+                  <div className="territorio-tabela-wrapper" style={{ flex: 1, overflowX: 'auto', background: 'var(--surface)', borderRadius: '14px', border: '1px solid var(--border-color)', padding: '16px' }}>
+                    <table className="territorio-tabela">
+                      <caption className="sr-only">Bairros por risco territorial</caption>
+                      <thead>
+                        <tr>
+                          <th>Bairro</th>
+                          <th>Nível</th>
+                          <th>Risco</th>
+                          <th>Ativos</th>
+                          <th>Críticos</th>
+                          <th>Escolas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(territorialRisk)
+                          .filter(([, b]) => b.chamados_ativos > 0)
+                          .sort((a, b) => b[1].risco - a[1].risco)
+                          .map(([key, b]) => (
+                            <tr
+                              key={key}
+                              className={selectedBairroNormalized === key ? 'is-selected' : ''}
+                              onClick={() => setSelectedBairroNormalized(key)}
+                              tabIndex={0}
+                              onKeyDown={(ev) => {
+                                if (ev.key === 'Enter' || ev.key === ' ') {
+                                  ev.preventDefault();
+                                  setSelectedBairroNormalized(key);
+                                }
+                              }}
+                            >
+                              <td>{b.nome_exibicao}</td>
+                              <td>
+                                <span className={`map-nivel-badge nivel-${b.nivel}`}>
+                                  {rotuloNivel(b.nivel)}
+                                </span>
+                              </td>
+                              <td style={{ fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}>
+                                {b.risco.toFixed(1)}
+                              </td>
+                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.chamados_ativos}</td>
+                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.criticos}</td>
+                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.escolas_cadastradas}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 {selectedBairroNormalized &&
                   (() => {
-                    const stats = aggregateBairroStats(tickets, schools);
-                    const bData = stats[selectedBairroNormalized];
+                    const bData = territorialRisk[selectedBairroNormalized];
                     if (!bData) return null;
                     return (
-                      <div className="bairro-details-card animate-slide-in">
+                      <div className="bairro-details-card bairro-details-card-v2 animate-slide-in">
                         <div className="bairro-card-header">
-                          <div className="bairro-card-title-group">
+                          <div className="bairro-card-title-group" style={{ flexWrap: 'wrap', gap: '8px' }}>
                             <span className="bairro-header-pin-icon">
                               <IconPin />
                             </span>
                             <h4>{bData.nome_exibicao}</h4>
+                            <span className={`map-nivel-badge nivel-${bData.nivel}`} style={{ marginLeft: '4px' }}>
+                              {rotuloNivel(bData.nivel)}
+                            </span>
                             <button
                               className="btn-focus-bairro-small"
                               onClick={() =>
@@ -2435,13 +2470,12 @@ export default function App() {
                               className="btn-copy-summary"
                               onClick={() =>
                                 handleCopySummary(
-                                  `Bairro: ${bData.nome_exibicao}\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nEm Atenção: ${bData.atencao}`,
+                                  `Bairro: ${bData.nome_exibicao}\nRisco: ${bData.risco} (${rotuloNivel(bData.nivel)})\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nDensidade: ${bData.densidade}`,
                                   'bairro'
                                 )
                               }
                               title="Copiar resumo gerencial do bairro"
                               aria-label="Copiar resumo gerencial do bairro"
-                              style={{ marginLeft: '4px' }}
                             >
                               <IconCopy />
                             </button>
@@ -2455,38 +2489,88 @@ export default function App() {
                             <IconClose />
                           </button>
                         </div>
-                        <div className="bairro-card-body">
-                          <div className="bairro-stat-row">
-                            <span>Escolas Cadastradas:</span>
-                            <span className="bairro-stat-badge">{bData.escolas_cadastradas}</span>
-                          </div>
-                          <div className="bairro-stat-row">
-                            <span>Chamados Ativos:</span>
-                            <span
-                              className={`bairro-stat-badge ${bData.chamados_ativos > 0 ? 'bairro-stat-badge-active' : ''}`}
-                            >
-                              {bData.chamados_ativos}
-                            </span>
-                          </div>
-                          <div className="bairro-stat-row">
-                            <span>Críticos:</span>
-                            <span
-                              className={`bairro-stat-badge ${bData.criticos > 0 ? 'bairro-stat-badge-critical' : ''}`}
-                            >
-                              {bData.criticos}
-                            </span>
-                          </div>
-                          <div className="bairro-stat-row">
-                            <span>Em Atenção:</span>
-                            <span
-                              className={`bairro-stat-badge ${bData.atencao > 0 ? 'bairro-stat-badge-warning' : ''}`}
-                            >
-                              {bData.atencao}
-                            </span>
+                        <div className="bairro-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          
+                          {/* Score e Nível */}
+                          <div className="bairro-irt-box" style={{ padding: '12px', borderRadius: '10px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div>
+                              <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '700', opacity: 0.75 }}>Índice de Risco (IRT)</div>
+                              <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-muted)' }}>Média dos piores casos</div>
+                            </div>
+                            <div style={{ fontSize: '22px', fontWeight: '800', color: bData.nivel === 'critico' ? 'var(--map-risk-critico, #C2434E)' : bData.nivel === 'alto' ? 'var(--map-risk-alto, #CC7A3D)' : 'var(--text-main)' }}>
+                              {bData.risco.toFixed(1)}
+                            </div>
                           </div>
 
-                          <div className="bairro-tickets-section">
-                            <h5>Chamados Ativos no Bairro ({bData.chamados_lista.length}):</h5>
+                          {/* Grid de Microcards */}
+                          <div className="bairro-microcards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Escolas</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.escolas_cadastradas}</span>
+                            </div>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Ativos</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.chamados_ativos}</span>
+                            </div>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Críticos</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800', color: bData.criticos > 0 ? 'var(--color-red)' : 'inherit' }}>{bData.criticos}</span>
+                            </div>
+                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Densidade</span>
+                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.densidade.toFixed(2)}</span>
+                            </div>
+                          </div>
+
+                          {/* Seção Principais Ofensores */}
+                          {bData.topOfensores && bData.topOfensores.length > 0 && (
+                            <div className="bairro-ofensores-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                              <h5 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                                Principais Ofensores
+                              </h5>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {bData.topOfensores.map((o) => {
+                                  const rawTicket = tickets.find((t) => String(t.id_chamado) === String(o.id_chamado));
+                                  return (
+                                    <div
+                                      key={o.id_chamado}
+                                      className="ofensor-card"
+                                      style={{
+                                        padding: '10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-color)',
+                                        background: 'var(--bg-app)',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '2px',
+                                        transition: 'var(--transition)'
+                                      }}
+                                      onClick={() => rawTicket && openTicketEdit(rawTicket)}
+                                      title={`Editar chamado ${o.id_chamado}`}
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main)' }}>{o.id_chamado}</span>
+                                        <span style={{ fontSize: '11px', fontWeight: '700', color: o.score >= 75 ? 'var(--color-red)' : 'var(--color-amber)' }}>{o.score} pts</span>
+                                      </div>
+                                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {o.unidade_escolar}
+                                      </div>
+                                      <div style={{ fontSize: '10.5px', color: 'var(--text-light)', fontStyle: 'italic' }}>
+                                        Inativo há {o.inactivityDays} dias
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Seção Lista Completa */}
+                          <div className="bairro-tickets-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                            <h5 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                              Todos os Chamados Ativos ({bData.chamados_lista.length})
+                            </h5>
                             <div className="bairro-tickets-list">
                               {bData.chamados_lista.map((tk) => {
                                 const statusNorm = tk.status_atual || '';
@@ -2504,11 +2588,13 @@ export default function App() {
                                   accentClass = 'accent-amber';
                                 }
 
+                                const rawTicket = tickets.find((t) => String(t.id_chamado) === String(tk.id_chamado));
+
                                 return (
                                   <div
                                     key={tk.id_chamado}
                                     className={`bairro-ticket-item ${accentClass}`}
-                                    onClick={() => openTicketEdit(tk)}
+                                    onClick={() => openTicketEdit(rawTicket || tk)}
                                     title={`Editar chamado ${tk.id_chamado}`}
                                   >
                                     <div className="bairro-ticket-meta">
@@ -2540,42 +2626,6 @@ export default function App() {
                     );
                   })()}
               </div>
-
-              <div className="op-legend">
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--secondary)', color: 'var(--secondary)' }}
-                  />
-                  Triagem / Vistoria <b>{stageCounts.triagem}</b>
-                </span>
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--color-amber)', color: 'var(--color-amber)' }}
-                  />
-                  Orçamento <b>{stageCounts.orcamento}</b>
-                </span>
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--primary)', color: 'var(--primary)' }}
-                  />
-                  Em execução <b>{stageCounts.execucao}</b>
-                </span>
-                <span className="lg">
-                  <span
-                    className="ld"
-                    style={{ background: 'var(--color-green)', color: 'var(--color-green)' }}
-                  />
-                  Concluído <b>{stageCounts.concluido}</b>
-                </span>
-              </div>
-              <p className="op-foot">
-                Mapa-base real (© OpenStreetMap · CARTO) com os 26 bairros da 3ª CRE destacados. As
-                contagens por etapa refletem os chamados do sistema. Mapa de contexto da área de
-                atuação — não localiza unidades individualmente.
-              </p>
             </div>
 
             {/* Layout Grid */}
@@ -2931,6 +2981,7 @@ export default function App() {
                 <div className="filter-select-wrapper">
                   <span className="filter-label">Prioridade:</span>
                   <select
+                    aria-label="Filtro de prioridade"
                     className="form-control select-filter"
                     value={filterPriority}
                     onChange={(e) => setFilterPriority(e.target.value)}
@@ -2953,6 +3004,7 @@ export default function App() {
                 <div className="filter-select-wrapper">
                   <span className="filter-label">Status:</span>
                   <select
+                    aria-label="Filtro de status"
                     className="form-control select-filter"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
@@ -4291,6 +4343,57 @@ export default function App() {
                           </div>
                         </div>
 
+                        {/* Quadro Financeiro Referencial */}
+                        <div
+                          className="dossier-financial-estimate"
+                          style={{
+                            marginTop: '20px',
+                            padding: '16px',
+                            borderRadius: 'var(--radius-xs)',
+                            backgroundColor: 'var(--bg-app)',
+                            border: '1px solid var(--border-color)',
+                            borderLeft: '4px solid var(--color-orange)'
+                          }}
+                        >
+                          <strong
+                            style={{
+                              fontSize: '11px',
+                              display: 'block',
+                              marginBottom: '6px',
+                              textTransform: 'uppercase',
+                              color: 'var(--text-light)',
+                              letterSpacing: '0.5px'
+                            }}
+                          >
+                            💰 Estimativa referencial preliminar, não orçamentária:
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '20px',
+                              fontWeight: '900',
+                              color: 'var(--color-orange)',
+                              display: 'block',
+                              marginBottom: '6px'
+                            }}
+                          >
+                            {dossier.investmentEstimate.toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            })}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              color: 'var(--text-muted)',
+                              lineHeight: '1.4',
+                              display: 'block',
+                              fontWeight: '500'
+                            }}
+                          >
+                            * Valor meramente referencial para triagem gerencial. Não substitui orçamento, pesquisa de preços, projeto elétrico ou processo de contratação.
+                          </span>
+                        </div>
+
                         {/* POP Action */}
                         <div
                           className={`dossier-pop-action status-${dossier.status}`}
@@ -4325,11 +4428,37 @@ export default function App() {
                             style={{
                               fontSize: '13.5px',
                               fontWeight: '800',
-                              color: 'var(--text-main)'
+                              color: 'var(--text-main)',
+                              display: 'block',
+                              marginBottom: dossier.oldestActiveTicket ? '12px' : '0'
                             }}
                           >
                             {selectedSchool.acao_sugerida}
                           </span>
+                          {dossier.oldestActiveTicket && (
+                            <button
+                              className="btn-email-shortcut no-print"
+                              onClick={() => goToCommunicationForTicket(dossier.oldestActiveTicket, 'school')}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 14px',
+                                backgroundColor: 'var(--primary)',
+                                color: 'var(--text-on-primary)',
+                                border: 'none',
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                transition: 'var(--transition)',
+                                width: '100%',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Mail size={14} /> Minutar E-mail de Pendência
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -4691,18 +4820,50 @@ export default function App() {
 
                       {/* Bloco de Histórico (Linha do Tempo) */}
                       <div className="dashboard-section dossier-section">
-                        <div className="section-header">
-                          <h3>Linha do Tempo e Nota Histórica</h3>
+                        <div
+                          className="section-header"
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                            marginBottom: '16px'
+                          }}
+                        >
+                          <h3 style={{ margin: 0 }}>Linha do Tempo e Nota Histórica</h3>
+                          <div className="timeline-filters no-print" style={{ display: 'flex', gap: '6px' }}>
+                            {[
+                              { id: 'all', label: 'Todos' },
+                              { id: 'notes', label: 'Notas Técnicas' },
+                              { id: 'system', label: 'Histórico do Sistema' }
+                            ].map((opt) => (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => setTimelineFilter(opt.id)}
+                                style={{
+                                  padding: '5px 12px',
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  borderRadius: '20px',
+                                  border: '1px solid var(--border-color)',
+                                  backgroundColor: timelineFilter === opt.id ? 'var(--primary)' : 'var(--bg-app)',
+                                  color: timelineFilter === opt.id ? 'var(--text-on-primary)' : 'var(--text-light)',
+                                  cursor: 'pointer',
+                                  transition: 'var(--transition)'
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
                         <div className="timeline">
                           {(() => {
                             const dbEvents = history
-                              .filter(
-                                (h) =>
-                                  h.designacao === selectedSchool.designacao ||
-                                  h.unidade_escolar === selectedSchool.unidade_escolar
-                              )
+                              .filter((h) => matchesSchool(h, selectedSchool))
                               .map((h) => {
                                 let docMeta = null;
                                 let isDocument = false;
@@ -4756,17 +4917,33 @@ export default function App() {
                               (a, b) => new Date(b.data) - new Date(a.data)
                             );
 
-                            if (integrated.length === 0) {
+                            const filteredEvents = integrated.filter((ev) => {
+                              if (timelineFilter === 'notes') {
+                                return ev.tipo === 'comentario_local' || (ev.tipo === 'historico_db' && ev.autor !== 'Sistema');
+                              }
+                              if (timelineFilter === 'system') {
+                                return ev.tipo === 'historico_db' && ev.autor === 'Sistema';
+                              }
+                              return true;
+                            });
+
+                            if (filteredEvents.length === 0) {
                               return (
                                 <EmptyState
                                   iconType="history"
                                   title="Sem registros no histórico"
-                                  description="Nenhum marco de evento registrado no histórico para esta unidade."
+                                  description={
+                                    timelineFilter === 'notes'
+                                      ? "Nenhuma nota técnica registrada para esta unidade."
+                                      : timelineFilter === 'system'
+                                        ? "Nenhum histórico do sistema registrado para esta unidade."
+                                        : "Nenhum marco de evento registrado no histórico para esta unidade."
+                                  }
                                 />
                               );
                             }
 
-                            return integrated.map((ev) => (
+                            return filteredEvents.map((ev) => (
                               <div
                                 key={ev.id}
                                 className="timeline-event"
@@ -5329,10 +5506,10 @@ export default function App() {
                       value={newTicket.status_atual}
                       onChange={(e) => setNewTicket({ ...newTicket, status_atual: e.target.value })}
                     >
-                      <option value="1 - Recebido — em triagem">1 - Recebido — em triagem</option>
-                      <option value="2 - Em vistoria técnica">2 - Em vistoria técnica</option>
-                      <option value="4 - Aguardando orçamento">4 - Aguardando orçamento</option>
-                      <option value="Suspenso / pendente">Suspenso / pendente</option>
+                      <option value={STATUSES.RECEBIDO}>{STATUSES.RECEBIDO}</option>
+                      <option value={STATUSES.VISTORIA}>{STATUSES.VISTORIA}</option>
+                      <option value={STATUSES.AGUARDANDO_ORCAMENTO}>{STATUSES.AGUARDANDO_ORCAMENTO}</option>
+                      <option value={STATUSES.SUSPENSO}>{STATUSES.SUSPENSO}</option>
                     </select>
                   </div>
 
@@ -5348,11 +5525,11 @@ export default function App() {
                         setNewTicket({ ...newTicket, setor_responsavel: e.target.value })
                       }
                     >
-                      <option value="GOP">GOP</option>
-                      <option value="CPS">CPS</option>
-                      <option value="GIN">GIN</option>
-                      <option value="CTO">CTO</option>
-                      <option value="Unidade Escolar">Unidade Escolar</option>
+                      <option value={DOMAIN_SECTORS.GOP}>{DOMAIN_SECTORS.GOP}</option>
+                      <option value={DOMAIN_SECTORS.CPS}>{DOMAIN_SECTORS.CPS}</option>
+                      <option value={DOMAIN_SECTORS.GIN}>{DOMAIN_SECTORS.GIN}</option>
+                      <option value={DOMAIN_SECTORS.CTO}>{DOMAIN_SECTORS.CTO}</option>
+                      <option value={DOMAIN_SECTORS.UNIDADE_ESCOLAR}>{DOMAIN_SECTORS.UNIDADE_ESCOLAR}</option>
                     </select>
                   </div>
                 </div>
@@ -5767,6 +5944,9 @@ CREATE TABLE IF NOT EXISTS chamados (
   data_solicitacao TIMESTAMPTZ,
   local_demanda TEXT,
   tipo_demanda TEXT,
+  tipo_aparelho TEXT DEFAULT 'Split',
+  btu_existente TEXT,
+  btu_pretendido TEXT,
   status_atual TEXT,
   setor_responsavel TEXT,
   proxima_providencia TEXT,
@@ -5791,6 +5971,21 @@ CREATE TABLE IF NOT EXISTS historico (
   setor TEXT,
   responsavel_registro TEXT,
   observacao TEXT
+);
+
+-- 4. Tabela de Anexos
+CREATE TABLE IF NOT EXISTS anexos_chamado (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id_chamado TEXT REFERENCES chamados(id_chamado) ON DELETE CASCADE,
+  designacao TEXT REFERENCES escolas(designacao) ON DELETE CASCADE,
+  unidade_escolar TEXT,
+  bucket TEXT DEFAULT 'gop-anexos',
+  storage_path TEXT UNIQUE,
+  nome_original TEXT,
+  mime_type TEXT,
+  tamanho_bytes BIGINT,
+  descricao TEXT,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
 );`}
                       </pre>
                     </details>
@@ -5815,12 +6010,11 @@ CREATE TABLE IF NOT EXISTS historico (
                       <button
                         className="btn btn-secondary"
                         onClick={handleSyncLocalToCloud}
-                        disabled={cloudLoading}
+                        disabled={true}
+                        title="Sincronização local para nuvem desativada por segurança."
                       >
                         <IconRefresh />
-                        <span>
-                          {cloudLoading ? 'Processando...' : 'Enviar base local para a base online'}
-                        </span>
+                        <span>Enviar base local (Desativado)</span>
                       </button>
                       <button
                         className="btn btn-secondary btn-danger"
@@ -5956,26 +6150,11 @@ CREATE TABLE IF NOT EXISTS historico (
                         }
                         disabled={!supabaseClient || isSavingTicket}
                       >
-                        <option value="1 - Recebido — em triagem">1 - Recebido — em triagem</option>
-                        <option value="2 - Em vistoria técnica">2 - Em vistoria técnica</option>
-                        <option value="3 - Vistoria concluída">3 - Vistoria concluída</option>
-                        <option value="4 - Aguardando orçamento">4 - Aguardando orçamento</option>
-                        <option value="5 - Orçamento em análise/decisão">
-                          5 - Orçamento em análise/decisão
-                        </option>
-                        <option value="6 - Recurso / remanejamento">
-                          6 - Recurso / remanejamento
-                        </option>
-                        <option value="7 - Adequação em execução">7 - Adequação em execução</option>
-                        <option value="8 - Autorizado — CTO acionada">
-                          8 - Autorizado — CTO acionada
-                        </option>
-                        <option value="9 - Aguardando aparelho/instalação">
-                          9 - Aguardando aparelho/instalação
-                        </option>
-                        <option value="10 - Concluído">10 - Concluído</option>
-                        <option value="11 - Encerrado">11 - Encerrado</option>
-                        <option value="Suspenso / pendente">Suspenso / pendente</option>
+                        {STATUS_LIST.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -5992,16 +6171,11 @@ CREATE TABLE IF NOT EXISTS historico (
                         }
                         disabled={!supabaseClient || isSavingTicket}
                       >
-                        <option value="GOP">GOP</option>
-                        <option value="CPS">CPS</option>
-                        <option value="GIN">GIN</option>
-                        <option value="CTO">CTO</option>
-                        <option value="CTIN">CTIN</option>
-                        <option value="Unidade Escolar">Unidade Escolar</option>
-                        <option value="GIN / Unidade Escolar">GIN / Unidade Escolar</option>
-                        <option value="CPS / Unidade Escolar">CPS / Unidade Escolar</option>
-                        <option value="COMP">COMP</option>
-                        <option value="GMP">GMP</option>
+                        {SECTOR_LIST.map((sector) => (
+                          <option key={sector} value={sector}>
+                            {sector}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -6018,10 +6192,11 @@ CREATE TABLE IF NOT EXISTS historico (
                         }
                         disabled={!supabaseClient || isSavingTicket}
                       >
-                        <option value="Baixa">Baixa</option>
-                        <option value="Média">Média</option>
-                        <option value="Alta">Alta</option>
-                        <option value="Crítica">Crítica</option>
+                        {PRIORITY_LIST.map((priority) => (
+                          <option key={priority} value={priority}>
+                            {priority}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
