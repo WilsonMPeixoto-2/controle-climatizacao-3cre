@@ -4207,7 +4207,7 @@ textarea {
 
 /* --- Mobile --- */
 @media (max-width: 768px) {
-  .operational-map, .map-and-details-container .leaflet-container {
+  .op-map, .operational-map, .map-and-details-container .leaflet-container {
     height: clamp(280px, 42vh, 420px) !important;
   }
   .map-and-details-container { flex-direction: column; }

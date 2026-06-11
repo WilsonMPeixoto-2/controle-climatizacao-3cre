@@ -580,6 +580,66 @@ try {
   printResult('Teste 8 falhou criticamente', false, e.message);
 }
 
+// ---------------------------------------------------------------------------
+// TESTE EXTRA: Validação Zod Rígida (Prioridade e Aptidão Técnicas vazias)
+// ---------------------------------------------------------------------------
+try {
+  console.log('--- Teste Extra: Validação Zod Rígida (Prioridade e Aptidão Técnicas) ---');
+
+  // 1. Testa prioridade vazia
+  const invalidTicket1 = {
+    school: { designacao: '312014', unidade_escolar: 'E. M. Nereu Sampaio' },
+    local_demanda: 'Sala de Leitura',
+    tipo_demanda: 'Nova Instalação',
+    status_atual: '1 - Recebido — em triagem',
+    setor_responsavel: 'GOP',
+    proxima_providencia: 'Aguardando triagem.',
+    informacao_validada: 'Pendente de Vistoria',
+    prioridade: '', // Vazio, deve falhar
+    resultado_aptidao: 'Pendente'
+  };
+
+  const val1 = createTicketSchema.safeParse(invalidTicket1);
+  const errMsg1 = val1.success ? '' : val1.error.issues[0]?.message;
+  printResult('Extra.1. Prioridade vazia -> inválida quando obrigatória', !val1.success && errMsg1 === 'Escolha a prioridade.', `Mensagem: ${errMsg1}`);
+
+  // 2. Testa aptidão vazia
+  const invalidTicket2 = {
+    school: { designacao: '312014', unidade_escolar: 'E. M. Nereu Sampaio' },
+    local_demanda: 'Sala de Leitura',
+    tipo_demanda: 'Nova Instalação',
+    status_atual: '1 - Recebido — em triagem',
+    setor_responsavel: 'GOP',
+    proxima_providencia: 'Aguardando triagem.',
+    informacao_validada: 'Pendente de Vistoria',
+    prioridade: 'Média',
+    resultado_aptidao: '' // Vazio, deve falhar
+  };
+
+  const val2 = createTicketSchema.safeParse(invalidTicket2);
+  const errMsg2 = val2.success ? '' : val2.error.issues[0]?.message;
+  printResult('Extra.2. Aptidão vazia -> inválida quando obrigatória', !val2.success && errMsg2 === 'Informe a aptidão técnica.', `Mensagem: ${errMsg2}`);
+
+  // 3. Valores válidos -> aceitos
+  const validTicket = {
+    school: { designacao: '312014', unidade_escolar: 'E. M. Nereu Sampaio' },
+    local_demanda: 'Sala de Leitura',
+    tipo_demanda: 'Nova Instalação',
+    status_atual: '1 - Recebido — em triagem',
+    setor_responsavel: 'GOP',
+    proxima_providencia: 'Aguardando triagem.',
+    informacao_validada: 'Pendente de Vistoria',
+    prioridade: 'Alta',
+    resultado_aptidao: 'Apta'
+  };
+  const val3 = createTicketSchema.safeParse(validTicket);
+  printResult('Extra.3. Valores válidos -> aceitos', val3.success);
+
+  console.log();
+} catch (e) {
+  printResult('Teste Extra de validação falhou criticamente', false, e.message);
+}
+
 console.log('\x1b[32m%s\x1b[0m', '================================================');
 console.log('\x1b[32m%s\x1b[0m', '🎉 RESULTADO: TODOS OS SMOKE TESTS PASSARAM! ');
 console.log('\x1b[32m%s\x1b[0m', '================================================');
