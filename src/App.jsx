@@ -59,6 +59,9 @@ import { createTicketSchema, editTicketSchema, firstValidationMessage } from './
 import OperationalMap from './components/OperationalMap.jsx';
 import { computeBairroRisk } from './lib/mapRisk.js';
 import MapLegend from './components/MapLegend.jsx';
+import { STATUSES, STATUS_LIST } from './domain/statuses.js';
+import { SECTORS as DOMAIN_SECTORS, SECTOR_LIST } from './domain/sectors.js';
+import { PRIORITY_LIST } from './domain/priorities.js';
 import { getOperationalSummary, getActionItems } from './lib/operationalIntelligence.js';
 import { getSchoolDossierData } from './lib/schoolDossier.js';
 import {
@@ -5401,10 +5404,10 @@ export default function App() {
                       value={newTicket.status_atual}
                       onChange={(e) => setNewTicket({ ...newTicket, status_atual: e.target.value })}
                     >
-                      <option value="1 - Recebido — em triagem">1 - Recebido — em triagem</option>
-                      <option value="2 - Em vistoria técnica">2 - Em vistoria técnica</option>
-                      <option value="4 - Aguardando orçamento">4 - Aguardando orçamento</option>
-                      <option value="Suspenso / pendente">Suspenso / pendente</option>
+                      <option value={STATUSES.RECEBIDO}>{STATUSES.RECEBIDO}</option>
+                      <option value={STATUSES.VISTORIA}>{STATUSES.VISTORIA}</option>
+                      <option value={STATUSES.AGUARDANDO_ORCAMENTO}>{STATUSES.AGUARDANDO_ORCAMENTO}</option>
+                      <option value={STATUSES.SUSPENSO}>{STATUSES.SUSPENSO}</option>
                     </select>
                   </div>
 
@@ -5420,11 +5423,11 @@ export default function App() {
                         setNewTicket({ ...newTicket, setor_responsavel: e.target.value })
                       }
                     >
-                      <option value="GOP">GOP</option>
-                      <option value="CPS">CPS</option>
-                      <option value="GIN">GIN</option>
-                      <option value="CTO">CTO</option>
-                      <option value="Unidade Escolar">Unidade Escolar</option>
+                      <option value={DOMAIN_SECTORS.GOP}>{DOMAIN_SECTORS.GOP}</option>
+                      <option value={DOMAIN_SECTORS.CPS}>{DOMAIN_SECTORS.CPS}</option>
+                      <option value={DOMAIN_SECTORS.GIN}>{DOMAIN_SECTORS.GIN}</option>
+                      <option value={DOMAIN_SECTORS.CTO}>{DOMAIN_SECTORS.CTO}</option>
+                      <option value={DOMAIN_SECTORS.UNIDADE_ESCOLAR}>{DOMAIN_SECTORS.UNIDADE_ESCOLAR}</option>
                     </select>
                   </div>
                 </div>
@@ -6045,26 +6048,11 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         }
                         disabled={!supabaseClient || isSavingTicket}
                       >
-                        <option value="1 - Recebido — em triagem">1 - Recebido — em triagem</option>
-                        <option value="2 - Em vistoria técnica">2 - Em vistoria técnica</option>
-                        <option value="3 - Vistoria concluída">3 - Vistoria concluída</option>
-                        <option value="4 - Aguardando orçamento">4 - Aguardando orçamento</option>
-                        <option value="5 - Orçamento em análise/decisão">
-                          5 - Orçamento em análise/decisão
-                        </option>
-                        <option value="6 - Recurso / remanejamento">
-                          6 - Recurso / remanejamento
-                        </option>
-                        <option value="7 - Adequação em execução">7 - Adequação em execução</option>
-                        <option value="8 - Autorizado — CTO acionada">
-                          8 - Autorizado — CTO acionada
-                        </option>
-                        <option value="9 - Aguardando aparelho/instalação">
-                          9 - Aguardando aparelho/instalação
-                        </option>
-                        <option value="10 - Concluído">10 - Concluído</option>
-                        <option value="11 - Encerrado">11 - Encerrado</option>
-                        <option value="Suspenso / pendente">Suspenso / pendente</option>
+                        {STATUS_LIST.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -6081,17 +6069,11 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         }
                         disabled={!supabaseClient || isSavingTicket}
                       >
-                        <option value="GOP">GOP</option>
-                        <option value="CPS">CPS</option>
-                        <option value="GIN">GIN</option>
-                        <option value="CTO">CTO</option>
-                        <option value="CTIN">CTIN</option>
-                        <option value="Unidade Escolar">Unidade Escolar</option>
-                        <option value="GIN / Unidade Escolar">GIN / Unidade Escolar</option>
-                        <option value="CPS / Unidade Escolar">CPS / Unidade Escolar</option>
-                        <option value="GIN / CPS">GIN / CPS</option>
-                        <option value="COMP">COMP</option>
-                        <option value="GMP">GMP</option>
+                        {SECTOR_LIST.map((sector) => (
+                          <option key={sector} value={sector}>
+                            {sector}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -6108,10 +6090,11 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         }
                         disabled={!supabaseClient || isSavingTicket}
                       >
-                        <option value="Baixa">Baixa</option>
-                        <option value="Média">Média</option>
-                        <option value="Alta">Alta</option>
-                        <option value="Crítica">Crítica</option>
+                        {PRIORITY_LIST.map((priority) => (
+                          <option key={priority} value={priority}>
+                            {priority}
+                          </option>
+                        ))}
                       </select>
                     </div>
 

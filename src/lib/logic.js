@@ -13,25 +13,25 @@
 // Constantes de domínio
 // ---------------------------------------------------------------------------
 
+import {
+  CLOSED_STATUSES as DOMAIN_CLOSED_STATUSES,
+  SUSPENDED_STATUSES as DOMAIN_SUSPENDED_STATUSES
+} from '../domain/statuses.js';
+import { normalizeSector as domainNormalizeSector } from '../domain/sectors.js';
+import { normalizePriority as domainNormalizePriority } from '../domain/priorities.js';
+
 /** Status que encerram o ciclo de um chamado — excluídos de TODOS os alertas. */
-export const CLOSED_STATUSES = ['10 - Concluído', '11 - Encerrado'];
+export const CLOSED_STATUSES = DOMAIN_CLOSED_STATUSES;
 
 /** Status de suspensão — não é fechado, mas também não dispara alertas de SLA/Antiguidade. */
-export const SUSPENDED_STATUSES = ['Suspenso / pendente'];
+export const SUSPENDED_STATUSES = DOMAIN_SUSPENDED_STATUSES;
 
 /**
  * Normaliza o texto de prioridade para comparação estável.
  * Trata variações de acento, caixa e espaços extras.
  */
 export function normalizePriority(pri) {
-  const p = String(pri || '')
-    .trim()
-    .toLowerCase();
-  if (p === 'crítica' || p === 'critica') return 'Crítica';
-  if (p === 'alta') return 'Alta';
-  if (p === 'média' || p === 'media') return 'Média';
-  if (p === 'baixa') return 'Baixa';
-  return pri || '';
+  return domainNormalizePriority(pri);
 }
 
 /**
@@ -39,12 +39,9 @@ export function normalizePriority(pri) {
  * Trata variantes como "Unidade Escolar / GIN" unificando para "GIN / Unidade Escolar".
  */
 export function normalizeSector(sector) {
-  const sec = String(sector || '').trim();
-  if (sec === 'Unidade Escolar / GIN') {
-    return 'GIN / Unidade Escolar';
-  }
-  return sec;
+  return domainNormalizeSector(sector);
 }
+
 
 
 /** Limiares do Alerta de SLA (inércia: dias SEM movimentação). */
