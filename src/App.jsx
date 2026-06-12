@@ -2396,7 +2396,6 @@ export default function App() {
                         <tr>
                           <th>Bairro</th>
                           <th>Nível</th>
-                          <th>Risco</th>
                           <th>Ativos</th>
                           <th>Críticos</th>
                           <th>Escolas</th>
@@ -2424,9 +2423,6 @@ export default function App() {
                                 <span className={`map-nivel-badge nivel-${b.nivel}`}>
                                   {rotuloNivel(b.nivel)}
                                 </span>
-                              </td>
-                              <td style={{ fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}>
-                                {b.risco.toFixed(1)}
                               </td>
                               <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.chamados_ativos}</td>
                               <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.criticos}</td>
@@ -2470,7 +2466,7 @@ export default function App() {
                               className="btn-copy-summary"
                               onClick={() =>
                                 handleCopySummary(
-                                  `Bairro: ${bData.nome_exibicao}\nRisco: ${bData.risco} (${rotuloNivel(bData.nivel)})\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nDensidade: ${bData.densidade}`,
+                                  `Bairro: ${bData.nome_exibicao}\nSituação: ${rotuloNivel(bData.nivel)}\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nEm atenção: ${bData.atencao}`,
                                   'bairro'
                                 )
                               }
@@ -2490,42 +2486,31 @@ export default function App() {
                           </button>
                         </div>
                         <div className="bairro-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                          
-                          {/* Score e Nível */}
-                          <div className="bairro-irt-box" style={{ padding: '12px', borderRadius: '10px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div>
-                              <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '700', opacity: 0.75 }}>Índice de Risco (IRT)</div>
-                              <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-muted)' }}>Média dos piores casos</div>
-                            </div>
-                            <div style={{ fontSize: '22px', fontWeight: '800', color: bData.nivel === 'critico' ? 'var(--map-risk-critico, #C2434E)' : bData.nivel === 'alto' ? 'var(--map-risk-alto, #CC7A3D)' : 'var(--text-main)' }}>
-                              {bData.risco.toFixed(1)}
-                            </div>
-                          </div>
 
                           {/* Grid de Microcards */}
                           <div className="bairro-microcards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                             <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Escolas</span>
-                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.escolas_cadastradas}</span>
+                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Escolas</span>
+                              <span style={{ fontSize: '17px', fontWeight: '800' }}>{bData.escolas_cadastradas}</span>
                             </div>
                             <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Ativos</span>
-                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.chamados_ativos}</span>
+                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Ativos</span>
+                              <span style={{ fontSize: '17px', fontWeight: '800' }}>{bData.chamados_ativos}</span>
                             </div>
                             <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Críticos</span>
-                              <span style={{ fontSize: '15px', fontWeight: '800', color: bData.criticos > 0 ? 'var(--color-red)' : 'inherit' }}>{bData.criticos}</span>
+                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Críticos</span>
+                              <span style={{ fontSize: '17px', fontWeight: '800', color: bData.criticos > 0 ? 'var(--color-red)' : 'inherit' }}>{bData.criticos}</span>
                             </div>
                             <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Densidade</span>
-                              <span style={{ fontSize: '15px', fontWeight: '800' }}>{bData.densidade.toFixed(2)}</span>
+                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Em atenção</span>
+                              <span style={{ fontSize: '17px', fontWeight: '800' }}>{bData.atencao}</span>
                             </div>
                           </div>
 
                           {/* Seção Principais Ofensores */}
                           {bData.topOfensores && bData.topOfensores.length > 0 && (
                             <div className="bairro-ofensores-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                              <h5 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                              <h5 style={{ fontSize: '11.5px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                                 Principais Ofensores
                               </h5>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -2549,14 +2534,11 @@ export default function App() {
                                       onClick={() => rawTicket && openTicketEdit(rawTicket)}
                                       title={`Editar chamado ${o.id_chamado}`}
                                     >
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main)' }}>{o.id_chamado}</span>
-                                        <span style={{ fontSize: '11px', fontWeight: '700', color: o.score >= 75 ? 'var(--color-red)' : 'var(--color-amber)' }}>{o.score} pts</span>
-                                      </div>
+                                      <span style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-main)' }}>{o.id_chamado}</span>
                                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                         {o.unidade_escolar}
                                       </div>
-                                      <div style={{ fontSize: '10.5px', color: 'var(--text-light)', fontStyle: 'italic' }}>
+                                      <div style={{ fontSize: '11.5px', color: 'var(--text-light)', fontStyle: 'italic' }}>
                                         Inativo há {o.inactivityDays} dias
                                       </div>
                                     </div>
@@ -2568,7 +2550,7 @@ export default function App() {
 
                           {/* Seção Lista Completa */}
                           <div className="bairro-tickets-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                            <h5 style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                            <h5 style={{ fontSize: '11.5px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                               Todos os Chamados Ativos ({bData.chamados_lista.length})
                             </h5>
                             <div className="bairro-tickets-list">
@@ -2601,13 +2583,13 @@ export default function App() {
                                       <span className="bairro-ticket-code">{tk.id_chamado}</span>
                                       <span
                                         className={`badge badge-priority-${normalizePriorityClass(tk.prioridade)}`}
-                                        style={{ fontSize: '8px', padding: '0px 4px' }}
+                                        style={{ fontSize: '11.5px', padding: '1px 6px' }}
                                       >
                                         {tk.prioridade}
                                       </span>
                                     </div>
-                                    <div className="bairro-ticket-school">{tk.unidade_escolar}</div>
-                                    <div className="bairro-ticket-status">{tk.status_atual}</div>
+                                    <div className="bairro-ticket-school" style={{ fontSize: '12px' }}>{tk.unidade_escolar}</div>
+                                    <div className="bairro-ticket-status" style={{ fontSize: '11.5px' }}>{tk.status_atual}</div>
                                   </div>
                                 );
                               })}

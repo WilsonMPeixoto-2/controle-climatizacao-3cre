@@ -2305,17 +2305,26 @@ html:not(.dark-theme) .leaflet-bar a {
   flex-direction: column;
   gap: 16px;
   box-shadow: var(--shadow-md);
-  max-height: 480px;
+  max-height: clamp(420px, 62vh, 640px);
   overflow-y: auto;
   transition: var(--transition);
 }
 
+/* Cabeçalho fixo durante a rolagem: o nome do bairro nunca sai de vista
+   e nenhum box aparece decapitado. Margens negativas compensam o padding
+   do cartão; o blur evita o vazamento do conteúdo sob o fundo translúcido. */
 .bairro-card-header {
+  position: sticky;
+  top: -18px;
+  margin: -18px -20px 0;
+  padding: 18px 20px 10px;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 10px;
 }
 
 .bairro-card-title-group {
