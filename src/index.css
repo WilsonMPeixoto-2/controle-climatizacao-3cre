@@ -4147,52 +4147,61 @@ textarea {
 .map-compbar-caption .c-aten { color: var(--map-risk-moderado); font-style: normal; }
 .map-compbar-caption .c-norm { color: var(--map-risk-vigilancia); font-style: normal; }
 
-/* --- Rótulos TOP-3 dinâmicos --- */
+/* --- Rótulos TOP-3 dinâmicos (discretos: só o nome do bairro, sem animação) --- */
 .map-toplabel-wrap { background: transparent; border: none; }
 .map-toplabel {
-  transform: translate(-50%, -50%);
-  display: inline-flex; flex-direction: column; align-items: center; gap: 1px;
-  padding: 5px 10px; border-radius: 9px;
-  background: var(--bg-card);
-  border: 1px solid var(--map-risk-alto);
-  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.45);
-  pointer-events: none; white-space: nowrap;
+  transform: translate(-50%, -50%); /* centra o chip no ponto do polylabel */
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: rgba(10, 16, 24, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #e6edf5;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  white-space: nowrap;
 }
-.map-toplabel.nivel-critico { border-color: var(--map-risk-critico); }
-.map-toplabel-nome { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-.map-toplabel-meta { font-size: 9.5px; opacity: 0.8; }
-.map-toplabel.nivel-critico .map-toplabel-nome { color: var(--map-risk-critico); }
-.map-toplabel.nivel-alto .map-toplabel-nome { color: var(--map-risk-alto); }
+html:not(.dark-theme) .map-toplabel {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(100, 116, 139, 0.4);
+  color: #14181f;
+}
 
-/* Pulso sutil e respeitoso apenas no rótulo crítico */
-@keyframes toplabel-pulse { 0%,100% { box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.45); } 50% { box-shadow: 0 6px 22px -6px var(--map-risk-critico); } }
-.map-toplabel.nivel-critico { animation: toplabel-pulse 2.8s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .map-toplabel.nivel-critico { animation: none; } }
-
-/* --- Legenda --- */
+/* --- Legenda (enxuta: uma linha, três itens, sem escalas numéricas) --- */
 .map-legend {
-  background: var(--bg-card); border: 1px solid var(--border-color);
-  border-radius: 14px; padding: 12px 14px; max-width: 280px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 12.5px;
+  color: var(--text-muted);
 }
-.map-legend-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; margin-bottom: 8px; }
-.map-legend-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
-.map-legend-item { display: grid; grid-template-columns: 14px auto 1fr auto; align-items: center; gap: 8px; font-size: 12.5px; }
-.map-legend-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid currentColor; }
-.map-legend-swatch.nivel-critico    { color: var(--map-risk-critico);    background: var(--map-risk-critico-bg); }
-.map-legend-swatch.nivel-alto       { color: var(--map-risk-alto);       background: var(--map-risk-alto-bg); }
-.map-legend-swatch.nivel-moderado   { color: var(--map-risk-moderado);   background: var(--map-risk-moderado-bg); }
-.map-legend-swatch.nivel-vigilancia { color: var(--map-risk-vigilancia); background: var(--map-risk-vigilancia-bg); }
-.map-legend-qtd { justify-self: end; font-weight: 700; font-variant-numeric: tabular-nums; }
-.map-legend-dica { grid-column: 2 / -1; font-size: 10.5px; opacity: .65; margin-top: -3px; }
-.map-legend-keys { display: grid; gap: 4px; font-size: 11px; opacity: .85; margin-bottom: 8px; }
-.map-legend-key { display: inline-flex; align-items: center; gap: 7px; }
-.map-legend-key .key-borda { width: 18px; height: 0; border-top: 3px solid var(--map-risk-critico); border-radius: 2px; }
-.map-legend-key .key-opacidade {
-  width: 18px; height: 10px; border-radius: 3px;
-  background: linear-gradient(90deg, var(--map-risk-vigilancia-bg), var(--map-risk-vigilancia));
+.map-legend-item { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.map-legend-item strong { color: var(--text-main); font-variant-numeric: tabular-nums; }
+.map-legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+/* Utilitário de acessibilidade: conteúdo só para leitores de tela.
+   (A classe já era usada no app, porém nunca havia sido definida — o texto
+   "invisível" da legenda aparecia na tela.) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
-.map-legend-howto summary { cursor: pointer; font-size: 11.5px; font-weight: 600; }
-.map-legend-howto p { font-size: 11.5px; line-height: 1.5; margin: 6px 0 0; }
 
 /* --- Alternância e tabela territorial --- */
 .territorio-toggle { display: inline-flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2, rgba(148, 163, 184, 0.12)); }
@@ -4211,8 +4220,6 @@ textarea {
     height: clamp(280px, 42vh, 420px) !important;
   }
   .map-and-details-container { flex-direction: column; }
-  .map-legend { max-width: none; }
-  .map-toplabel-meta { display: none; } /* rótulo enxuto em telas pequenas */
 }
 
 /* --- Microcard Leaflet Tooltip & Pulso --- */
@@ -4252,18 +4259,5 @@ textarea {
 .map-tooltip-ofensor-item .ofensor-days {
   color: var(--map-risk-critico);
   font-weight: 600;
-}
-
-@keyframes polygon-pulse {
-  0%, 100% { fill-opacity: 0.18; }
-  50% { fill-opacity: 0.38; }
-}
-.cre-glow-pulse-poly {
-  animation: polygon-pulse 2.2s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .cre-glow-pulse-poly {
-    animation: none;
-  }
 }
 

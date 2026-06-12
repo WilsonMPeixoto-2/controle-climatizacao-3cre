@@ -7,58 +7,80 @@ import { normalizeString, escapeHtml } from '../lib/logic.js';
 import { topRiskBairros } from '../lib/mapRisk.js';
 
 /**
- * Paleta IRT — espelha os tokens --map-risk-* do index.css.
- * (Leaflet pinta SVG por atributo; valores concretos por tema, AA verificado.)
+ * Pintura sóbria dos bairros (padrão consolidado do projeto):
+ * cor forte SOMENTE onde há chamado crítico ou em atenção; bairros com
+ * demanda recente recebem azul discreto; os demais recuam para o fundo.
+ * Nenhuma escala numérica é exibida — a leitura é operacional, não estatística.
  */
-const RISK_PAINT = {
-  dark: {
-    critico:       { stroke: 'hsl(350, 85%, 62%)', fill: 'hsl(349, 75%, 50%)' },
-    alto:          { stroke: 'hsl(22, 90%, 58%)',  fill: 'hsl(22, 85%, 50%)'  },
-    moderado:      { stroke: 'hsl(38, 95%, 52%)',  fill: 'hsl(38, 92%, 48%)'  },
-    vigilancia:    { stroke: 'hsl(201, 85%, 55%)', fill: 'hsl(201, 80%, 48%)' },
-    'em-dia':      { stroke: 'hsla(160, 35%, 55%, .55)', fill: 'hsl(160, 30%, 40%)' },
-    'sem-cobertura': { stroke: 'rgba(148,163,184,.35)', fill: 'transparent' }
-  },
-  light: {
-    critico:       { stroke: '#C2434E', fill: '#F6D9D8' },
-    alto:          { stroke: '#CC7A3D', fill: '#FBE9DC' },
-    moderado:      { stroke: '#D8B85A', fill: '#FDF6E2' },
-    vigilancia:    { stroke: '#7DAFCC', fill: '#EBF3F9' },
-    'em-dia':      { stroke: '#6EAD7A', fill: '#EEF7F0' },
-    'sem-cobertura': { stroke: 'rgba(148,163,184,.45)', fill: 'transparent' }
-  }
-};
-
-/** Opacidade do preenchimento por banda de pressão (volume), por tema. */
-const FILL_BY_PRESSURE = {
-  dark:  { 0: 0.08, 1: 0.18, 2: 0.27, 3: 0.36 },
-  light: { 0: 0,    1: 0.34, 2: 0.48, 3: 0.62 }
-};
-
 function getBairroStyle(feature, theme, risk) {
   const nm = feature.properties?.NOME || '';
   const b = risk[normalizeString(nm)];
   const isDark = theme === 'dark';
-  const paint = RISK_PAINT[isDark ? 'dark' : 'light'];
 
-  const nivel = b ? b.nivel : 'sem-cobertura';
-  const pressao = b ? b.pressao : 0;
-  const p = paint[nivel] || paint['sem-cobertura'];
+  let color;
+  let fillColor;
+  let fillOpacity;
+  let weight;
 
-  // Em-dia/sem-cobertura mantêm a base leve atual; níveis ativos escalam por pressão
-  const fillOpacity =
-    nivel === 'em-dia'
-      ? (isDark ? 0.10 : 0.45)
-      : FILL_BY_PRESSURE[isDark ? 'dark' : 'light'][pressao];
+  if (isDark) {
+    color = 'rgba(148, 163, 184, 0.4)';
+    fillColor = 'hsl(215, 12%, 40%)';
+    fillOpacity = 0.08;
+    weight = 1.2;
 
-  // Borda: presença de crítico é um canal próprio, independente da cor
-  const weight = b && b.temCritico ? 2.4 : nivel === 'alto' ? 1.7 : nivel === 'sem-cobertura' ? 0.85 : 1.3;
+    if (b && b.chamados_ativos > 0) {
+      if (b.criticos > 0) {
+        color = 'hsl(350, 80%, 55%)';
+        fillColor = 'hsl(350, 75%, 48%)';
+        fillOpacity = 0.26;
+        weight = 1.6;
+      } else if (b.atencao > 0) {
+        color = 'hsl(38, 95%, 52%)';
+        fillColor = 'hsl(38, 92%, 48%)';
+        fillOpacity = 0.22;
+        weight = 1.5;
+      } else {
+        color = 'hsl(201, 85%, 55%)';
+        fillColor = 'hsl(201, 80%, 48%)';
+        fillOpacity = 0.18;
+        weight = 1.4;
+      }
+    }
+  } else {
+    // Tema claro: paleta translúcida editorial (contornos foscos, fundos suaves)
+    fillOpacity = 0.45;
+
+    if (b && b.chamados_ativos > 0) {
+      if (b.criticos > 0) {
+        color = '#D98287';
+        fillColor = '#FCE8E6';
+        weight = 1.6;
+      } else if (b.atencao > 0) {
+        color = '#D8B85A';
+        fillColor = '#FDF6E2';
+        weight = 1.4;
+      } else {
+        color = '#7DAFCC';
+        fillColor = '#EBF3F9';
+        weight = 1.3;
+      }
+    } else if (b && b.escolas_cadastradas > 0) {
+      color = '#6EAD7A';
+      fillColor = '#EEF7F0';
+      weight = 1.2;
+    } else {
+      color = 'rgba(148, 163, 184, 0.45)';
+      fillColor = 'transparent';
+      fillOpacity = 0;
+      weight = 0.85;
+    }
+  }
 
   return {
-    color: p.stroke,
+    color,
     weight,
     opacity: isDark ? 0.95 : 0.85,
-    fillColor: p.fill,
+    fillColor,
     fillOpacity
   };
 }
@@ -128,12 +150,7 @@ export default function OperationalMap({
       const layer = layersRef.current[bairroNorm];
       if (!layer) continue;
       const center = labelPointFor(layer);
-      const isCritico = b.nivel === 'critico';
-      const html = `
-        <div class="map-toplabel nivel-${b.nivel} ${isCritico ? 'cre-glow-pulse' : ''}">
-          <span class="map-toplabel-nome">${escapeHtml(b.nome_exibicao)}</span>
-          <span class="map-toplabel-meta">${rotuloNivel(b.nivel)} · ${b.chamados_ativos} ativos</span>
-        </div>`;
+      const html = `<div class="map-toplabel">${escapeHtml(b.nome_exibicao)}</div>`;
       const marker = L.marker(center, {
         interactive: false,
         icon: L.divIcon({ className: 'map-toplabel-wrap', html, iconSize: null })
@@ -355,10 +372,8 @@ export default function OperationalMap({
             <span class="map-tooltip-title">${escapedNm}</span>
             <span class="map-nivel-badge nivel-${b.nivel}">${rotuloNivel(b.nivel)}</span>
           </div>
-          <div class="map-tooltip-row"><span>Risco Territorial (IRT)</span><strong>${b.risco.toFixed(1)}</strong></div>
           <div class="map-tooltip-row"><span>Escolas Cadastradas</span><strong>${b.escolas_cadastradas}</strong></div>
           <div class="map-tooltip-row"><span>Chamados Ativos</span><strong>${b.chamados_ativos}</strong></div>
-          <div class="map-tooltip-row"><span>Densidade por Escola</span><strong>${b.densidade.toFixed(2)}</strong></div>
           ${
             b.chamados_ativos > 0
               ? `<div class="map-compbar" role="img"
@@ -406,7 +421,6 @@ export default function OperationalMap({
       if (!el) return;
       const b = risk[norm];
       el.classList.toggle('is-critico', Boolean(b && b.temCritico));
-      el.classList.toggle('cre-glow-pulse-poly', Boolean(b && b.nivel === 'critico'));
       el.setAttribute(
         'aria-label',
         b
