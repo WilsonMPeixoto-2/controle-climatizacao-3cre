@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -805,8 +805,12 @@ export default function App() {
     [tickets, schools, allAttachments]
   );
 
+  // Busca diferida: digitação fica fluida e o filtro pesado renderiza em prioridade baixa
+  const deferredTicketSearch = useDeferredValue(ticketSearch);
+  const deferredLookupQuery = useDeferredValue(lookupSchoolQuery);
+
   // Tickets views filters
-  const getFilteredTickets = () => {
+  const computeFilteredTickets = () => {
     let result = [...tickets];
 
     // Apply tab views
@@ -851,8 +855,8 @@ export default function App() {
     }
 
     // Apply text search
-    if (ticketSearch.trim()) {
-      const q = ticketSearch.toLowerCase();
+    if (deferredTicketSearch.trim()) {
+      const q = deferredTicketSearch.toLowerCase();
       result = result.filter(
         (t) =>
           String(t.id_chamado || '')
@@ -909,6 +913,10 @@ export default function App() {
 
     return result;
   };
+
+  // Computa uma única vez por render (memoizado pelo React Compiler) e reusado nos 5+ pontos de uso
+  const filteredTickets = computeFilteredTickets();
+  const getFilteredTickets = () => filteredTickets;
 
   // Ranking dos chamados ativos mais parados (delegado ao módulo de lógica)
   const getDashboardStuckRanking = () => stuckRanking(tickets, todayRef(), 5);
@@ -3609,7 +3617,7 @@ export default function App() {
 
                       {showLookupSuggestions && lookupSchoolQuery && (
                         <div className="suggestion-box">
-                          {searchSchools(schools, lookupSchoolQuery).map((s) => (
+                          {searchSchools(schools, deferredLookupQuery).map((s) => (
                             <div
                               key={s.designacao}
                               className="suggestion-item"
@@ -3622,7 +3630,7 @@ export default function App() {
                               🏢 {s.unidade_escolar} ({s.designacao})
                             </div>
                           ))}
-                          {searchSchools(schools, lookupSchoolQuery).length === 0 && (
+                          {searchSchools(schools, deferredLookupQuery).length === 0 && (
                             <div
                               style={{
                                 padding: '12px 14px',
