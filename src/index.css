@@ -718,6 +718,7 @@ html:not(.dark-theme) body::after {
 .donut-chart-svg {
   transform: rotate(-90deg);
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
 .donut-chart-segment {
