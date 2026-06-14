@@ -9,7 +9,7 @@
   --primary-s: 89%;
   --primary-l: 52%;
   --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
-  --primary-hover: hsl(var(--primary-h), var(--primary-s), 40%);
+  --primary-hover: hsl(var(--primary-h), var(--primary-s), 45%);
   --primary-light: hsl(var(--primary-h), var(--primary-s), 96%);
   --primary-glow: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
   --primary-active: hsl(201, 95%, 26%); /* Dark high-contrast blue for active elements (WCAG AA) */
