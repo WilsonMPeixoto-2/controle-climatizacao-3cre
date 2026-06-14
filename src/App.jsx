@@ -759,27 +759,27 @@ export default function App() {
 
   // Inline status color mapper based on standard lists design
   const getStatusStyle = (status) => {
-    let color = 'hsl(215, 12%, 52%)';
-    let bg = 'rgba(107, 114, 128, 0.08)';
+    let color = 'var(--color-gray)';
+    let bg = 'var(--border-color)';
 
     if (status.startsWith('1 ')) {
-      color = 'hsl(214, 90%, 52%)';
-      bg = 'rgba(59, 130, 246, 0.08)';
+      color = 'var(--color-blue)';
+      bg = 'var(--color-blue-tint)';
     } else if (status.startsWith('2 ') || status.startsWith('3 ')) {
-      color = 'hsl(199, 89%, 48%)';
-      bg = 'rgba(14, 165, 233, 0.08)';
+      color = 'var(--primary)';
+      bg = 'var(--primary-glow)';
     } else if (status.startsWith('4 ') || status.startsWith('5 ')) {
-      color = 'hsl(38, 92%, 44%)';
-      bg = 'rgba(245, 158, 11, 0.08)';
+      color = 'var(--color-amber)';
+      bg = 'var(--color-amber-tint)';
     } else if (status.startsWith('6 ')) {
-      color = 'hsl(20, 90%, 50%)';
-      bg = 'rgba(249, 115, 22, 0.08)';
+      color = 'var(--color-orange)';
+      bg = 'var(--color-orange-tint)';
     } else if (status.startsWith('7 ') || status.startsWith('8 ') || status.startsWith('9 ')) {
-      color = 'hsl(175, 80%, 35%)';
-      bg = 'rgba(13, 148, 136, 0.08)';
+      color = 'var(--secondary)';
+      bg = 'var(--secondary-glow)';
     } else if (status.startsWith('10 ')) {
-      color = 'hsl(142, 72%, 36%)';
-      bg = 'rgba(16, 185, 129, 0.08)';
+      color = 'var(--color-green)';
+      bg = 'var(--color-green-tint)';
     }
 
     return {
@@ -1626,13 +1626,13 @@ export default function App() {
           />
         </svg>
         <div>
-          <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--primary)' }}>
+          <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>
             {coverage}%
           </div>
           <span
             style={{
               fontSize: '10.5px',
-              color: 'var(--text-light)',
+              color: 'var(--text-muted)',
               fontWeight: '700',
               textTransform: 'uppercase',
               letterSpacing: '0.3px'
@@ -2625,7 +2625,7 @@ export default function App() {
             <div className="dashboard-layout">
               {/* Left section: Charts */}
               <div>
-                <div className="dashboard-section">
+                <div className="dashboard-section goals-section">
                   <div className="section-header">
                     <h3>
                       <IconDashboard /> Visão de Metas & Conclusões
@@ -2751,7 +2751,7 @@ export default function App() {
 
                 {/* Right Section: Inactivity Ranking */}
                 <div
-                  className="dashboard-section"
+                  className="dashboard-section inactivity-ranking-section"
                   style={{ height: 'fit-content', marginBottom: 0 }}
                 >
                   <div className="section-header">
@@ -3029,7 +3029,7 @@ export default function App() {
                   }}
                 >
                   Exibindo{' '}
-                  <span style={{ color: 'var(--primary)' }}>{getFilteredTickets().length}</span> de{' '}
+                  <span style={{ color: 'var(--primary-active, var(--primary))' }}>{getFilteredTickets().length}</span> de{' '}
                   <span>{tickets.length}</span> chamados
                 </div>
 
@@ -4613,8 +4613,8 @@ export default function App() {
                                   fontWeight: '700',
                                   borderRadius: '20px',
                                   border: '1px solid var(--border-color)',
-                                  backgroundColor: timelineFilter === opt.id ? 'var(--primary)' : 'var(--bg-app)',
-                                  color: timelineFilter === opt.id ? 'var(--text-on-primary)' : 'var(--text-light)',
+                                  backgroundColor: timelineFilter === opt.id ? 'var(--primary)' : 'var(--surface-2)',
+                                  color: timelineFilter === opt.id ? 'var(--text-on-primary)' : 'var(--text-main)',
                                   cursor: 'pointer',
                                   transition: 'var(--transition)'
                                 }}

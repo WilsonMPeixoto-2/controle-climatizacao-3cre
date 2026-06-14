@@ -9,9 +9,10 @@
   --primary-s: 89%;
   --primary-l: 52%;
   --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
-  --primary-hover: hsl(var(--primary-h), var(--primary-s), 40%);
+  --primary-hover: hsl(var(--primary-h), var(--primary-s), 45%);
   --primary-light: hsl(var(--primary-h), var(--primary-s), 96%);
   --primary-glow: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
+  --primary-active: hsl(201, 95%, 26%); /* Dark high-contrast blue for active elements (WCAG AA) */
 
   --secondary: hsl(175, 80%, 35%); /* Deep premium teal */
   --secondary-hover: hsl(175, 80%, 26%);
@@ -30,11 +31,11 @@
   --text-main: hsl(217, 33%, 15%);
   --text-muted: hsl(215, 21%, 34%);
   --text-light: hsl(215, 14%, 46%);
-  --text-on-primary: hsl(0, 0%, 100%);
+  --text-on-primary: hsl(212, 32%, 7%);
 
   /* Status Colors */
   --color-green: hsl(142, 70%, 28%); /* Verde Esmeralda Acessível */
-  --color-amber: hsl(35, 88%, 32%); /* Mel de Ouro Acessível (WCAG AA) */
+  --color-amber: hsl(35, 90%, 29%); /* Mel de Ouro Acessível (WCAG AA) */
   --color-orange: hsl(16, 85%, 38%); /* Laranja Telha Acessível (WCAG AA) */
   --color-red: hsl(350, 78%, 38%); /* Vermelho Carmim Acessível (WCAG AA) */
   --color-blue: hsl(214, 85%, 38%); /* Azul Safira Acessível (WCAG AA) */
@@ -79,16 +80,18 @@
   --text-light: hsl(214, 14%, 70%);
 
   --primary-light: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.14);
+  --primary-active: var(--primary);
+  --secondary: hsl(175, 60%, 55%);
   --secondary-light: hsla(175, 80%, 35%, 0.14);
 
   /* Cores usadas como TEXTO: clareadas para passar WCAG AA sobre o navy */
-  --color-red: hsl(350, 82%, 64%);
+  --color-red: hsl(350, 82%, 66%);
   --color-blue: hsl(214, 90%, 64%);
   --color-green: hsl(142, 58%, 55%);
   --color-amber: hsl(38, 88%, 55%);
   --color-orange: hsl(20, 90%, 60%);
   --color-age-warn: hsl(250, 70%, 73%);
-  --color-age-severe: hsl(255, 72%, 70%);
+  --color-age-severe: hsl(255, 80%, 78%);
 
   /* Tints de status mais sólidos (alpha 0.08 some sobre o escuro) */
   --color-green-tint: hsla(142, 58%, 50%, 0.16);
@@ -332,7 +335,7 @@ html:not(.dark-theme) body::after {
 }
 
 .sidebar-item.active {
-  color: var(--primary);
+  color: var(--primary-active, var(--primary));
   background-color: var(--primary-light);
   font-weight: 800;
   position: relative;
@@ -1373,7 +1376,7 @@ html:not(.dark-theme) body::after {
 
 .view-tab.active {
   background-color: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
 }
 
 /* Live Email Client Simulator */
@@ -1844,42 +1847,7 @@ html:not(.dark-theme) .suggestion-item:hover {
 }
 
 /* Responsive layout updates */
-@media (max-width: 1024px) {
-  .sidebar {
-    width: 76px;
-    padding: 32px 12px;
-  }
-  .sidebar-brand-text,
-  .sidebar-footer button span,
-  .sidebar-user-info {
-    display: none;
-  }
-  .sidebar-user {
-    justify-content: center;
-    padding: 10px;
-  }
-  .sidebar-brand {
-    justify-content: center;
-    margin-bottom: 24px;
-    padding-left: 0;
-  }
-  .sidebar-item {
-    justify-content: center;
-    padding: 12px;
-  }
-  .sidebar-item span {
-    display: none;
-  }
-  .main-content {
-    margin-left: 76px;
-  }
-  .dashboard-layout {
-    grid-template-columns: 1fr;
-  }
-  .school-grid-layout {
-    grid-template-columns: 1fr;
-  }
-}
+
 
 /* ===========================================================================
    Mapa Operacional (Leaflet + CARTO dark) — painel do Painel Executivo
@@ -2721,12 +2689,7 @@ html:not(.dark-theme) .bairro-details-card {
   align-items: flex-start;
 }
 
-@media (max-width: 1024px) {
-  .dashboard-goals-split {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-}
+
 
 .goals-column {
   display: flex;
@@ -2942,51 +2905,7 @@ html:not(.dark-theme) .main-portal-title {
 /* ==========================================================================
    FASE 6: Responsividade Completa e Ajuste Premium Mobile (Fim do Overflow)
    ========================================================================== */
-@media (max-width: 1024px) {
-  .app-container {
-    flex-direction: column;
-  }
-  .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    padding: 24px 20px;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
-  }
-  .sidebar-brand {
-    margin-bottom: 24px;
-  }
-  .sidebar-menu {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .sidebar-item {
-    width: auto;
-    padding: 8px 12px;
-    font-size: 13px;
-  }
-  .sidebar-item span {
-    display: inline !important;
-  }
-  .sidebar-footer {
-    display: none;
-  }
-  .main-content {
-    margin-left: 0;
-    padding: 28px 16px;
-    width: 100%;
-    overflow-x: hidden;
-  }
-  .dashboard-layout {
-    grid-template-columns: 1fr !important;
-  }
-  .header-actions {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-}
+
 
 /* ===========================================================================
    Inteligência Operacional e Fila de Ações
@@ -3304,144 +3223,13 @@ html:not(.dark-theme) .dossier-status-banner strong {
    Fase 3: Refinamentos Responsivos e Acessibilidade (Mobile)
    =========================================================================== */
 
-@media (max-width: 768px) {
-  /* M-03: Sub-grids de KPIs no dashboard */
-  .kpi-subgroups-grid {
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
-  }
-  .subgroup-cards {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  
-  /* M-07: Table to Cards (Tabela de chamados em blocos verticais) */
-  .lists-table, 
-  .lists-table thead, 
-  .lists-table tbody, 
-  .lists-table th, 
-  .lists-table td, 
-  .lists-table tr { 
-    display: block !important; 
-  }
-  
-  /* Hide original table headers */
-  .lists-table thead tr { 
-    position: absolute !important;
-    top: -9999px !important;
-    left: -9999px !important;
-  }
-  
-  .lists-table tr { 
-    border: 1px solid var(--border-color) !important;
-    border-radius: var(--radius-xs) !important;
-    margin-bottom: 16px !important;
-    background-color: var(--bg-card) !important;
-    padding: 12px !important;
-    box-shadow: var(--shadow-sm) !important;
-    border-left: 4px solid var(--border-color) !important; /* fallback default */
-  }
-  
-  /* Manter os alertas de borda lateral no formato card */
-  .lists-table tr.lists-row-severe {
-    border-left: 4px solid var(--color-red) !important;
-  }
-  .lists-table tr.lists-row-warning {
-    border-left: 4px solid var(--color-amber) !important;
-  }
-  .lists-table tr.lists-row-age-severe {
-    border-left: 4px solid var(--color-age-severe) !important;
-  }
-  .lists-table tr.lists-row-age-warning {
-    border-left: 4px solid var(--color-age-warn) !important;
-  }
-  
-  .lists-table td { 
-    border: none !important;
-    border-bottom: 1px solid var(--border-color) !important; 
-    position: relative !important;
-    padding-left: 45% !important; 
-    text-align: right !important;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-    font-size: 13px !important;
-    min-height: 40px !important;
-  }
-  
-  .lists-table td:last-child {
-    border-bottom: 0 !important;
-  }
-  
-  .lists-table td:before { 
-    position: absolute !important;
-    top: 10px !important;
-    left: 12px !important;
-    width: 40% !important; 
-    padding-right: 10px !important; 
-    white-space: nowrap !important;
-    text-align: left !important;
-    font-weight: 700 !important;
-    color: var(--text-muted) !important;
-    content: attr(data-label) !important;
-  }
-  
-  /* M-08: Aba de Comunicações vertical */
-  .email-composer-layout {
-    grid-template-columns: 1fr !important;
-    gap: 20px !important;
-  }
-  .template-list {
-    max-height: 280px !important;
-  }
-  
-  /* Melhora alvos de toque dos botões na tabela mobile */
-  .lists-table td button,
-  .lists-table td a.ticket-id-link {
-    padding: 8px 12px !important;
-    font-size: 12.5px !important;
-    margin: 4px 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-  }
-  
-  /* M-09: Cabeçalho mobile compacto */
-  .main-content {
-    padding: 24px 12px !important;
-  }
-  .main-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 16px !important;
-    margin-bottom: 24px !important;
-    padding-bottom: 16px !important;
-  }
-  .header-title h1 {
-    font-size: 22px !important;
-  }
-  .header-title p {
-    font-size: 11.5px !important;
-    margin-top: 4px !important;
-  }
-  .header-actions {
-    width: 100% !important;
-    gap: 10px !important;
-  }
-  .header-actions button {
-    flex: 1 !important;
-    font-size: 12.5px !important;
-    padding: 9px 12px !important;
-  }
-}
+
 
 textarea {
   font-family: var(--font-sans) !important;
 }
 
-@media (max-width: 768px) {
-  .email-flow-steps {
-    grid-template-columns: 1fr;
-  }
-}
+
 
 /* ==========================================================================
    REF_VISUAL: Refinamentos Estéticos Premium e Design de Interface (UI)
@@ -3666,150 +3454,7 @@ textarea {
 }
 
 /* Mobile View (Responsivo) */
-@media (max-width: 768px) {
-  .lists-table-desktop-view {
-    display: none !important;
-  }
-  .lists-table-mobile-view {
-    display: block !important;
-  }
 
-  /* Estilização dos Cards Mobile */
-  .mobile-ticket-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-left: 4px solid var(--border-color);
-    border-radius: var(--radius-xs);
-    padding: 16px;
-    margin-bottom: 14px;
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .mobile-ticket-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-
-  /* Bordas coloridas por SLA no Card */
-  .mobile-ticket-card.lists-row-severe {
-    border-left: 4px solid var(--color-red) !important;
-  }
-  .mobile-ticket-card.lists-row-warning {
-    border-left: 4px solid var(--color-amber) !important;
-  }
-  .mobile-ticket-card.lists-row-age-severe {
-    border-left: 4px solid var(--color-age-severe) !important;
-  }
-  .mobile-ticket-card.lists-row-age-warning {
-    border-left: 4px solid var(--color-age-warn) !important;
-  }
-
-  .card-header-mobile {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  .card-title-id {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .card-id {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--text-main);
-  }
-  .attachment-badge-mobile {
-    font-size: 11px;
-    font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background-color: rgba(59, 130, 246, 0.15);
-    color: var(--primary);
-  }
-  .card-school-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 8px;
-    line-height: 1.4;
-  }
-  .card-meta-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
-  .card-date-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 700;
-    color: var(--text-light);
-  }
-
-  /* Banners de Alerta dentro do Card */
-  .card-alert-banner {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 6px 10px;
-    border-radius: 4px;
-    margin-bottom: 12px;
-    display: inline-block;
-  }
-
-  .card-action-mobile {
-    display: flex;
-    justify-content: flex-end;
-    border-top: 1px solid var(--border-color);
-    padding-top: 10px;
-    margin-top: 10px;
-  }
-  .btn-mobile-details {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--primary);
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 10px;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-  }
-  .btn-mobile-details:hover {
-    background-color: var(--primary-light);
-  }
-
-  .card-details-expanded {
-    background-color: var(--bg-app-lighter, #1e293b);
-    border-radius: var(--radius-xs);
-    padding: 12px;
-    margin-top: 12px;
-    border: 1px dashed var(--border-color);
-    animation: slideDownFade 0.2s ease forwards;
-  }
-
-  .btn-open-ticket-mobile {
-    width: 100%;
-    justify-content: center;
-    margin-top: 12px;
-  }
-
-  .details-expanded-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  /* Esconder a tabela no mobile */
-  .lists-table-desktop-view {
-    display: none !important;
-  }
-}
 
 /* Print Overrides */
 @media print {
@@ -4021,12 +3666,7 @@ html:not(.dark-theme) .map-toplabel {
 .territorio-tabela tbody tr.is-selected { background: var(--primary-light); }
 
 /* --- Mobile --- */
-@media (max-width: 768px) {
-  .op-map, .operational-map, .map-and-details-container .leaflet-container {
-    height: clamp(280px, 42vh, 420px) !important;
-  }
-  .map-and-details-container { flex-direction: column; }
-}
+
 
 /* --- Microcard Leaflet Tooltip & Pulso --- */
 .cre-tooltip-custom .map-tooltip-v2 {
@@ -4067,3 +3707,353 @@ html:not(.dark-theme) .map-toplabel {
   font-weight: 600;
 }
 
+/* ==========================================================================
+   UNIFIED RESPONSIVE BREAKPOINT: 1024px (M-cleanup)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    padding: 24px 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .sidebar-brand-text,
+  .sidebar-footer button span,
+  .sidebar-user-info {
+    display: none;
+  }
+  .sidebar-user {
+    justify-content: center;
+    padding: 10px;
+  }
+  .sidebar-brand {
+    justify-content: center;
+    margin-bottom: 24px;
+    padding-left: 0;
+  }
+  .sidebar-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sidebar-item {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .sidebar-item span {
+    display: inline !important;
+  }
+  .sidebar-footer {
+    display: none;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 28px 16px;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  .dashboard-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-goals-split {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .school-grid-layout {
+    grid-template-columns: 1fr;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* ==========================================================================
+   UNIFIED RESPONSIVE BREAKPOINT: 768px (M-cleanup)
+   ========================================================================== */
+@media (max-width: 768px) {
+/* M-03: Sub-grids de KPIs no dashboard */
+  .kpi-subgroups-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .subgroup-cards {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  
+  /* M-07: Table to Cards (Tabela de chamados em blocos verticais) */
+  .lists-table, 
+  .lists-table thead, 
+  .lists-table tbody, 
+  .lists-table th, 
+  .lists-table td, 
+  .lists-table tr { 
+    display: block !important; 
+  }
+  
+  /* Hide original table headers */
+  .lists-table thead tr { 
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+  }
+  
+  .lists-table tr { 
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-xs) !important;
+    margin-bottom: 16px !important;
+    background-color: var(--bg-card) !important;
+    padding: 12px !important;
+    box-shadow: var(--shadow-sm) !important;
+    border-left: 4px solid var(--border-color) !important; /* fallback default */
+  }
+  
+  /* Manter os alertas de borda lateral no formato card */
+  .lists-table tr.lists-row-severe {
+    border-left: 4px solid var(--color-red) !important;
+  }
+  .lists-table tr.lists-row-warning {
+    border-left: 4px solid var(--color-amber) !important;
+  }
+  .lists-table tr.lists-row-age-severe {
+    border-left: 4px solid var(--color-age-severe) !important;
+  }
+  .lists-table tr.lists-row-age-warning {
+    border-left: 4px solid var(--color-age-warn) !important;
+  }
+  
+  .lists-table td { 
+    border: none !important;
+    border-bottom: 1px solid var(--border-color) !important; 
+    position: relative !important;
+    padding-left: 45% !important; 
+    text-align: right !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    font-size: 13px !important;
+    min-height: 40px !important;
+  }
+  
+  .lists-table td:last-child {
+    border-bottom: 0 !important;
+  }
+  
+  .lists-table td:before { 
+    position: absolute !important;
+    top: 10px !important;
+    left: 12px !important;
+    width: 40% !important; 
+    padding-right: 10px !important; 
+    white-space: nowrap !important;
+    text-align: left !important;
+    font-weight: 700 !important;
+    color: var(--text-muted) !important;
+    content: attr(data-label) !important;
+  }
+  
+  /* M-08: Aba de Comunicações vertical */
+  .email-composer-layout {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .template-list {
+    max-height: 280px !important;
+  }
+  
+  /* Melhora alvos de toque dos botões na tabela mobile */
+  .lists-table td button,
+  .lists-table td a.ticket-id-link {
+    padding: 8px 12px !important;
+    font-size: 12.5px !important;
+    margin: 4px 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  
+  /* M-09: Cabeçalho mobile compacto */
+  .main-content {
+    padding: 24px 12px !important;
+  }
+  .main-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    margin-bottom: 24px !important;
+    padding-bottom: 16px !important;
+  }
+  .header-title h1 {
+    font-size: 22px !important;
+  }
+  .header-title p {
+    font-size: 11.5px !important;
+    margin-top: 4px !important;
+  }
+  .header-actions {
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .header-actions button {
+    flex: 1 !important;
+    font-size: 12.5px !important;
+    padding: 9px 12px !important;
+  }
+
+.email-flow-steps {
+    grid-template-columns: 1fr;
+  }
+
+.lists-table-desktop-view {
+    display: none !important;
+  }
+  .lists-table-mobile-view {
+    display: block !important;
+  }
+
+  /* Estilização dos Cards Mobile */
+  .mobile-ticket-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--border-color);
+    border-radius: var(--radius-xs);
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .mobile-ticket-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Bordas coloridas por SLA no Card */
+  .mobile-ticket-card.lists-row-severe {
+    border-left: 4px solid var(--color-red) !important;
+  }
+  .mobile-ticket-card.lists-row-warning {
+    border-left: 4px solid var(--color-amber) !important;
+  }
+  .mobile-ticket-card.lists-row-age-severe {
+    border-left: 4px solid var(--color-age-severe) !important;
+  }
+  .mobile-ticket-card.lists-row-age-warning {
+    border-left: 4px solid var(--color-age-warn) !important;
+  }
+
+  .card-header-mobile {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .card-title-id {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-id {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+  .attachment-badge-mobile {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: rgba(59, 130, 246, 0.15);
+    color: var(--primary);
+  }
+  .card-school-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .card-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .card-date-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: var(--text-light);
+  }
+
+  /* Banners de Alerta dentro do Card */
+  .card-alert-banner {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  .card-action-mobile {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+  .btn-mobile-details {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+  .btn-mobile-details:hover {
+    background-color: var(--primary-light);
+  }
+
+  .card-details-expanded {
+    background-color: var(--bg-app-lighter, #1e293b);
+    border-radius: var(--radius-xs);
+    padding: 12px;
+    margin-top: 12px;
+    border: 1px dashed var(--border-color);
+    animation: slideDownFade 0.2s ease forwards;
+  }
+
+  .btn-open-ticket-mobile {
+    width: 100%;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .details-expanded-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Esconder a tabela no mobile */
+  .lists-table-desktop-view {
+    display: none !important;
+  }
+
+.op-map, .operational-map, .map-and-details-container .leaflet-container {
+    height: clamp(280px, 42vh, 420px) !important;
+  }
+  .map-and-details-container { flex-direction: column; }
+}
