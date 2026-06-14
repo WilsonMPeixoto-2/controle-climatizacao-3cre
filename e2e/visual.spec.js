@@ -10,11 +10,18 @@ test.describe('Regressão Visual', () => {
     // Aguarda um tempo para assentar as animações de carregamento inicial
     await page.waitForTimeout(1000);
 
-    // Captura a tela inteira mascarando o Leaflet map container para evitar falsos negativos
+    // Captura a tela inteira mascarando elementos dinâmicos e o mapa para evitar falsos negativos
     await expect(page).toHaveScreenshot('home-dark-theme.png', {
       mask: [
         page.locator('.leaflet-container'),
-        page.locator('.op-map')
+        page.locator('.op-map'),
+        page.locator('.operational-summary-card'),
+        page.locator('.stat-number'),
+        page.locator('.header-title p'),
+        page.locator('.task-queue-section'),
+        page.locator('.inactivity-ranking-section'),
+        page.locator('.goals-section'),
+        page.locator('[role="status"]')
       ]
     });
   });
@@ -31,11 +38,18 @@ test.describe('Regressão Visual', () => {
 
     await page.waitForTimeout(1000);
 
-    // Captura a tela inteira mascarando o Leaflet map container para evitar falsos negativos
+    // Captura a tela inteira mascarando elementos dinâmicos e o mapa para evitar falsos negativos
     await expect(page).toHaveScreenshot('home-light-theme.png', {
       mask: [
         page.locator('.leaflet-container'),
-        page.locator('.op-map')
+        page.locator('.op-map'),
+        page.locator('.operational-summary-card'),
+        page.locator('.stat-number'),
+        page.locator('.header-title p'),
+        page.locator('.task-queue-section'),
+        page.locator('.inactivity-ranking-section'),
+        page.locator('.goals-section'),
+        page.locator('[role="status"]')
       ]
     });
   });
