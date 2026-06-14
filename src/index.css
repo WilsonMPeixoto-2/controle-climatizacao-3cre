@@ -3711,9 +3711,16 @@ html:not(.dark-theme) .map-toplabel {
    UNIFIED RESPONSIVE BREAKPOINT: 1024px (M-cleanup)
    ========================================================================== */
 @media (max-width: 1024px) {
-.sidebar {
-    width: 76px;
-    padding: 32px 12px;
+  .app-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    padding: 24px 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
   }
   .sidebar-brand-text,
   .sidebar-footer button span,
@@ -3728,42 +3735,6 @@ html:not(.dark-theme) .map-toplabel {
     justify-content: center;
     margin-bottom: 24px;
     padding-left: 0;
-  }
-  .sidebar-item {
-    justify-content: center;
-    padding: 12px;
-  }
-  .sidebar-item span {
-    display: none;
-  }
-  .main-content {
-    margin-left: 76px;
-  }
-  .dashboard-layout {
-    grid-template-columns: 1fr;
-  }
-  .school-grid-layout {
-    grid-template-columns: 1fr;
-  }
-
-.dashboard-goals-split {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-.app-container {
-    flex-direction: column;
-  }
-  .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    padding: 24px 20px;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
-  }
-  .sidebar-brand {
-    margin-bottom: 24px;
   }
   .sidebar-menu {
     flex-direction: row;
@@ -3789,6 +3760,13 @@ html:not(.dark-theme) .map-toplabel {
   }
   .dashboard-layout {
     grid-template-columns: 1fr !important;
+  }
+  .dashboard-goals-split {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .school-grid-layout {
+    grid-template-columns: 1fr;
   }
   .header-actions {
     flex-wrap: wrap;
