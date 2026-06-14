@@ -86,7 +86,8 @@ test.describe('GOP Clima E2E tests', () => {
     const emailBtn = page.locator('.btn-email-shortcut');
     if (await emailBtn.count() > 0) {
       await emailBtn.click();
-      // Deve ter trocado para a aba de e-mail
+      // Deve ter trocado para a aba de e-mail e selecionado a edição de texto para exibir a textarea
+      await page.click('button:has-text("Editar texto do e-mail")');
       await expect(page.locator('textarea')).toBeVisible();
       // Volta para a aba Consulta por Escola
       await page.click('button:has-text("Consulta por Escola")');

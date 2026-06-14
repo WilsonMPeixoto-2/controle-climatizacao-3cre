@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Regressão Visual', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
   test('deve capturar screenshot da home no tema escuro', async ({ page }) => {
     await page.goto('/');
     await page.waitForSelector('text=Resumo operacional');
