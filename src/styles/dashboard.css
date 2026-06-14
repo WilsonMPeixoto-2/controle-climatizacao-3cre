@@ -1,0 +1,35 @@
+/* ============================================================
+   dashboard.css — PR 6.3 · KPIs com firmeza tipográfica e
+   refinamentos do painel. Evolui .stat-card SEM tocar index.css.
+   ============================================================ */
+
+/* Números de KPI: Inter tabular, peso de display */
+.stat-card .stat-number {
+  font-family: var(--font-text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 700;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+}
+.stat-card .stat-header span {
+  font-family: var(--font-text);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+.stat-card .stat-description { font-family: var(--font-text); font-size: var(--text-xs); color: var(--text-light); }
+
+/* Acento por família: barra fina superior usando o --card-accent já existente */
+.stat-card { border-top: 3px solid var(--card-accent, transparent); }
+
+/* Blur vira pontual (Princípio 3): cards de lista densa sem backdrop-filter */
+.stat-card { backdrop-filter: none; background: var(--surface-1); }
+
+/* Cartão clicável: feedback de foco por teclado */
+.stat-card:focus-visible { outline: none; box-shadow: var(--ring), var(--shadow-md); }
+
+/* Toolbar do painel herdada do components.css; ajuste de respiro */
+.dashboard-section .toolbar { margin-bottom: var(--space-4); }

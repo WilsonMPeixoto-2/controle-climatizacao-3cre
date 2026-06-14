@@ -109,34 +109,34 @@ const buildEmailDraft = (templates, ticketList, ticketId, templateIndex) => {
 };
 
 // Premium wrappers around Lucide Icons for drop-in backward compatibility
-const IconDashboard = () => <LayoutDashboard size={18} strokeWidth={2.2} />;
-const IconList = () => <ListTodo size={18} strokeWidth={2.2} />;
-const IconSearch = () => <Search size={18} strokeWidth={2.2} />;
-const IconForm = () => <FileText size={18} strokeWidth={2.2} />;
-const IconMail = () => <Mail size={18} strokeWidth={2.2} />;
-const IconSun = () => <Sun size={18} strokeWidth={2.2} />;
-const IconMoon = () => <Moon size={18} strokeWidth={2.2} />;
-const IconPlus = () => <Plus size={18} strokeWidth={2.2} />;
-const IconFolder = () => <FolderOpen size={18} strokeWidth={2.2} />;
-const IconRefresh = () => <RefreshCw size={18} strokeWidth={2.2} />;
-const IconWarning = () => <AlertTriangle size={18} strokeWidth={2.2} />;
-const IconSiren = () => <AlertOctagon size={18} strokeWidth={2.2} />;
-const IconBuilding = () => <Building2 size={18} strokeWidth={2.2} />;
-const IconClock = () => <Clock size={18} strokeWidth={2.2} />;
-const IconCalendar = () => <Calendar size={18} strokeWidth={2.2} />;
-const IconCheck = () => <Check size={18} strokeWidth={2.2} />;
-const IconClose = () => <X size={18} strokeWidth={2.2} />;
-const IconFocus = () => <Compass size={18} strokeWidth={2.2} />;
-const IconPin = () => <MapPin size={18} strokeWidth={2.2} />;
-const IconCopy = () => <Copy size={18} strokeWidth={2.2} />;
-const IconSettings = () => <Settings size={18} strokeWidth={2.2} />;
-const IconDatabase = () => <Database size={18} strokeWidth={2.2} />;
-const IconActivity = () => <Activity size={18} strokeWidth={2.2} />;
-const IconCheckCircle = () => <CheckCircle2 size={18} strokeWidth={2.2} />;
-const IconFileText = () => <FileText size={18} strokeWidth={2.2} />;
-const IconUser = () => <User size={18} strokeWidth={2.2} />;
-const IconChevronRight = ({ size = 18 }) => <ChevronRight size={size} strokeWidth={2.2} />;
-const IconChevronDown = ({ size = 18 }) => <ChevronDown size={size} strokeWidth={2.2} />;
+const IconDashboard = () => <LayoutDashboard size={18} strokeWidth={2} />;
+const IconList = () => <ListTodo size={18} strokeWidth={2} />;
+const IconSearch = () => <Search size={18} strokeWidth={2} />;
+const IconForm = () => <FileText size={18} strokeWidth={2} />;
+const IconMail = () => <Mail size={18} strokeWidth={2} />;
+const IconSun = () => <Sun size={18} strokeWidth={2} />;
+const IconMoon = () => <Moon size={18} strokeWidth={2} />;
+const IconPlus = () => <Plus size={18} strokeWidth={2} />;
+const IconFolder = () => <FolderOpen size={18} strokeWidth={2} />;
+const IconRefresh = () => <RefreshCw size={18} strokeWidth={2} />;
+const IconWarning = () => <AlertTriangle size={18} strokeWidth={2} />;
+const IconSiren = () => <AlertOctagon size={18} strokeWidth={2} />;
+const IconBuilding = () => <Building2 size={18} strokeWidth={2} />;
+const IconClock = () => <Clock size={18} strokeWidth={2} />;
+const IconCalendar = () => <Calendar size={18} strokeWidth={2} />;
+const IconCheck = () => <Check size={18} strokeWidth={2} />;
+const IconClose = () => <X size={18} strokeWidth={2} />;
+const IconFocus = () => <Compass size={18} strokeWidth={2} />;
+const IconPin = () => <MapPin size={18} strokeWidth={2} />;
+const IconCopy = () => <Copy size={18} strokeWidth={2} />;
+const IconSettings = () => <Settings size={18} strokeWidth={2} />;
+const IconDatabase = () => <Database size={18} strokeWidth={2} />;
+const IconActivity = () => <Activity size={18} strokeWidth={2} />;
+const IconCheckCircle = () => <CheckCircle2 size={18} strokeWidth={2} />;
+const IconFileText = () => <FileText size={18} strokeWidth={2} />;
+const IconUser = () => <User size={18} strokeWidth={2} />;
+const IconChevronRight = ({ size = 18 }) => <ChevronRight size={size} strokeWidth={2} />;
+const IconChevronDown = ({ size = 18 }) => <ChevronDown size={size} strokeWidth={2} />;
 
 const EmptyState = ({ iconType, title, description, style = {} }) => {
   const renderIcon = () => {
@@ -237,8 +237,8 @@ const EmptyState = ({ iconType, title, description, style = {} }) => {
   );
 };
 
-const IconCloud = () => <Cloud size={18} strokeWidth={2.2} />;
-const IconInfo = (props) => <AlertTriangle {...props} size={18} strokeWidth={2.2} />;
+const IconCloud = () => <Cloud size={18} strokeWidth={2} />;
+const IconInfo = (props) => <AlertTriangle {...props} size={18} strokeWidth={2} />;
 
 const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'email', 'cloud'];
 const VALID_THEMES = ['dark', 'light'];
@@ -1873,6 +1873,9 @@ export default function App() {
 
   return (
     <div className="app-container">
+      <a href="#conteudo" className="skip-link">
+        Ir para o conteúdo principal
+      </a>
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -2109,7 +2112,7 @@ export default function App() {
       </aside>
 
       {/* Main Container */}
-      <main className="main-content">
+      <main id="conteudo" className="main-content">
         {/* Top Header */}
         <header className="main-header">
           <div className="header-title">
@@ -2180,9 +2183,13 @@ export default function App() {
               <span>Clique em um indicador para filtrar a lista de chamados abaixo.</span>
             </p>
             <div className="kpi-group-container" style={{ marginBottom: '24px' }}>
-              <div className="kpi-group-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
-                <IconFolder style={{ width: '16px', height: '16px', color: 'var(--primary)' }} />
-                <span>Volume Geral</span>
+              <div className="section-header" style={{ marginBottom: '12px' }}>
+                <div className="section-heading">
+                  <span className="section-eyebrow">
+                    <IconFolder />
+                    Volume Geral
+                  </span>
+                </div>
               </div>
               <div className="card-grid volume-grid">
                 <div
@@ -2218,13 +2225,17 @@ export default function App() {
             </div>
 
             <div className="kpi-group-container" style={{ marginBottom: '36px' }}>
-              <div className="kpi-group-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '12px' }}>
-                <IconClock style={{ width: '16px', height: '16px', color: 'var(--primary)' }} />
-                <span>Prazos e Gestão de Risco</span>
+              <div className="section-header" style={{ marginBottom: '12px' }}>
+                <div className="section-heading">
+                  <span className="section-eyebrow">
+                    <IconClock />
+                    Prazos e Gestão de Risco
+                  </span>
+                </div>
               </div>
               <div className="kpi-subgroups-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div className="kpi-subgroup-column">
-                  <h5 className="kpi-subgroup-title" style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-light)', marginBottom: '12px' }}>Sem Movimentação Recente (Inércia)</h5>
+                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)', marginBottom: '12px' }}>Sem Movimentação Recente (Inércia)</h5>
                   <div className="card-grid subgroup-cards" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div
                       className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
@@ -2263,7 +2274,7 @@ export default function App() {
                 </div>
 
                 <div className="kpi-subgroup-column">
-                  <h5 className="kpi-subgroup-title" style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-light)', marginBottom: '12px' }}>Tempo Total em Aberto (Antiguidade)</h5>
+                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)', marginBottom: '12px' }}>Tempo Total em Aberto (Antiguidade)</h5>
                   <div className="card-grid subgroup-cards" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div
                       className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
@@ -3230,7 +3241,7 @@ export default function App() {
 
             {/* Lists grid table */}
             <div className="lists-table-desktop-view">
-              <div className="lists-table-wrapper">
+              <div className="table-shell">
                 <table className="lists-table">
                   <thead>
                     <tr>
@@ -3255,7 +3266,7 @@ export default function App() {
                             onClick={() => openTicketEdit(t)}
                             style={{ cursor: 'pointer', display: 'table-row' }}
                           >
-                            <td data-label="Código" style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
+                            <td className="cell-num" data-label="Código" style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span>{t.id_chamado}</span>
                                 {(() => {
@@ -3312,7 +3323,7 @@ export default function App() {
                                 {t.prioridade}
                               </span>
                             </td>
-                            <td data-label="Modificado Em" style={{ fontWeight: '700' }}>
+                            <td className="cell-num" data-label="Modificado Em" style={{ fontWeight: '700' }}>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} title={hasPulse ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})` : ''}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   {hasPulse && (
@@ -3898,10 +3909,7 @@ export default function App() {
                       </div>
 
                       {/* Cabeçalho do Dossiê */}
-                      <div
-                        className="dashboard-section dossier-header-section"
-                        style={{ padding: '24px' }}
-                      >
+                      <div className="dossier-hero dashboard-section dossier-header-section" style={{ padding: '24px' }}>
                         <div
                           style={{
                             display: 'flex',
@@ -3912,38 +3920,13 @@ export default function App() {
                           }}
                         >
                           <div style={{ flex: 1, minWidth: '250px' }}>
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                fontWeight: '800',
-                                color: 'var(--primary)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px'
-                              }}
-                            >
+                            <span className="section-eyebrow">
                               Ficha Técnica Consolidada
                             </span>
-                            <h2
-                              style={{
-                                fontSize: '22px',
-                                fontWeight: '850',
-                                color: 'var(--text-main)',
-                                margin: '4px 0 6px 0',
-                                lineHeight: '1.2'
-                              }}
-                            >
+                            <h2 className="dossier-hero-name">
                               {selectedSchool.unidade_escolar}
                             </h2>
-                            <div
-                              style={{
-                                display: 'flex',
-                                gap: '12px',
-                                flexWrap: 'wrap',
-                                fontSize: '13px',
-                                color: 'var(--text-light)',
-                                fontWeight: '600'
-                              }}
-                            >
+                            <div className="dossier-hero-meta">
                               <span>
                                 Designação: <strong>{selectedSchool.designacao}</strong>
                               </span>
@@ -3986,16 +3969,7 @@ export default function App() {
                           {dossier.status === 'critica' && (
                             <div
                               className="dossier-status-banner status-critica"
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                padding: '16px',
-                                borderRadius: 'var(--radius-xs)',
-                                backgroundColor: 'var(--color-red-tint)',
-                                border: '1px solid var(--color-red)',
-                                color: 'var(--color-red)'
-                              }}
+                              data-selo="Crítico"
                             >
                               <span style={{ fontSize: '24px' }}>🚨</span>
                               <div>
@@ -4017,16 +3991,7 @@ export default function App() {
                           {dossier.status === 'atencao' && (
                             <div
                               className="dossier-status-banner status-atencao"
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                padding: '16px',
-                                borderRadius: 'var(--radius-xs)',
-                                backgroundColor: 'var(--color-amber-tint)',
-                                border: '1px solid var(--color-amber)',
-                                color: 'var(--color-amber)'
-                              }}
+                              data-selo="Atenção"
                             >
                               <span style={{ fontSize: '24px' }}>⚠️</span>
                               <div>
@@ -4048,16 +4013,7 @@ export default function App() {
                           {dossier.status === 'regular' && (
                             <div
                               className="dossier-status-banner status-regular"
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                padding: '16px',
-                                borderRadius: 'var(--radius-xs)',
-                                backgroundColor: 'var(--color-green-tint)',
-                                border: '1px solid var(--color-green)',
-                                color: 'var(--color-green)'
-                              }}
+                              data-selo="Regular"
                             >
                               <span style={{ fontSize: '24px' }}>✓</span>
                               <div>
@@ -4093,127 +4049,39 @@ export default function App() {
                             marginBottom: '20px'
                           }}
                         >
-                          <div
-                            className="dossier-stat-card"
-                            style={{
-                              padding: '16px',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: 'var(--bg-app)'
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Salas de Aula
-                            </span>
-                            <div
-                              style={{
-                                fontSize: '22px',
-                                fontWeight: '850',
-                                color: 'var(--text-main)',
-                                marginTop: '4px'
-                              }}
-                            >
-                              {selectedSchool.qtd_salas_de_aula || '0'}
-                            </div>
+                          <div className="dossier-stat-card">
+                            <span>Salas de Aula</span>
+                            <div className="stat-value">{selectedSchool.qtd_salas_de_aula || '0'}</div>
                           </div>
-                          <div
-                            className="dossier-stat-card"
-                            style={{
-                              padding: '16px',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: 'var(--bg-app)'
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Salas Climatizadas
-                            </span>
-                            <div
-                              style={{
-                                fontSize: '22px',
-                                fontWeight: '850',
-                                color: 'var(--color-green)',
-                                marginTop: '4px'
-                              }}
-                            >
+                          <div className="dossier-stat-card">
+                            <span>Salas Climatizadas</span>
+                            <div className="stat-value" style={{ color: 'var(--color-green)' }}>
                               {selectedSchool.aparelhos_em_sala || '0'}
                             </div>
                           </div>
-                          <div
-                            className="dossier-stat-card"
-                            style={{
-                              padding: '16px',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: 'var(--bg-app)'
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Salas sem Aparelho
-                            </span>
+                          <div className="dossier-stat-card">
+                            <span>Salas sem Aparelho</span>
                             <div
+                              className="stat-value"
                               style={{
-                                fontSize: '22px',
-                                fontWeight: '850',
                                 color:
                                   Number(selectedSchool.salas_sem_aparelho) > 0
                                     ? 'var(--color-red)'
-                                    : 'var(--text-main)',
-                                marginTop: '4px'
+                                    : 'var(--text-main)'
                               }}
                             >
                               {selectedSchool.salas_sem_aparelho || '0'}
                             </div>
                           </div>
-                          <div
-                            className="dossier-stat-card"
-                            style={{
-                              padding: '16px',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: 'var(--bg-app)'
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Necessidade Estimada
-                            </span>
+                          <div className="dossier-stat-card">
+                            <span>Necessidade Estimada</span>
                             <div
+                              className="stat-value"
                               style={{
-                                fontSize: '22px',
-                                fontWeight: '850',
                                 color:
                                   Number(selectedSchool.necessidade_aparelhos) > 0
                                     ? 'var(--color-orange)'
-                                    : 'var(--text-main)',
-                                marginTop: '4px'
+                                    : 'var(--text-main)'
                               }}
                             >
                               {selectedSchool.necessidade_aparelhos || '0'} aparelhos
@@ -4326,17 +4194,7 @@ export default function App() {
                         </div>
 
                         {/* Quadro Financeiro Referencial */}
-                        <div
-                          className="dossier-financial-estimate"
-                          style={{
-                            marginTop: '20px',
-                            padding: '16px',
-                            borderRadius: 'var(--radius-xs)',
-                            backgroundColor: 'var(--bg-app)',
-                            border: '1px solid var(--border-color)',
-                            borderLeft: '4px solid var(--color-orange)'
-                          }}
-                        >
+                        <div className="dossier-financial-estimate diagnostic-block diagnostic-block--warning">
                           <strong
                             style={{
                               fontSize: '11px',
@@ -4378,21 +4236,13 @@ export default function App() {
 
                         {/* POP Action */}
                         <div
-                          className={`dossier-pop-action status-${dossier.status}`}
-                          style={{
-                            marginTop: '20px',
-                            padding: '16px',
-                            borderRadius: 'var(--radius-xs)',
-                            backgroundColor: 'var(--bg-app)',
-                            border: '1px dashed var(--border-color)',
-                            borderLeft: `4px solid ${
-                              dossier.status === 'critica'
-                                ? 'var(--color-red)'
-                                : dossier.status === 'atencao'
-                                  ? 'var(--color-amber)'
-                                  : 'var(--color-green)'
-                            }`
-                          }}
+                          className={`dossier-pop-action diagnostic-block ${
+                            dossier.status === 'critica'
+                              ? 'diagnostic-block--critical'
+                              : dossier.status === 'atencao'
+                                ? 'diagnostic-block--warning'
+                                : 'diagnostic-block--success'
+                          }`}
                         >
                           <strong
                             style={{
@@ -4458,94 +4308,27 @@ export default function App() {
                             marginBottom: '20px'
                           }}
                         >
-                          <div
-                            style={{
-                              padding: '14px',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: 'var(--bg-app)',
-                              textAlign: 'center'
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '11px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Ativos
-                            </span>
-                            <div
-                              style={{
-                                fontSize: '20px',
-                                fontWeight: '850',
-                                color: 'var(--primary)',
-                                marginTop: '4px'
-                              }}
-                            >
+                          <div className="dossier-stat-card" style={{ textAlign: 'center' }}>
+                            <span>Ativos</span>
+                            <div className="stat-value" style={{ color: 'var(--primary)' }}>
                               {dossier.activeCount}
                             </div>
                           </div>
-                          <div
-                            style={{
-                              padding: '14px',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: 'var(--bg-app)',
-                              textAlign: 'center'
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '11px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Concluídos
-                            </span>
-                            <div
-                              style={{
-                                fontSize: '20px',
-                                fontWeight: '850',
-                                color: 'var(--color-green)',
-                                marginTop: '4px'
-                              }}
-                            >
+                          <div className="dossier-stat-card" style={{ textAlign: 'center' }}>
+                            <span>Concluídos</span>
+                            <div className="stat-value" style={{ color: 'var(--color-green)' }}>
                               {dossier.closedCount}
                             </div>
                           </div>
-                          <div
-                            style={{
-                              padding: '14px',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: 'var(--radius-xs)',
-                              backgroundColor: 'var(--bg-app)',
-                              textAlign: 'center'
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '11px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase'
-                              }}
-                            >
-                              Críticos Ativos
-                            </span>
+                          <div className="dossier-stat-card" style={{ textAlign: 'center' }}>
+                            <span>Críticos Ativos</span>
                             <div
+                              className="stat-value"
                               style={{
-                                fontSize: '20px',
-                                fontWeight: '850',
                                 color:
                                   dossier.criticalCount > 0
                                     ? 'var(--color-red)'
-                                    : 'var(--text-main)',
-                                marginTop: '4px'
+                                    : 'var(--text-main)'
                               }}
                             >
                               {dossier.criticalCount}
@@ -4842,7 +4625,7 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div className="timeline">
+                        <div className="timeline-refined">
                           {(() => {
                             const dbEvents = history
                               .filter((h) => matchesSchool(h, selectedSchool))
@@ -4928,32 +4711,9 @@ export default function App() {
                             return filteredEvents.map((ev) => (
                               <div
                                 key={ev.id}
-                                className="timeline-event"
-                                style={{
-                                  borderLeft:
-                                    ev.tipo === 'comentario_local'
-                                      ? '2px dashed var(--primary)'
-                                      : '2px solid var(--border-color)'
-                                }}
+                                className={`timeline-event ${ev.tipo === 'comentario_local' ? 'timeline-event-local' : ''}`}
                               >
-                                <div
-                                  className="timeline-event-marker"
-                                  style={{
-                                    backgroundColor:
-                                      ev.tipo === 'comentario_local'
-                                        ? 'var(--primary)'
-                                        : 'var(--border-color)'
-                                  }}
-                                />
-                                <div
-                                  className="timeline-event-card"
-                                  style={{
-                                    borderLeft:
-                                      ev.tipo === 'comentario_local'
-                                        ? `3px solid ${ev.logType === 'documento' ? 'var(--primary)' : 'var(--color-amber)'}`
-                                        : 'none'
-                                  }}
-                                >
+                                <div className="timeline-event-card">
                                   <div className="timeline-event-meta">
                                     <span>📅 {formatDateBrazilian(ev.data)}</span>
                                     <span style={{ fontWeight: 'bold' }}>

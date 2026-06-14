@@ -1,0 +1,67 @@
+/* ============================================================
+   ELEVAÇÃO VISUAL — TOKENS (PR 6.1)
+   Fundação complementar ao :root do index.css. NÃO redefine
+   tokens existentes (--primary, --radius-*, --shadow-*, status):
+   acrescenta espaço, superfícies, tipografia, motion e ring.
+   Importado após index.css; tema escuro via .dark-theme (padrão do app).
+   ============================================================ */
+
+:root {
+  /* --- Vozes tipográficas (Princípio 2) --- */
+  --font-display: 'Outfit', var(--font-sans);
+  --font-text: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Escala tipográfica nomeada (px efetivos em font-size base 16) */
+  --text-2xs: 0.6875rem;  /* 11 — eyebrows, mono-labels */
+  --text-xs: 0.75rem;     /* 12 — hints, metadados      */
+  --text-sm: 0.8125rem;   /* 13 — tabelas densas        */
+  --text-base: 0.875rem;  /* 14 — corpo padrão          */
+  --text-md: 1rem;        /* 16 — corpo confortável     */
+  --text-lg: 1.1875rem;   /* 19 — títulos de cartão     */
+  --text-xl: 1.5rem;      /* 24 — títulos de seção      */
+  --text-2xl: 1.875rem;   /* 30 — números de KPI        */
+  --text-3xl: 2.375rem;   /* 38 — display/hero          */
+
+  --tracking-tight: -0.015em;
+  --tracking-wide: 0.08em;
+
+  /* --- Ritmo de 4px (Princípio 4) --- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-7: 32px; --space-8: 40px;
+  --space-9: 48px; --space-10: 64px;
+
+  /* --- Superfícies em camadas (Princípio 3) --- */
+  --surface-0: var(--bg-app);
+  --surface-1: rgba(255, 255, 255, 0.92);
+  --surface-2: #ffffff;
+  --hairline: rgba(100, 116, 139, 0.16);
+  --border-strong: rgba(100, 116, 139, 0.32);
+
+  /* --- Movimento com intenção (Princípio 5) --- */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --- Anel de foco unificado --- */
+  --ring: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.35);
+
+  /* --- Z-index nomeado --- */
+  --z-sticky: 30; --z-overlay: 80; --z-modal: 90; --z-toast: 100;
+}
+
+.dark-theme {
+  --surface-1: rgba(17, 27, 41, 0.88);
+  --surface-2: hsl(213, 30%, 12%);
+  --hairline: rgba(148, 163, 184, 0.14);
+  --border-strong: rgba(148, 163, 184, 0.30);
+}
+
+/* Utilitários de fundação (consumidos a partir do PR 6.2) */
+.font-display { font-family: var(--font-display); }
+.font-text { font-family: var(--font-text); }
+.tabular {
+  font-family: var(--font-text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+.u-stack > * + * { margin-top: var(--space-4); }

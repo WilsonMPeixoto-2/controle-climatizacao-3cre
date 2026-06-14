@@ -1,0 +1,212 @@
+/* ============================================================
+   dossier.css — PR 6.4 · Dossiê Executivo da Unidade Escolar
+   Estilos específicos para a ficha técnica e linha do tempo.
+   ============================================================ */
+
+/* Cabeçalho do Dossiê */
+.dossier-hero {
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: var(--space-4);
+}
+
+.dossier-hero-name {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--text-main);
+  margin: var(--space-2) 0;
+  line-height: 1.25;
+}
+
+.dossier-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-family: var(--font-text);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  align-items: center;
+}
+
+.dossier-hero-meta strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+/* Banners de Situação */
+.dossier-status-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-4);
+}
+
+.dossier-status-banner::before {
+  content: attr(data-selo);
+  display: inline-block;
+  font-family: var(--font-text);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  margin-right: var(--space-2);
+  border: 1px solid currentColor;
+}
+
+.dossier-status-banner.status-critica {
+  background: var(--color-red-tint);
+  border: 1px solid var(--color-red);
+  color: var(--color-red);
+}
+.dossier-status-banner.status-critica::before {
+  background: var(--color-red);
+  color: var(--text-on-primary);
+  border-color: var(--color-red);
+}
+
+.dossier-status-banner.status-atencao {
+  background: var(--color-amber-tint);
+  border: 1px solid var(--color-amber);
+  color: var(--color-amber);
+}
+.dossier-status-banner.status-atencao::before {
+  background: var(--color-amber);
+  color: var(--text-on-primary);
+  border-color: var(--color-amber);
+}
+
+.dossier-status-banner.status-regular {
+  background: var(--color-green-tint);
+  border: 1px solid var(--color-green);
+  color: var(--color-green);
+}
+.dossier-status-banner.status-regular::before {
+  background: var(--color-green);
+  color: var(--text-on-primary);
+  border-color: var(--color-green);
+}
+
+/* Microcards de Métricas */
+.dossier-stat-card {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.dossier-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.dossier-stat-card span {
+  display: block;
+  font-family: var(--font-text);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: var(--tracking-wide);
+}
+.dossier-stat-card .stat-value {
+  font-family: var(--font-text);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--text-main);
+  margin-top: var(--space-2);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Blocos de Diagnóstico (Visual Law) */
+.diagnostic-block {
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-left: 4px solid var(--text-muted);
+  margin-top: var(--space-4);
+}
+.diagnostic-block--critical {
+  border-left-color: var(--color-red) !important;
+}
+.diagnostic-block--warning {
+  border-left-color: var(--color-orange) !important;
+}
+.diagnostic-block--success {
+  border-left-color: var(--color-green) !important;
+}
+
+/* Linha do Tempo Refinada */
+.timeline-refined {
+  position: relative;
+  padding-left: var(--space-6);
+  margin-top: var(--space-4);
+}
+.timeline-refined::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--hairline);
+}
+
+.timeline-refined .timeline-event {
+  position: relative;
+  padding-bottom: var(--space-6);
+  border-left: none !important; /* overrides previous styles */
+}
+.timeline-refined .timeline-event:last-child {
+  padding-bottom: 0;
+}
+
+/* Pseudo-elementos substituindo marcadores inline */
+.timeline-refined .timeline-event::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: 2px solid var(--border-strong);
+  z-index: 1;
+}
+.timeline-refined .timeline-event.timeline-event-local::before {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.timeline-refined .timeline-event-marker {
+  display: none !important; /* Oculta marcador legado */
+}
+
+.timeline-refined .timeline-event-card {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.timeline-refined .timeline-event-local .timeline-event-card {
+  border-left: 3px solid var(--primary) !important;
+}
+
+.timeline-refined .timeline-event-meta {
+  display: flex;
+  gap: var(--space-3);
+  font-family: var(--font-text);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}

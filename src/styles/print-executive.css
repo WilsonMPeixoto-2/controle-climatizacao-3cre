@@ -1,0 +1,110 @@
+/* ============================================================
+   print-executive.css — PR 6.5 · Relatório de Impressão A4
+   Otimizações para impressão e exportação PDF do Dossiê.
+   ============================================================ */
+
+@media print {
+  /* Configuração geral de página A4 */
+  @page {
+    size: A4 portrait !important;
+    margin: 15mm 12mm 15mm 12mm !important;
+  }
+
+  /* Reset global de cores e sombras para economia de tinta e legibilidade */
+  html, body, #root {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Ocultar elementos puramente interativos */
+  .no-print,
+  button,
+  select,
+  input,
+  textarea,
+  .tabs-shell,
+  .timeline-filters,
+  .toolbar,
+  .app-sidebar,
+  .app-header {
+    display: none !important;
+  }
+
+  /* Quebra de páginas e contenção */
+  .dashboard-section,
+  .dossier-hero,
+  .diagnostic-block,
+  .timeline-event-card,
+  .dossier-stat-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    margin-bottom: 12pt !important;
+  }
+
+  /* Exibir cabeçalho de impressão */
+  .print-only-header {
+    display: block !important;
+    border-bottom: 2px solid #000 !important;
+    margin-bottom: 20pt !important;
+    padding-bottom: 8pt !important;
+  }
+
+  .print-only-header h2 {
+    font-size: 16pt !important;
+    margin: 0 !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+  }
+
+  .print-only-header p {
+    font-size: 9pt !important;
+    color: #444 !important;
+  }
+
+  /* Links e botões de PDF devem estar limpos */
+  a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  /* Ajustar grids para uma coluna na impressão */
+  .card-grid,
+  .kpi-subgroups-grid,
+  .volume-grid,
+  .subgroup-cards,
+  div[style*="display: grid"] {
+    display: block !important;
+  }
+
+  .dossier-stat-card,
+  .diagnostic-block,
+  .dossier-status-banner {
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+    float: none !important;
+  }
+
+  /* Corrigir cores dos banners e status para alta legibilidade em P&B */
+  .dossier-status-banner {
+    border: 2px solid #000 !important;
+    background: #fff !important;
+    color: #000 !important;
+    padding: 10pt !important;
+  }
+
+  .dossier-status-banner::before {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+  }
+
+  .diagnostic-block {
+    border-left: 4px solid #000 !important;
+  }
+}
