@@ -24,6 +24,13 @@ class ErrorBoundary extends Component {
       return this.props.children;
     }
 
+    // Fallback customizado (ex.: boundary granular do mapa) — evita a tela cheia de erro
+    if (this.props.fallback !== undefined) {
+      return typeof this.props.fallback === 'function'
+        ? this.props.fallback(this.state.error)
+        : this.props.fallback;
+    }
+
     const errorMessage = this.state.error?.message || 'Erro não especificado';
     const componentStack = this.state.errorInfo?.componentStack || '';
 

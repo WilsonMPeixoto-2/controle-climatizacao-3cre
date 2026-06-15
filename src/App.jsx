@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, lazy, Suspense } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -57,7 +57,18 @@ import {
   AGE_SEVERE_DAYS
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
-import OperationalMap from './components/OperationalMap.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
+// Carregado sob demanda: o mapa (Leaflet + GeoJSON) só baixa quando a aba é aberta
+const OperationalMap = lazy(() => import('./components/OperationalMap.jsx'));
+// Títulos por aba (React 19 hoista <title> para o <head>)
+const TAB_TITLES = {
+  dashboard: 'Painel',
+  tickets: 'Chamados',
+  lookup: 'Consulta por Unidade',
+  form: 'Registrar Chamado',
+  email: 'Modelos de E-mail',
+  cloud: 'Base Online'
+};
 import { computeBairroRisk } from './lib/mapRisk.js';
 import MapLegend from './components/MapLegend.jsx';
 import { STATUSES, STATUS_LIST } from './domain/statuses.js';
@@ -548,21 +559,23 @@ export default function App() {
   }, [theme]);
 
   // Fecha o modal de edição com Esc e trava o scroll do fundo enquanto aberto
+  // useEffectEvent (React 19.2): o listener lê isSavingTicket/isSavingHistory atuais sem
+  // re-anexar a cada salvamento — o efeito só re-roda quando o modal abre/fecha.
+  const onEscapeCloseModal = useEffectEvent((e) => {
+    if (e.key === 'Escape' && !isSavingTicket && !isSavingHistory) {
+      setShowEditModal(false);
+    }
+  });
   useEffect(() => {
-    if (!showEditModal) return;
-    const onKey = (e) => {
-      if (e.key === 'Escape' && !isSavingTicket && !isSavingHistory) {
-        setShowEditModal(false);
-      }
-    };
+    if (!showEditModal) return undefined;
     const prevOverflow = document.body.style.overflow;
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onEscapeCloseModal);
     document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onEscapeCloseModal);
       document.body.style.overflow = prevOverflow;
     };
-  }, [showEditModal, isSavingTicket, isSavingHistory]);
+  }, [showEditModal]);
 
   // Carrega anexos consolidados da escola de forma reativa
   useEffect(() => {
@@ -2438,13 +2451,29 @@ export default function App() {
               >
                 {vistaTerritorio === 'mapa' ? (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <OperationalMap
-                      selectedSchool={selectedSchool}
-                      theme={theme}
-                      onSelectBairro={setSelectedBairroNormalized}
-                      focusedBairro={focusedBairro}
-                      risk={territorialRisk}
-                    />
+                    <ErrorBoundary
+                      fallback={
+                        <div style={{ flex: 1, minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px', background: 'var(--surface)', borderRadius: '14px', border: '1px solid var(--border-color)', color: 'var(--text-muted, #64748b)' }}>
+                          Não foi possível carregar o mapa. O restante do painel segue funcionando — recarregue a página para tentar de novo.
+                        </div>
+                      }
+                    >
+                      <Suspense
+                        fallback={
+                          <div style={{ flex: 1, minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted, #64748b)' }}>
+                            Carregando mapa…
+                          </div>
+                        }
+                      >
+                        <OperationalMap
+                          selectedSchool={selectedSchool}
+                          theme={theme}
+                          onSelectBairro={setSelectedBairroNormalized}
+                          focusedBairro={focusedBairro}
+                          risk={territorialRisk}
+                        />
+                      </Suspense>
+                    </ErrorBoundary>
                     <MapLegend risk={territorialRisk} />
                   </div>
                 ) : (
@@ -6778,6 +6807,11 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
           </div>
         </div>
       )}
+      <title>
+        {currentTab === 'lookup' && selectedSchool
+          ? `Consulta: ${selectedSchool.unidade_escolar} — Controle de Climatização 3ª CRE`
+          : `${TAB_TITLES[currentTab] ?? 'Painel'} — Controle de Climatização 3ª CRE`}
+      </title>
       <Analytics />
     </div>
   );
