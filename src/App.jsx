@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, lazy, Suspense } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, useActionState, lazy, Suspense } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -462,7 +462,6 @@ export default function App() {
     resultado_aptidao: 'Pendente'
   });
   const [newTicketSuccess, setNewTicketSuccess] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
 
   // Email tab states
   const [selectedEmailTicketId, setSelectedEmailTicketId] = useState('');
@@ -1497,11 +1496,8 @@ export default function App() {
     }
   };
 
-  // Submit a new ticket simulator
-  const handleRegisterNewTicket = async (e) => {
-    e.preventDefault();
-    if (submitting) return;
-
+  // Registrar novo chamado — action do useActionState (React 19 gerencia o pending)
+  const handleRegisterNewTicket = async () => {
     const validation = createTicketSchema.safeParse({
       school: formSelectedSchool,
       ...newTicket
@@ -1518,7 +1514,6 @@ export default function App() {
       return;
     }
 
-    setSubmitting(true);
     try {
       const nowIso = new Date().toISOString().substring(0, 19);
 
@@ -1575,7 +1570,6 @@ export default function App() {
             `Falha ao registrar chamado na nuvem: ${err.message || err}. O formulário foi mantido para nova tentativa.`,
             'error'
           );
-          setSubmitting(false);
           return; // Aborta sem criar chamado local — dado não confiável
         }
       }
@@ -1639,10 +1633,15 @@ export default function App() {
       });
       setFormSelectedSchool(null);
       setFormSearchQuery('');
-    } finally {
-      setSubmitting(false);
+    } catch (err) {
+      console.error('Erro inesperado ao registrar chamado:', err);
+      triggerToast('Erro inesperado ao registrar o chamado. Tente novamente.', 'error');
     }
   };
+
+  // useActionState (React 19): isRegistering (pending) substitui o booleano manual,
+  // e a concorrência de submit é gerenciada pelo próprio React.
+  const [, registerTicketAction, isRegistering] = useActionState(handleRegisterNewTicket, null);
 
   // Interactive SVG circular metrics computations for school detail
   const renderCircularCoverage = (school) => {
@@ -5076,7 +5075,7 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <form noValidate onSubmit={handleRegisterNewTicket}>
+              <form noValidate action={registerTicketAction}>
                 {!supabaseClient && (
                   <div
                     className="local-warning-banner"
@@ -5401,15 +5400,15 @@ export default function App() {
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={submitting}>
-                    {submitting ? (
+                  <button type="submit" className="btn btn-primary" disabled={isRegistering}>
+                    {isRegistering ? (
                       <span className="spin" style={{ display: 'inline-flex' }}>
                         <IconRefresh />
                       </span>
                     ) : (
                       <IconPlus />
                     )}
-                    <span>{submitting ? 'Registrando…' : 'Registrar Demanda'}</span>
+                    <span>{isRegistering ? 'Registrando…' : 'Registrar Demanda'}</span>
                   </button>
                 </div>
               </form>
