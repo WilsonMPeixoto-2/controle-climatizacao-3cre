@@ -48,17 +48,22 @@ const selectedSchoolSchema = z
 
 const selectedSchoolInputSchema = z.preprocess((value) => value ?? {}, selectedSchoolSchema);
 
+// Campos compartilhados entre criar e editar — fonte única, evita duplicar ~8 campos
+const ticketCoreFields = {
+  local_demanda: requiredText('Informe o local da demanda.'),
+  tipo_demanda: requiredText('Escolha o tipo de solicitação.'),
+  status_atual: statusValidator,
+  setor_responsavel: sectorValidator,
+  proxima_providencia: requiredText('Informe a próxima providência.'),
+  prioridade: priorityValidator,
+  informacao_validada: requiredText('Informe a validação da informação.'),
+  resultado_aptidao: aptidaoValidator
+};
+
 export const createTicketSchema = z
   .object({
     school: selectedSchoolInputSchema,
-    local_demanda: requiredText('Informe o local da demanda.'),
-    tipo_demanda: requiredText('Escolha o tipo de solicitação.'),
-    status_atual: statusValidator,
-    setor_responsavel: sectorValidator,
-    proxima_providencia: requiredText('Informe a próxima providência.'),
-    prioridade: priorityValidator,
-    informacao_validada: requiredText('Informe a validação da informação.'),
-    resultado_aptidao: aptidaoValidator
+    ...ticketCoreFields
   })
   .passthrough();
 
@@ -71,18 +76,11 @@ export const editTicketSchema = z
     designacao: requiredText(
       'Chamado sem designação da unidade. Recarregue a página e tente novamente.'
     ),
-    local_demanda: requiredText('Informe o local da demanda.'),
-    tipo_demanda: requiredText('Escolha o tipo de solicitação.'),
-    status_atual: statusValidator,
-    setor_responsavel: sectorValidator,
-    proxima_providencia: requiredText('Informe a próxima providência.'),
+    ...ticketCoreFields,
     ultima_movimentacao: z.preprocess(
       (value) => (value == null ? '' : String(value).trim()),
       z.string()
     ),
-    prioridade: priorityValidator,
-    informacao_validada: requiredText('Informe a validação da informação.'),
-    resultado_aptidao: aptidaoValidator,
     criado_em: optionalDate,
     modificado_em: optionalDate
   })
