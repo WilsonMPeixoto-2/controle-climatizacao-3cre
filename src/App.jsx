@@ -33,6 +33,7 @@ import {
 import dbData from './data/db.json';
 import { createClient } from '@supabase/supabase-js';
 import { Analytics } from '@vercel/analytics/react';
+import { track } from '@vercel/analytics';
 import {
   formatDateBrazilian as fmtDateBR,
   inactivityDays as calcInactivityDays,
@@ -698,6 +699,43 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCloudConfig]);
+
+  // Realtime: reflete ao vivo as mudanças de chamados/histórico feitas por outros usuários,
+  // sem recarregar a página (atende ao monitoramento compartilhado da GOP). Degrada com
+  // segurança: se a publicação realtime não estiver ligada no banco, apenas não atualiza sozinho.
+  useEffect(() => {
+    if (!supabaseClient || !cloudConnected) return undefined;
+    let active = true;
+    let timer;
+    const refresh = async () => {
+      try {
+        const [ticketsData, historyData] = await Promise.all([
+          fetchChamados(supabaseClient),
+          fetchHistorico(supabaseClient),
+        ]);
+        if (active) {
+          setTickets(ticketsData);
+          setHistory(historyData);
+        }
+      } catch (err) {
+        console.error('Realtime: falha ao atualizar dados', err);
+      }
+    };
+    const scheduleRefresh = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(refresh, 400);
+    };
+    const channel = supabaseClient
+      .channel('gop-chamados-historico')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chamados' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'historico' }, scheduleRefresh)
+      .subscribe();
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      supabaseClient.removeChannel(channel);
+    };
+  }, [supabaseClient, cloudConnected]);
 
   const handleConnectCloud = (e) => {
     e.preventDefault();
@@ -1437,6 +1475,7 @@ export default function App() {
 
       setShowEditModal(false);
       triggerToast('Chamado atualizado com sucesso!', 'success');
+      track('chamado_atualizado', { online: !!supabaseClient });
     } catch (err) {
       console.error('Cloud save failed:', err);
       triggerToast(`Falha ao salvar alteração na nuvem: ${err.message || err}`, 'error');
@@ -1568,6 +1607,7 @@ export default function App() {
           : 'Chamado criado em modo offline — salvo neste dispositivo.',
         supabaseClient ? 'success' : 'info'
       );
+      track('chamado_lancado', { online: !!supabaseClient });
 
       // Limpa inputs
       setNewTicket({
@@ -3625,6 +3665,7 @@ export default function App() {
                                 setSelectedSchool(s);
                                 setLookupSchoolQuery(s.unidade_escolar);
                                 setShowLookupSuggestions(false);
+                                track('consulta_unidade');
                               }}
                             >
                               🏢 {s.unidade_escolar} ({s.designacao})
