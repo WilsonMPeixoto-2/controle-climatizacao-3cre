@@ -209,3 +209,29 @@
   outline: none;
   box-shadow: var(--ring);
 }
+
+/* ============================================================
+   4K: componentes com proporções escaláveis
+   ============================================================ */
+@media (min-width: 2560px) {
+  .section-eyebrow svg {
+    width: clamp(14px, 0.9vw, 20px);
+    height: clamp(14px, 0.9vw, 20px);
+  }
+
+  .btn-sm { padding: clamp(7px, 0.45vw, 10px) clamp(14px, 0.9vw, 20px); }
+  .btn-lg { padding: clamp(14px, 0.9vw, 20px) clamp(28px, 1.8vw, 40px); }
+
+  .status-chip {
+    padding: clamp(3px, 0.2vw, 5px) clamp(10px, 0.65vw, 14px);
+  }
+
+  .tabs-shell [role='tab'],
+  .tabs-shell .tab {
+    padding: clamp(7px, 0.45vw, 10px) clamp(16px, 1vw, 24px);
+  }
+
+  .table-shell thead th { padding: var(--space-4) var(--space-5); }
+  .table-shell tbody td { padding: var(--space-4) var(--space-5); }
+}
+

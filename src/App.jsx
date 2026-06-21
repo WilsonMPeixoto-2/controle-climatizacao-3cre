@@ -2243,8 +2243,8 @@ export default function App() {
               <IconInfo style={{ width: '14px', height: '14px', color: 'var(--primary)' }} />
               <span>Clique em um indicador para filtrar a lista de chamados abaixo.</span>
             </p>
-            <div className="kpi-group-container" style={{ marginBottom: '24px' }}>
-              <div className="section-header" style={{ marginBottom: '12px' }}>
+            <div className="kpi-group-container">
+              <div className="section-header">
                 <div className="section-heading">
                   <span className="section-eyebrow">
                     <IconFolder />
@@ -2285,8 +2285,8 @@ export default function App() {
               </div>
             </div>
 
-            <div className="kpi-group-container" style={{ marginBottom: '36px' }}>
-              <div className="section-header" style={{ marginBottom: '12px' }}>
+            <div className="kpi-group-container">
+              <div className="section-header">
                 <div className="section-heading">
                   <span className="section-eyebrow">
                     <IconClock />
@@ -2294,10 +2294,10 @@ export default function App() {
                   </span>
                 </div>
               </div>
-              <div className="kpi-subgroups-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="kpi-subgroups-grid">
                 <div className="kpi-subgroup-column">
-                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)', marginBottom: '12px' }}>Sem Movimentação Recente (Inércia)</h5>
-                  <div className="card-grid subgroup-cards" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)' }}>Sem Movimentação Recente (Inércia)</h5>
+                  <div className="card-grid subgroup-cards">
                     <div
                       className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
                       onClick={() => setActiveListsView('inactive7')}
@@ -2335,8 +2335,8 @@ export default function App() {
                 </div>
 
                 <div className="kpi-subgroup-column">
-                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)', marginBottom: '12px' }}>Tempo Total em Aberto (Antiguidade)</h5>
-                  <div className="card-grid subgroup-cards" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)' }}>Tempo Total em Aberto (Antiguidade)</h5>
+                  <div className="card-grid subgroup-cards">
                     <div
                       className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
                       onClick={() => setActiveListsView('age30')}

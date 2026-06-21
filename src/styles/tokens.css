@@ -65,3 +65,65 @@
   font-feature-settings: 'tnum' 1;
 }
 .u-stack > * + * { margin-top: var(--space-4); }
+
+/* ============================================================
+   4K / HDR / OLED — TOKENS ADAPTATIVOS
+   Progressive enhancement: escala suavemente entre FHD e 4K,
+   ativa cores wide-gamut em displays P3, e otimiza superfícies
+   para painéis OLED. Zero breaking changes em telas padrão.
+   ============================================================ */
+
+/* --- Renderização de alta fidelidade tipográfica --- */
+:root {
+  font-optical-sizing: auto;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+/* --- 4K: escala tipográfica ampliada para viewports >= 2560px --- */
+@media (min-width: 2560px) {
+  :root {
+    --text-2xs: clamp(0.6875rem, 0.5vw + 0.2rem, 0.875rem);
+    --text-xs: clamp(0.75rem, 0.55vw + 0.2rem, 1rem);
+    --text-sm: clamp(0.8125rem, 0.6vw + 0.2rem, 1.0625rem);
+    --text-base: clamp(0.875rem, 0.65vw + 0.2rem, 1.125rem);
+    --text-md: clamp(1rem, 0.7vw + 0.25rem, 1.3125rem);
+    --text-lg: clamp(1.1875rem, 0.8vw + 0.3rem, 1.5625rem);
+    --text-xl: clamp(1.5rem, 1vw + 0.4rem, 2rem);
+    --text-2xl: clamp(1.875rem, 1.2vw + 0.5rem, 2.5rem);
+    --text-3xl: clamp(2.375rem, 1.5vw + 0.6rem, 3.125rem);
+
+    /* Ritmo de espaço ampliado em 4K */
+    --space-1: 5px;  --space-2: 10px; --space-3: 15px; --space-4: 20px;
+    --space-5: 25px; --space-6: 30px; --space-7: 40px; --space-8: 50px;
+    --space-9: 60px; --space-10: 80px;
+  }
+}
+
+/* --- OLED: superfícies ultra-escuras com separação por micro-luminância --- */
+@supports (color: oklch(0.5 0.1 240)) {
+  @media (color-gamut: p3) {
+    .dark-theme {
+      --surface-0: oklch(0.06 0.006 260);
+      --surface-1: oklch(0.10 0.008 260 / 0.92);
+      --surface-2: oklch(0.13 0.010 255);
+      --hairline: oklch(0.28 0.012 250 / 0.20);
+      --border-strong: oklch(0.38 0.015 250 / 0.32);
+    }
+
+    /* Light theme com P3 enrichment */
+    :root:not(.dark-theme) {
+      --surface-1: oklch(0.99 0.002 240 / 0.94);
+      --surface-2: oklch(1.00 0 0);
+      --hairline: oklch(0.65 0.015 240 / 0.18);
+    }
+  }
+}
+
+/* --- Motion tokens adaptativos para alta refresh-rate (120Hz+) --- */
+@media (min-resolution: 2dppx) {
+  :root {
+    --dur-fast: 120ms;
+    --dur-base: 180ms;
+  }
+}
