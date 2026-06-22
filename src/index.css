@@ -632,7 +632,7 @@ html:not(.dark-theme) body::after {
 /* Sections & Layout grids */
 .dashboard-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: clamp(24px, 1.5vw, 36px);
 }
 
@@ -773,71 +773,87 @@ html:not(.dark-theme) body::after {
 .lists-legend-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 16px;
+  padding: 16px 20px;
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-xs);
-  margin-bottom: 12px;
-  font-size: 12px;
-  color: var(--text-color);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  font-size: 13px;
   box-shadow: var(--shadow-sm);
 }
 
 .legend-section {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .lists-legend-panel {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .legend-section {
+    flex: 1;
+  }
+  .legend-section:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+    padding-right: 24px;
+    margin-right: 24px;
+  }
 }
 
 .legend-section-title {
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--text-muted);
-  margin-right: 8px;
-  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .legend-items {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 12px 16px;
+  gap: 10px 16px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
+  gap: 8px;
+  font-size: 13px;
   color: var(--text-main);
+  font-weight: 500;
 }
 
 .legend-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 6px;
+  height: 16px;
+  border-radius: 3px;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .legend-indicator.border-severe {
-  border-left: 4px solid var(--color-red);
-  background-color: var(--color-red-tint);
+  background-color: var(--color-red);
 }
 
 .legend-indicator.border-warning {
-  border-left: 4px solid var(--color-amber);
-  background-color: var(--color-amber-tint);
+  background-color: var(--color-amber);
 }
 
 .legend-indicator.border-age-severe {
-  border-left: 4px solid var(--color-age-severe);
-  background-color: var(--color-age-severe-tint);
+  background-color: var(--color-age-severe);
 }
 
 .legend-indicator.border-age-warning {
-  border-left: 4px solid var(--color-age-warn);
-  background-color: var(--color-age-warn-tint);
+  background-color: var(--color-age-warn);
 }
 
 .legend-badge-dot {
@@ -960,29 +976,23 @@ html:not(.dark-theme) body::after {
 }
 
 .lists-row-warning td:first-child {
+  border-left: 4px solid var(--color-amber) !important;
   padding-left: 12px;
 }
 
-.lists-row-severe {
-  border-left: 4px solid var(--color-red) !important;
-}
-
 .lists-row-severe td:first-child {
+  border-left: 4px solid var(--color-red) !important;
   padding-left: 12px;
 }
 
 /* Condicionais de Antiguidade (tempo total em aberto) — tons de roxo */
-.lists-row-age-warning {
-  border-left: 4px solid var(--color-age-warn) !important;
-}
 .lists-row-age-warning td:first-child {
+  border-left: 4px solid var(--color-age-warn) !important;
   padding-left: 12px;
 }
 
-.lists-row-age-severe {
-  border-left: 4px solid var(--color-age-severe) !important;
-}
 .lists-row-age-severe td:first-child {
+  border-left: 4px solid var(--color-age-severe) !important;
   padding-left: 12px;
 }
 
@@ -1087,6 +1097,30 @@ html:not(.dark-theme) body::after {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Premium pill style task count badge */
+.task-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  border-radius: 999px;
+  background-color: var(--primary-light);
+  color: var(--primary-active);
+  border: 1px solid rgba(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
+  font-family: var(--font-sans);
+  line-height: 1;
+}
+
+.dark-theme .task-count-badge {
+  background-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+  color: var(--primary);
+  border-color: rgba(var(--primary-h), var(--primary-s), var(--primary-l), 0.35);
 }
 
 /* SLA Pulsing Dot warning indicator */
@@ -1198,6 +1232,53 @@ html:not(.dark-theme) body::after {
   font-size: 13.5px;
   font-weight: 600;
   font-family: var(--font-sans);
+}
+
+/* Placeholder and high-contrast donut style additions */
+.form-control::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: hsl(215, 14%, 48%) !important;
+  opacity: 0.8 !important;
+}
+.dark-theme .form-control::placeholder,
+.dark-theme input::placeholder,
+.dark-theme textarea::placeholder {
+  color: hsl(214, 14%, 60%) !important;
+  opacity: 0.75 !important;
+}
+
+.donut-chart-bg {
+  stroke: var(--border-color);
+  opacity: 1;
+}
+html:not(.dark-theme) .donut-chart-bg {
+  stroke: rgba(100, 116, 139, 0.35) !important;
+}
+.donut-total-num {
+  fill: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 800;
+}
+.donut-total-lbl {
+  fill: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.dark-theme .donut-total-lbl {
+  fill: var(--text-light);
+}
+.donut-legend-pct {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.dark-theme .donut-legend-pct {
+  color: var(--text-light);
 }
 
 .form-control:focus {
@@ -2081,7 +2162,16 @@ html:not(.dark-theme) .dashboard-section:hover {
 html:not(.dark-theme) .form-control,
 html:not(.dark-theme) .email-preview-body {
   background-color: #ffffff;
-  border-color: rgba(100, 116, 139, 0.22);
+  border: 1.5px solid hsl(215, 16%, 68%) !important;
+}
+
+html:not(.dark-theme) .form-control:hover:not(:disabled):not(:focus) {
+  border-color: hsl(201, 80%, 45%) !important;
+}
+
+html:not(.dark-theme) .form-control:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
 }
 
 html:not(.dark-theme) .form-control:disabled {
@@ -2264,6 +2354,9 @@ html:not(.dark-theme) .leaflet-bar a {
   height: 16px;
   color: var(--text-light);
   pointer-events: none;
+}
+html:not(.dark-theme) .input-search svg {
+  color: hsl(215, 21%, 30%) !important;
 }
 .input-search .form-control {
   padding-left: 38px;

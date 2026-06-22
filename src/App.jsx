@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, lazy, Suspense, useTransition } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, lazy, Suspense } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -1864,6 +1864,7 @@ export default function App() {
             fill="none"
             stroke="var(--border-color)"
             strokeWidth={strokeWidth}
+            className="donut-chart-bg"
           />
           <circle
             cx={size / 2}
@@ -1883,12 +1884,7 @@ export default function App() {
             textAnchor="middle"
             dominantBaseline="middle"
             transform={`rotate(90 ${size / 2} ${size / 2})`}
-            style={{
-              fontSize: '16px',
-              fontWeight: '800',
-              fill: 'var(--text-main)',
-              fontFamily: 'var(--font-sans)'
-            }}
+            className="donut-total-num"
           >
             {total}
           </text>
@@ -1898,13 +1894,7 @@ export default function App() {
             textAnchor="middle"
             dominantBaseline="middle"
             transform={`rotate(90 ${size / 2} ${size / 2})`}
-            style={{
-              fontSize: '9px',
-              fontWeight: '800',
-              fill: 'var(--text-light)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}
+            className="donut-total-lbl"
           >
             Total
           </text>
@@ -1916,15 +1906,15 @@ export default function App() {
             <div>
               <span>Chamados Ativos: </span>
               <strong>{active}</strong>{' '}
-              <span style={{ fontSize: '13px', color: 'var(--text-light)' }}>({activePct}%)</span>
+              <span className="donut-legend-pct">({activePct}%)</span>
             </div>
           </div>
           <div className="donut-legend-item">
-            <div className="donut-legend-dot" style={{ backgroundColor: 'var(--border-color)' }} />
+            <div className="donut-legend-dot" style={{ backgroundColor: 'var(--color-gray)' }} />
             <div>
               <span>Concluídos: </span>
               <strong>{closed}</strong>{' '}
-              <span style={{ fontSize: '13px', color: 'var(--text-light)' }}>({closedPct}%)</span>
+              <span className="donut-legend-pct">({closedPct}%)</span>
             </div>
           </div>
         </div>
@@ -2701,8 +2691,7 @@ export default function App() {
             {/* Layout Grid */}
             <div className="dashboard-layout">
               {/* Left section: Charts */}
-              <div>
-                <div className="dashboard-section goals-section">
+              <div className="dashboard-section goals-section">
                   <div className="section-header">
                     <h3>
                       <IconDashboard /> Visão de Metas & Conclusões
@@ -2816,11 +2805,6 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-
-                {/* (removido) "Distribuição pelas 12 Etapas POP" — substituído pelo Mapa Operacional; a leitura por etapa agora aparece na legenda do mapa */}
-
-                {/* (removido) "Envolvimento e Demandas por Setor" — a visão por setor permanece na barra de setor da Lista de chamados (Bloco C) */}
-              </div>
 
               {/* Right column: Action checklist, Inactivity ranking, and Sync panel */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -3006,31 +2990,8 @@ export default function App() {
                   atualizar o andamento.
                 </p>
               </div>
-
-              {/* Text Search */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '12px',
-                  flex: 1,
-                  justifySelf: 'flex-end',
-                  maxWidth: '350px'
-                }}
-              >
-                <div className="input-search" style={{ flex: 1 }}>
-                  <IconSearch />
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Buscar chamado..."
-                    value={ticketSearch}
-                    onChange={(e) => setTicketSearch(e.target.value)}
-                  />
-                </div>
-              </div>
             </div>
 
-            {/* FASE 4: Barra de Ferramentas de Tabelas (Filtros, Contadores e Exportador CSV) */}
             <div
               className="table-toolbar"
               style={{
@@ -3046,7 +3007,18 @@ export default function App() {
                 flexWrap: 'wrap'
               }}
             >
-              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+                {/* Text Search */}
+                <div className="input-search" style={{ minWidth: '220px', maxWidth: '300px' }}>
+                  <IconSearch />
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Buscar chamado..."
+                    value={ticketSearch}
+                    onChange={(e) => setTicketSearch(e.target.value)}
+                  />
+                </div>
                 {/* Filtro Prioridade */}
                 <div className="filter-select-wrapper">
                   <span className="filter-label">Prioridade:</span>
@@ -3269,28 +3241,32 @@ export default function App() {
             {/* Legend Panel for status colors and row borders (M-11) */}
             <div className="lists-legend-panel">
               <div className="legend-section">
-                <span className="legend-section-title">🕒 Prazos (Bordas e Alertas):</span>
+                <span className="legend-section-title">
+                  <Clock size={14} style={{ flexShrink: 0 }} /> Prazos e Alertas
+                </span>
                 <div className="legend-items">
                   <div className="legend-item">
                     <span className="legend-indicator border-severe"></span>
-                    <span>Inércia Crítica (parado +15 dias)</span>
+                    <span>Inércia Crítica (+15 dias)</span>
                   </div>
                   <div className="legend-item">
                     <span className="legend-indicator border-warning"></span>
-                    <span>Inércia Alerta (parado +7 dias)</span>
+                    <span>Inércia Alerta (+7 dias)</span>
                   </div>
                   <div className="legend-item">
                     <span className="legend-indicator border-age-severe"></span>
-                    <span>Antiguidade Crítica (aberto +60 dias)</span>
+                    <span>Antiguidade Crítica (+60 dias)</span>
                   </div>
                   <div className="legend-item">
                     <span className="legend-indicator border-age-warning"></span>
-                    <span>Antiguidade Alerta (aberto +30 dias)</span>
+                    <span>Antiguidade Alerta (+30 dias)</span>
                   </div>
                 </div>
               </div>
               <div className="legend-section">
-                <span className="legend-section-title">📋 Status (Etapas POP):</span>
+                <span className="legend-section-title">
+                  <Activity size={14} style={{ flexShrink: 0 }} /> Etapas de Status
+                </span>
                 <div className="legend-items">
                   <div className="legend-item">
                     <span className="legend-badge-dot bg-triagem"></span>
@@ -5186,11 +5162,17 @@ export default function App() {
                       borderLeft: '4px solid var(--primary)',
                       fontSize: '13px',
                       fontWeight: '600',
-                      marginBottom: '20px'
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
                     }}
                   >
-                    📍 <strong>Endereço:</strong> {formSelectedSchool.endereco}, Bairro:{' '}
-                    {formSelectedSchool.bairro}
+                    <IconPin style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                    <span>
+                      <strong>Endereço:</strong> {formSelectedSchool.endereco}, Bairro:{' '}
+                      {formSelectedSchool.bairro}
+                    </span>
                   </div>
                 )}
 
@@ -5409,7 +5391,7 @@ export default function App() {
                     ) : (
                       <IconPlus />
                     )}
-                    <span>{isRegisterPending ? 'Registrando…' : 'Registrar Demanda'}</span>
+                    <span>{isRegisterPending ? 'Registrando…' : 'Registrar Chamado'}</span>
                   </button>
                 </div>
               </form>
