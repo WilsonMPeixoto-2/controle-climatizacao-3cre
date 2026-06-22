@@ -25,6 +25,7 @@
   /* Neutral Slate Palette for high-end professional UI */
   --bg-app: hsl(215, 24%, 93.5%);
   --bg-card: #ffffff;
+  --surface: var(--bg-card);
   --border-color: rgba(100, 116, 139, 0.22);
   --border-hover: rgba(14, 116, 144, 0.34);
 
@@ -78,6 +79,7 @@
 .dark-theme {
   --bg-app: hsl(212, 32%, 7%);
   --bg-card: rgba(17, 24, 39, 0.8);
+  --surface: var(--bg-card);
   --border-color: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(120, 190, 235, 0.22);
 
@@ -2025,9 +2027,20 @@ html:not(.dark-theme) body {
 
 html:not(.dark-theme) .sidebar {
   background-color: hsl(215, 18%, 91.5%);
-  border-right-color: rgba(100, 116, 139, 0.20);
-  box-shadow: 6px 0 20px -22px rgba(15, 23, 42, 0.3);
+  border-right-color: rgba(100, 116, 139, 0.16);
+  box-shadow: 1px 0 10px rgba(15, 23, 42, 0.04), 4px 0 24px -12px rgba(15, 23, 42, 0.08);
   backdrop-filter: none;
+}
+
+html:not(.dark-theme) .task-item {
+  background-color: #ffffff !important;
+  border-color: rgba(100, 116, 139, 0.14) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px -6px rgba(15, 23, 42, 0.05) !important;
+}
+
+html:not(.dark-theme) .task-item:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 16px -8px rgba(15, 23, 42, 0.08) !important;
 }
 
 html:not(.dark-theme) .sidebar-user {
@@ -4137,6 +4150,7 @@ html:not(.dark-theme) .map-toplabel {
     :root:not(.dark-theme) {
       --bg-app: oklch(0.952 0.009 235);
       --bg-card: oklch(1.00 0 0);
+      --surface: var(--bg-card);
       --border-color: oklch(0.85 0.01 235 / 0.35);
       --text-main: oklch(0.22 0.015 235);
       --text-muted: oklch(0.42 0.015 235);
@@ -4156,6 +4170,7 @@ html:not(.dark-theme) .map-toplabel {
       /* Fundo quase-preto: pixels OLED desligados = contraste infinito */
       --bg-app: oklch(0.06 0.005 260);
       --bg-card: oklch(0.09 0.008 260 / 0.88);
+      --surface: var(--bg-card);
 
       /* Bordas visíveis (alpha 0.08 original era invisível em OLED) */
       --border-color: oklch(0.30 0.012 250 / 0.20);
