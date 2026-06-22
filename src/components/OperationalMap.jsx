@@ -175,15 +175,18 @@ export default function OperationalMap({
     });
     mapRef.current = map;
 
-    // Define tile layer inicial baseado no tema
+    // Define tile layer inicial baseado no tema — tiles @2x retina para 4K/OLED
     const isDark = theme === 'dark';
     const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+      ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png';
 
     const tileLayer = L.tileLayer(tileUrl, {
       subdomains: 'abcd',
       maxZoom: 19,
+      tileSize: 512,
+      zoomOffset: -1,
+      detectRetina: true,
       attribution: '© OpenStreetMap · © CARTO'
     }).addTo(map);
     tileLayerRef.current = tileLayer;
@@ -311,12 +314,12 @@ export default function OperationalMap({
   useEffect(() => {
     if (!mapRef.current || !geoJsonRef.current || !mapRef.current._loaded) return;
 
-    // Atualiza o Tile Layer para o tema correto
+    // Atualiza o Tile Layer para o tema correto — tiles @2x retina
     if (tileLayerRef.current) {
       const isDark = theme === 'dark';
       const tileUrl = isDark
-        ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+        ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png'
+        : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png';
       tileLayerRef.current.setUrl(tileUrl);
     }
 
