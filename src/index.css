@@ -23,8 +23,8 @@
   --accent-blue: hsl(210, 95%, 52%);
 
   /* Neutral Slate Palette for high-end professional UI */
-  --bg-app: hsl(210, 32%, 97%);
-  --bg-card: rgba(255, 255, 255, 0.94);
+  --bg-app: hsl(215, 24%, 93.5%);
+  --bg-card: #ffffff;
   --border-color: rgba(100, 116, 139, 0.22);
   --border-hover: rgba(14, 116, 144, 0.34);
 
@@ -2014,20 +2014,30 @@ html:not(.dark-theme) .leaflet-bar a:hover {
 }
 
 /* Tema claro: acabamento institucional sem alterar a estrutura das telas */
+html:not(.dark-theme) body {
+  background: linear-gradient(
+    180deg,
+    hsl(215, 24%, 95%) 0%,
+    hsl(215, 20%, 92.5%) 100%
+  );
+  background-attachment: fixed;
+}
+
 html:not(.dark-theme) .sidebar {
-  background-color: rgba(248, 250, 252, 0.98);
-  border-right-color: rgba(100, 116, 139, 0.24);
-  box-shadow: 10px 0 26px -28px rgba(15, 23, 42, 0.45);
+  background-color: hsl(215, 18%, 91.5%);
+  border-right-color: rgba(100, 116, 139, 0.20);
+  box-shadow: 6px 0 20px -22px rgba(15, 23, 42, 0.3);
   backdrop-filter: none;
 }
 
 html:not(.dark-theme) .sidebar-user {
-  background-color: hsl(210, 28%, 94%);
-  border: 1px solid rgba(100, 116, 139, 0.18);
+  background-color: hsl(215, 20%, 88.5%);
+  border: 1px solid rgba(100, 116, 139, 0.16);
 }
 
 html:not(.dark-theme) .main-header {
-  border-bottom-color: rgba(100, 116, 139, 0.22);
+  border-bottom-color: rgba(100, 116, 139, 0.18);
+  background-color: transparent;
 }
 
 html:not(.dark-theme) .dashboard-section,
@@ -2037,7 +2047,9 @@ html:not(.dark-theme) .modal-container,
 html:not(.dark-theme) .suggestion-box,
 html:not(.dark-theme) .template-item,
 html:not(.dark-theme) .btn-secondary {
-  background-color: rgba(255, 255, 255, 0.96);
+  background-color: #ffffff;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(100, 116, 139, 0.16);
   backdrop-filter: none;
 }
 
@@ -2046,7 +2058,7 @@ html:not(.dark-theme) .stat-card,
 html:not(.dark-theme) .lists-table-wrapper,
 html:not(.dark-theme) .modal-container,
 html:not(.dark-theme) .school-details-card {
-  border-color: rgba(100, 116, 139, 0.22);
+  border-color: rgba(100, 116, 139, 0.16);
 }
 
 html:not(.dark-theme) .dashboard-section:hover {
@@ -2055,18 +2067,18 @@ html:not(.dark-theme) .dashboard-section:hover {
 
 html:not(.dark-theme) .form-control,
 html:not(.dark-theme) .email-preview-body {
-  background-color: hsl(0, 0%, 100%);
-  border-color: rgba(100, 116, 139, 0.26);
+  background-color: #ffffff;
+  border-color: rgba(100, 116, 139, 0.22);
 }
 
 html:not(.dark-theme) .form-control:disabled {
-  background-color: hsl(210, 28%, 94%);
+  background-color: hsl(215, 18%, 91.5%);
   color: hsl(215, 14%, 44%);
 }
 
 html:not(.dark-theme) .lists-table th {
-  background-color: hsl(210, 28%, 94%);
-  color: hsl(215, 22%, 32%);
+  background-color: hsl(215, 18%, 91.5%);
+  color: hsl(215, 22%, 30%);
 }
 
 html:not(.dark-theme) .lists-table tr:hover {
@@ -2086,17 +2098,17 @@ html:not(.dark-theme) .email-preview-actions,
 html:not(.dark-theme) .email-preview-panel,
 html:not(.dark-theme) .timeline-event-card,
 html:not(.dark-theme) .circle-progress-wrapper {
-  background-color: hsl(210, 32%, 97%);
+  background-color: hsl(215, 20%, 93.5%);
 }
 
 html:not(.dark-theme) .email-preview-header,
 html:not(.dark-theme) .sector-summary-bar,
 html:not(.dark-theme) .sync-panel {
-  background-color: hsl(210, 30%, 96%);
+  background-color: hsl(215, 20%, 93.5%);
 }
 
 html:not(.dark-theme) .op-panel {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
+  background: linear-gradient(180deg, #ffffff, hsl(215, 20%, 93.5%));
 }
 
 html:not(.dark-theme) .op-map {
@@ -4123,19 +4135,19 @@ html:not(.dark-theme) .map-toplabel {
 
     /* ---- LIGHT THEME P3 enrichment ---- */
     :root:not(.dark-theme) {
-      --bg-app: oklch(0.975 0.005 240);
-      --bg-card: oklch(1.00 0 0 / 0.95);
-      --border-color: oklch(0.65 0.015 240 / 0.22);
-      --text-main: oklch(0.20 0.02 240);
-      --text-muted: oklch(0.40 0.02 240);
-      --text-light: oklch(0.52 0.015 240);
+      --bg-app: oklch(0.952 0.009 235);
+      --bg-card: oklch(1.00 0 0);
+      --border-color: oklch(0.85 0.01 235 / 0.35);
+      --text-main: oklch(0.22 0.015 235);
+      --text-muted: oklch(0.42 0.015 235);
+      --text-light: oklch(0.52 0.01 235);
     }
 
     html:not(.dark-theme) body {
       background: linear-gradient(
         180deg,
-        oklch(0.98 0.004 240) 0%,
-        oklch(0.96 0.008 240) 100%
+        oklch(0.962 0.008 235) 0%,
+        oklch(0.942 0.010 235) 100%
       );
     }
 
