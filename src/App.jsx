@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, lazy, Suspense } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, lazy, Suspense, useTransition } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -424,7 +424,7 @@ export default function App() {
   // Estados de controle para arquivos e uploads reais
   const [ticketAttachments, setTicketAttachments] = useState([]);
   const [schoolAttachments, setSchoolAttachments] = useState([]);
-  const [attachmentUploading, setAttachmentUploading] = useState(false);
+  const [isAttachmentPending, setAttachmentUploading] = useState(false);
   const [allAttachments, setAllAttachments] = useState([]);
 
   // Lookup tab states
@@ -440,8 +440,8 @@ export default function App() {
   const [activeListsView, setActiveListsView] = useState('all');
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [isSavingTicket, setIsSavingTicket] = useState(false);
-  const [isSavingHistory, setIsSavingHistory] = useState(false);
+  const [isSavingTicketPending, setIsSavingTicket] = useState(false);
+  const [isSavingHistoryPending, setIsSavingHistory] = useState(false);
 
   // Form tab states
   const [formSearchQuery, setFormSearchQuery] = useState('');
@@ -462,7 +462,7 @@ export default function App() {
     resultado_aptidao: 'Pendente'
   });
   const [newTicketSuccess, setNewTicketSuccess] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [isRegisterPending, setSubmitting] = useState(false);
 
   // Email tab states
   const [selectedEmailTicketId, setSelectedEmailTicketId] = useState('');
@@ -559,10 +559,10 @@ export default function App() {
   }, [theme]);
 
   // Fecha o modal de edição com Esc e trava o scroll do fundo enquanto aberto
-  // useEffectEvent (React 19.2): o listener lê isSavingTicket/isSavingHistory atuais sem
+  // useEffectEvent (React 19.2): o listener lê isSavingTicketPending/isSavingHistoryPending atuais sem
   // re-anexar a cada salvamento — o efeito só re-roda quando o modal abre/fecha.
   const onEscapeCloseModal = useEffectEvent((e) => {
-    if (e.key === 'Escape' && !isSavingTicket && !isSavingHistory) {
+    if (e.key === 'Escape' && !isSavingTicketPending && !isSavingHistoryPending) {
       setShowEditModal(false);
     }
   });
@@ -1333,7 +1333,7 @@ export default function App() {
   };
 
   const handleAddTicketHistoryEvent = async (commentText) => {
-    if (isSavingHistory) return false;
+    if (isSavingHistoryPending) return false;
     if (!commentText.trim()) return false;
     if (!supabaseClient) {
       triggerToast(
@@ -1374,7 +1374,7 @@ export default function App() {
   };
 
   const saveEditedTicket = async () => {
-    if (isSavingTicket) return;
+    if (isSavingTicketPending) return;
     if (!supabaseClient) {
       triggerToast('Edição bloqueada em modo local. Conecte a base online.', 'error');
       return;
@@ -1500,7 +1500,7 @@ export default function App() {
   // Submit a new ticket simulator
   const handleRegisterNewTicket = async (e) => {
     e.preventDefault();
-    if (submitting) return;
+    if (isRegisterPending) return;
 
     const validation = createTicketSchema.safeParse({
       school: formSelectedSchool,
@@ -5401,15 +5401,15 @@ export default function App() {
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={submitting}>
-                    {submitting ? (
+                  <button type="submit" className="btn btn-primary" disabled={isRegisterPending}>
+                    {isRegisterPending ? (
                       <span className="spin" style={{ display: 'inline-flex' }}>
                         <IconRefresh />
                       </span>
                     ) : (
                       <IconPlus />
                     )}
-                    <span>{submitting ? 'Registrando…' : 'Registrar Demanda'}</span>
+                    <span>{isRegisterPending ? 'Registrando…' : 'Registrar Demanda'}</span>
                   </button>
                 </div>
               </form>
@@ -5857,7 +5857,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
         <div
           className="modal-overlay"
           onClick={() => {
-            if (!isSavingTicket && !isSavingHistory) setShowEditModal(false);
+            if (!isSavingTicketPending && !isSavingHistoryPending) setShowEditModal(false);
           }}
         >
           <div className="modal-container" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -5899,9 +5899,9 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
               <button
                 className="modal-close-btn"
                 onClick={() => {
-                  if (!isSavingTicket && !isSavingHistory) setShowEditModal(false);
+                  if (!isSavingTicketPending && !isSavingHistoryPending) setShowEditModal(false);
                 }}
-                disabled={isSavingTicket || isSavingHistory}
+                disabled={isSavingTicketPending || isSavingHistoryPending}
                 aria-label="Fechar ficha do chamado"
               >
                 <IconClose />
@@ -5968,7 +5968,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, status_atual: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       >
                         {STATUS_LIST.map((status) => (
                           <option key={status} value={status}>
@@ -5989,7 +5989,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, setor_responsavel: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       >
                         {SECTOR_LIST.map((sector) => (
                           <option key={sector} value={sector}>
@@ -6010,7 +6010,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, prioridade: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       >
                         {PRIORITY_LIST.map((priority) => (
                           <option key={priority} value={priority}>
@@ -6036,7 +6036,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                             proxima_providencia: e.target.value
                           })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       />
                     </div>
 
@@ -6055,7 +6055,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                             ultima_movimentacao: e.target.value
                           })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       />
                     </div>
 
@@ -6074,7 +6074,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                               comunicacao_cto: e.target.checked ? 'Sim' : 'Não'
                             })
                           }
-                          disabled={!supabaseClient || isSavingTicket}
+                          disabled={!supabaseClient || isSavingTicketPending}
                         />
                         <label
                           htmlFor="c_cto"
@@ -6104,7 +6104,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                               informacao_validada: e.target.value
                             })
                           }
-                          disabled={!supabaseClient || isSavingTicket}
+                          disabled={!supabaseClient || isSavingTicketPending}
                         >
                           <option value="Sim">Validada</option>
                           <option value="Pendente de Vistoria">Pendente de Vistoria</option>
@@ -6127,7 +6127,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           setEditingTicket({ ...editingTicket, observacoes: e.target.value })
                         }
                         style={{ fontSize: '13px', lineHeight: '1.5', padding: '12px' }}
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       />
                     </div>
                   </div>
@@ -6184,7 +6184,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, local_demanda: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       />
                     </div>
 
@@ -6209,7 +6209,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, tipo_demanda: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       >
                         <option value="Substituição/Instalação de Aparelho">
                           Substituição/Instalação de Aparelho
@@ -6246,7 +6246,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           onChange={(e) =>
                             setEditingTicket({ ...editingTicket, tipo_aparelho: e.target.value })
                           }
-                          disabled={!supabaseClient || isSavingTicket}
+                          disabled={!supabaseClient || isSavingTicketPending}
                         >
                           <option value="Split">Split</option>
                           <option value="Janela">Janela</option>
@@ -6278,7 +6278,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           onChange={(e) =>
                             setEditingTicket({ ...editingTicket, btu_existente: e.target.value })
                           }
-                          disabled={!supabaseClient || isSavingTicket}
+                          disabled={!supabaseClient || isSavingTicketPending}
                         />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
@@ -6304,7 +6304,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           onChange={(e) =>
                             setEditingTicket({ ...editingTicket, btu_pretendido: e.target.value })
                           }
-                          disabled={!supabaseClient || isSavingTicket}
+                          disabled={!supabaseClient || isSavingTicketPending}
                         />
                       </div>
                     </div>
@@ -6330,7 +6330,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, resultado_aptidao: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicket}
+                        disabled={!supabaseClient || isSavingTicketPending}
                       >
                         <option value="Pendente">Pendente</option>
                         <option value="Apta">Apta</option>
@@ -6432,15 +6432,15 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                             accept="application/pdf,image/png,image/jpeg,image/webp"
                             onChange={handleUploadTicketAttachment}
                             style={{ display: 'none' }}
-                            disabled={attachmentUploading}
+                            disabled={isAttachmentPending}
                           />
                           <label
                             htmlFor="ticket-attachment"
-                            className={`btn ${attachmentUploading ? 'btn-secondary' : 'btn-primary'}`}
+                            className={`btn ${isAttachmentPending ? 'btn-secondary' : 'btn-primary'}`}
                             style={{
                               fontSize: '12.5px',
                               padding: '6px 12px',
-                              cursor: attachmentUploading ? 'not-allowed' : 'pointer',
+                              cursor: isAttachmentPending ? 'not-allowed' : 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '6px',
@@ -6448,7 +6448,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                               margin: 0
                             }}
                           >
-                            {attachmentUploading ? 'Enviando...' : '📎 Anexar documento'}
+                            {isAttachmentPending ? 'Enviando...' : '📎 Anexar documento'}
                           </label>
                         </>
                       ) : (
@@ -6703,7 +6703,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           }}
                           value={newTicketComment}
                           onChange={(e) => setNewTicketComment(e.target.value)}
-                          disabled={isSavingHistory}
+                          disabled={isSavingHistoryPending}
                         />
                         <button
                           type="button"
@@ -6720,9 +6720,9 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                               setNewTicketComment('');
                             }
                           }}
-                          disabled={isSavingHistory}
+                          disabled={isSavingHistoryPending}
                         >
-                          {isSavingHistory ? 'Registrando...' : 'Registrar'}
+                          {isSavingHistoryPending ? 'Registrando...' : 'Registrar'}
                         </button>
                       </div>
                     </div>
@@ -6777,9 +6777,9 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => {
-                  if (!isSavingTicket && !isSavingHistory) setShowEditModal(false);
+                  if (!isSavingTicketPending && !isSavingHistoryPending) setShowEditModal(false);
                 }}
-                disabled={isSavingTicket || isSavingHistory}
+                disabled={isSavingTicketPending || isSavingHistoryPending}
               >
                 Fechar
               </button>
@@ -6787,14 +6787,14 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                 type="button"
                 className="btn btn-primary"
                 onClick={saveEditedTicket}
-                disabled={!supabaseClient || isSavingTicket || isSavingHistory}
+                disabled={!supabaseClient || isSavingTicketPending || isSavingHistoryPending}
                 style={
-                  !supabaseClient || isSavingTicket || isSavingHistory
+                  !supabaseClient || isSavingTicketPending || isSavingHistoryPending
                     ? { opacity: 0.5, cursor: 'not-allowed' }
                     : {}
                 }
               >
-                {isSavingTicket ? (
+                {isSavingTicketPending ? (
                   <span>Salvando...</span>
                 ) : (
                   <>
