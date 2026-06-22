@@ -4,7 +4,6 @@ import 'leaflet/dist/leaflet.css';
 import polylabel from 'polylabel';
 import creBairros from '../data/cre-bairros.geo.json';
 import { normalizeString, escapeHtml } from '../lib/logic.js';
-import { topRiskBairros } from '../lib/mapRisk.js';
 
 /**
  * Pintura sóbria dos bairros (padrão consolidado do projeto):
@@ -146,7 +145,15 @@ export default function OperationalMap({
     });
     labelMarkersRef.current = [];
 
-    for (const [bairroNorm, b] of topRiskBairros(risk, 3)) {
+    const activeBairros = Object.entries(risk || {}).filter(([, b]) => b.chamados_ativos > 0);
+    const entriesToLabel = activeBairros.length > 0
+      ? activeBairros
+      : Object.entries(risk || {})
+          .filter(([, b]) => b.escolas_cadastradas > 0)
+          .sort((a, b) => b[1].escolas_cadastradas - a[1].escolas_cadastradas)
+          .slice(0, 5);
+
+    for (const [bairroNorm, b] of entriesToLabel) {
       const layer = layersRef.current[bairroNorm];
       if (!layer) continue;
       const center = labelPointFor(layer);
