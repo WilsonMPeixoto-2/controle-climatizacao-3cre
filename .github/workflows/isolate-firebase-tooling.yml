@@ -1,0 +1,58 @@
+name: Isolate Firebase tooling
+
+on:
+  push:
+    branches:
+      - feat/firebase-spark-migration
+    paths:
+      - .github/isolate-firebase-tooling-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  isolate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/firebase-spark-migration
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Reconcile lockfile without administrative tooling
+        run: npm install --package-lock-only
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Audit application dependency graph
+        run: npm audit
+
+      - name: Verify application build
+        run: npm run build
+
+      - name: Verify Firestore with pinned ephemeral CLI
+        run: npm run test:firestore
+
+      - name: Record clean audit
+        shell: bash
+        run: |
+          mkdir -p docs/migration/firebase
+          npm audit --json > docs/migration/firebase/npm-audit-app-after-tooling-isolation.json
+
+      - name: Commit reconciled lockfile and audit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json docs/migration/firebase/npm-audit-app-after-tooling-isolation.json
+          git commit -m "chore: isolate Firebase administrative tooling from app graph"
+          git pull --rebase origin feat/firebase-spark-migration
+          git push origin HEAD:feat/firebase-spark-migration
