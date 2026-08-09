@@ -57,6 +57,40 @@ jobs:
       - name: Apply guarded App migration
         run: node .github/scripts/migrate-app-to-firestore.mjs
 
+      - name: Refine derived React state
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/App.jsx')
+          text = path.read_text(encoding='utf-8')
+
+          state_line = "  const [schoolAttachments, setSchoolAttachments] = useState([]);\n"
+          if text.count(state_line) != 1:
+              raise SystemExit('Expected one schoolAttachments state declaration')
+          text = text.replace(state_line, '')
+
+          effect_block = """  // Anexos são preservados apenas como metadados legados durante a fase Firestore Spark.\n  useEffect(() => {\n    if (!selectedSchool?.designacao) {\n      setSchoolAttachments([]);\n      return;\n    }\n    setSchoolAttachments(\n      allAttachments.filter((attachment) => attachment.designacao === selectedSchool.designacao)\n    );\n  }, [selectedSchool, allAttachments]);\n\n"""
+          derived_block = """  // Anexos são preservados apenas como metadados legados durante a fase Firestore Spark.\n  const schoolAttachments = useMemo(\n    () =>\n      selectedSchool?.designacao\n        ? allAttachments.filter(\n            (attachment) => attachment.designacao === selectedSchool.designacao\n          )\n        : [],\n    [selectedSchool, allAttachments]\n  );\n\n"""
+          if text.count(effect_block) != 1:
+              raise SystemExit('Expected one school attachment derivation effect')
+          text = text.replace(effect_block, derived_block)
+
+          sync_state = "  const [syncStatusText, setSyncStatusText] = useState('Local (db.json)');\n"
+          sync_replacement = """  const [syncStatusText, setSyncStatusText] = useState(() =>\n    firebaseConfigured ? 'Local (db.json)' : 'Local (Firebase não configurado)'\n  );\n"""
+          if text.count(sync_state) != 1:
+              raise SystemExit('Expected one syncStatusText state declaration')
+          text = text.replace(sync_state, sync_replacement)
+
+          init_effect = """  useEffect(() => {\n    if (!firebaseConfigured) {\n      setIsInitialLoad(false);\n      setSyncStatusText('Local (Firebase não configurado)');\n      return undefined;\n    }\n\n    const timer = window.setTimeout(() => {\n      initializeFirebase();\n    }, 0);\n    return () => window.clearTimeout(timer);\n    // Configuração é imutável durante a sessão e vem do ambiente de build.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [firebaseConfigured]);\n"""
+          init_replacement = """  useEffect(() => {\n    if (!firebaseConfigured) return undefined;\n\n    const timer = window.setTimeout(() => {\n      initializeFirebase();\n    }, 0);\n    return () => window.clearTimeout(timer);\n    // Configuração é imutável durante a sessão e vem do ambiente de build.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [firebaseConfigured]);\n"""
+          if text.count(init_effect) != 1:
+              raise SystemExit('Expected one Firebase initialization effect')
+          text = text.replace(init_effect, init_replacement)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
       - name: Format migrated App
         run: npx prettier --write src/App.jsx
 
