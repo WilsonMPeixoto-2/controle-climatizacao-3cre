@@ -1,0 +1,63 @@
+name: Migration diagnostics
+
+on:
+  push:
+    branches:
+      - feat/firebase-spark-migration
+    paths:
+      - .github/migration-diagnostics-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feat/firebase-spark-migration
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Collect package diagnostics
+        shell: bash
+        run: |
+          mkdir -p docs/migration/baseline
+          node --version > docs/migration/baseline/runtime.txt
+          npm --version >> docs/migration/baseline/runtime.txt
+          npm outdated --json > docs/migration/baseline/npm-outdated.json || true
+          npm audit --json > docs/migration/baseline/npm-audit.json || true
+
+      - name: Collect E2E baseline
+        shell: bash
+        env:
+          VITE_SUPABASE_URL: ''
+          VITE_SUPABASE_KEY: ''
+        run: |
+          npm run test:e2e -- --reporter=line > docs/migration/baseline/e2e-baseline.txt 2>&1 || true
+
+      - name: Commit diagnostics
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/migration/baseline
+          if git diff --cached --quiet; then
+            echo "No diagnostic changes to commit."
+          else
+            git commit -m "chore: record migration diagnostic baseline"
+            git push origin HEAD:feat/firebase-spark-migration
+          fi
