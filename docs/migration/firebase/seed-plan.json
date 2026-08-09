@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-08-09T21:15:08.573Z",
+  "source": "src/data/db.json",
+  "targetCollections": [
+    "escolas",
+    "chamados",
+    "historico",
+    "modelos_email",
+    "contadores"
+  ],
+  "deferredCollections": [
+    "anexos_chamado"
+  ],
+  "counts": {
+    "escolas": 134,
+    "chamados": 30,
+    "historico": 64,
+    "modelos_email": 8,
+    "anexos_chamado": 1
+  },
+  "counters": [
+    {
+      "ano": "2026",
+      "ultimoNumero": 31,
+      "ultimoId": "GOP-AR-2026-0031",
+      "atualizado_em": "2026-06-02T19:29:37+00:00"
+    }
+  ],
+  "duplicateKeys": {
+    "escolas_designacao": [],
+    "chamados_id_chamado": [],
+    "historico_id_evento": [],
+    "modelos_email_id": []
+  },
+  "invalidTicketIds": [],
+  "referentialIntegrity": {
+    "orphanTicketSchools": [],
+    "orphanHistoryTickets": [],
+    "orphanHistorySchools": []
+  },
+  "criticalIssues": [],
+  "warnings": [],
+  "readyForSeed": true
+}
