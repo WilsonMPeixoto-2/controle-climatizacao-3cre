@@ -1,0 +1,61 @@
+name: Firebase tooling install
+
+on:
+  push:
+    branches:
+      - feat/firebase-spark-migration
+    paths:
+      - .github/firebase-tooling-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/firebase-spark-migration
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install current dependencies
+        run: npm ci
+
+      - name: Install Firebase client SDK
+        run: npm install firebase@latest
+
+      - name: Install Firebase development tooling
+        run: npm install -D firebase-tools@latest firebase-admin@latest @firebase/rules-unit-testing@latest
+
+      - name: Security audit
+        run: npm audit --audit-level=high
+
+      - name: Verify project
+        run: npm run build
+
+      - name: Record resolved Firebase versions
+        shell: bash
+        run: |
+          mkdir -p docs/migration/firebase
+          node -e "const p=require('./package.json'); const out={firebase:p.dependencies.firebase,'firebase-tools':p.devDependencies['firebase-tools'],'firebase-admin':p.devDependencies['firebase-admin'],'@firebase/rules-unit-testing':p.devDependencies['@firebase/rules-unit-testing']}; require('fs').writeFileSync('docs/migration/firebase/resolved-versions.json', JSON.stringify(out,null,2)+'\n')"
+
+      - name: Commit verified Firebase tooling
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json docs/migration/firebase/resolved-versions.json
+          if git diff --cached --quiet; then
+            echo "No Firebase dependency changes to commit."
+          else
+            git commit -m "chore: install Firebase migration tooling"
+            git push origin HEAD:feat/firebase-spark-migration
+          fi
