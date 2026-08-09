@@ -4,9 +4,9 @@
 
 **Goal:** Migrar a persistência ativa do Supabase para Cloud Firestore no plano Spark, preservando as funcionalidades atuais, o modo local e a hospedagem Vercel, sem exigir cadastro de meio de pagamento.
 
-**Architecture:** A UI React não deve conhecer diretamente o SDK do provedor de banco. A migração introduzirá uma camada de persistência/repositórios com adapter Firebase, Firestore Transactions para operações atômicas e `onSnapshot` para sincronização multiusuário. Upload de anexos ficará fora desta fase, pois Firebase Storage exige projeto com faturamento habilitado; a capacidade existente será preservada como legado/futuro, sem ser conectada ao Spark.
+**Architecture:** A UI React não deve conhecer diretamente o SDK do provedor de banco. A migração introduzirá uma camada de persistência/repositórios com adapter Firebase, Firestore Transactions para operações atômicas e `onSnapshot` para sincronização multiusuário. Upload de anexos ficará fora desta fase, pois Firebase Storage exige projeto com faturamento habilitado; a capacidade existente será preservada como legado/futuro, sem ser conectada ao Spark. A decisão histórica de produto de operar sem login/autenticação individual será preservada nesta migração.
 
-**Tech Stack:** React 19, Vite 8, Firebase JS SDK, Cloud Firestore, Firebase Authentication, Firebase App Check, Firebase Emulator Suite, Zod, Playwright, Vercel.
+**Tech Stack:** React 19, Vite 8, Firebase JS SDK, Cloud Firestore, Firebase App Check quando compatível com o modo público/anônimo, Firebase Emulator Suite, Zod, Playwright, Vercel.
 
 ## Restrições globais
 
@@ -14,6 +14,8 @@
 - O frontend continuará hospedado na Vercel.
 - A primeira versão deve permanecer compatível com o plano Firebase Spark e não depender de meio de pagamento.
 - Firebase Storage e upload de anexos ficam fora do escopo desta fase.
+- Preservar a decisão existente de produto: sem login, sem tela de acesso, sem cadastro de usuários e sem perfis individuais de permissão.
+- Firestore Security Rules devem ser compatíveis com a operação pública/anônima controlada definida pelo projeto; não introduzir autenticação silenciosamente como requisito técnico.
 - O código-fonte executável é a fonte de verdade em caso de divergência documental.
 - Não reescrever a aplicação; migrar incrementalmente e manter testes verdes entre etapas.
 - Não introduzir Redux, Zustand, TanStack Query ou outra camada de estado sem necessidade comprovada.
@@ -27,7 +29,7 @@
 
 ### Criar
 
-- `src/infrastructure/firebase/client.js` — inicialização única do Firebase App/Firestore/Auth/App Check.
+- `src/infrastructure/firebase/client.js` — inicialização única do Firebase App/Firestore e integrações compatíveis com o modo público/anônimo.
 - `src/infrastructure/firebase/firestoreAdapter.js` — primitives do Firestore usadas pelos repositórios.
 - `src/repositories/chamadosRepository.js` — leitura, criação, atualização e realtime de chamados.
 - `src/repositories/escolasRepository.js` — leitura ordenada das escolas.
@@ -68,7 +70,7 @@
 - [ ] **Step 1:** Criar workflow CI para `feat/firebase-spark-migration` e pull requests.
 - [ ] **Step 2:** Executar `npm ci`, `npm run lint`, `npm test`, `npm run build` e `npm run test:e2e`.
 - [ ] **Step 3:** Registrar falhas preexistentes separadamente das regressões novas.
-- [ ] **Step 4:** Confirmar preview Vercel da branch.
+- [ ] **Step 4:** Confirmar preview Vercel da branch ou registrar falha ambiental da plataforma quando não houver logs de build da aplicação.
 - [ ] **Step 5:** Encerrar PR #13 como supersedido, sem merge.
 
 ### Task 2: Atualização controlada de dependências
@@ -127,15 +129,15 @@
 
 **Interfaces:**
 - Consumes: contrato dos repositórios da Task 4.
-- Produces: backend Firestore compatível com a mesma fachada.
+- Produces: backend Firestore compatível com a mesma fachada e com a operação pública/anônima do projeto.
 
 - [ ] **Step 1:** Escrever testes do adapter/repositories contra Emulator Suite.
-- [ ] **Step 2:** Criar inicialização Firebase baseada em `VITE_FIREBASE_*`.
+- [ ] **Step 2:** Criar inicialização Firebase baseada em `VITE_FIREBASE_*`, sem exigir login/autenticação individual.
 - [ ] **Step 3:** Implementar leitura de `escolas`, `chamados`, `historico` e `modelos_email`.
 - [ ] **Step 4:** Implementar criação atômica chamado+histórico+contador anual com `runTransaction`.
 - [ ] **Step 5:** Implementar atualização atômica chamado+eventos com transaction/write batch.
 - [ ] **Step 6:** Implementar realtime com `onSnapshot` sem refetch integral disparado por evento.
-- [ ] **Step 7:** Implementar Security Rules e testes de permissão.
+- [ ] **Step 7:** Implementar Security Rules compatíveis com o modo público/anônimo e testes explícitos das permissões necessárias; não confundir regras de banco com autenticação de usuário.
 - [ ] **Step 8:** Validar tudo no Emulator Suite.
 
 ### Task 6: Corrigir estratégia de IDs e offline
@@ -179,7 +181,7 @@
 - Produces: aplicação sem dependência ativa do Supabase.
 
 - [ ] **Step 1:** Configurar Firebase como provider ativo na fachada.
-- [ ] **Step 2:** Remover UI de URL/key Supabase e substituir por estado de conexão Firebase.
+- [ ] **Step 2:** Remover UI de URL/key Supabase e substituir por estado de conexão Firebase configurado por ambiente.
 - [ ] **Step 3:** Remover `@supabase/supabase-js`, Supabase CLI e script `db:types` depois de todos os testes passarem com Firestore.
 - [ ] **Step 4:** Atualizar chunks do Vite e variáveis E2E.
 - [ ] **Step 5:** Arquivar documentação/migrations Supabase em `docs/legacy/supabase/` ou manter pasta marcada explicitamente como legado até homologação final.
@@ -197,7 +199,8 @@
 - [ ] **Step 2:** Documentar configuração local, Vercel e Emulator Suite.
 - [ ] **Step 3:** Corrigir número/descrição das coleções efetivamente usadas.
 - [ ] **Step 4:** Registrar anexos como capacidade adiada por restrição do Spark.
-- [ ] **Step 5:** Registrar procedimento de rollback e fonte de verdade.
+- [ ] **Step 5:** Registrar que a arquitetura continua sem login/autenticação individual, em consonância com a decisão histórica do projeto.
+- [ ] **Step 6:** Registrar procedimento de rollback e fonte de verdade.
 
 ### Task 10: Verificação final e integração
 
