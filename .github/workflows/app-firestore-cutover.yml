@@ -35,6 +35,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Refine migration guard for neutral persistence methods
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/migrate-app-to-firestore.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = """    'insertHistoryEvent(',\n    'updateTicketWithHistory(',\n    'createTicketWithHistory(',\n"""
+          if old not in text:
+              raise SystemExit('Legacy-service guard block not found')
+          path.write_text(text.replace(old, ''), encoding='utf-8')
+          PY
+
       - name: Apply guarded App migration
         run: node .github/scripts/migrate-app-to-firestore.mjs
 
@@ -48,6 +61,18 @@ jobs:
             echo "Supabase reference remains in App.jsx"
             exit 1
           fi
+
+      - name: Reject standalone legacy service calls
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path('src/App.jsx').read_text(encoding='utf-8')
+          for name in ('insertHistoryEvent', 'updateTicketWithHistory', 'createTicketWithHistory'):
+              if re.search(rf'(?<![.\w]){name}\s*\(', text):
+                  raise SystemExit(f'Legacy standalone call remains: {name}')
+          PY
 
       - name: Verify application build
         run: npm run build
