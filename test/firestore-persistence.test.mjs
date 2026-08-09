@@ -138,23 +138,26 @@ try {
   assert.equal(schoolLog.id_evento, 'EV-ESCOLA-1');
   console.log('[PASSED] 6. histórico de escola sem chamado continua suportado');
 
-  let realtimeTickets;
-  let realtimeHistory;
+  let realtimeTickets = [];
+  let realtimeHistory = [];
   await new Promise((resolve, reject) => {
+    let unsubscribe = () => {};
     const timeout = setTimeout(() => {
       unsubscribe();
-      reject(new Error('Timeout aguardando snapshots Firestore.'));
+      reject(new Error(
+        `Timeout aguardando snapshots completos do Firestore: ${realtimeTickets.length} chamados / ${realtimeHistory.length} eventos.`
+      ));
     }, 5000);
 
     const maybeDone = () => {
-      if (realtimeTickets && realtimeHistory) {
+      if (realtimeTickets.length >= 2 && realtimeHistory.length >= 4) {
         clearTimeout(timeout);
         unsubscribe();
         resolve();
       }
     };
 
-    const unsubscribe = persistence.subscribeOperationalData({
+    unsubscribe = persistence.subscribeOperationalData({
       onTickets(rows) {
         realtimeTickets = rows;
         maybeDone();
@@ -173,7 +176,7 @@ try {
 
   assert.equal(realtimeTickets.length, 2);
   assert.ok(realtimeHistory.length >= 4);
-  console.log('[PASSED] 7. onSnapshot entrega estado diretamente sem refetch manual');
+  console.log('[PASSED] 7. onSnapshot entrega estado completo diretamente sem refetch manual');
 
   const after = await persistence.loadInitialData();
   assert.equal(after.tickets[0].id_chamado, 'GOP-AR-2027-0002');
