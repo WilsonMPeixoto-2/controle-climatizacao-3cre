@@ -94,11 +94,13 @@ export function createFirestorePersistence(db, { now = () => new Date().toISOStr
         const ticketRef = doc(db, COLLECTIONS.tickets, ticketId);
         const historyRef = doc(db, COLLECTIONS.history, initialEvent.id_evento);
 
+        // Timestamps de criação são definidos pelo adapter para manter o vínculo
+        // transacional auditável entre chamado e contador, independentemente da UI.
         const finalTicket = omitUndefined({
           ...ticketRecord,
           id_chamado: ticketId,
-          criado_em: ticketRecord?.criado_em || operationTime,
-          modificado_em: ticketRecord?.modificado_em || operationTime
+          criado_em: operationTime,
+          modificado_em: operationTime
         });
         const finalEvent = omitUndefined({
           ...initialEvent,
@@ -108,6 +110,7 @@ export function createFirestorePersistence(db, { now = () => new Date().toISOStr
         transaction.set(counterRef, {
           ano: yearText,
           ultimoNumero: next,
+          ultimoId: ticketId,
           atualizado_em: operationTime
         });
         transaction.set(ticketRef, finalTicket);
