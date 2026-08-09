@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-09T21:15:08.573Z",
+  "generatedAt": "2026-08-09T21:17:06.908Z",
   "source": "src/data/db.json",
   "targetCollections": [
     "escolas",
@@ -11,12 +11,19 @@
   "deferredCollections": [
     "anexos_chamado"
   ],
-  "counts": {
+  "sourceCounts": {
     "escolas": 134,
     "chamados": 30,
     "historico": 64,
     "modelos_email": 8,
     "anexos_chamado": 1
+  },
+  "productionSeedCounts": {
+    "escolas": 134,
+    "chamados": 30,
+    "historico": 62,
+    "modelos_email": 8,
+    "contadores": 1
   },
   "counters": [
     {
@@ -24,6 +31,37 @@
       "ultimoNumero": 31,
       "ultimoId": "GOP-AR-2026-0031",
       "atualizado_em": "2026-06-02T19:29:37+00:00"
+    }
+  ],
+  "excludedTestArtifacts": {
+    "historico": [
+      {
+        "id_evento": "EV-TEST-1780465561197",
+        "id_chamado": "GOP-AR-2026-0001",
+        "data": "2026-06-03T05:46:00+00:00",
+        "observacao": "Aptidão técnica alterada de 'Não apta' para 'Apta' em 03/06/2026."
+      },
+      {
+        "id_evento": "EV-TEST-1780466408400",
+        "id_chamado": "GOP-AR-2026-0001",
+        "data": "2026-06-03T06:00:07+00:00",
+        "observacao": "Aptidão técnica alterada de 'Não apta' para 'Apta' em 03/06/2026."
+      }
+    ]
+  },
+  "deferredAttachments": [
+    {
+      "id": 2,
+      "id_chamado": "GOP-AR-2026-0030",
+      "designacao": "313001",
+      "unidade_escolar": "Escola Municipal Marechal Carlos Machado Bittencourt",
+      "nome_original": "Laudo Bitencourt  (1) (1).pdf",
+      "mime_type": "application/pdf",
+      "tamanho_bytes": 5135396,
+      "bucket": "gop-anexos",
+      "storage_path": "chamados/GOP-AR-2026-0030/2ccb3968-bcc3-42f3-b30b-a3de96a1a28c-Laudo-Bitencourt-1-1-.pdf",
+      "criado_em": "2026-06-02T19:39:13.629226+00:00",
+      "migrationStatus": "deferred-storage-requires-blaze"
     }
   ],
   "duplicateKeys": {
@@ -39,6 +77,42 @@
     "orphanHistorySchools": []
   },
   "criticalIssues": [],
-  "warnings": [],
+  "warnings": [
+    {
+      "type": "test-history-artifacts-excluded-from-production-seed",
+      "rows": [
+        {
+          "id_evento": "EV-TEST-1780465561197",
+          "id_chamado": "GOP-AR-2026-0001",
+          "data": "2026-06-03T05:46:00+00:00",
+          "observacao": "Aptidão técnica alterada de 'Não apta' para 'Apta' em 03/06/2026."
+        },
+        {
+          "id_evento": "EV-TEST-1780466408400",
+          "id_chamado": "GOP-AR-2026-0001",
+          "data": "2026-06-03T06:00:07+00:00",
+          "observacao": "Aptidão técnica alterada de 'Não apta' para 'Apta' em 03/06/2026."
+        }
+      ]
+    },
+    {
+      "type": "attachments-deferred-from-spark-seed",
+      "rows": [
+        {
+          "id": 2,
+          "id_chamado": "GOP-AR-2026-0030",
+          "designacao": "313001",
+          "unidade_escolar": "Escola Municipal Marechal Carlos Machado Bittencourt",
+          "nome_original": "Laudo Bitencourt  (1) (1).pdf",
+          "mime_type": "application/pdf",
+          "tamanho_bytes": 5135396,
+          "bucket": "gop-anexos",
+          "storage_path": "chamados/GOP-AR-2026-0030/2ccb3968-bcc3-42f3-b30b-a3de96a1a28c-Laudo-Bitencourt-1-1-.pdf",
+          "criado_em": "2026-06-02T19:39:13.629226+00:00",
+          "migrationStatus": "deferred-storage-requires-blaze"
+        }
+      ]
+    }
+  ],
   "readyForSeed": true
 }
