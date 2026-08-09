@@ -39,13 +39,15 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
+          import re
           from pathlib import Path
           path = Path('.github/scripts/migrate-app-to-firestore.mjs')
           text = path.read_text(encoding='utf-8')
-          old = """    'insertHistoryEvent(',\n    'updateTicketWithHistory(',\n    'createTicketWithHistory(',\n"""
-          if old not in text:
-              raise SystemExit('Legacy-service guard block not found')
-          path.write_text(text.replace(old, ''), encoding='utf-8')
+          pattern = r"^\s*'(?:insertHistoryEvent|updateTicketWithHistory|createTicketWithHistory)\(',\s*$\n?"
+          text, count = re.subn(pattern, '', text, flags=re.MULTILINE)
+          if count != 3:
+              raise SystemExit(f'Expected to refine 3 legacy-service guard entries, refined {count}')
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Apply guarded App migration
