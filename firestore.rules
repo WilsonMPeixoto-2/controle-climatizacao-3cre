@@ -36,6 +36,7 @@ service cloud.firestore {
         && data.keys().hasAll([
           'id_chamado',
           'unidade_escolar',
+          'designacao',
           'data_solicitacao',
           'local_demanda',
           'tipo_demanda',
@@ -48,6 +49,7 @@ service cloud.firestore {
         && validTicketId(ticketId)
         && data.id_chamado == ticketId
         && data.unidade_escolar is string
+        && data.designacao is string
         && data.data_solicitacao is string
         && data.local_demanda is string
         && data.tipo_demanda is string
@@ -56,7 +58,6 @@ service cloud.firestore {
         && data.prioridade is string
         && data.criado_em is string
         && data.modificado_em is string
-        && optionalString(data, 'designacao')
         && optionalString(data, 'tipo_aparelho')
         && optionalString(data, 'btu_existente')
         && optionalString(data, 'btu_pretendido')
@@ -66,6 +67,10 @@ service cloud.firestore {
         && optionalString(data, 'comunicacao_cto')
         && optionalString(data, 'observacoes')
         && optionalString(data, 'resultado_aptidao');
+    }
+
+    function ticketSchoolExists(data) {
+      return exists(/databases/$(database)/documents/escolas/$(data.designacao));
     }
 
     function validHistoryShape(data, eventId) {
@@ -105,6 +110,21 @@ service cloud.firestore {
         || existsAfter(/databases/$(database)/documents/chamados/$(ticketId));
     }
 
+    function validCounterShape(data) {
+      return data.keys().hasOnly(['ano', 'ultimoNumero', 'ultimoId', 'atualizado_em'])
+        && data.keys().hasAll(['ano', 'ultimoNumero', 'ultimoId', 'atualizado_em'])
+        && data.ano is string
+        && data.ultimoNumero is int
+        && validTicketId(data.ultimoId)
+        && data.atualizado_em is string;
+    }
+
+    function counterMatchesTicketAfter(data) {
+      return existsAfter(/databases/$(database)/documents/chamados/$(data.ultimoId))
+        && getAfter(/databases/$(database)/documents/chamados/$(data.ultimoId)).data.id_chamado == data.ultimoId
+        && getAfter(/databases/$(database)/documents/chamados/$(data.ultimoId)).data.criado_em == data.atualizado_em;
+    }
+
     match /escolas/{schoolId} {
       allow read: if true;
       allow create, update, delete: if false;
@@ -119,13 +139,13 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if validTicketShape(request.resource.data, ticketId)
-        && request.resource.data.designacao is string;
+        && ticketSchoolExists(request.resource.data);
 
       allow update: if validTicketShape(request.resource.data, ticketId)
         && request.resource.data.id_chamado == resource.data.id_chamado
         && request.resource.data.criado_em == resource.data.criado_em
         && request.resource.data.unidade_escolar == resource.data.unidade_escolar
-        && request.resource.data.get('designacao', null) == resource.data.get('designacao', null)
+        && request.resource.data.designacao == resource.data.designacao
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'local_demanda',
           'tipo_demanda',
@@ -163,20 +183,21 @@ service cloud.firestore {
       allow read: if counterId.matches('^chamados-[0-9]{4}$');
 
       allow create: if counterId.matches('^chamados-[0-9]{4}$')
-        && request.resource.data.keys().hasOnly(['ano', 'ultimoNumero', 'atualizado_em'])
-        && request.resource.data.keys().hasAll(['ano', 'ultimoNumero', 'atualizado_em'])
-        && request.resource.data.ano is string
-        && request.resource.data.ultimoNumero is int
+        && validCounterShape(request.resource.data)
         && request.resource.data.ultimoNumero == 1
-        && request.resource.data.atualizado_em is string;
+        && counterMatchesTicketAfter(request.resource.data);
 
       allow update: if counterId.matches('^chamados-[0-9]{4}$')
-        && request.resource.data.keys().hasOnly(['ano', 'ultimoNumero', 'atualizado_em'])
+        && validCounterShape(request.resource.data)
         && request.resource.data.ano == resource.data.ano
-        && request.resource.data.ultimoNumero is int
         && request.resource.data.ultimoNumero == resource.data.ultimoNumero + 1
-        && request.resource.data.atualizado_em is string
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ultimoNumero', 'atualizado_em']);
+        && request.resource.data.ultimoId != resource.data.ultimoId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'ultimoNumero',
+          'ultimoId',
+          'atualizado_em'
+        ])
+        && counterMatchesTicketAfter(request.resource.data);
 
       allow delete: if false;
     }
