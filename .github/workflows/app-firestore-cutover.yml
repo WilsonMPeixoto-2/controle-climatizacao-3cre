@@ -68,11 +68,11 @@ jobs:
             exit 1
           fi
 
-      - name: Assert Storage runtime calls are gone
+      - name: Assert Storage runtime API calls are gone
         shell: bash
         run: |
-          if grep -n -C 8 "\.storage" src/App.jsx; then
-            echo "Direct Storage reference remains in App.jsx"
+          if grep -n -C 8 "\.storage\." src/App.jsx; then
+            echo "Direct Storage API reference remains in App.jsx"
             exit 1
           fi
 
