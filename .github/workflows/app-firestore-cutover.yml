@@ -45,7 +45,7 @@ jobs:
           text = path.read_text(encoding='utf-8')
           service_pattern = r"^\s*'(?:insertHistoryEvent|updateTicketWithHistory|createTicketWithHistory)\(',\s*$\n?"
           text, service_count = re.subn(service_pattern, '', text, flags=re.MULTILINE)
-          storage_pattern = r"^\s*'\.storage',\s*$\n?"
+          storage_pattern = r"^\s*'\.storage'\s*,?\s*$\n?"
           text, storage_count = re.subn(storage_pattern, '', text, flags=re.MULTILINE)
           if service_count != 3 or storage_count != 1:
               raise SystemExit(
