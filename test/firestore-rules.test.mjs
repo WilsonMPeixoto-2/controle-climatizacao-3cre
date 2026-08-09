@@ -17,7 +17,7 @@ import {
 const PROJECT_ID = 'demo-controle-climatizacao-3cre';
 const rules = fs.readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
 
-const ticket = (id = 'GOP-AR-2026-0001') => ({
+const ticket = (id = 'GOP-AR-2026-0001', overrides = {}) => ({
   id_chamado: id,
   unidade_escolar: 'Escola Municipal Teste',
   designacao: '312001',
@@ -37,7 +37,8 @@ const ticket = (id = 'GOP-AR-2026-0001') => ({
   observacoes: '',
   resultado_aptidao: null,
   criado_em: '2026-08-09T12:00:00.000Z',
-  modificado_em: '2026-08-09T12:00:00.000Z'
+  modificado_em: '2026-08-09T12:00:00.000Z',
+  ...overrides
 });
 
 const historyEvent = (eventId, ticketId) => ({
@@ -94,9 +95,13 @@ try {
   ));
   await assertFails(setDoc(
     doc(db, 'chamados/RASCUNHO-123'),
-    { ...ticket('RASCUNHO-123') }
+    ticket('RASCUNHO-123')
   ));
-  console.log('[PASSED] 3. criação exige ID oficial coerente e schema permitido');
+  await assertFails(setDoc(
+    doc(db, 'chamados/GOP-AR-2026-0009'),
+    ticket('GOP-AR-2026-0009', { designacao: '399999' })
+  ));
+  console.log('[PASSED] 3. criação exige ID coerente, schema permitido e escola existente');
 
   await assertSucceeds(updateDoc(doc(db, 'chamados/GOP-AR-2026-0001'), {
     status_atual: 'Em atendimento',
@@ -126,35 +131,57 @@ try {
   await assertFails(deleteDoc(doc(db, 'historico/EV-1')));
   console.log('[PASSED] 5. histórico exige vínculo válido e só permite corrigir observação');
 
+  await assertFails(setDoc(doc(db, 'contadores/chamados-2026'), {
+    ano: '2026',
+    ultimoNumero: 1,
+    ultimoId: 'GOP-AR-2026-0009',
+    atualizado_em: '2026-08-09T12:00:00.000Z'
+  }));
+
+  await assertSucceeds(setDoc(doc(db, 'contadores/chamados-2026'), {
+    ano: '2026',
+    ultimoNumero: 1,
+    ultimoId: 'GOP-AR-2026-0001',
+    atualizado_em: '2026-08-09T12:00:00.000Z'
+  }));
+
+  await assertFails(updateDoc(doc(db, 'contadores/chamados-2026'), {
+    ultimoNumero: 2,
+    ultimoId: 'GOP-AR-2026-0002',
+    atualizado_em: '2026-08-09T13:00:00.000Z'
+  }));
+  console.log('[PASSED] 6. contador isolado não avança sem chamado correspondente');
+
   const atomicBatch = writeBatch(db);
   atomicBatch.set(
     doc(db, 'chamados/GOP-AR-2026-0002'),
-    ticket('GOP-AR-2026-0002')
+    ticket('GOP-AR-2026-0002', {
+      criado_em: '2026-08-09T13:00:00.000Z',
+      modificado_em: '2026-08-09T13:00:00.000Z'
+    })
   );
   atomicBatch.set(
     doc(db, 'historico/EV-2'),
     historyEvent('EV-2', 'GOP-AR-2026-0002')
   );
-  await assertSucceeds(atomicBatch.commit());
-  console.log('[PASSED] 6. getAfter permite chamado + histórico no mesmo lote atômico');
-
-  await assertSucceeds(setDoc(doc(db, 'contadores/chamados-2026'), {
-    ano: '2026',
-    ultimoNumero: 1,
-    atualizado_em: '2026-08-09T12:00:00.000Z'
-  }));
-  await assertSucceeds(updateDoc(doc(db, 'contadores/chamados-2026'), {
+  atomicBatch.update(doc(db, 'contadores/chamados-2026'), {
     ultimoNumero: 2,
+    ultimoId: 'GOP-AR-2026-0002',
     atualizado_em: '2026-08-09T13:00:00.000Z'
-  }));
+  });
+  await assertSucceeds(atomicBatch.commit());
+  console.log('[PASSED] 7. contador, chamado e histórico avançam juntos atomicamente');
+
   await assertFails(updateDoc(doc(db, 'contadores/chamados-2026'), {
     ultimoNumero: 9,
+    ultimoId: 'GOP-AR-2026-0009',
     atualizado_em: '2026-08-09T14:00:00.000Z'
   }));
-  console.log('[PASSED] 7. contador só pode avançar uma unidade por gravação');
+  await assertFails(deleteDoc(doc(db, 'contadores/chamados-2026')));
+  console.log('[PASSED] 8. salto sequencial e exclusão de contador são bloqueados');
 
   await assertFails(setDoc(doc(db, 'colecao_nao_autorizada/x'), { qualquer: true }));
-  console.log('[PASSED] 8. coleções não declaradas permanecem bloqueadas');
+  console.log('[PASSED] 9. coleções não declaradas permanecem bloqueadas');
 
   const stored = await getDoc(doc(db, 'chamados/GOP-AR-2026-0001'));
   assert.equal(stored.data().id_chamado, 'GOP-AR-2026-0001');
