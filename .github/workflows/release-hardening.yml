@@ -1,0 +1,162 @@
+name: Firebase release hardening
+
+on:
+  push:
+    branches:
+      - feat/firebase-spark-migration
+    paths:
+      - .github/release-hardening-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/firebase-spark-migration
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Remove outgoing Supabase runtime tooling
+        shell: bash
+        run: |
+          npm uninstall @supabase/supabase-js
+          npm uninstall --save-dev supabase
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+          delete pkg.scripts['db:types'];
+          fs.writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
+          NODE
+          npm install --package-lock-only
+
+      - name: Switch build and CI metadata to Firebase
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          vite = Path('vite.config.js')
+          text = vite.read_text(encoding='utf-8')
+          text = text.replace("if (id.includes('@supabase')) return 'supabase-vendor'", "if (id.includes('firebase') || id.includes('@firebase')) return 'firebase-vendor'")
+          vite.write_text(text, encoding='utf-8')
+
+          ci = Path('.github/workflows/ci.yml')
+          text = ci.read_text(encoding='utf-8')
+          text = text.replace("      VITE_SUPABASE_URL: ''\n      VITE_SUPABASE_KEY: ''", "      VITE_FIREBASE_API_KEY: ''\n      VITE_FIREBASE_PROJECT_ID: ''\n      VITE_FIREBASE_APP_ID: ''")
+          ci.write_text(text, encoding='utf-8')
+
+          Path('.env.example').write_text("""# Firebase / Firestore — produção e desenvolvimento\n# As chaves de configuração do app Web não são segredos; não inclua credenciais administrativas.\n\nVITE_FIREBASE_API_KEY=\nVITE_FIREBASE_AUTH_DOMAIN=\nVITE_FIREBASE_PROJECT_ID=\nVITE_FIREBASE_APP_ID=\nVITE_FIREBASE_MESSAGING_SENDER_ID=\n\n# Cloud Storage fica desativado nesta fase Spark.\n""", encoding='utf-8')
+          PY
+
+      - name: Apply WCAG light-theme contrast corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/index.css')
+          text = path.read_text(encoding='utf-8')
+          marker = '/* Release 2026-08: contraste WCAG do tema claro */'
+          block = r'''
+
+/* Release 2026-08: contraste WCAG do tema claro */
+html:not(.dark-theme) {
+  --primary-readable: hsl(201, 95%, 26%);
+  --text-light-readable: hsl(215, 22%, 31%);
+}
+
+html:not(.dark-theme) .sidebar-brand-text span,
+html:not(.dark-theme) .summary-badge-editorial,
+html:not(.dark-theme) .priority-ticket-link,
+html:not(.dark-theme) .btn-secondary,
+html:not(.dark-theme) .theme-toggle-header,
+html:not(.dark-theme) .sidebar-footer [style*='var(--primary)'] {
+  color: var(--primary-readable) !important;
+}
+
+html:not(.dark-theme) .sidebar-footer {
+  color: var(--text-light-readable);
+}
+'''
+          if marker not in text:
+              text += block
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Format changed source and config
+        run: npx prettier --write src/index.css vite.config.js package.json .env.example .github/workflows/ci.yml
+
+      - name: Security audit
+        run: npm audit --audit-level=high
+
+      - name: Verify build and unit/domain tests
+        run: npm run build
+
+      - name: Verify Firestore rules and persistence adapter
+        run: npm run test:firestore
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Refresh Linux visual baselines after intentional release changes
+        env:
+          VITE_FIREBASE_API_KEY: ''
+          VITE_FIREBASE_PROJECT_ID: ''
+          VITE_FIREBASE_APP_ID: ''
+        run: npx playwright test e2e/visual.spec.js --update-snapshots
+
+      - name: Verify complete E2E suite
+        env:
+          VITE_FIREBASE_API_KEY: ''
+          VITE_FIREBASE_PROJECT_ID: ''
+          VITE_FIREBASE_APP_ID: ''
+        run: npm run test:e2e
+
+      - name: Assert Supabase removed from production bundle metadata
+        shell: bash
+        run: |
+          if grep -q '"@supabase/supabase-js"' package.json; then
+            echo 'Supabase JS dependency still present.'
+            exit 1
+          fi
+          if grep -q '"supabase"' package.json; then
+            echo 'Supabase CLI dependency still present.'
+            exit 1
+          fi
+          if grep -q 'supabase-vendor' vite.config.js; then
+            echo 'Supabase vendor chunk still present.'
+            exit 1
+          fi
+
+      - name: Commit verified release hardening
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json vite.config.js .env.example .github/workflows/ci.yml src/index.css e2e || true
+          if git diff --cached --quiet; then
+            echo 'No hardening changes to commit.'
+          else
+            git commit -m "chore: harden Firebase release candidate"
+            git pull --rebase origin feat/firebase-spark-migration
+            git push origin HEAD:feat/firebase-spark-migration
+          fi
