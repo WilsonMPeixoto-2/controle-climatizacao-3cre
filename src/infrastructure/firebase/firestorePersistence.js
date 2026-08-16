@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -16,12 +17,12 @@ const COLLECTIONS = Object.freeze({
   tickets: 'chamados',
   history: 'historico',
   emailTemplates: 'modelos_email',
-  counters: 'contadores'
+  counters: 'contadores',
+  climateSurveys: 'levantamentos_climatizacao'
 });
 
-const omitUndefined = (record) => Object.fromEntries(
-  Object.entries(record || {}).filter(([, value]) => value !== undefined)
-);
+const omitUndefined = (record) =>
+  Object.fromEntries(Object.entries(record || {}).filter(([, value]) => value !== undefined));
 
 const docsToRows = (snapshot) => snapshot.docs.map((item) => item.data());
 
@@ -36,7 +37,8 @@ const parseReferenceYear = (ticketRecord, fallbackDate) => {
   return Number.isNaN(parsed.getTime()) ? new Date(fallbackDate).getFullYear() : parsed.getFullYear();
 };
 
-const formatTicketId = (year, sequence) => `GOP-AR-${year}-${String(sequence).padStart(4, '0')}`;
+const formatTicketId = (year, sequence) =>
+  `GOP-AR-${year}-${String(sequence).padStart(4, '0')}`;
 
 async function fetchOrdered(db, collectionName, field, direction = 'asc') {
   const snapshot = await getDocs(query(collection(db, collectionName), orderBy(field, direction)));
@@ -74,6 +76,25 @@ export function createFirestorePersistence(db, { now = () => new Date().toISOStr
       };
     },
 
+    async loadClimateSurvey(designacao) {
+      const schoolId = String(designacao || '').trim();
+      if (!schoolId) throw new Error('Designação da escola não informada.');
+      const snapshot = await getDoc(doc(db, COLLECTIONS.climateSurveys, schoolId));
+      return snapshot.exists() ? snapshot.data() : null;
+    },
+
+    async saveClimateSurvey(survey) {
+      const schoolId = String(survey?.designacao || '').trim();
+      if (!schoolId) throw new Error('Levantamento sem designação da escola.');
+      const finalSurvey = omitUndefined({
+        ...survey,
+        designacao: schoolId,
+        atualizado_em: now()
+      });
+      await setDoc(doc(db, COLLECTIONS.climateSurveys, schoolId), finalSurvey);
+      return finalSurvey;
+    },
+
     async createTicketWithHistory(ticketRecord, initialEvent) {
       if (!initialEvent?.id_evento) {
         throw new Error('Evento inicial sem id_evento.');
@@ -94,8 +115,6 @@ export function createFirestorePersistence(db, { now = () => new Date().toISOStr
         const ticketRef = doc(db, COLLECTIONS.tickets, ticketId);
         const historyRef = doc(db, COLLECTIONS.history, initialEvent.id_evento);
 
-        // Timestamps de criação são definidos pelo adapter para manter o vínculo
-        // transacional auditável entre chamado e contador, independentemente da UI.
         const finalTicket = omitUndefined({
           ...ticketRecord,
           id_chamado: ticketId,
@@ -133,11 +152,9 @@ export function createFirestorePersistence(db, { now = () => new Date().toISOStr
         ...updatedRecord,
         modificado_em: updatedRecord.modificado_em || now()
       });
-      batch.set(
-        doc(db, COLLECTIONS.tickets, updatedRecord.id_chamado),
-        finalTicket,
-        { merge: true }
-      );
+      batch.set(doc(db, COLLECTIONS.tickets, updatedRecord.id_chamado), finalTicket, {
+        merge: true
+      });
 
       for (const event of events) {
         if (!event?.id_evento) throw new Error('Evento de histórico sem id_evento.');
@@ -160,10 +177,7 @@ export function createFirestorePersistence(db, { now = () => new Date().toISOStr
         collection(db, COLLECTIONS.tickets),
         orderBy('id_chamado', 'desc')
       );
-      const historyQuery = query(
-        collection(db, COLLECTIONS.history),
-        orderBy('data', 'desc')
-      );
+      const historyQuery = query(collection(db, COLLECTIONS.history), orderBy('data', 'desc'));
 
       const unsubscribeTickets = onSnapshot(
         ticketsQuery,
