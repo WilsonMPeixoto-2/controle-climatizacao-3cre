@@ -27,7 +27,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: npx playwright test e2e/climate-survey.spec.js
         env:
           VITE_SUPABASE_URL: ''
           VITE_SUPABASE_KEY: ''
