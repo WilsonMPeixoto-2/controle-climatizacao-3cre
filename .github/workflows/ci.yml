@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Climate survey domain TDD gate
+        run: node --test test/climate-survey.test.mjs
+
       - name: Lint
         run: npm run lint
 
