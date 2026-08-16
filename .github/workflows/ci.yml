@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - feat/firebase-spark-migration
+      - feat/prontuario-climatizacao-mvp
   pull_request:
     branches:
       - master
+      - feat/firebase-spark-migration
 
 permissions:
   contents: read
