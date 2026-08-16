@@ -12,6 +12,12 @@ async function runA11yScan(page) {
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 }
 
+async function waitForThemeTransition(page) {
+  // O sistema usa transições de até 300 ms para cor/fundo. O axe deve avaliar o estado final,
+  // não um frame intermediário logo após a troca de classe do tema.
+  await page.waitForTimeout(400);
+}
+
 test.describe('Acessibilidade (WCAG 2.1)', () => {
   test('painel - tema escuro (padrão)', async ({ page }) => {
     await page.goto('/');
@@ -25,6 +31,7 @@ test.describe('Acessibilidade (WCAG 2.1)', () => {
     await expect(page.locator('html')).toHaveClass(/dark-theme/);
     await page.click('.theme-toggle-header');
     await expect(page.locator('html')).not.toHaveClass(/dark-theme/);
+    await waitForThemeTransition(page);
     await runA11yScan(page);
   });
 
@@ -38,6 +45,7 @@ test.describe('Acessibilidade (WCAG 2.1)', () => {
     // Alterna para tema claro e testa
     await page.click('.theme-toggle-header');
     await expect(page.locator('html')).not.toHaveClass(/dark-theme/);
+    await waitForThemeTransition(page);
     await runA11yScan(page);
   });
 
@@ -60,6 +68,7 @@ test.describe('Acessibilidade (WCAG 2.1)', () => {
     // Alterna para tema claro e testa
     await page.click('.theme-toggle-header');
     await expect(page.locator('html')).not.toHaveClass(/dark-theme/);
+    await waitForThemeTransition(page);
     await runA11yScan(page);
   });
 
@@ -73,6 +82,7 @@ test.describe('Acessibilidade (WCAG 2.1)', () => {
     // Alterna para tema claro e testa
     await page.click('.theme-toggle-header');
     await expect(page.locator('html')).not.toHaveClass(/dark-theme/);
+    await waitForThemeTransition(page);
     await runA11yScan(page);
   });
 });

@@ -1,4 +1,15 @@
-import { Fragment, useState, useEffect, useCallback, useRef, useMemo, useDeferredValue, useEffectEvent, lazy, Suspense } from 'react';
+import {
+  Fragment,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+  useDeferredValue,
+  useEffectEvent,
+  lazy,
+  Suspense
+} from 'react';
 import { useReactToPrint } from 'react-to-print';
 import {
   LayoutDashboard,
@@ -31,7 +42,6 @@ import {
   ChevronDown
 } from 'lucide-react';
 import dbData from './data/db.json';
-import { createClient } from '@supabase/supabase-js';
 import { Analytics } from '@vercel/analytics/react';
 import { track } from '@vercel/analytics';
 import {
@@ -77,21 +87,11 @@ import { PRIORITY_LIST } from './domain/priorities.js';
 import { getOperationalSummary, getActionItems } from './lib/operationalIntelligence.js';
 import { getSchoolDossierData } from './lib/schoolDossier.js';
 import {
-  uploadTicketAttachment,
-  listTicketAttachments,
-  listSchoolAttachments,
-  deleteTicketAttachment,
-  getAttachmentPublicUrl,
-  getAttachmentDownloadUrl
-} from './lib/attachments.js';
-import { fetchEscolas } from './services/escolasService.js';
-import { fetchHistorico, insertHistoryEvent } from './services/historicoService.js';
-import {
-  fetchChamados,
-  createTicketWithHistory,
-  updateTicketWithHistory
-} from './services/chamadosService.js';
-
+  readFirebaseConfig,
+  isFirebaseConfigured,
+  createFirebaseClient
+} from './infrastructure/firebase/firebaseClient.js';
+import { createFirestorePersistence } from './infrastructure/firebase/firestorePersistence.js';
 
 // Data dinâmica: "hoje" é sempre a data real do dia. Os cálculos de inatividade
 // e antiguidade são derivados em ./lib/logic.js a partir desta referência.
@@ -107,8 +107,11 @@ const normalizePriorityClass = (priority) => {
 
 const initialTickets = dbData?.chamados || [];
 const initialSchools = dbData?.escolas || [];
-const initialHistory = dbData?.historico || [];
+const initialHistory = (dbData?.historico || []).filter(
+  (event) => !/^EV-TEST-/i.test(String(event?.id_evento || ''))
+);
 const initialEmailTemplates = dbData?.modelos_email || [];
+const initialAttachments = dbData?.anexos_chamado || [];
 const initialSelectedSchool = null;
 
 const buildEmailDraft = (templates, ticketList, ticketId, templateIndex) => {
@@ -257,24 +260,28 @@ const VALID_THEMES = ['dark', 'light'];
 
 function rotuloNivel(nivel) {
   switch (nivel) {
-    case 'critico': return 'Crítico';
-    case 'alto': return 'Alto';
-    case 'moderado': return 'Moderado';
-    case 'vigilancia': return 'Vigilância';
-    case 'em-dia': return 'Em dia';
-    default: return 'Sem cobertura';
+    case 'critico':
+      return 'Crítico';
+    case 'alto':
+      return 'Alto';
+    case 'moderado':
+      return 'Moderado';
+    case 'vigilancia':
+      return 'Vigilância';
+    case 'em-dia':
+      return 'Em dia';
+    default:
+      return 'Sem cobertura';
   }
 }
 
 export default function App() {
   const dossierRef = useRef(null);
-  const [initialCloudConfig] = useState(() => ({
-    url: import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_url') || '',
-    key: import.meta.env.VITE_SUPABASE_KEY || localStorage.getItem('supabase_key') || ''
-  }));
+  const [initialCloudConfig] = useState(() => readFirebaseConfig(import.meta.env));
+  const firebaseConfigured = isFirebaseConfigured(initialCloudConfig);
 
-  // App states — isInitialLoad só inicia como true quando há credenciais de nuvem disponíveis
-  const [isInitialLoad, setIsInitialLoad] = useState(() => !!(initialCloudConfig.url && initialCloudConfig.key));
+  // App states — a carga online só inicia quando o Firebase está configurado no ambiente.
+  const [isInitialLoad, setIsInitialLoad] = useState(() => firebaseConfigured);
   const [currentTab, setCurrentTab] = useState(() => {
     try {
       const savedTab = sessionStorage.getItem('gop_current_tab');
@@ -413,19 +420,17 @@ export default function App() {
   const [focusedBairro, setFocusedBairro] = useState(null);
   const [vistaTerritorio, setVistaTerritorio] = useState('mapa'); // 'mapa' | 'lista'
 
-  // Cloud (Supabase) integration states
-  const [supabaseUrl, setSupabaseUrl] = useState(initialCloudConfig.url);
-  const [supabaseKey, setSupabaseKey] = useState(initialCloudConfig.key);
+  // Persistência online desacoplada da UI. Nesta fase, o provider ativo é Cloud Firestore.
   const [cloudConnected, setCloudConnected] = useState(false);
-  const [syncStatusText, setSyncStatusText] = useState('Local (db.json)');
+  const [syncStatusText, setSyncStatusText] = useState(() =>
+    firebaseConfigured ? 'Local (db.json)' : 'Local (Firebase não configurado)'
+  );
   const [cloudLoading, setCloudLoading] = useState(false);
-  const [supabaseClient, setSupabaseClient] = useState(null);
+  const [persistence, setPersistence] = useState(null);
 
-  // Estados de controle para arquivos e uploads reais
+  // Anexos permanecem como metadados legados nesta fase Spark; upload/Storage está adiado.
   const [ticketAttachments, setTicketAttachments] = useState([]);
-  const [schoolAttachments, setSchoolAttachments] = useState([]);
-  const [isAttachmentPending, setAttachmentUploading] = useState(false);
-  const [allAttachments, setAllAttachments] = useState([]);
+  const [allAttachments, setAllAttachments] = useState(initialAttachments);
 
   // Lookup tab states
   const [lookupSchoolQuery, setLookupSchoolQuery] = useState(
@@ -496,8 +501,8 @@ export default function App() {
       user: 'GOP / 3ª CRE'
     };
 
-    // Se estiver conectado à nuvem Supabase, salva o log diretamente na tabela `historico`
-    if (cloudConnected && supabaseClient) {
+    // Se estiver conectado à base online, persiste o log pelo contrato neutro
+    if (cloudConnected && persistence) {
       try {
         const newHistoryEvent = {
           id_evento: newLog.id,
@@ -510,7 +515,7 @@ export default function App() {
           observacao: newCommentText
         };
 
-        await insertHistoryEvent(supabaseClient, newHistoryEvent);
+        await persistence.insertHistoryEvent(newHistoryEvent);
 
         // Atualiza o estado local do histórico
         setHistory((prev) => [newHistoryEvent, ...prev]);
@@ -533,7 +538,7 @@ export default function App() {
       setNewCommentText('');
       triggerToast('Anotação técnica registrada localmente (Modo Offline)!', 'info');
     }
-  }, [newCommentText, selectedSchool, cloudConnected, supabaseClient]);
+  }, [newCommentText, selectedSchool, cloudConnected, persistence]);
 
   const refreshEmailDraft = (
     ticketId = selectedEmailTicketId,
@@ -577,218 +582,103 @@ export default function App() {
     };
   }, [showEditModal]);
 
-  // Carrega anexos consolidados da escola de forma reativa
-  useEffect(() => {
-    const fetchSchoolAttachments = async () => {
-      if (supabaseClient && selectedSchool?.designacao) {
-        try {
-          const anexos = await listSchoolAttachments(supabaseClient, selectedSchool.designacao);
-          setSchoolAttachments(anexos || []);
-        } catch (err) {
-          console.error('Erro ao carregar anexos da escola:', err);
-          setSchoolAttachments([]);
-        }
-      } else {
-        setSchoolAttachments([]);
-      }
-    };
-    fetchSchoolAttachments();
-  }, [selectedSchool, supabaseClient]);
+  // Anexos são preservados apenas como metadados legados durante a fase Firestore Spark.
+  const schoolAttachments = useMemo(
+    () =>
+      selectedSchool?.designacao
+        ? allAttachments.filter((attachment) => attachment.designacao === selectedSchool.designacao)
+        : [],
+    [selectedSchool, allAttachments]
+  );
 
-  const handleUploadTicketAttachment = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file || !editingTicket) return;
-
-    setAttachmentUploading(true);
-    try {
-      const anexo = await uploadTicketAttachment(supabaseClient, editingTicket, file);
-      setTicketAttachments((prev) => [anexo, ...prev]);
-      setSchoolAttachments((prev) => [anexo, ...prev]);
-      setAllAttachments((prev) => [anexo, ...prev]);
-      if (anexo && anexo._historyEvent) {
-        setHistory((prev) => [anexo._historyEvent, ...prev]);
-      }
-      triggerToast('Arquivo enviado com sucesso!', 'success');
-    } catch (err) {
-      console.error('Erro no upload do anexo:', err);
-      triggerToast(err.message || 'Erro ao enviar arquivo.', 'error');
-    } finally {
-      setAttachmentUploading(false);
-      event.target.value = '';
-    }
-  };
-
-  const handleDeleteTicketAttachment = async (attachment) => {
-    if (!window.confirm(`Tem certeza que deseja excluir o anexo "${attachment.nome_original}"?`))
-      return;
-
-    try {
-      const deleteEvent = await deleteTicketAttachment(supabaseClient, attachment);
-      setTicketAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
-      setSchoolAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
-      setAllAttachments((prev) => prev.filter((a) => a.id !== attachment.id));
-      if (deleteEvent && typeof deleteEvent === 'object') {
-        setHistory((prev) => [deleteEvent, ...prev]);
-      }
-      triggerToast('Arquivo excluído com sucesso!', 'success');
-    } catch (err) {
-      console.error('Erro ao excluir anexo:', err);
-      triggerToast(err.message || 'Erro ao excluir arquivo.', 'error');
-    }
-  };
-
-  // 2. Initialize Supabase Connection
-  const initializeSupabase = async (url, key) => {
+  // Inicializa o Firebase/Firestore a partir das variáveis de ambiente do deploy.
+  const initializeFirebase = async () => {
     setCloudLoading(true);
     setIsInitialLoad(true);
-    setSyncStatusText('Conectando à nuvem...');
+    setSyncStatusText('Conectando ao Firestore...');
+
     try {
-      const client = createClient(url, key);
-      setSupabaseClient(client);
-
-      // Verify connection by loading schools
-      const schoolsData = await fetchEscolas(client);
-
-      // If schools table exists, load cloud datasets
-      setCloudConnected(true);
-      setSyncStatusText('Base online ativa');
-
-      if (schoolsData && schoolsData.length > 0) {
-        setSchools(schoolsData);
-
-        // Load tickets
-        const ticketsData = await fetchChamados(client);
-        setTickets(ticketsData);
-
-        // Load timeline history
-        const historyData = await fetchHistorico(client);
-        setHistory(historyData);
-
-        // Load all attachments
-        const { data: attachmentsData, error: attachmentsError } = await client
-          .from('anexos_chamado')
-          .select('*');
-
-        if (attachmentsError) throw attachmentsError;
-        if (attachmentsData) setAllAttachments(attachmentsData);
-
-        // Load e-mail templates from Supabase so the app uses the curated online models.
-        const { data: emailTemplatesData, error: emailTemplatesError } = await client
-          .from('modelos_email')
-          .select('*')
-          .order('id', { ascending: true });
-
-        if (emailTemplatesError) throw emailTemplatesError;
-        if (emailTemplatesData) {
-          setEmailTemplates(emailTemplatesData);
-          setCustomEmailBody(
-            buildEmailDraft(emailTemplatesData, ticketsData || initialTickets, '', 0)
-          );
-        }
-        triggerToast('Base online carregada com sucesso!', 'success');
-      } else {
-        setSyncStatusText('Conectado (Tabelas vazias)');
-        triggerToast('Conectado à nuvem, mas a base está vazia. Usando dados locais.', 'info');
+      if (!isFirebaseConfigured(initialCloudConfig)) {
+        throw new Error('Configuração Firebase ausente ou incompleta.');
       }
+
+      const { db } = createFirebaseClient(initialCloudConfig);
+      const gateway = createFirestorePersistence(db);
+      const onlineData = await gateway.loadInitialData();
+
+      setPersistence(gateway);
+      setCloudConnected(true);
+      setSyncStatusText('Cloud Firestore ativo');
+      setSchools(onlineData.schools);
+      setTickets(onlineData.tickets);
+      setHistory(onlineData.history);
+      setEmailTemplates(onlineData.emailTemplates);
+      setAllAttachments(initialAttachments);
+      setCustomEmailBody(buildEmailDraft(onlineData.emailTemplates, onlineData.tickets, '', 0));
+      triggerToast('Base Firestore carregada com sucesso!', 'success');
     } catch (err) {
-      console.error('Supabase Error:', err);
+      console.error('Firebase/Firestore connection error:', err);
+      setPersistence(null);
       setCloudConnected(false);
-      setSupabaseClient(null);
-      setSyncStatusText('Erro de conexão - Modo Local');
-      triggerToast('Erro ao carregar dados online. Usando base local.');
+      setSyncStatusText('Firestore indisponível — modo local');
+      triggerToast('Base online indisponível. O sistema continua em modo local.', 'info');
     } finally {
       setCloudLoading(false);
       setIsInitialLoad(false);
     }
   };
 
-  // 1. Initial cloud configuration. Local db.json is loaded by lazy state above.
+  // Conexão inicial: local db.json continua sendo o fallback imediato.
   useEffect(() => {
-    if (initialCloudConfig.url && initialCloudConfig.key) {
-      const timer = window.setTimeout(() => {
-        initializeSupabase(initialCloudConfig.url, initialCloudConfig.key);
-      }, 0);
-      return () => window.clearTimeout(timer);
-    }
+    if (!firebaseConfigured) return undefined;
+
+    const timer = window.setTimeout(() => {
+      initializeFirebase();
+    }, 0);
+    return () => window.clearTimeout(timer);
+    // Configuração é imutável durante a sessão e vem do ambiente de build.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialCloudConfig]);
+  }, [firebaseConfigured]);
 
-  // Realtime: reflete ao vivo as mudanças de chamados/histórico feitas por outros usuários,
-  // sem recarregar a página (atende ao monitoramento compartilhado da GOP). Degrada com
-  // segurança: se a publicação realtime não estiver ligada no banco, apenas não atualiza sozinho.
+  // Firestore entrega os snapshots diretamente; não há refetch integral a cada evento.
   useEffect(() => {
-    if (!supabaseClient || !cloudConnected) return undefined;
-    let active = true;
-    let timer;
-    const refresh = async () => {
-      try {
-        const [ticketsData, historyData] = await Promise.all([
-          fetchChamados(supabaseClient),
-          fetchHistorico(supabaseClient),
-        ]);
-        if (active) {
-          setTickets(ticketsData);
-          setHistory(historyData);
-        }
-      } catch (err) {
-        console.error('Realtime: falha ao atualizar dados', err);
-      }
-    };
-    const scheduleRefresh = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(refresh, 400);
-    };
-    const channel = supabaseClient
-      .channel('gop-chamados-historico')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chamados' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'historico' }, scheduleRefresh)
-      .subscribe();
-    return () => {
-      active = false;
-      window.clearTimeout(timer);
-      supabaseClient.removeChannel(channel);
-    };
-  }, [supabaseClient, cloudConnected]);
+    if (!persistence || !cloudConnected) return undefined;
+    return persistence.subscribeOperationalData({
+      onTickets: setTickets,
+      onHistory: setHistory,
+      onError: (err) => console.error('Realtime Firestore:', err)
+    });
+  }, [persistence, cloudConnected]);
 
-  const handleConnectCloud = (e) => {
-    e.preventDefault();
-    if (!supabaseUrl.trim() || !supabaseKey.trim()) {
-      triggerToast('Preencha a URL e a Chave do Supabase!');
+  const handleConnectCloud = () => {
+    if (!firebaseConfigured) {
+      triggerToast(
+        'Firebase ainda não está configurado no ambiente deste deploy. Consulte a documentação técnica.',
+        'info'
+      );
       return;
     }
-    localStorage.setItem('supabase_url', supabaseUrl);
-    localStorage.setItem('supabase_key', supabaseKey);
-    initializeSupabase(supabaseUrl, supabaseKey);
+    initializeFirebase();
   };
 
   const handleDisconnectCloud = () => {
-    localStorage.removeItem('supabase_url');
-    localStorage.removeItem('supabase_key');
-    setSupabaseUrl('');
-    setSupabaseKey('');
     setCloudConnected(false);
-    setSupabaseClient(null);
+    setPersistence(null);
     setSyncStatusText('Local (db.json)');
 
-    // Reload local files
-    if (dbData) {
-      const normalized = (dbData.chamados || []).map(t => ({
-        ...t,
-        setor_responsavel: normalizeSector(t.setor_responsavel)
-      }));
-      setTickets(normalized);
-      setSchools(dbData.escolas || []);
-      setHistory(dbData.historico || []);
-      setAllAttachments([]);
-    }
-    triggerToast('Desconectado da nuvem. Modo local ativo.');
+    const normalized = initialTickets.map((ticket) => ({
+      ...ticket,
+      setor_responsavel: normalizeSector(ticket.setor_responsavel)
+    }));
+    setTickets(normalized);
+    setSchools(initialSchools);
+    setHistory(initialHistory);
+    setEmailTemplates(initialEmailTemplates);
+    setAllAttachments(initialAttachments);
+    triggerToast('Modo local ativado para esta sessão.', 'info');
   };
 
-  // Upload local db.json items to Supabase
-  const handleSyncLocalToCloud = async () => {
-    triggerToast('A sincronização local para a nuvem está desativada por segurança.', 'error');
-  };
-
+  // Date Formatting Helpers — delega ao módulo de lógica (fonte única da verdade)
   // Date Formatting Helpers — delega ao módulo de lógica (fonte única da verdade)
   const formatDateBrazilian = (isoStr) => fmtDateBR(isoStr);
 
@@ -882,9 +772,7 @@ export default function App() {
         (t) => !isInactive(t) && calcInactivityDays(t, todayRef()) >= SLA_SEVERE_DAYS
       );
     } else if (activeListsView === 'age30') {
-      result = result.filter(
-        (t) => !isInactive(t) && calcAgeDays(t, todayRef()) >= AGE_WARN_DAYS
-      );
+      result = result.filter((t) => !isInactive(t) && calcAgeDays(t, todayRef()) >= AGE_WARN_DAYS);
     } else if (activeListsView === 'age60') {
       result = result.filter(
         (t) => !isInactive(t) && calcAgeDays(t, todayRef()) >= AGE_SEVERE_DAYS
@@ -973,21 +861,12 @@ export default function App() {
   const getDashboardStuckRanking = () => stuckRanking(tickets, todayRef(), 5);
 
   // Edit ticket action
-  const openTicketEdit = async (ticket) => {
+  const openTicketEdit = (ticket) => {
     setEditingTicket({ ...ticket });
     setShowEditModal(true);
-
-    if (supabaseClient) {
-      try {
-        const anexos = await listTicketAttachments(supabaseClient, ticket.id_chamado);
-        setTicketAttachments(anexos);
-      } catch (err) {
-        console.error('Erro ao listar anexos do chamado:', err);
-        setTicketAttachments([]);
-      }
-    } else {
-      setTicketAttachments([]);
-    }
+    setTicketAttachments(
+      allAttachments.filter((attachment) => attachment.id_chamado === ticket.id_chamado)
+    );
   };
 
   const goToCommunicationForTicket = (ticket, type) => {
@@ -1335,7 +1214,7 @@ export default function App() {
   const handleAddTicketHistoryEvent = async (commentText) => {
     if (isSavingHistoryPending) return false;
     if (!commentText.trim()) return false;
-    if (!supabaseClient) {
+    if (!persistence) {
       triggerToast(
         'Registro de comentário bloqueado em modo local. Conecte a base online.',
         'error'
@@ -1359,13 +1238,13 @@ export default function App() {
         observacao: commentText.trim()
       };
 
-      const savedEvent = await insertHistoryEvent(supabaseClient, newEvent);
+      const savedEvent = await persistence.insertHistoryEvent(newEvent);
 
       setHistory((prev) => [savedEvent, ...prev]);
       triggerToast('Comentário registrado na linha do tempo!', 'success');
       return true;
     } catch (err) {
-      console.error('Erro ao registrar comentário no Supabase:', err);
+      console.error('Erro ao registrar comentário na base online:', err);
       triggerToast(`Falha ao registrar comentário na nuvem: ${err.message || err}`, 'error');
       return false;
     } finally {
@@ -1375,7 +1254,7 @@ export default function App() {
 
   const saveEditedTicket = async () => {
     if (isSavingTicketPending) return;
-    if (!supabaseClient) {
+    if (!persistence) {
       triggerToast('Edição bloqueada em modo local. Conecte a base online.', 'error');
       return;
     }
@@ -1466,12 +1345,8 @@ export default function App() {
     setIsSavingTicket(true);
 
     try {
-      // 1. Gravação pessimista transacional via RPC no Supabase
-      const savedTicket = await updateTicketWithHistory(
-        supabaseClient,
-        updatedRecord,
-        novosEventos
-      );
+      // 1. Gravação pessimista transacional via adapter transacional de persistência
+      const savedTicket = await persistence.updateTicketWithHistory(updatedRecord, novosEventos);
 
       // 3. Somente após sucesso na nuvem, atualiza o estado local do frontend
       const updatedTickets = tickets.map((t) => {
@@ -1488,7 +1363,7 @@ export default function App() {
 
       setShowEditModal(false);
       triggerToast('Chamado atualizado com sucesso!', 'success');
-      track('chamado_atualizado', { online: !!supabaseClient });
+      track('chamado_atualizado', { online: !!persistence });
     } catch (err) {
       console.error('Cloud save failed:', err);
       triggerToast(`Falha ao salvar alteração na nuvem: ${err.message || err}`, 'error');
@@ -1548,7 +1423,7 @@ export default function App() {
       let finalTicketRecord;
       let finalEventRecord;
 
-      if (supabaseClient) {
+      if (persistence) {
         try {
           const initialEvent = {
             id_evento: `EV-${crypto.randomUUID()}`, // ID robusto para evitar conflitos de chaves primarias
@@ -1561,12 +1436,8 @@ export default function App() {
             observacao: `Abertura oficial do chamado. Demanda cadastrada para o local: ${newTicket.local_demanda}.`
           };
 
-          // 1. Gravação pessimista transacional via RPC no Supabase
-          const result = await createTicketWithHistory(
-            supabaseClient,
-            ticketRecord,
-            initialEvent
-          );
+          // 1. Gravação pessimista transacional via adapter transacional de persistência
+          const result = await persistence.createTicketWithHistory(ticketRecord, initialEvent);
           finalTicketRecord = result.ticket;
           finalEventRecord = result.event;
         } catch (err) {
@@ -1580,15 +1451,9 @@ export default function App() {
         }
       }
 
-      // Fallback offline: cria ID local apenas quando NÃO há conexão Supabase
-      if (!supabaseClient) {
-        const nextIdNum =
-          tickets.reduce((max, t) => {
-            const num = parseInt(t.id_chamado.split('-').pop(), 10);
-            return num > max ? num : max;
-          }, 0) + 1;
-
-        const generatedId = `GOP-AR-2026-${String(nextIdNum).padStart(4, '0')}`;
+      // Offline nunca recebe número oficial: evita colisões entre dispositivos desconectados.
+      if (!persistence) {
+        const generatedId = `RASCUNHO-${crypto.randomUUID()}`;
 
         finalTicketRecord = {
           id_chamado: generatedId,
@@ -1604,7 +1469,7 @@ export default function App() {
           marco_relevante: newTicket.status_atual,
           setor: 'GOP',
           responsavel_registro: 'GOP / Sistema',
-          observacao: `Abertura oficial do chamado. Demanda cadastrada para o local: ${newTicket.local_demanda}.`
+          observacao: `Rascunho local. Demanda cadastrada para o local: ${newTicket.local_demanda}. O número oficial será atribuído somente após gravação online.`
         };
       }
 
@@ -1615,12 +1480,12 @@ export default function App() {
       // Mostra painel de sucesso com o ID real gerado
       setNewTicketSuccess(finalTicketRecord.id_chamado);
       triggerToast(
-        supabaseClient
-          ? 'Chamado criado com sucesso na nuvem!'
-          : 'Chamado criado em modo offline — salvo neste dispositivo.',
-        supabaseClient ? 'success' : 'info'
+        persistence
+          ? 'Chamado criado com sucesso no Firestore!'
+          : 'Rascunho local criado neste dispositivo. O número oficial será atribuído somente online.',
+        persistence ? 'success' : 'info'
       );
-      track('chamado_lancado', { online: !!supabaseClient });
+      track('chamado_lancado', { online: !!persistence });
 
       // Limpa inputs
       setNewTicket({
@@ -1905,16 +1770,14 @@ export default function App() {
             <div className="donut-legend-dot" style={{ backgroundColor: 'var(--primary)' }} />
             <div>
               <span>Chamados Ativos: </span>
-              <strong>{active}</strong>{' '}
-              <span className="donut-legend-pct">({activePct}%)</span>
+              <strong>{active}</strong> <span className="donut-legend-pct">({activePct}%)</span>
             </div>
           </div>
           <div className="donut-legend-item">
             <div className="donut-legend-dot" style={{ backgroundColor: 'var(--color-gray)' }} />
             <div>
               <span>Concluídos: </span>
-              <strong>{closed}</strong>{' '}
-              <span className="donut-legend-pct">({closedPct}%)</span>
+              <strong>{closed}</strong> <span className="donut-legend-pct">({closedPct}%)</span>
             </div>
           </div>
         </div>
@@ -2054,9 +1917,7 @@ export default function App() {
                     if (isAuth) {
                       setCurrentTab('cloud');
                     } else {
-                      const pass = window.prompt(
-                        'Digite a chave de acesso administrativo:'
-                      );
+                      const pass = window.prompt('Digite a chave de acesso administrativo:');
                       if (pass === 'GOP-ADMIN-3CRE') {
                         sessionStorage.setItem('gop_admin_authenticated', 'true');
                         setCurrentTab('cloud');
@@ -2205,8 +2066,18 @@ export default function App() {
 
             {isInitialLoad ? (
               <div className="skeleton-container" style={{ padding: '24px 0' }}>
-                <div className="skeleton-line short" style={{ height: '32px', marginBottom: '16px' }} />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
+                <div
+                  className="skeleton-line short"
+                  style={{ height: '32px', marginBottom: '16px' }}
+                />
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '20px',
+                    marginBottom: '24px'
+                  }}
+                >
                   <div className="skeleton-card" style={{ height: '120px' }} />
                   <div className="skeleton-card" style={{ height: '120px' }} />
                   <div className="skeleton-card" style={{ height: '120px' }} />
@@ -2217,755 +2088,995 @@ export default function App() {
               <>
                 {renderOperationalSummary()}
 
-            {/* Stat row */}
-            <p
-              className="stat-cards-instruction"
-              style={{
-                fontSize: '13px',
-                color: 'var(--text-light)',
-                marginBottom: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontWeight: '600'
-              }}
-            >
-              <IconInfo style={{ width: '14px', height: '14px', color: 'var(--primary)' }} />
-              <span>Clique em um indicador para filtrar a lista de chamados abaixo.</span>
-            </p>
-            <div className="kpi-group-container">
-              <div className="section-header">
-                <div className="section-heading">
-                  <span className="section-eyebrow">
-                    <IconFolder />
-                    Volume Geral
-                  </span>
-                </div>
-              </div>
-              <div className="card-grid volume-grid">
-                <div
-                  className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
-                  onClick={() => setActiveListsView('all')}
-                  style={{ '--card-accent': 'var(--primary)' }}
+                {/* Stat row */}
+                <p
+                  className="stat-cards-instruction"
+                  style={{
+                    fontSize: '13px',
+                    color: 'var(--text-light)',
+                    marginBottom: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: '600'
+                  }}
                 >
-                  <div className="stat-header">
-                    <span>Chamados Registrados</span>
-                    <div className="stat-icon">
-                      <IconFolder />
-                    </div>
-                  </div>
-                  <div className="stat-number">{totalTickets}</div>
-                  <div className="stat-description">Total histórico importado</div>
-                </div>
-
-                <div
-                  className={`stat-card ${activeListsView === 'active' ? 'active' : ''}`}
-                  onClick={() => setActiveListsView('active')}
-                  style={{ '--card-accent': 'var(--color-blue)' }}
-                >
-                  <div className="stat-header">
-                    <span>Chamados Ativos</span>
-                    <div className="stat-icon">
-                      <IconRefresh />
-                    </div>
-                  </div>
-                  <div className="stat-number">{openTickets}</div>
-                  <div className="stat-description">Demandas em triagem ou andamento</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="kpi-group-container">
-              <div className="section-header">
-                <div className="section-heading">
-                  <span className="section-eyebrow">
-                    <IconClock />
-                    Prazos e Gestão de Risco
-                  </span>
-                </div>
-              </div>
-              <div className="kpi-subgroups-grid">
-                <div className="kpi-subgroup-column">
-                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)' }}>Sem Movimentação Recente (Inércia)</h5>
-                  <div className="card-grid subgroup-cards">
-                    <div
-                      className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
-                      onClick={() => setActiveListsView('inactive7')}
-                      style={{ '--card-accent': 'var(--color-amber)' }}
-                    >
-                      <div className="stat-header">
-                        <span>Em Aberto +7 Dias</span>
-                        <div className="stat-icon">
-                          <IconWarning />
-                        </div>
-                      </div>
-                      <div className="stat-number" style={{ color: 'var(--color-amber)' }}>
-                        {inactivePlus7}
-                      </div>
-                      <div className="stat-description">Sem movimentação (Alerta Âmbar)</div>
-                    </div>
-
-                    <div
-                      className={`stat-card ${activeListsView === 'inactive15' ? 'active' : ''}`}
-                      onClick={() => setActiveListsView('inactive15')}
-                      style={{ '--card-accent': 'var(--color-red)' }}
-                    >
-                      <div className="stat-header">
-                        <span>Em Aberto +15 Dias</span>
-                        <div className="stat-icon">
-                          <IconSiren />
-                        </div>
-                      </div>
-                      <div className="stat-number" style={{ color: 'var(--color-red)' }}>
-                        {inactivePlus15}
-                      </div>
-                      <div className="stat-description">Sem movimentação (Alerta Vermelho)</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="kpi-subgroup-column">
-                  <h5 className="section-eyebrow" style={{ color: 'var(--text-light)' }}>Tempo Total em Aberto (Antiguidade)</h5>
-                  <div className="card-grid subgroup-cards">
-                    <div
-                      className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
-                      onClick={() => setActiveListsView('age30')}
-                      style={{ '--card-accent': 'var(--color-age-warn)' }}
-                    >
-                      <div className="stat-header">
-                        <span>Em Aberto +30 Dias</span>
-                        <div className="stat-icon">
-                          <IconClock />
-                        </div>
-                      </div>
-                      <div className="stat-number" style={{ color: 'var(--color-age-warn)' }}>
-                        {agePlus30}
-                      </div>
-                      <div className="stat-description">Tempo total em aberto (Antiguidade)</div>
-                    </div>
-
-                    <div
-                      className={`stat-card ${activeListsView === 'age60' ? 'active' : ''}`}
-                      onClick={() => setActiveListsView('age60')}
-                      style={{ '--card-accent': 'var(--color-age-severe)' }}
-                    >
-                      <div className="stat-header">
-                        <span>Em Aberto +60 Dias</span>
-                        <div className="stat-icon">
-                          <IconCalendar />
-                        </div>
-                      </div>
-                      <div className="stat-number" style={{ color: 'var(--color-age-severe)' }}>
-                        {agePlus60}
-                      </div>
-                      <div className="stat-description">Antiguidade crítica (revisar caso)</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mapa Operacional — área de atuação da 3ª CRE */}
-            <div className="dashboard-section op-panel">
-              <div
-                className="section-header"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '12px'
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h3>
-                    <IconBuilding /> Mapa Operacional
-                  </h3>
-                  <span
-                    style={{
-                      fontSize: '13px',
-                      color: 'var(--text-light)',
-                      fontWeight: '600',
-                      marginTop: '2px'
-                    }}
-                  >
-                    Área de atuação da 3ª CRE · Zona Norte
-                  </span>
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <div className="territorio-toggle" role="tablist" aria-label="Visualização do território">
-                    <button
-                      role="tab"
-                      aria-selected={vistaTerritorio === 'mapa'}
-                      className={vistaTerritorio === 'mapa' ? 'is-active' : ''}
-                      onClick={() => setVistaTerritorio('mapa')}
-                    >
-                      Mapa
-                    </button>
-                    <button
-                      role="tab"
-                      aria-selected={vistaTerritorio === 'lista'}
-                      className={vistaTerritorio === 'lista' ? 'is-active' : ''}
-                      onClick={() => setVistaTerritorio('lista')}
-                    >
-                      Lista
-                    </button>
-                  </div>
-
-                  <span
-                    className="map-instruction"
-                    style={{
-                      fontSize: '12.5px',
-                      color: 'var(--primary)',
-                      fontWeight: '700',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      backgroundColor: 'var(--primary-light)',
-                      padding: '6px 14px',
-                      borderRadius: '20px',
-                      border: '1px solid var(--border-hover)'
-                    }}
-                  >
-                    <IconInfo style={{ width: '13px', height: '13px', flexShrink: 0 }} />
-                    {vistaTerritorio === 'mapa'
-                      ? 'Clique em um bairro para ver escolas e chamados ativos.'
-                      : 'Selecione uma linha para detalhar o bairro.'}
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className={`map-and-details-container ${selectedBairroNormalized ? 'has-details' : ''}`}
-              >
-                {vistaTerritorio === 'mapa' ? (
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <ErrorBoundary
-                      fallback={
-                        <div style={{ flex: 1, minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px', background: 'var(--surface)', borderRadius: '14px', border: '1px solid var(--border-color)', color: 'var(--text-muted, #64748b)' }}>
-                          Não foi possível carregar o mapa. O restante do painel segue funcionando — recarregue a página para tentar de novo.
-                        </div>
-                      }
-                    >
-                      <Suspense
-                        fallback={
-                          <div style={{ flex: 1, minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted, #64748b)' }}>
-                            Carregando mapa…
-                          </div>
-                        }
-                      >
-                        <OperationalMap
-                          selectedSchool={selectedSchool}
-                          theme={theme}
-                          onSelectBairro={setSelectedBairroNormalized}
-                          focusedBairro={focusedBairro}
-                          risk={territorialRisk}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                    <MapLegend risk={territorialRisk} />
-                  </div>
-                ) : (
-                  <div className="territorio-tabela-wrapper" style={{ flex: 1, overflowX: 'auto', background: 'var(--surface)', borderRadius: '14px', border: '1px solid var(--border-color)', padding: '16px' }}>
-                    <table className="territorio-tabela">
-                      <caption className="sr-only">Bairros por risco territorial</caption>
-                      <thead>
-                        <tr>
-                          <th>Bairro</th>
-                          <th>Nível</th>
-                          <th>Ativos</th>
-                          <th>Críticos</th>
-                          <th>Escolas</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(territorialRisk)
-                          .filter(([, b]) => b.chamados_ativos > 0)
-                          .sort((a, b) => b[1].risco - a[1].risco)
-                          .map(([key, b]) => (
-                            <tr
-                              key={key}
-                              className={selectedBairroNormalized === key ? 'is-selected' : ''}
-                              onClick={() => setSelectedBairroNormalized(key)}
-                              tabIndex={0}
-                              onKeyDown={(ev) => {
-                                if (ev.key === 'Enter' || ev.key === ' ') {
-                                  ev.preventDefault();
-                                  setSelectedBairroNormalized(key);
-                                }
-                              }}
-                            >
-                              <td>{b.nome_exibicao}</td>
-                              <td>
-                                <span className={`map-nivel-badge nivel-${b.nivel}`}>
-                                  {rotuloNivel(b.nivel)}
-                                </span>
-                              </td>
-                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.chamados_ativos}</td>
-                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.criticos}</td>
-                              <td style={{ fontVariantNumeric: 'tabular-nums' }}>{b.escolas_cadastradas}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {selectedBairroNormalized &&
-                  (() => {
-                    const bData = territorialRisk[selectedBairroNormalized];
-                    if (!bData) return null;
-                    return (
-                      <div className="bairro-details-card bairro-details-card-v2 animate-slide-in">
-                        <div className="bairro-card-header">
-                          <div className="bairro-card-title-group" style={{ flexWrap: 'wrap', gap: '8px' }}>
-                            <span className="bairro-header-pin-icon">
-                              <IconPin />
-                            </span>
-                            <h4>{bData.nome_exibicao}</h4>
-                            <span className={`map-nivel-badge nivel-${bData.nivel}`} style={{ marginLeft: '4px' }}>
-                              {rotuloNivel(bData.nivel)}
-                            </span>
-                            <button
-                              className="btn-focus-bairro-small"
-                              onClick={() =>
-                                setFocusedBairro({
-                                  name: selectedBairroNormalized,
-                                  timestamp: Date.now()
-                                })
-                              }
-                              title="Recentralizar e focar este bairro no mapa"
-                              aria-label="Focar este bairro no mapa"
-                            >
-                              <IconFocus />
-                            </button>
-                            <button
-                              className="btn-copy-summary"
-                              onClick={() =>
-                                handleCopySummary(
-                                  `Bairro: ${bData.nome_exibicao}\nSituação: ${rotuloNivel(bData.nivel)}\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nEm atenção: ${bData.atencao}`,
-                                  'bairro'
-                                )
-                              }
-                              title="Copiar resumo gerencial do bairro"
-                              aria-label="Copiar resumo gerencial do bairro"
-                            >
-                              <IconCopy />
-                            </button>
-                          </div>
-                          <button
-                            className="btn-close-small"
-                            onClick={() => setSelectedBairroNormalized(null)}
-                            title="Fechar detalhes do bairro"
-                            aria-label="Fechar detalhes do bairro"
-                          >
-                            <IconClose />
-                          </button>
-                        </div>
-                        <div className="bairro-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-                          {/* Grid de Microcards */}
-                          <div className="bairro-microcards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Escolas</span>
-                              <span style={{ fontSize: '17px', fontWeight: '800' }}>{bData.escolas_cadastradas}</span>
-                            </div>
-                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Ativos</span>
-                              <span style={{ fontSize: '17px', fontWeight: '800' }}>{bData.chamados_ativos}</span>
-                            </div>
-                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Críticos</span>
-                              <span style={{ fontSize: '17px', fontWeight: '800', color: bData.criticos > 0 ? 'var(--color-red)' : 'inherit' }}>{bData.criticos}</span>
-                            </div>
-                            <div className="microcard" style={{ padding: '8px 12px', background: 'var(--surface-2, rgba(148,163,184,.08))', border: '1px solid var(--border-color)', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '11.5px', textTransform: 'uppercase', opacity: 0.7, fontWeight: '700' }}>Em atenção</span>
-                              <span style={{ fontSize: '17px', fontWeight: '800' }}>{bData.atencao}</span>
-                            </div>
-                          </div>
-
-                          {/* Seção Principais Ofensores */}
-                          {bData.topOfensores && bData.topOfensores.length > 0 && (
-                            <div className="bairro-ofensores-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                              <h5 style={{ fontSize: '11.5px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                                Principais Ofensores
-                              </h5>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {bData.topOfensores.map((o) => {
-                                  const rawTicket = tickets.find((t) => String(t.id_chamado) === String(o.id_chamado));
-                                  return (
-                                    <div
-                                      key={o.id_chamado}
-                                      className="ofensor-card"
-                                      style={{
-                                        padding: '10px',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border-color)',
-                                        background: 'var(--bg-app)',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '2px',
-                                        transition: 'var(--transition)'
-                                      }}
-                                      onClick={() => rawTicket && openTicketEdit(rawTicket)}
-                                      title={`Editar chamado ${o.id_chamado}`}
-                                    >
-                                      <span style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-main)' }}>{o.id_chamado}</span>
-                                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {o.unidade_escolar}
-                                      </div>
-                                      <div style={{ fontSize: '11.5px', color: 'var(--text-light)', fontStyle: 'italic' }}>
-                                        Inativo há {o.inactivityDays} dias
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Seção Lista Completa */}
-                          <div className="bairro-tickets-section" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                            <h5 style={{ fontSize: '11.5px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                              Todos os Chamados Ativos ({bData.chamados_lista.length})
-                            </h5>
-                            <div className="bairro-tickets-list">
-                              {bData.chamados_lista.map((tk) => {
-                                const statusNorm = tk.status_atual || '';
-                                const isCritical =
-                                  statusNorm.startsWith('2') ||
-                                  statusNorm.startsWith('3') ||
-                                  statusNorm.startsWith('4');
-                                const isWarning =
-                                  statusNorm.startsWith('1') && tk.prioridade === 'Crítica';
-
-                                let accentClass = 'accent-blue';
-                                if (isCritical) {
-                                  accentClass = 'accent-red';
-                                } else if (isWarning) {
-                                  accentClass = 'accent-amber';
-                                }
-
-                                const rawTicket = tickets.find((t) => String(t.id_chamado) === String(tk.id_chamado));
-
-                                return (
-                                  <div
-                                    key={tk.id_chamado}
-                                    className={`bairro-ticket-item ${accentClass}`}
-                                    onClick={() => openTicketEdit(rawTicket || tk)}
-                                    title={`Editar chamado ${tk.id_chamado}`}
-                                  >
-                                    <div className="bairro-ticket-meta">
-                                      <span className="bairro-ticket-code">{tk.id_chamado}</span>
-                                      <span
-                                        className={`badge badge-priority-${normalizePriorityClass(tk.prioridade)}`}
-                                        style={{ fontSize: '11.5px', padding: '1px 6px' }}
-                                      >
-                                        {tk.prioridade}
-                                      </span>
-                                    </div>
-                                    <div className="bairro-ticket-school" style={{ fontSize: '12px' }}>{tk.unidade_escolar}</div>
-                                    <div className="bairro-ticket-status" style={{ fontSize: '11.5px' }}>{tk.status_atual}</div>
-                                  </div>
-                                );
-                              })}
-                              {bData.chamados_lista.length === 0 && (
-                                <EmptyState
-                                  iconType="ticket"
-                                  title="Nenhum chamado ativo"
-                                  description="Nenhum chamado ativo pendente neste bairro."
-                                  style={{ padding: '16px 12px' }}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-              </div>
-            </div>
-
-            {/* Layout Grid */}
-            <div className="dashboard-layout">
-              {/* Left section: Charts */}
-              <div className="dashboard-section goals-section">
+                  <IconInfo style={{ width: '14px', height: '14px', color: 'var(--primary)' }} />
+                  <span>Clique em um indicador para filtrar a lista de chamados abaixo.</span>
+                </p>
+                <div className="kpi-group-container">
                   <div className="section-header">
-                    <h3>
-                      <IconDashboard /> Visão de Metas & Conclusões
-                    </h3>
-                    <span
+                    <div className="section-heading">
+                      <span className="section-eyebrow">
+                        <IconFolder />
+                        Volume Geral
+                      </span>
+                    </div>
+                  </div>
+                  <div className="card-grid volume-grid">
+                    <div
+                      className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
+                      onClick={() => setActiveListsView('all')}
+                      style={{ '--card-accent': 'var(--primary)' }}
+                    >
+                      <div className="stat-header">
+                        <span>Chamados Registrados</span>
+                        <div className="stat-icon">
+                          <IconFolder />
+                        </div>
+                      </div>
+                      <div className="stat-number">{totalTickets}</div>
+                      <div className="stat-description">Total histórico importado</div>
+                    </div>
+
+                    <div
+                      className={`stat-card ${activeListsView === 'active' ? 'active' : ''}`}
+                      onClick={() => setActiveListsView('active')}
+                      style={{ '--card-accent': 'var(--color-blue)' }}
+                    >
+                      <div className="stat-header">
+                        <span>Chamados Ativos</span>
+                        <div className="stat-icon">
+                          <IconRefresh />
+                        </div>
+                      </div>
+                      <div className="stat-number">{openTickets}</div>
+                      <div className="stat-description">Demandas em triagem ou andamento</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-group-container">
+                  <div className="section-header">
+                    <div className="section-heading">
+                      <span className="section-eyebrow">
+                        <IconClock />
+                        Prazos e Gestão de Risco
+                      </span>
+                    </div>
+                  </div>
+                  <div className="kpi-subgroups-grid">
+                    <div className="kpi-subgroup-column">
+                      <h5 className="section-eyebrow" style={{ color: 'var(--text-light)' }}>
+                        Sem Movimentação Recente (Inércia)
+                      </h5>
+                      <div className="card-grid subgroup-cards">
+                        <div
+                          className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
+                          onClick={() => setActiveListsView('inactive7')}
+                          style={{ '--card-accent': 'var(--color-amber)' }}
+                        >
+                          <div className="stat-header">
+                            <span>Em Aberto +7 Dias</span>
+                            <div className="stat-icon">
+                              <IconWarning />
+                            </div>
+                          </div>
+                          <div className="stat-number" style={{ color: 'var(--color-amber)' }}>
+                            {inactivePlus7}
+                          </div>
+                          <div className="stat-description">Sem movimentação (Alerta Âmbar)</div>
+                        </div>
+
+                        <div
+                          className={`stat-card ${activeListsView === 'inactive15' ? 'active' : ''}`}
+                          onClick={() => setActiveListsView('inactive15')}
+                          style={{ '--card-accent': 'var(--color-red)' }}
+                        >
+                          <div className="stat-header">
+                            <span>Em Aberto +15 Dias</span>
+                            <div className="stat-icon">
+                              <IconSiren />
+                            </div>
+                          </div>
+                          <div className="stat-number" style={{ color: 'var(--color-red)' }}>
+                            {inactivePlus15}
+                          </div>
+                          <div className="stat-description">Sem movimentação (Alerta Vermelho)</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="kpi-subgroup-column">
+                      <h5 className="section-eyebrow" style={{ color: 'var(--text-light)' }}>
+                        Tempo Total em Aberto (Antiguidade)
+                      </h5>
+                      <div className="card-grid subgroup-cards">
+                        <div
+                          className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
+                          onClick={() => setActiveListsView('age30')}
+                          style={{ '--card-accent': 'var(--color-age-warn)' }}
+                        >
+                          <div className="stat-header">
+                            <span>Em Aberto +30 Dias</span>
+                            <div className="stat-icon">
+                              <IconClock />
+                            </div>
+                          </div>
+                          <div className="stat-number" style={{ color: 'var(--color-age-warn)' }}>
+                            {agePlus30}
+                          </div>
+                          <div className="stat-description">
+                            Tempo total em aberto (Antiguidade)
+                          </div>
+                        </div>
+
+                        <div
+                          className={`stat-card ${activeListsView === 'age60' ? 'active' : ''}`}
+                          onClick={() => setActiveListsView('age60')}
+                          style={{ '--card-accent': 'var(--color-age-severe)' }}
+                        >
+                          <div className="stat-header">
+                            <span>Em Aberto +60 Dias</span>
+                            <div className="stat-icon">
+                              <IconCalendar />
+                            </div>
+                          </div>
+                          <div className="stat-number" style={{ color: 'var(--color-age-severe)' }}>
+                            {agePlus60}
+                          </div>
+                          <div className="stat-description">Antiguidade crítica (revisar caso)</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mapa Operacional — área de atuação da 3ª CRE */}
+                <div className="dashboard-section op-panel">
+                  <div
+                    className="section-header"
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <h3>
+                        <IconBuilding /> Mapa Operacional
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          color: 'var(--text-light)',
+                          fontWeight: '600',
+                          marginTop: '2px'
+                        }}
+                      >
+                        Área de atuação da 3ª CRE · Zona Norte
+                      </span>
+                    </div>
+
+                    <div
                       style={{
-                        fontSize: '13px',
-                        color: 'var(--text-light)',
-                        fontWeight: '700',
-                        textTransform: 'uppercase'
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        flexWrap: 'wrap'
                       }}
                     >
-                      Consolidado Geral
-                    </span>
-                  </div>
-
-                  <div className="dashboard-goals-split">
-                    {/* Coluna 1: Donut Chart Geral */}
-                    <div className="goals-column">{renderDashboardDonutChart()}</div>
-
-                    {/* Coluna 2: Status dos Chamados */}
-                    <div className="goals-column">
-                      <h4>Status das Demandas</h4>
-                      <div className="mini-progress-list">
-                        {(() => {
-                          const statusCounts = tickets.reduce((acc, t) => {
-                            const st = t.status_atual || 'Não especificado';
-                            acc[st] = (acc[st] || 0) + 1;
-                            return acc;
-                          }, {});
-                          const sortedStatuses = Object.entries(statusCounts).sort(
-                            (a, b) => b[1] - a[1]
-                          );
-                          return sortedStatuses.map(([status, count]) => {
-                            const pct = Math.round((count / tickets.length) * 100) || 0;
-                            const color = getStatusColor(status);
-                            return (
-                              <div key={status} className="mini-progress-item">
-                                <div className="mini-progress-label">
-                                  <span
-                                    className="status-bullet"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                  <span className="status-name" title={status}>
-                                    {status}
-                                  </span>
-                                </div>
-                                <div className="mini-progress-track-wrapper">
-                                  <div className="mini-progress-track">
-                                    <div
-                                      className="mini-progress-fill"
-                                      style={{
-                                        width: `${pct}%`,
-                                        backgroundColor: color
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="mini-progress-value">{count}</span>
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Coluna 3: Setor Responsável */}
-                    <div className="goals-column">
-                      <h4>Responsabilidade (Último Setor)</h4>
-                      <div className="mini-progress-list">
-                        {(() => {
-                          const sectorCounts = tickets.reduce((acc, t) => {
-                            const sec = normalizeSector(t.setor_responsavel || 'Não especificado');
-                            acc[sec] = (acc[sec] || 0) + 1;
-                            return acc;
-                          }, {});
-                          const sortedSectors = Object.entries(sectorCounts).sort(
-                            (a, b) => b[1] - a[1]
-                          );
-                          return sortedSectors.map(([sector, count]) => {
-                            const pct = Math.round((count / tickets.length) * 100) || 0;
-                            const color = getSectorColor(sector);
-                            return (
-                              <div key={sector} className="mini-progress-item">
-                                <div className="mini-progress-label">
-                                  <span
-                                    className="sector-bullet"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                  <span className="sector-name" title={sector}>
-                                    {sector}
-                                  </span>
-                                </div>
-                                <div className="mini-progress-track-wrapper">
-                                  <div className="mini-progress-track">
-                                    <div
-                                      className="mini-progress-fill"
-                                      style={{
-                                        width: `${pct}%`,
-                                        backgroundColor: color
-                                      }}
-                                    />
-                                  </div>
-                                  <span className="mini-progress-value">{count}</span>
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              {/* Right column: Action checklist, Inactivity ranking, and Sync panel */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {renderActionItems()}
-
-                {/* Right Section: Inactivity Ranking */}
-                <div
-                  className="dashboard-section inactivity-ranking-section"
-                  style={{ height: 'fit-content', marginBottom: 0 }}
-                >
-                  <div className="section-header">
-                    <h3>
-                      <IconWarning /> Acompanhamento Prioritário de Demandas
-                    </h3>
-                  </div>
-                  <p
-                    style={{
-                      fontSize: '13.5px',
-                      color: 'var(--text-muted)',
-                      marginBottom: '16px',
-                      lineHeight: '1.45',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Lista das demandas em andamento ordenadas por tempo de tramitação para
-                    priorização de ações.
-                  </p>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {getDashboardStuckRanking().map((t) => {
-                      const isSevere = t.inactivityDays >= 15;
-                      return (
-                        <div
-                          key={t.id_chamado}
-                          onClick={() => openTicketEdit(t)}
-                          style={{
-                            padding: '14px 18px',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: 'var(--radius-xs)',
-                            backgroundColor: 'var(--bg-app)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            borderLeft: `4px solid ${isSevere ? 'var(--color-red)' : 'var(--color-amber)'}`,
-                            transition: 'var(--transition)'
-                          }}
+                      <div
+                        className="territorio-toggle"
+                        role="tablist"
+                        aria-label="Visualização do território"
+                      >
+                        <button
+                          role="tab"
+                          aria-selected={vistaTerritorio === 'mapa'}
+                          className={vistaTerritorio === 'mapa' ? 'is-active' : ''}
+                          onClick={() => setVistaTerritorio('mapa')}
                         >
-                          <div style={{ minWidth: 0, flex: 1 }}>
+                          Mapa
+                        </button>
+                        <button
+                          role="tab"
+                          aria-selected={vistaTerritorio === 'lista'}
+                          className={vistaTerritorio === 'lista' ? 'is-active' : ''}
+                          onClick={() => setVistaTerritorio('lista')}
+                        >
+                          Lista
+                        </button>
+                      </div>
+
+                      <span
+                        className="map-instruction"
+                        style={{
+                          fontSize: '12.5px',
+                          color: 'var(--primary)',
+                          fontWeight: '700',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          backgroundColor: 'var(--primary-light)',
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          border: '1px solid var(--border-hover)'
+                        }}
+                      >
+                        <IconInfo style={{ width: '13px', height: '13px', flexShrink: 0 }} />
+                        {vistaTerritorio === 'mapa'
+                          ? 'Clique em um bairro para ver escolas e chamados ativos.'
+                          : 'Selecione uma linha para detalhar o bairro.'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`map-and-details-container ${selectedBairroNormalized ? 'has-details' : ''}`}
+                  >
+                    {vistaTerritorio === 'mapa' ? (
+                      <div
+                        style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}
+                      >
+                        <ErrorBoundary
+                          fallback={
                             <div
                               style={{
+                                flex: 1,
+                                minHeight: '320px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px',
-                                marginBottom: '4px'
+                                justifyContent: 'center',
+                                textAlign: 'center',
+                                padding: '24px',
+                                background: 'var(--surface)',
+                                borderRadius: '14px',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-muted, #64748b)'
                               }}
                             >
-                              <strong style={{ fontSize: '13.5px', color: 'var(--text-main)' }}>
-                                {t.id_chamado}
-                              </strong>
-                              <span
-                                className={`badge ${t.prioridade === 'Crítica' ? 'badge-priority-critica' : 'badge-priority-alta'}`}
-                                style={{ fontSize: '9px', padding: '1px 5px' }}
-                              >
-                                {t.prioridade}
-                              </span>
+                              Não foi possível carregar o mapa. O restante do painel segue
+                              funcionando — recarregue a página para tentar de novo.
                             </div>
-                            <div
-                              style={{
-                                fontSize: '13px',
-                                color: 'var(--text-muted)',
-                                textOverflow: 'ellipsis',
-                                overflow: 'hidden',
-                                whiteSpace: 'nowrap',
-                                fontWeight: '600'
-                              }}
-                            >
-                              {t.unidade_escolar}
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right', marginLeft: '12px' }}>
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end'
-                              }}
-                            >
-                              <span
-                                className={`sla-pulse-active ${isSevere ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
-                              />
-                              <span
-                                style={{
-                                  fontSize: '13.5px',
-                                  fontWeight: '800',
-                                  color: isSevere ? 'var(--color-red)' : 'var(--color-amber)'
-                                }}
-                              >
-                                {t.inactivityDays} dias
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '11.5px',
-                                color: 'var(--text-light)',
-                                fontWeight: '700',
-                                textTransform: 'uppercase',
-                                marginTop: '2px'
-                              }}
-                            >
-                              sem alteração
-                            </div>
-                            {typeof t.ageDays === 'number' && t.ageDays > 0 && (
+                          }
+                        >
+                          <Suspense
+                            fallback={
                               <div
                                 style={{
-                                  fontSize: '11.5px',
-                                  color: 'var(--color-age-severe)',
-                                  fontWeight: '700',
-                                  marginTop: '3px'
+                                  flex: 1,
+                                  minHeight: '320px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'var(--text-muted, #64748b)'
                                 }}
                               >
-                                {t.ageDays} dias em aberto
+                                Carregando mapa…
                               </div>
-                            )}
+                            }
+                          >
+                            <OperationalMap
+                              selectedSchool={selectedSchool}
+                              theme={theme}
+                              onSelectBairro={setSelectedBairroNormalized}
+                              focusedBairro={focusedBairro}
+                              risk={territorialRisk}
+                            />
+                          </Suspense>
+                        </ErrorBoundary>
+                        <MapLegend risk={territorialRisk} />
+                      </div>
+                    ) : (
+                      <div
+                        className="territorio-tabela-wrapper"
+                        style={{
+                          flex: 1,
+                          overflowX: 'auto',
+                          background: 'var(--surface)',
+                          borderRadius: '14px',
+                          border: '1px solid var(--border-color)',
+                          padding: '16px'
+                        }}
+                      >
+                        <table className="territorio-tabela">
+                          <caption className="sr-only">Bairros por risco territorial</caption>
+                          <thead>
+                            <tr>
+                              <th>Bairro</th>
+                              <th>Nível</th>
+                              <th>Ativos</th>
+                              <th>Críticos</th>
+                              <th>Escolas</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(territorialRisk)
+                              .filter(([, b]) => b.chamados_ativos > 0)
+                              .sort((a, b) => b[1].risco - a[1].risco)
+                              .map(([key, b]) => (
+                                <tr
+                                  key={key}
+                                  className={selectedBairroNormalized === key ? 'is-selected' : ''}
+                                  onClick={() => setSelectedBairroNormalized(key)}
+                                  tabIndex={0}
+                                  onKeyDown={(ev) => {
+                                    if (ev.key === 'Enter' || ev.key === ' ') {
+                                      ev.preventDefault();
+                                      setSelectedBairroNormalized(key);
+                                    }
+                                  }}
+                                >
+                                  <td>{b.nome_exibicao}</td>
+                                  <td>
+                                    <span className={`map-nivel-badge nivel-${b.nivel}`}>
+                                      {rotuloNivel(b.nivel)}
+                                    </span>
+                                  </td>
+                                  <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                    {b.chamados_ativos}
+                                  </td>
+                                  <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                    {b.criticos}
+                                  </td>
+                                  <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                    {b.escolas_cadastradas}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {selectedBairroNormalized &&
+                      (() => {
+                        const bData = territorialRisk[selectedBairroNormalized];
+                        if (!bData) return null;
+                        return (
+                          <div className="bairro-details-card bairro-details-card-v2 animate-slide-in">
+                            <div className="bairro-card-header">
+                              <div
+                                className="bairro-card-title-group"
+                                style={{ flexWrap: 'wrap', gap: '8px' }}
+                              >
+                                <span className="bairro-header-pin-icon">
+                                  <IconPin />
+                                </span>
+                                <h4>{bData.nome_exibicao}</h4>
+                                <span
+                                  className={`map-nivel-badge nivel-${bData.nivel}`}
+                                  style={{ marginLeft: '4px' }}
+                                >
+                                  {rotuloNivel(bData.nivel)}
+                                </span>
+                                <button
+                                  className="btn-focus-bairro-small"
+                                  onClick={() =>
+                                    setFocusedBairro({
+                                      name: selectedBairroNormalized,
+                                      timestamp: Date.now()
+                                    })
+                                  }
+                                  title="Recentralizar e focar este bairro no mapa"
+                                  aria-label="Focar este bairro no mapa"
+                                >
+                                  <IconFocus />
+                                </button>
+                                <button
+                                  className="btn-copy-summary"
+                                  onClick={() =>
+                                    handleCopySummary(
+                                      `Bairro: ${bData.nome_exibicao}\nSituação: ${rotuloNivel(bData.nivel)}\nEscolas Cadastradas: ${bData.escolas_cadastradas}\nChamados Ativos: ${bData.chamados_ativos}\nCríticos: ${bData.criticos}\nEm atenção: ${bData.atencao}`,
+                                      'bairro'
+                                    )
+                                  }
+                                  title="Copiar resumo gerencial do bairro"
+                                  aria-label="Copiar resumo gerencial do bairro"
+                                >
+                                  <IconCopy />
+                                </button>
+                              </div>
+                              <button
+                                className="btn-close-small"
+                                onClick={() => setSelectedBairroNormalized(null)}
+                                title="Fechar detalhes do bairro"
+                                aria-label="Fechar detalhes do bairro"
+                              >
+                                <IconClose />
+                              </button>
+                            </div>
+                            <div
+                              className="bairro-card-body"
+                              style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+                            >
+                              {/* Grid de Microcards */}
+                              <div
+                                className="bairro-microcards-grid"
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '1fr 1fr',
+                                  gap: '8px'
+                                }}
+                              >
+                                <div
+                                  className="microcard"
+                                  style={{
+                                    padding: '8px 12px',
+                                    background: 'var(--surface-2, rgba(148,163,184,.08))',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: '11.5px',
+                                      textTransform: 'uppercase',
+                                      opacity: 0.7,
+                                      fontWeight: '700'
+                                    }}
+                                  >
+                                    Escolas
+                                  </span>
+                                  <span style={{ fontSize: '17px', fontWeight: '800' }}>
+                                    {bData.escolas_cadastradas}
+                                  </span>
+                                </div>
+                                <div
+                                  className="microcard"
+                                  style={{
+                                    padding: '8px 12px',
+                                    background: 'var(--surface-2, rgba(148,163,184,.08))',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: '11.5px',
+                                      textTransform: 'uppercase',
+                                      opacity: 0.7,
+                                      fontWeight: '700'
+                                    }}
+                                  >
+                                    Ativos
+                                  </span>
+                                  <span style={{ fontSize: '17px', fontWeight: '800' }}>
+                                    {bData.chamados_ativos}
+                                  </span>
+                                </div>
+                                <div
+                                  className="microcard"
+                                  style={{
+                                    padding: '8px 12px',
+                                    background: 'var(--surface-2, rgba(148,163,184,.08))',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: '11.5px',
+                                      textTransform: 'uppercase',
+                                      opacity: 0.7,
+                                      fontWeight: '700'
+                                    }}
+                                  >
+                                    Críticos
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: '17px',
+                                      fontWeight: '800',
+                                      color: bData.criticos > 0 ? 'var(--color-red)' : 'inherit'
+                                    }}
+                                  >
+                                    {bData.criticos}
+                                  </span>
+                                </div>
+                                <div
+                                  className="microcard"
+                                  style={{
+                                    padding: '8px 12px',
+                                    background: 'var(--surface-2, rgba(148,163,184,.08))',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    flexDirection: 'column'
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: '11.5px',
+                                      textTransform: 'uppercase',
+                                      opacity: 0.7,
+                                      fontWeight: '700'
+                                    }}
+                                  >
+                                    Em atenção
+                                  </span>
+                                  <span style={{ fontSize: '17px', fontWeight: '800' }}>
+                                    {bData.atencao}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Seção Principais Ofensores */}
+                              {bData.topOfensores && bData.topOfensores.length > 0 && (
+                                <div
+                                  className="bairro-ofensores-section"
+                                  style={{
+                                    borderTop: '1px solid var(--border-color)',
+                                    paddingTop: '12px'
+                                  }}
+                                >
+                                  <h5
+                                    style={{
+                                      fontSize: '11.5px',
+                                      fontWeight: '700',
+                                      marginBottom: '8px',
+                                      textTransform: 'uppercase',
+                                      color: 'var(--text-muted)'
+                                    }}
+                                  >
+                                    Principais Ofensores
+                                  </h5>
+                                  <div
+                                    style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+                                  >
+                                    {bData.topOfensores.map((o) => {
+                                      const rawTicket = tickets.find(
+                                        (t) => String(t.id_chamado) === String(o.id_chamado)
+                                      );
+                                      return (
+                                        <div
+                                          key={o.id_chamado}
+                                          className="ofensor-card"
+                                          style={{
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--border-color)',
+                                            background: 'var(--bg-app)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '2px',
+                                            transition: 'var(--transition)'
+                                          }}
+                                          onClick={() => rawTicket && openTicketEdit(rawTicket)}
+                                          title={`Editar chamado ${o.id_chamado}`}
+                                        >
+                                          <span
+                                            style={{
+                                              fontSize: '12.5px',
+                                              fontWeight: '700',
+                                              color: 'var(--text-main)'
+                                            }}
+                                          >
+                                            {o.id_chamado}
+                                          </span>
+                                          <div
+                                            style={{
+                                              fontSize: '12px',
+                                              color: 'var(--text-muted)',
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis',
+                                              whiteSpace: 'nowrap'
+                                            }}
+                                          >
+                                            {o.unidade_escolar}
+                                          </div>
+                                          <div
+                                            style={{
+                                              fontSize: '11.5px',
+                                              color: 'var(--text-light)',
+                                              fontStyle: 'italic'
+                                            }}
+                                          >
+                                            Inativo há {o.inactivityDays} dias
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Seção Lista Completa */}
+                              <div
+                                className="bairro-tickets-section"
+                                style={{
+                                  borderTop: '1px solid var(--border-color)',
+                                  paddingTop: '12px'
+                                }}
+                              >
+                                <h5
+                                  style={{
+                                    fontSize: '11.5px',
+                                    fontWeight: '700',
+                                    marginBottom: '8px',
+                                    textTransform: 'uppercase',
+                                    color: 'var(--text-muted)'
+                                  }}
+                                >
+                                  Todos os Chamados Ativos ({bData.chamados_lista.length})
+                                </h5>
+                                <div className="bairro-tickets-list">
+                                  {bData.chamados_lista.map((tk) => {
+                                    const statusNorm = tk.status_atual || '';
+                                    const isCritical =
+                                      statusNorm.startsWith('2') ||
+                                      statusNorm.startsWith('3') ||
+                                      statusNorm.startsWith('4');
+                                    const isWarning =
+                                      statusNorm.startsWith('1') && tk.prioridade === 'Crítica';
+
+                                    let accentClass = 'accent-blue';
+                                    if (isCritical) {
+                                      accentClass = 'accent-red';
+                                    } else if (isWarning) {
+                                      accentClass = 'accent-amber';
+                                    }
+
+                                    const rawTicket = tickets.find(
+                                      (t) => String(t.id_chamado) === String(tk.id_chamado)
+                                    );
+
+                                    return (
+                                      <div
+                                        key={tk.id_chamado}
+                                        className={`bairro-ticket-item ${accentClass}`}
+                                        onClick={() => openTicketEdit(rawTicket || tk)}
+                                        title={`Editar chamado ${tk.id_chamado}`}
+                                      >
+                                        <div className="bairro-ticket-meta">
+                                          <span className="bairro-ticket-code">
+                                            {tk.id_chamado}
+                                          </span>
+                                          <span
+                                            className={`badge badge-priority-${normalizePriorityClass(tk.prioridade)}`}
+                                            style={{ fontSize: '11.5px', padding: '1px 6px' }}
+                                          >
+                                            {tk.prioridade}
+                                          </span>
+                                        </div>
+                                        <div
+                                          className="bairro-ticket-school"
+                                          style={{ fontSize: '12px' }}
+                                        >
+                                          {tk.unidade_escolar}
+                                        </div>
+                                        <div
+                                          className="bairro-ticket-status"
+                                          style={{ fontSize: '11.5px' }}
+                                        >
+                                          {tk.status_atual}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                  {bData.chamados_lista.length === 0 && (
+                                    <EmptyState
+                                      iconType="ticket"
+                                      title="Nenhum chamado ativo"
+                                      description="Nenhum chamado ativo pendente neste bairro."
+                                      style={{ padding: '16px 12px' }}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })()}
                   </div>
                 </div>
 
-                {/* Info and Sync center box */}
-                <div
-                  className="sync-panel"
-                  style={{ cursor: 'pointer', margin: 0 }}
-                  onClick={() => setCurrentTab('cloud')}
-                >
-                  <div className="sync-status">
-                    <span
-                      className="sync-dot"
-                      style={{
-                        backgroundColor: cloudConnected ? 'var(--color-green)' : 'var(--color-red)',
-                        boxShadow: cloudConnected
-                          ? '0 0 8px var(--color-green)'
-                          : '0 0 8px var(--color-red)'
-                      }}
-                    />
-                    <span>{syncStatusText}</span>
+                {/* Layout Grid */}
+                <div className="dashboard-layout">
+                  {/* Left section: Charts */}
+                  <div className="dashboard-section goals-section">
+                    <div className="section-header">
+                      <h3>
+                        <IconDashboard /> Visão de Metas & Conclusões
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          color: 'var(--text-light)',
+                          fontWeight: '700',
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        Consolidado Geral
+                      </span>
+                    </div>
+
+                    <div className="dashboard-goals-split">
+                      {/* Coluna 1: Donut Chart Geral */}
+                      <div className="goals-column">{renderDashboardDonutChart()}</div>
+
+                      {/* Coluna 2: Status dos Chamados */}
+                      <div className="goals-column">
+                        <h4>Status das Demandas</h4>
+                        <div className="mini-progress-list">
+                          {(() => {
+                            const statusCounts = tickets.reduce((acc, t) => {
+                              const st = t.status_atual || 'Não especificado';
+                              acc[st] = (acc[st] || 0) + 1;
+                              return acc;
+                            }, {});
+                            const sortedStatuses = Object.entries(statusCounts).sort(
+                              (a, b) => b[1] - a[1]
+                            );
+                            return sortedStatuses.map(([status, count]) => {
+                              const pct = Math.round((count / tickets.length) * 100) || 0;
+                              const color = getStatusColor(status);
+                              return (
+                                <div key={status} className="mini-progress-item">
+                                  <div className="mini-progress-label">
+                                    <span
+                                      className="status-bullet"
+                                      style={{ backgroundColor: color }}
+                                    />
+                                    <span className="status-name" title={status}>
+                                      {status}
+                                    </span>
+                                  </div>
+                                  <div className="mini-progress-track-wrapper">
+                                    <div className="mini-progress-track">
+                                      <div
+                                        className="mini-progress-fill"
+                                        style={{
+                                          width: `${pct}%`,
+                                          backgroundColor: color
+                                        }}
+                                      />
+                                    </div>
+                                    <span className="mini-progress-value">{count}</span>
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Coluna 3: Setor Responsável */}
+                      <div className="goals-column">
+                        <h4>Responsabilidade (Último Setor)</h4>
+                        <div className="mini-progress-list">
+                          {(() => {
+                            const sectorCounts = tickets.reduce((acc, t) => {
+                              const sec = normalizeSector(
+                                t.setor_responsavel || 'Não especificado'
+                              );
+                              acc[sec] = (acc[sec] || 0) + 1;
+                              return acc;
+                            }, {});
+                            const sortedSectors = Object.entries(sectorCounts).sort(
+                              (a, b) => b[1] - a[1]
+                            );
+                            return sortedSectors.map(([sector, count]) => {
+                              const pct = Math.round((count / tickets.length) * 100) || 0;
+                              const color = getSectorColor(sector);
+                              return (
+                                <div key={sector} className="mini-progress-item">
+                                  <div className="mini-progress-label">
+                                    <span
+                                      className="sector-bullet"
+                                      style={{ backgroundColor: color }}
+                                    />
+                                    <span className="sector-name" title={sector}>
+                                      {sector}
+                                    </span>
+                                  </div>
+                                  <div className="mini-progress-track-wrapper">
+                                    <div className="mini-progress-track">
+                                      <div
+                                        className="mini-progress-fill"
+                                        style={{
+                                          width: `${pct}%`,
+                                          backgroundColor: color
+                                        }}
+                                      />
+                                    </div>
+                                    <span className="mini-progress-value">{count}</span>
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <span
-                    style={{ fontSize: '11.5px', fontWeight: '800', color: 'var(--text-light)' }}
-                  >
-                    {cloudConnected ? 'Base online ativa' : 'Configurar base online'}
-                  </span>
+
+                  {/* Right column: Action checklist, Inactivity ranking, and Sync panel */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {renderActionItems()}
+
+                    {/* Right Section: Inactivity Ranking */}
+                    <div
+                      className="dashboard-section inactivity-ranking-section"
+                      style={{ height: 'fit-content', marginBottom: 0 }}
+                    >
+                      <div className="section-header">
+                        <h3>
+                          <IconWarning /> Acompanhamento Prioritário de Demandas
+                        </h3>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: '13.5px',
+                          color: 'var(--text-muted)',
+                          marginBottom: '16px',
+                          lineHeight: '1.45',
+                          fontWeight: '500'
+                        }}
+                      >
+                        Lista das demandas em andamento ordenadas por tempo de tramitação para
+                        priorização de ações.
+                      </p>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {getDashboardStuckRanking().map((t) => {
+                          const isSevere = t.inactivityDays >= 15;
+                          return (
+                            <div
+                              key={t.id_chamado}
+                              onClick={() => openTicketEdit(t)}
+                              style={{
+                                padding: '14px 18px',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: 'var(--radius-xs)',
+                                backgroundColor: 'var(--bg-app)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                borderLeft: `4px solid ${isSevere ? 'var(--color-red)' : 'var(--color-amber)'}`,
+                                transition: 'var(--transition)'
+                              }}
+                            >
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    marginBottom: '4px'
+                                  }}
+                                >
+                                  <strong style={{ fontSize: '13.5px', color: 'var(--text-main)' }}>
+                                    {t.id_chamado}
+                                  </strong>
+                                  <span
+                                    className={`badge ${t.prioridade === 'Crítica' ? 'badge-priority-critica' : 'badge-priority-alta'}`}
+                                    style={{ fontSize: '9px', padding: '1px 5px' }}
+                                  >
+                                    {t.prioridade}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: '13px',
+                                    color: 'var(--text-muted)',
+                                    textOverflow: 'ellipsis',
+                                    overflow: 'hidden',
+                                    whiteSpace: 'nowrap',
+                                    fontWeight: '600'
+                                  }}
+                                >
+                                  {t.unidade_escolar}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right', marginLeft: '12px' }}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end'
+                                  }}
+                                >
+                                  <span
+                                    className={`sla-pulse-active ${isSevere ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
+                                  />
+                                  <span
+                                    style={{
+                                      fontSize: '13.5px',
+                                      fontWeight: '800',
+                                      color: isSevere ? 'var(--color-red)' : 'var(--color-amber)'
+                                    }}
+                                  >
+                                    {t.inactivityDays} dias
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: '11.5px',
+                                    color: 'var(--text-light)',
+                                    fontWeight: '700',
+                                    textTransform: 'uppercase',
+                                    marginTop: '2px'
+                                  }}
+                                >
+                                  sem alteração
+                                </div>
+                                {typeof t.ageDays === 'number' && t.ageDays > 0 && (
+                                  <div
+                                    style={{
+                                      fontSize: '11.5px',
+                                      color: 'var(--color-age-severe)',
+                                      fontWeight: '700',
+                                      marginTop: '3px'
+                                    }}
+                                  >
+                                    {t.ageDays} dias em aberto
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Info and Sync center box */}
+                    <div
+                      className="sync-panel"
+                      style={{ cursor: 'pointer', margin: 0 }}
+                      onClick={() => setCurrentTab('cloud')}
+                    >
+                      <div className="sync-status">
+                        <span
+                          className="sync-dot"
+                          style={{
+                            backgroundColor: cloudConnected
+                              ? 'var(--color-green)'
+                              : 'var(--color-red)',
+                            boxShadow: cloudConnected
+                              ? '0 0 8px var(--color-green)'
+                              : '0 0 8px var(--color-red)'
+                          }}
+                        />
+                        <span>{syncStatusText}</span>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '11.5px',
+                          fontWeight: '800',
+                          color: 'var(--text-light)'
+                        }}
+                      >
+                        {cloudConnected ? 'Base online ativa' : 'Configurar base online'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </>
+              </>
+            )}
+          </div>
         )}
-      </div>
-    )}
 
         {/* Tickets Tab (Lists Mirror) */}
         {currentTab === 'tickets' && (
@@ -3007,7 +3118,15 @@ export default function App() {
                 flexWrap: 'wrap'
               }}
             >
-              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  flex: 1
+                }}
+              >
                 {/* Text Search */}
                 <div className="input-search" style={{ minWidth: '220px', maxWidth: '300px' }}>
                   <IconSearch />
@@ -3078,8 +3197,10 @@ export default function App() {
                   }}
                 >
                   Exibindo{' '}
-                  <span style={{ color: 'var(--primary-active, var(--primary))' }}>{getFilteredTickets().length}</span> de{' '}
-                  <span>{tickets.length}</span> chamados
+                  <span style={{ color: 'var(--primary-active, var(--primary))' }}>
+                    {getFilteredTickets().length}
+                  </span>{' '}
+                  de <span>{tickets.length}</span> chamados
                 </div>
 
                 {/* Botão limpar filtros */}
@@ -3319,7 +3440,11 @@ export default function App() {
                             onClick={() => openTicketEdit(t)}
                             style={{ cursor: 'pointer', display: 'table-row' }}
                           >
-                            <td className="cell-num" data-label="Código" style={{ fontWeight: '800', whiteSpace: 'nowrap' }}>
+                            <td
+                              className="cell-num"
+                              data-label="Código"
+                              style={{ fontWeight: '800', whiteSpace: 'nowrap' }}
+                            >
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span>{t.id_chamado}</span>
                                 {(() => {
@@ -3372,12 +3497,25 @@ export default function App() {
                               </span>
                             </td>
                             <td data-label="Prioridade">
-                              <span className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}>
+                              <span
+                                className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}
+                              >
                                 {t.prioridade}
                               </span>
                             </td>
-                            <td className="cell-num" data-label="Modificado Em" style={{ fontWeight: '700' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }} title={hasPulse ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})` : ''}>
+                            <td
+                              className="cell-num"
+                              data-label="Modificado Em"
+                              style={{ fontWeight: '700' }}
+                            >
+                              <div
+                                style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}
+                                title={
+                                  hasPulse
+                                    ? `Sem atualização há ${days} dias (${days >= 15 ? 'Aviso Crítico/Vermelho' : 'Atenção/Âmbar'})`
+                                    : ''
+                                }
+                              >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   {hasPulse && (
                                     <span
@@ -3390,16 +3528,32 @@ export default function App() {
                                   const sla = slaLevel(t, todayRef());
                                   const age = ageLevel(t, todayRef());
                                   if (sla === 'severe') {
-                                    return <span className="lists-alert-tag alert-tag-severe">Inércia: {days} dias</span>;
+                                    return (
+                                      <span className="lists-alert-tag alert-tag-severe">
+                                        Inércia: {days} dias
+                                      </span>
+                                    );
                                   }
                                   if (sla === 'warning') {
-                                    return <span className="lists-alert-tag alert-tag-warning">Inércia: {days} dias</span>;
+                                    return (
+                                      <span className="lists-alert-tag alert-tag-warning">
+                                        Inércia: {days} dias
+                                      </span>
+                                    );
                                   }
                                   if (age === 'severe') {
-                                    return <span className="lists-alert-tag alert-tag-age-severe">Aberto +60 dias</span>;
+                                    return (
+                                      <span className="lists-alert-tag alert-tag-age-severe">
+                                        Aberto +60 dias
+                                      </span>
+                                    );
                                   }
                                   if (age === 'warning') {
-                                    return <span className="lists-alert-tag alert-tag-age-warn">Aberto +30 dias</span>;
+                                    return (
+                                      <span className="lists-alert-tag alert-tag-age-warn">
+                                        Aberto +30 dias
+                                      </span>
+                                    );
                                   }
                                   return null;
                                 })()}
@@ -3416,30 +3570,46 @@ export default function App() {
                                   setExpandedTicketId(isExpanded ? null : t.id_chamado);
                                 }}
                               >
-                                {isExpanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+                                {isExpanded ? (
+                                  <IconChevronDown size={18} />
+                                ) : (
+                                  <IconChevronRight size={18} />
+                                )}
                               </button>
                             </td>
                           </tr>
                           {isExpanded && (
-                            <tr className="detail-row" onClick={(e) => e.stopPropagation()} style={{ display: 'table-row' }}>
+                            <tr
+                              className="detail-row"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ display: 'table-row' }}
+                            >
                               <td colSpan="6" style={{ padding: '0', border: 'none' }}>
                                 <div className="detail-grid">
                                   <div className="detail-item">
                                     <span className="detail-item-label">Tipo Demanda</span>
-                                    <span className="detail-item-value">{t.tipo_demanda || '-'}</span>
+                                    <span className="detail-item-value">
+                                      {t.tipo_demanda || '-'}
+                                    </span>
                                   </div>
                                   <div className="detail-item">
                                     <span className="detail-item-label">Local</span>
-                                    <span className="detail-item-value">{t.local_demanda || '-'}</span>
+                                    <span className="detail-item-value">
+                                      {t.local_demanda || '-'}
+                                    </span>
                                   </div>
                                   <div className="detail-item">
                                     <span className="detail-item-label">Responsável</span>
-                                    <span className="detail-item-value">{t.setor_responsavel || '-'}</span>
+                                    <span className="detail-item-value">
+                                      {t.setor_responsavel || '-'}
+                                    </span>
                                   </div>
                                   <div className="detail-item">
                                     <span className="detail-item-label">Aptidão</span>
                                     <span className="detail-item-value">
-                                      <span className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}>
+                                      <span
+                                        className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}
+                                      >
                                         {t.resultado_aptidao || '-'}
                                       </span>
                                     </span>
@@ -3498,11 +3668,7 @@ export default function App() {
                             (a) => a.id_chamado === t.id_chamado
                           ).length;
                           if (count > 0) {
-                            return (
-                              <span className="attachment-badge-mobile">
-                                📎 {count}
-                              </span>
-                            );
+                            return <span className="attachment-badge-mobile">📎 {count}</span>;
                           }
                           return null;
                         })()}
@@ -3513,12 +3679,16 @@ export default function App() {
                     </div>
                     <div className="card-school-name">{t.unidade_escolar}</div>
                     <div className="card-meta-row">
-                      <span className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}>
+                      <span
+                        className={`badge badge-priority-${normalizePriorityClass(t.prioridade)}`}
+                      >
                         {t.prioridade}
                       </span>
                       <div className="card-date-info">
                         {hasPulse && (
-                          <span className={`sla-pulse-active ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`} />
+                          <span
+                            className={`sla-pulse-active ${days >= 15 ? 'sla-pulse-red' : 'sla-pulse-amber'}`}
+                          />
                         )}
                         <span>{formatDateBrazilian(t.modificado_em)}</span>
                       </div>
@@ -3528,16 +3698,32 @@ export default function App() {
                       const sla = slaLevel(t, todayRef());
                       const age = ageLevel(t, todayRef());
                       if (sla === 'severe') {
-                        return <div className="card-alert-banner alert-tag-severe">Inércia: {days} dias</div>;
+                        return (
+                          <div className="card-alert-banner alert-tag-severe">
+                            Inércia: {days} dias
+                          </div>
+                        );
                       }
                       if (sla === 'warning') {
-                        return <div className="card-alert-banner alert-tag-warning">Inércia: {days} dias</div>;
+                        return (
+                          <div className="card-alert-banner alert-tag-warning">
+                            Inércia: {days} dias
+                          </div>
+                        );
                       }
                       if (age === 'severe') {
-                        return <div className="card-alert-banner alert-tag-age-severe">Aberto +60 dias</div>;
+                        return (
+                          <div className="card-alert-banner alert-tag-age-severe">
+                            Aberto +60 dias
+                          </div>
+                        );
                       }
                       if (age === 'warning') {
-                        return <div className="card-alert-banner alert-tag-age-warn">Aberto +30 dias</div>;
+                        return (
+                          <div className="card-alert-banner alert-tag-age-warn">
+                            Aberto +30 dias
+                          </div>
+                        );
                       }
                       return null;
                     })()}
@@ -3553,7 +3739,14 @@ export default function App() {
                         }}
                       >
                         {isExpanded ? 'Ocultar detalhes' : 'Ver detalhes'}
-                        <span style={{ marginLeft: '4px', display: 'inline-flex', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                        <span
+                          style={{
+                            marginLeft: '4px',
+                            display: 'inline-flex',
+                            transform: isExpanded ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 0.2s'
+                          }}
+                        >
                           ▾
                         </span>
                       </button>
@@ -3577,7 +3770,9 @@ export default function App() {
                           <div className="detail-item">
                             <span className="detail-item-label">Aptidão</span>
                             <span className="detail-item-value">
-                              <span className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}>
+                              <span
+                                className={`badge ${t.resultado_aptidao === 'Apta' ? 'badge-valid-sim' : t.resultado_aptidao === 'Pendente' ? 'badge-valid-pendente' : 'badge-valid-nao'}`}
+                              >
                                 {t.resultado_aptidao || '-'}
                               </span>
                             </span>
@@ -3963,7 +4158,10 @@ export default function App() {
                       </div>
 
                       {/* Cabeçalho do Dossiê */}
-                      <div className="dossier-hero dashboard-section dossier-header-section" style={{ padding: '24px' }}>
+                      <div
+                        className="dossier-hero dashboard-section dossier-header-section"
+                        style={{ padding: '24px' }}
+                      >
                         <div
                           style={{
                             display: 'flex',
@@ -3974,12 +4172,8 @@ export default function App() {
                           }}
                         >
                           <div style={{ flex: 1, minWidth: '250px' }}>
-                            <span className="section-eyebrow">
-                              Ficha Técnica Consolidada
-                            </span>
-                            <h2 className="dossier-hero-name">
-                              {selectedSchool.unidade_escolar}
-                            </h2>
+                            <span className="section-eyebrow">Ficha Técnica Consolidada</span>
+                            <h2 className="dossier-hero-name">{selectedSchool.unidade_escolar}</h2>
                             <div className="dossier-hero-meta">
                               <span>
                                 Designação: <strong>{selectedSchool.designacao}</strong>
@@ -4037,7 +4231,8 @@ export default function App() {
                                   Situação Crítica
                                 </strong>
                                 <span style={{ fontSize: '13px', opacity: 0.9 }}>
-                                  {dossier.reason || 'Unidade possui chamados críticos em aberto ou baixa cobertura de climatização. Exige intervenção imediata.'}
+                                  {dossier.reason ||
+                                    'Unidade possui chamados críticos em aberto ou baixa cobertura de climatização. Exige intervenção imediata.'}
                                 </span>
                               </div>
                             </div>
@@ -4059,7 +4254,8 @@ export default function App() {
                                   Em Atenção
                                 </strong>
                                 <span style={{ fontSize: '13px', opacity: 0.9 }}>
-                                  {dossier.reason || 'Dados pendentes de validação ou demandas ativas de menor severidade em andamento.'}
+                                  {dossier.reason ||
+                                    'Dados pendentes de validação ou demandas ativas de menor severidade em andamento.'}
                                 </span>
                               </div>
                             </div>
@@ -4081,7 +4277,8 @@ export default function App() {
                                   Situação Regular
                                 </strong>
                                 <span style={{ fontSize: '13px', opacity: 0.9 }}>
-                                  {dossier.reason || 'Infraestrutura validada, dados confirmados e sem chamados em aberto.'}
+                                  {dossier.reason ||
+                                    'Infraestrutura validada, dados confirmados e sem chamados em aberto.'}
                                 </span>
                               </div>
                             </div>
@@ -4105,7 +4302,9 @@ export default function App() {
                         >
                           <div className="dossier-stat-card">
                             <span>Salas de Aula</span>
-                            <div className="stat-value">{selectedSchool.qtd_salas_de_aula || '0'}</div>
+                            <div className="stat-value">
+                              {selectedSchool.qtd_salas_de_aula || '0'}
+                            </div>
                           </div>
                           <div className="dossier-stat-card">
                             <span>Salas Climatizadas</span>
@@ -4284,7 +4483,9 @@ export default function App() {
                               fontWeight: '500'
                             }}
                           >
-                            * Valor meramente referencial para triagem gerencial. Não substitui orçamento, pesquisa de preços, projeto elétrico ou processo de contratação.
+                            * Valor meramente referencial para triagem gerencial. Não substitui
+                            orçamento, pesquisa de preços, projeto elétrico ou processo de
+                            contratação.
                           </span>
                         </div>
 
@@ -4324,7 +4525,9 @@ export default function App() {
                           {dossier.oldestActiveTicket && (
                             <button
                               className="btn-email-shortcut no-print"
-                              onClick={() => goToCommunicationForTicket(dossier.oldestActiveTicket, 'school')}
+                              onClick={() =>
+                                goToCommunicationForTicket(dossier.oldestActiveTicket, 'school')
+                              }
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -4589,41 +4792,19 @@ export default function App() {
                               </div>
 
                               <div className="no-print" style={{ display: 'flex', gap: '6px' }}>
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary"
+                                <span
                                   style={{
-                                    padding: '6px 10px',
-                                    fontSize: '12.5px',
-                                    fontWeight: '700'
+                                    fontSize: '11px',
+                                    fontWeight: '800',
+                                    padding: '4px 8px',
+                                    borderRadius: '99px',
+                                    color: 'var(--color-orange)',
+                                    border: '1px solid var(--border-color)'
                                   }}
-                                  onClick={() => {
-                                    const { data } = supabaseClient.storage
-                                      .from(anexo.bucket)
-                                      .getPublicUrl(anexo.storage_path);
-                                    window.open(data.publicUrl, '_blank', 'noopener,noreferrer');
-                                  }}
+                                  title="Arquivo legado preservado; Storage será reativado em fase futura."
                                 >
-                                  Abrir
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary"
-                                  style={{
-                                    padding: '6px 10px',
-                                    fontSize: '12.5px',
-                                    fontWeight: '700'
-                                  }}
-                                  onClick={() =>
-                                    window.open(
-                                      getAttachmentDownloadUrl(supabaseClient, anexo),
-                                      '_blank',
-                                      'noopener,noreferrer'
-                                    )
-                                  }
-                                >
-                                  Baixar
-                                </button>
+                                  Arquivo legado · acesso adiado
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -4651,7 +4832,10 @@ export default function App() {
                           }}
                         >
                           <h3 style={{ margin: 0 }}>Linha do Tempo e Nota Histórica</h3>
-                          <div className="timeline-filters no-print" style={{ display: 'flex', gap: '6px' }}>
+                          <div
+                            className="timeline-filters no-print"
+                            style={{ display: 'flex', gap: '6px' }}
+                          >
                             {[
                               { id: 'all', label: 'Todos' },
                               { id: 'notes', label: 'Notas Técnicas' },
@@ -4667,8 +4851,14 @@ export default function App() {
                                   fontWeight: '700',
                                   borderRadius: '20px',
                                   border: '1px solid var(--border-color)',
-                                  backgroundColor: timelineFilter === opt.id ? 'var(--primary)' : 'var(--surface-2)',
-                                  color: timelineFilter === opt.id ? 'var(--text-on-primary)' : 'var(--text-main)',
+                                  backgroundColor:
+                                    timelineFilter === opt.id
+                                      ? 'var(--primary)'
+                                      : 'var(--surface-2)',
+                                  color:
+                                    timelineFilter === opt.id
+                                      ? 'var(--text-on-primary)'
+                                      : 'var(--text-main)',
                                   cursor: 'pointer',
                                   transition: 'var(--transition)'
                                 }}
@@ -4738,7 +4928,10 @@ export default function App() {
 
                             const filteredEvents = integrated.filter((ev) => {
                               if (timelineFilter === 'notes') {
-                                return ev.tipo === 'comentario_local' || (ev.tipo === 'historico_db' && ev.autor !== 'Sistema');
+                                return (
+                                  ev.tipo === 'comentario_local' ||
+                                  (ev.tipo === 'historico_db' && ev.autor !== 'Sistema')
+                                );
                               }
                               if (timelineFilter === 'system') {
                                 return ev.tipo === 'historico_db' && ev.autor === 'Sistema';
@@ -4753,10 +4946,10 @@ export default function App() {
                                   title="Sem registros no histórico"
                                   description={
                                     timelineFilter === 'notes'
-                                      ? "Nenhuma nota técnica registrada para esta unidade."
+                                      ? 'Nenhuma nota técnica registrada para esta unidade.'
                                       : timelineFilter === 'system'
-                                        ? "Nenhum histórico do sistema registrado para esta unidade."
-                                        : "Nenhum marco de evento registrado no histórico para esta unidade."
+                                        ? 'Nenhum histórico do sistema registrado para esta unidade.'
+                                        : 'Nenhum marco de evento registrado no histórico para esta unidade.'
                                   }
                                 />
                               );
@@ -5053,7 +5246,7 @@ export default function App() {
               </div>
             ) : (
               <form noValidate onSubmit={handleRegisterNewTicket}>
-                {!supabaseClient && (
+                {!persistence && (
                   <div
                     className="local-warning-banner"
                     style={{
@@ -5072,7 +5265,7 @@ export default function App() {
                   >
                     <IconWarning />
                     <div>
-                      <strong>Atenção: Modo Local Ativo (Sem Conexão Supabase)</strong>
+                      <strong>Atenção: Modo Local Ativo (Sem Conexão Firestore)</strong>
                       <p style={{ margin: '4px 0 0 0', opacity: 0.85, fontSize: '0.82rem' }}>
                         Qualquer chamado criado ou alterado agora ficará salvo apenas na memória
                         temporária do seu navegador e será <strong>totalmente perdido</strong> ao
@@ -5310,7 +5503,9 @@ export default function App() {
                     >
                       <option value={STATUSES.RECEBIDO}>{STATUSES.RECEBIDO}</option>
                       <option value={STATUSES.VISTORIA}>{STATUSES.VISTORIA}</option>
-                      <option value={STATUSES.AGUARDANDO_ORCAMENTO}>{STATUSES.AGUARDANDO_ORCAMENTO}</option>
+                      <option value={STATUSES.AGUARDANDO_ORCAMENTO}>
+                        {STATUSES.AGUARDANDO_ORCAMENTO}
+                      </option>
                       <option value={STATUSES.SUSPENSO}>{STATUSES.SUSPENSO}</option>
                     </select>
                   </div>
@@ -5331,7 +5526,9 @@ export default function App() {
                       <option value={DOMAIN_SECTORS.CPS}>{DOMAIN_SECTORS.CPS}</option>
                       <option value={DOMAIN_SECTORS.GIN}>{DOMAIN_SECTORS.GIN}</option>
                       <option value={DOMAIN_SECTORS.CTO}>{DOMAIN_SECTORS.CTO}</option>
-                      <option value={DOMAIN_SECTORS.UNIDADE_ESCOLAR}>{DOMAIN_SECTORS.UNIDADE_ESCOLAR}</option>
+                      <option value={DOMAIN_SECTORS.UNIDADE_ESCOLAR}>
+                        {DOMAIN_SECTORS.UNIDADE_ESCOLAR}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -5632,8 +5829,8 @@ export default function App() {
                     fontWeight: '500'
                   }}
                 >
-                  Acompanhe a situação da base usada pelo sistema. As ações técnicas ficam separadas
-                  para evitar uso acidental.
+                  O sistema usa Cloud Firestore quando as variáveis Firebase estão configuradas no
+                  ambiente de implantação. Não há credenciais digitadas ou armazenadas no navegador.
                 </p>
               </div>
             </div>
@@ -5646,189 +5843,58 @@ export default function App() {
                   {cloudConnected ? <IconCloud /> : <IconWarning />}
                 </div>
                 <div>
-                  <strong>
-                    {cloudConnected ? 'Base online ativa' : 'Base online não conectada'}
-                  </strong>
+                  <strong>{cloudConnected ? 'Cloud Firestore ativo' : 'Modo local ativo'}</strong>
                   <p>
                     {cloudConnected
-                      ? 'Chamados, alterações e históricos estão usando a base online configurada para o site.'
-                      : 'O sistema está usando a base local carregada junto com a aplicação neste navegador.'}
+                      ? 'Chamados, alterações, modelos e histórico usam a base Firestore configurada para este deploy.'
+                      : firebaseConfigured
+                        ? 'A configuração Firebase existe, mas a conexão online não está ativa nesta sessão.'
+                        : 'As variáveis VITE_FIREBASE_* ainda não foram configuradas neste ambiente. O db.json permanece como fallback local.'}
                   </p>
                   <span>Status: {syncStatusText}</span>
                 </div>
               </div>
 
-              {!cloudConnected ? (
-                <div>
-                  <button className="btn btn-secondary" onClick={() => setCurrentTab('tickets')}>
-                    <IconList />
-                    <span>Ver Lista de Chamados</span>
+              <div className="admin-primary-actions" style={{ marginTop: '18px' }}>
+                <button className="btn btn-primary" onClick={() => setCurrentTab('tickets')}>
+                  <IconList />
+                  <span>Ver Lista de Chamados</span>
+                </button>
+                {!cloudConnected && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleConnectCloud}
+                    disabled={!firebaseConfigured || cloudLoading}
+                  >
+                    {cloudLoading ? <IconRefresh /> : <IconCloud />}
+                    <span>{cloudLoading ? 'Conectando...' : 'Tentar conexão Firestore'}</span>
                   </button>
+                )}
+              </div>
 
-                  <details className="admin-advanced">
-                    <summary>Configuração técnica da base online</summary>
-                    <p className="admin-warning">
-                      Use esta área somente durante implantação ou manutenção. Usuários da rotina
-                      diária não precisam preencher URL, chave ou SQL.
-                    </p>
-
-                    <form onSubmit={handleConnectCloud} className="admin-technical-form">
-                      <div className="form-group">
-                        <label className="form-label">Supabase Project URL *</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Ex: https://xxxxxxxxx.supabase.co"
-                          required
-                          value={supabaseUrl}
-                          onChange={(e) => setSupabaseUrl(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">
-                          Supabase Project API Key (Anon / Public) *
-                        </label>
-                        <input
-                          type="password"
-                          className="form-control"
-                          placeholder="Digite a chave anon do projeto Supabase..."
-                          required
-                          value={supabaseKey}
-                          onChange={(e) => setSupabaseKey(e.target.value)}
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="btn btn-primary"
-                        style={{ alignSelf: 'flex-start', marginTop: '8px' }}
-                        disabled={cloudLoading}
-                      >
-                        {cloudLoading ? <IconRefresh /> : <IconCloud />}
-                        <span>{cloudLoading ? 'Conectando...' : 'Conectar base online'}</span>
-                      </button>
-                    </form>
-
-                    <details className="admin-sql-details">
-                      <summary>Ver instruções SQL de configuração</summary>
-                      <ol>
-                        <li>
-                          Use o SQL Editor do Supabase apenas na configuração inicial ou em
-                          manutenção controlada.
-                        </li>
-                        <li>Confirme o projeto correto antes de executar qualquer comando.</li>
-                        <li>Não cole chaves privadas ou service role no front-end.</li>
-                      </ol>
-                      <pre>
-                        {`-- 1. Tabela de Escolas
-CREATE TABLE IF NOT EXISTS escolas (
-  designacao TEXT PRIMARY KEY,
-  unidade_escolar TEXT,
-  sici TEXT,
-  endereco TEXT,
-  bairro TEXT,
-  confirmado_pela_unidade TEXT,
-  validado_pela_gop TEXT,
-  qtd_salas_de_aula INTEGER,
-  aparelhos_em_sala INTEGER,
-  aparelhos_total INTEGER,
-  salas_sem_aparelho INTEGER,
-  necessidade_aparelhos INTEGER,
-  acao_sugerida TEXT
-);
-
--- 2. Tabela de Chamados
-CREATE TABLE IF NOT EXISTS chamados (
-  id_chamado TEXT PRIMARY KEY,
-  unidade_escolar TEXT,
-  designacao TEXT REFERENCES escolas(designacao),
-  data_solicitacao TIMESTAMPTZ,
-  local_demanda TEXT,
-  tipo_demanda TEXT,
-  tipo_aparelho TEXT DEFAULT 'Split',
-  btu_existente TEXT,
-  btu_pretendido TEXT,
-  status_atual TEXT,
-  setor_responsavel TEXT,
-  proxima_providencia TEXT,
-  ultima_movimentacao TEXT,
-  informacao_validada TEXT,
-  prioridade TEXT,
-  comunicacao_cto TEXT,
-  observacoes TEXT,
-  resultado_aptidao TEXT,
-  criado_em TIMESTAMPTZ,
-  modificado_em TIMESTAMPTZ
-);
-
--- 3. Tabela de Histórico
-CREATE TABLE IF NOT EXISTS historico (
-  id_evento TEXT PRIMARY KEY,
-  data TIMESTAMPTZ,
-  id_chamado TEXT REFERENCES chamados(id_chamado),
-  designacao TEXT REFERENCES escolas(designacao),
-  unidade_escolar TEXT,
-  marco_relevante TEXT,
-  setor TEXT,
-  responsavel_registro TEXT,
-  observacao TEXT
-);
-
--- 4. Tabela de Anexos
-CREATE TABLE IF NOT EXISTS anexos_chamado (
-  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  id_chamado TEXT REFERENCES chamados(id_chamado) ON DELETE CASCADE,
-  designacao TEXT REFERENCES escolas(designacao) ON DELETE CASCADE,
-  unidade_escolar TEXT,
-  bucket TEXT DEFAULT 'gop-anexos',
-  storage_path TEXT UNIQUE,
-  nome_original TEXT,
-  mime_type TEXT,
-  tamanho_bytes BIGINT,
-  descricao TEXT,
-  criado_em TIMESTAMPTZ DEFAULT NOW()
-);`}
-                      </pre>
-                    </details>
-                  </details>
+              <details className="admin-advanced" style={{ marginTop: '18px' }}>
+                <summary>Informações técnicas da migração</summary>
+                <div className="admin-warning">
+                  <p>
+                    <strong>Banco:</strong> Cloud Firestore · plano alvo: Spark.
+                  </p>
+                  <p>
+                    <strong>Anexos:</strong> Storage está adiado. Metadados legados continuam
+                    catalogados, sem upload/download nesta fase.
+                  </p>
+                  <p>
+                    <strong>Configuração:</strong> VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN,
+                    VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID e
+                    VITE_FIREBASE_MESSAGING_SENDER_ID.
+                  </p>
                 </div>
-              ) : (
-                <div>
-                  <div className="admin-primary-actions">
-                    <button className="btn btn-primary" onClick={() => setCurrentTab('tickets')}>
-                      <IconList />
-                      <span>Ver Lista de Chamados</span>
-                    </button>
-                  </div>
-
-                  <details className="admin-advanced">
-                    <summary>Ações técnicas avançadas</summary>
-                    <p className="admin-warning">
-                      Estas ações podem afetar a base usada pelo site. Use apenas em manutenção
-                      controlada, quando houver certeza sobre a base correta.
-                    </p>
-                    <div className="admin-advanced-actions">
-                      <button
-                        className="btn btn-secondary"
-                        onClick={handleSyncLocalToCloud}
-                        disabled={true}
-                        title="Sincronização local para nuvem desativada por segurança."
-                      >
-                        <IconRefresh />
-                        <span>Enviar base local (Desativado)</span>
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-danger"
-                        onClick={handleDisconnectCloud}
-                      >
-                        <IconClose />
-                        <span>Desconectar base online</span>
-                      </button>
-                    </div>
-                  </details>
-                </div>
-              )}
+                {cloudConnected && (
+                  <button className="btn btn-secondary" onClick={handleDisconnectCloud}>
+                    <IconClose />
+                    <span>Usar modo local nesta sessão</span>
+                  </button>
+                )}
+              </details>
             </div>
           </div>
         )}
@@ -5842,7 +5908,13 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
             if (!isSavingTicketPending && !isSavingHistoryPending) setShowEditModal(false);
           }}
         >
-          <div className="modal-container" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+          >
             <div className="modal-header">
               <div>
                 <h2
@@ -5913,7 +5985,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                     <IconDatabase /> Atualização Administrativa da GOP
                   </h4>
 
-                  {!supabaseClient && (
+                  {!persistence && (
                     <div
                       className="local-warning-banner"
                       style={{
@@ -5933,7 +6005,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                       <IconWarning />
                       <div>
                         <strong>Edição Bloqueada — Modo Local Ativo.</strong> Conecte a base online
-                        (Supabase) para editar e salvar alterações permanentes.
+                        (Firestore) para editar e salvar alterações permanentes.
                       </div>
                     </div>
                   )}
@@ -5950,7 +6022,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, status_atual: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       >
                         {STATUS_LIST.map((status) => (
                           <option key={status} value={status}>
@@ -5971,7 +6043,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, setor_responsavel: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       >
                         {SECTOR_LIST.map((sector) => (
                           <option key={sector} value={sector}>
@@ -5992,7 +6064,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, prioridade: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       >
                         {PRIORITY_LIST.map((priority) => (
                           <option key={priority} value={priority}>
@@ -6018,7 +6090,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                             proxima_providencia: e.target.value
                           })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       />
                     </div>
 
@@ -6037,7 +6109,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                             ultima_movimentacao: e.target.value
                           })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       />
                     </div>
 
@@ -6056,7 +6128,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                               comunicacao_cto: e.target.checked ? 'Sim' : 'Não'
                             })
                           }
-                          disabled={!supabaseClient || isSavingTicketPending}
+                          disabled={!persistence || isSavingTicketPending}
                         />
                         <label
                           htmlFor="c_cto"
@@ -6086,7 +6158,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                               informacao_validada: e.target.value
                             })
                           }
-                          disabled={!supabaseClient || isSavingTicketPending}
+                          disabled={!persistence || isSavingTicketPending}
                         >
                           <option value="Sim">Validada</option>
                           <option value="Pendente de Vistoria">Pendente de Vistoria</option>
@@ -6109,7 +6181,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           setEditingTicket({ ...editingTicket, observacoes: e.target.value })
                         }
                         style={{ fontSize: '13px', lineHeight: '1.5', padding: '12px' }}
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       />
                     </div>
                   </div>
@@ -6166,7 +6238,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, local_demanda: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       />
                     </div>
 
@@ -6191,7 +6263,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, tipo_demanda: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       >
                         <option value="Substituição/Instalação de Aparelho">
                           Substituição/Instalação de Aparelho
@@ -6228,7 +6300,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           onChange={(e) =>
                             setEditingTicket({ ...editingTicket, tipo_aparelho: e.target.value })
                           }
-                          disabled={!supabaseClient || isSavingTicketPending}
+                          disabled={!persistence || isSavingTicketPending}
                         >
                           <option value="Split">Split</option>
                           <option value="Janela">Janela</option>
@@ -6260,7 +6332,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           onChange={(e) =>
                             setEditingTicket({ ...editingTicket, btu_existente: e.target.value })
                           }
-                          disabled={!supabaseClient || isSavingTicketPending}
+                          disabled={!persistence || isSavingTicketPending}
                         />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
@@ -6286,7 +6358,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                           onChange={(e) =>
                             setEditingTicket({ ...editingTicket, btu_pretendido: e.target.value })
                           }
-                          disabled={!supabaseClient || isSavingTicketPending}
+                          disabled={!persistence || isSavingTicketPending}
                         />
                       </div>
                     </div>
@@ -6312,7 +6384,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                         onChange={(e) =>
                           setEditingTicket({ ...editingTicket, resultado_aptidao: e.target.value })
                         }
-                        disabled={!supabaseClient || isSavingTicketPending}
+                        disabled={!persistence || isSavingTicketPending}
                       >
                         <option value="Pendente">Pendente</option>
                         <option value="Apta">Apta</option>
@@ -6358,7 +6430,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                     </div>
                   </div>
 
-                  {/* Seção de Anexos do Chamado */}
+                  {/* Anexos: metadados legados preservados; Storage adiado na fase Spark. */}
                   <h4
                     style={{
                       fontSize: '13px',
@@ -6368,10 +6440,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                       borderBottom: '1px solid var(--border-color)',
                       paddingBottom: '6px',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.3px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
+                      letterSpacing: '0.3px'
                     }}
                   >
                     📎 Documentos do chamado ({ticketAttachments.length})
@@ -6382,78 +6451,22 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                       borderRadius: 'var(--radius-xs)',
                       backgroundColor: 'var(--bg-app)',
                       border: '1px solid var(--border-color)',
-                      marginBottom: '20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px'
+                      marginBottom: '20px'
                     }}
                   >
                     <div
                       style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: '12px',
-                        flexWrap: 'wrap'
+                        fontSize: '12px',
+                        color: 'var(--color-orange)',
+                        fontWeight: '700',
+                        marginBottom: ticketAttachments.length ? '12px' : 0
                       }}
                     >
-                      <span
-                        style={{
-                          fontSize: '12.5px',
-                          color: 'var(--text-light)',
-                          fontWeight: '500'
-                        }}
-                      >
-                        Laudos técnicos, termos ou fotos da vistoria.
-                      </span>
-                      {supabaseClient ? (
-                        <>
-                          <input
-                            id="ticket-attachment"
-                            type="file"
-                            accept="application/pdf,image/png,image/jpeg,image/webp"
-                            onChange={handleUploadTicketAttachment}
-                            style={{ display: 'none' }}
-                            disabled={isAttachmentPending}
-                          />
-                          <label
-                            htmlFor="ticket-attachment"
-                            className={`btn ${isAttachmentPending ? 'btn-secondary' : 'btn-primary'}`}
-                            style={{
-                              fontSize: '12.5px',
-                              padding: '6px 12px',
-                              cursor: isAttachmentPending ? 'not-allowed' : 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontWeight: '700',
-                              margin: 0
-                            }}
-                          >
-                            {isAttachmentPending ? 'Enviando...' : '📎 Anexar documento'}
-                          </label>
-                        </>
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: '12px',
-                            color: 'var(--color-orange)',
-                            fontWeight: '700'
-                          }}
-                        >
-                          ⚠️ Conecte ao Supabase para anexar
-                        </span>
-                      )}
+                      Upload, abertura, download e exclusão estão temporariamente indisponíveis na
+                      fase Firestore Spark. Os metadados existentes foram preservados para migração
+                      futura do Storage.
                     </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                        marginTop: '4px'
-                      }}
-                    >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {ticketAttachments.map((anexo) => (
                         <div
                           key={anexo.id}
@@ -6461,101 +6474,47 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
+                            gap: '12px',
                             padding: '10px 12px',
                             borderRadius: 'var(--radius-xs)',
                             border: '1px solid var(--border-color)',
-                            backgroundColor: 'var(--bg-card)',
-                            transition: 'border-color 0.2s'
+                            backgroundColor: 'var(--bg-card)'
                           }}
-                          className="hover-trigger"
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '18px' }}>
-                              {anexo.mime_type?.includes('pdf') ? '📄' : '🖼️'}
-                            </span>
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: '13px',
-                                  fontWeight: '700',
-                                  color: 'var(--text-main)',
-                                  maxWidth: '180px',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {anexo.nome_original}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: '11.5px',
-                                  color: 'var(--text-muted)',
-                                  marginTop: '2px'
-                                }}
-                              >
-                                {(anexo.tamanho_bytes / 1024).toFixed(1)} KB ·{' '}
-                                {formatDateBrazilian(anexo.criado_em)}
-                              </div>
+                          <div>
+                            <div
+                              style={{
+                                fontSize: '13px',
+                                fontWeight: '700',
+                                color: 'var(--text-main)'
+                              }}
+                            >
+                              {anexo.nome_original}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '11.5px',
+                                color: 'var(--text-muted)',
+                                marginTop: '2px'
+                              }}
+                            >
+                              {anexo.tamanho_bytes
+                                ? `${(anexo.tamanho_bytes / 1024).toFixed(1)} KB · `
+                                : ''}
+                              {formatDateBrazilian(anexo.criado_em)}
                             </div>
                           </div>
-
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              style={{ padding: '4px 10px', fontSize: '12px', fontWeight: '700' }}
-                              onClick={() =>
-                                window.open(
-                                  getAttachmentPublicUrl(supabaseClient, anexo),
-                                  '_blank',
-                                  'noopener,noreferrer'
-                                )
-                              }
-                            >
-                              Abrir
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              style={{ padding: '4px 10px', fontSize: '12px', fontWeight: '700' }}
-                              onClick={() =>
-                                window.open(
-                                  getAttachmentDownloadUrl(supabaseClient, anexo),
-                                  '_blank',
-                                  'noopener,noreferrer'
-                                )
-                              }
-                            >
-                              Baixar
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '12px',
-                                color: 'var(--color-red, #ef4444)',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}
-                              onClick={() => handleDeleteTicketAttachment(anexo)}
-                            >
-                              ✕
-                            </button>
-                          </div>
+                          <span
+                            style={{
+                              fontSize: '10.5px',
+                              fontWeight: '800',
+                              color: 'var(--color-orange)'
+                            }}
+                          >
+                            LEGADO
+                          </span>
                         </div>
                       ))}
-                      {ticketAttachments.length === 0 && (
-                        <EmptyState
-                          iconType="attachment"
-                          title="Nenhum documento vinculado ainda"
-                          description="Anexe laudos, fotos ou PDFs para consolidar o histórico da demanda."
-                        />
-                      )}
                     </div>
                   </div>
 
@@ -6649,7 +6608,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                     )}
                   </div>
 
-                  {supabaseClient && (
+                  {persistence && (
                     <div
                       style={{
                         marginTop: '16px',
@@ -6735,7 +6694,7 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                 <IconMail />
                 <span>Minutar E-mail</span>
               </button>
-              {!supabaseClient && (
+              {!persistence && (
                 <div
                   style={{
                     color: 'hsl(38, 92%, 50%)',
@@ -6769,9 +6728,9 @@ CREATE TABLE IF NOT EXISTS anexos_chamado (
                 type="button"
                 className="btn btn-primary"
                 onClick={saveEditedTicket}
-                disabled={!supabaseClient || isSavingTicketPending || isSavingHistoryPending}
+                disabled={!persistence || isSavingTicketPending || isSavingHistoryPending}
                 style={
-                  !supabaseClient || isSavingTicketPending || isSavingHistoryPending
+                  !persistence || isSavingTicketPending || isSavingHistoryPending
                     ? { opacity: 0.5, cursor: 'not-allowed' }
                     : {}
                 }
