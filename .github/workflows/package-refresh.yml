@@ -39,7 +39,7 @@ jobs:
         run: node .github/scripts/release-hardening.mjs
 
       - name: Format changed files
-        run: npx prettier --write src/index.css vite.config.js package.json .github/workflows/ci.yml
+        run: npx prettier --write src/index.css vite.config.js package.json
 
       - name: Verify security audit
         run: npm audit --audit-level=high
@@ -83,7 +83,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json vite.config.js .env.example .github/workflows/ci.yml src/index.css e2e
+          git restore .github/workflows/ci.yml
+          git add package.json package-lock.json vite.config.js .env.example src/index.css e2e
           if git diff --cached --quiet; then
             echo "No release hardening changes to commit."
           else
