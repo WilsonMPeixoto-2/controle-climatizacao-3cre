@@ -39,7 +39,7 @@ jobs:
         run: node .github/scripts/release-hardening.mjs
 
       - name: Format changed files
-        run: npx prettier --write src/index.css vite.config.js package.json .env.example .github/workflows/ci.yml
+        run: npx prettier --write src/index.css vite.config.js package.json .github/workflows/ci.yml
 
       - name: Verify security audit
         run: npm audit --audit-level=high
