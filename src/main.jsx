@@ -20,13 +20,16 @@ import './styles/dossier.css';
 import './styles/print-executive.css';
 
 import App from './App.jsx';
+import ClimateSurveyPage from './components/ClimateSurveyPage.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
+const surveyDesignation = new URLSearchParams(window.location.search).get('levantamento');
+const RootApplication = surveyDesignation ? ClimateSurveyPage : App;
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <RootApplication />
     </ErrorBoundary>
   </StrictMode>
 );
