@@ -42,9 +42,9 @@ write(
 
 const cssPath = 'src/index.css';
 let css = read(cssPath);
-const marker = '/* Release 2026-08: contraste WCAG do tema claro */';
+const marker = '/* Release 2026-08: tokens semânticos de contraste WCAG */';
 if (!css.includes(marker)) {
-  css += `\n\n${marker}\nhtml:not(.dark-theme) {\n  --primary-readable: hsl(201, 95%, 26%);\n  --text-light-readable: hsl(215, 22%, 31%);\n}\n\nhtml:not(.dark-theme) .sidebar-brand-text span,\nhtml:not(.dark-theme) .summary-badge-editorial,\nhtml:not(.dark-theme) .priority-ticket-link,\nhtml:not(.dark-theme) .btn-secondary,\nhtml:not(.dark-theme) .theme-toggle-header,\nhtml:not(.dark-theme) .sidebar-footer [style*='var(--primary)'] {\n  color: var(--primary-readable) !important;\n}\n\nhtml:not(.dark-theme) .sidebar-footer {\n  color: var(--text-light-readable);\n}\n`;
+  css += `\n\n${marker}\n.sidebar-brand-text span,\n.summary-badge-editorial,\n.priority-ticket-link {\n  color: var(--primary-active);\n}\n\n.sidebar-footer {\n  color: var(--text-muted);\n}\n\n.sidebar-footer [style*='var(--primary)'] {\n  color: var(--primary-active) !important;\n}\n`;
 }
 write(cssPath, css);
 
