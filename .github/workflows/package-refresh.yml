@@ -61,11 +61,22 @@ jobs:
         run: npx playwright test e2e/visual.spec.js --update-snapshots
 
       - name: Verify complete E2E suite
+        shell: bash
         env:
           VITE_FIREBASE_API_KEY: ''
           VITE_FIREBASE_PROJECT_ID: ''
           VITE_FIREBASE_APP_ID: ''
-        run: npm run test:e2e
+        run: |
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee e2e-release.log
+
+      - name: Upload E2E diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-release-log
+          path: e2e-release.log
+          if-no-files-found: ignore
 
       - name: Commit verified release hardening
         shell: bash
