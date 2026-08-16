@@ -133,6 +133,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git restore .github/scripts/migrate-app-to-firestore.mjs
           git add src/App.jsx
           git commit -m "feat: route application persistence through Firestore adapter"
           git pull --rebase origin feat/firebase-spark-migration
