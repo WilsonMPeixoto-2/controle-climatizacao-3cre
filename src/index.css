@@ -129,7 +129,11 @@
 
 body {
   font-family: var(--font-sans);
-  font-size: clamp(15.5px, 0.85vw + 0.4rem, 20px); /* Escala suavemente de FHD (15.5px) a 4K (20px) */
+  font-size: clamp(
+    15.5px,
+    0.85vw + 0.4rem,
+    20px
+  ); /* Escala suavemente de FHD (15.5px) a 4K (20px) */
   line-height: 1.6;
   background-color: var(--bg-app);
   color: var(--text-main);
@@ -1953,7 +1957,6 @@ html:not(.dark-theme) .suggestion-item:hover {
 
 /* Responsive layout updates */
 
-
 /* ===========================================================================
    Mapa Operacional (Leaflet + CARTO dark) — painel do Painel Executivo
    =========================================================================== */
@@ -2098,30 +2101,32 @@ html:not(.dark-theme) .leaflet-bar a:hover {
 
 /* Tema claro: acabamento institucional sem alterar a estrutura das telas */
 html:not(.dark-theme) body {
-  background: linear-gradient(
-    180deg,
-    hsl(215, 24%, 95%) 0%,
-    hsl(215, 20%, 92.5%) 100%
-  );
+  background: linear-gradient(180deg, hsl(215, 24%, 95%) 0%, hsl(215, 20%, 92.5%) 100%);
   background-attachment: fixed;
 }
 
 html:not(.dark-theme) .sidebar {
   background-color: hsl(215, 18%, 91.5%);
   border-right-color: rgba(100, 116, 139, 0.16);
-  box-shadow: 1px 0 10px rgba(15, 23, 42, 0.04), 4px 0 24px -12px rgba(15, 23, 42, 0.08);
+  box-shadow:
+    1px 0 10px rgba(15, 23, 42, 0.04),
+    4px 0 24px -12px rgba(15, 23, 42, 0.08);
   backdrop-filter: none;
 }
 
 html:not(.dark-theme) .task-item {
   background-color: #ffffff !important;
   border-color: rgba(100, 116, 139, 0.14) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px -6px rgba(15, 23, 42, 0.05) !important;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 4px 12px -6px rgba(15, 23, 42, 0.05) !important;
 }
 
 html:not(.dark-theme) .task-item:hover {
   border-color: var(--primary) !important;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 16px -8px rgba(15, 23, 42, 0.08) !important;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.04),
+    0 8px 16px -8px rgba(15, 23, 42, 0.08) !important;
 }
 
 html:not(.dark-theme) .sidebar-user {
@@ -2142,7 +2147,9 @@ html:not(.dark-theme) .suggestion-box,
 html:not(.dark-theme) .template-item,
 html:not(.dark-theme) .btn-secondary {
   background-color: #ffffff;
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(100, 116, 139, 0.16);
   backdrop-filter: none;
 }
@@ -2829,8 +2836,6 @@ html:not(.dark-theme) .bairro-details-card {
   align-items: flex-start;
 }
 
-
-
 .goals-column {
   display: flex;
   flex-direction: column;
@@ -3041,11 +3046,9 @@ html:not(.dark-theme) .main-portal-title {
 
 /* Legacy print media query consolidated and moved to print-executive.css */
 
-
 /* ==========================================================================
    FASE 6: Responsividade Completa e Ajuste Premium Mobile (Fim do Overflow)
    ========================================================================== */
-
 
 /* ===========================================================================
    Inteligência Operacional e Fila de Ações
@@ -3363,13 +3366,9 @@ html:not(.dark-theme) .dossier-status-banner strong {
    Fase 3: Refinamentos Responsivos e Acessibilidade (Mobile)
    =========================================================================== */
 
-
-
 textarea {
   font-family: var(--font-sans) !important;
 }
-
-
 
 /* ==========================================================================
    REF_VISUAL: Refinamentos Estéticos Premium e Design de Interface (UI)
@@ -3526,13 +3525,16 @@ textarea {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 .btn-chevron-expand:hover {
   background-color: var(--bg-app-lighter, #1e293b);
   color: var(--primary) !important;
 }
-.btn-chevron-expand[aria-expanded="true"] {
+.btn-chevron-expand[aria-expanded='true'] {
   color: var(--primary) !important;
   transform: rotate(0deg);
 }
@@ -3594,7 +3596,6 @@ textarea {
 }
 
 /* Mobile View (Responsivo) */
-
 
 /* Print Overrides */
 @media print {
@@ -3665,22 +3666,22 @@ textarea {
 
 :root {
   /* Tokens IRT (tema claro) — espelhados em RISK_PAINT no componente */
-  --map-risk-critico: #C2434E;
-  --map-risk-critico-bg: #F6D9D8;
-  --map-risk-alto: #CC7A3D;
-  --map-risk-alto-bg: #FBE9DC;
-  --map-risk-moderado: #B5710A;
-  --map-risk-moderado-bg: #FDF6E2;
-  --map-risk-vigilancia: #2E7FAE;
-  --map-risk-vigilancia-bg: #EBF3F9;
-  --map-risk-emdia: #3E7A4C;
+  --map-risk-critico: #c2434e;
+  --map-risk-critico-bg: #f6d9d8;
+  --map-risk-alto: #cc7a3d;
+  --map-risk-alto-bg: #fbe9dc;
+  --map-risk-moderado: #b5710a;
+  --map-risk-moderado-bg: #fdf6e2;
+  --map-risk-vigilancia: #2e7fae;
+  --map-risk-vigilancia-bg: #ebf3f9;
+  --map-risk-emdia: #3e7a4c;
 }
 
 .dark-theme {
   --map-risk-critico: hsl(350, 85%, 68%);
   --map-risk-critico-bg: hsla(349, 75%, 50%, 0.22);
   --map-risk-alto: hsl(22, 90%, 64%);
-  --map-risk-alto-bg: hsla(22, 85%, 50%, 0.20);
+  --map-risk-alto-bg: hsla(22, 85%, 50%, 0.2);
   --map-risk-moderado: hsl(38, 95%, 60%);
   --map-risk-moderado-bg: hsla(38, 92%, 48%, 0.18);
   --map-risk-vigilancia: hsl(201, 85%, 62%);
@@ -3690,14 +3691,16 @@ textarea {
 
 /* Transições suaves nos polígonos (sem jank: só fill/stroke) */
 .leaflet-overlay-pane svg path {
-  transition: fill-opacity 0.22s ease, stroke-width 0.18s ease;
+  transition:
+    fill-opacity 0.22s ease,
+    stroke-width 0.18s ease;
 }
 
 /* Foco visível por teclado nos polígonos */
 .leaflet-overlay-pane svg path.bairro-focavel:focus-visible {
   outline: none;
   filter: drop-shadow(0 0 0 2px var(--map-risk-vigilancia))
-          drop-shadow(0 0 10px hsla(201, 90%, 55%, 0.45));
+    drop-shadow(0 0 10px hsla(201, 90%, 55%, 0.45));
 }
 
 /* --- Selo de nível (tooltip, legenda, tabela, microcards) --- */
@@ -3713,33 +3716,84 @@ textarea {
   border-radius: 999px;
   border: 1px solid currentColor;
 }
-.map-nivel-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.map-nivel-badge.nivel-critico    { color: var(--map-risk-critico);    background: var(--map-risk-critico-bg); }
-.map-nivel-badge.nivel-alto       { color: var(--map-risk-alto);       background: var(--map-risk-alto-bg); }
-.map-nivel-badge.nivel-moderado   { color: var(--map-risk-moderado);   background: var(--map-risk-moderado-bg); }
-.map-nivel-badge.nivel-vigilancia { color: var(--map-risk-vigilancia); background: var(--map-risk-vigilancia-bg); }
-.map-nivel-badge.nivel-em-dia     { color: var(--map-risk-emdia); }
+.map-nivel-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.map-nivel-badge.nivel-critico {
+  color: var(--map-risk-critico);
+  background: var(--map-risk-critico-bg);
+}
+.map-nivel-badge.nivel-alto {
+  color: var(--map-risk-alto);
+  background: var(--map-risk-alto-bg);
+}
+.map-nivel-badge.nivel-moderado {
+  color: var(--map-risk-moderado);
+  background: var(--map-risk-moderado-bg);
+}
+.map-nivel-badge.nivel-vigilancia {
+  color: var(--map-risk-vigilancia);
+  background: var(--map-risk-vigilancia-bg);
+}
+.map-nivel-badge.nivel-em-dia {
+  color: var(--map-risk-emdia);
+}
 
 /* --- Tooltip v2 --- */
 .map-tooltip-v2 .map-tooltip-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 6px;
 }
 .map-compbar {
-  display: flex; height: 7px; border-radius: 99px; overflow: hidden;
-  margin: 7px 0 3px; background: rgba(148, 163, 184, 0.18);
+  display: flex;
+  height: 7px;
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 7px 0 3px;
+  background: rgba(148, 163, 184, 0.18);
 }
-.map-compbar .seg { display: block; height: 100%; }
-.map-compbar .seg-criticos { background: var(--map-risk-critico); }
-.map-compbar .seg-atencao  { background: var(--map-risk-moderado); }
-.map-compbar .seg-normais  { background: var(--map-risk-vigilancia); }
-.map-compbar-caption { font-size: 10px; opacity: 0.85; }
-.map-compbar-caption .c-crit { color: var(--map-risk-critico); font-style: normal; }
-.map-compbar-caption .c-aten { color: var(--map-risk-moderado); font-style: normal; }
-.map-compbar-caption .c-norm { color: var(--map-risk-vigilancia); font-style: normal; }
+.map-compbar .seg {
+  display: block;
+  height: 100%;
+}
+.map-compbar .seg-criticos {
+  background: var(--map-risk-critico);
+}
+.map-compbar .seg-atencao {
+  background: var(--map-risk-moderado);
+}
+.map-compbar .seg-normais {
+  background: var(--map-risk-vigilancia);
+}
+.map-compbar-caption {
+  font-size: 10px;
+  opacity: 0.85;
+}
+.map-compbar-caption .c-crit {
+  color: var(--map-risk-critico);
+  font-style: normal;
+}
+.map-compbar-caption .c-aten {
+  color: var(--map-risk-moderado);
+  font-style: normal;
+}
+.map-compbar-caption .c-norm {
+  color: var(--map-risk-vigilancia);
+  font-style: normal;
+}
 
 /* --- Rótulos TOP-3 dinâmicos (discretos: só o nome do bairro, sem animação) --- */
-.map-toplabel-wrap { background: transparent; border: none; }
+.map-toplabel-wrap {
+  background: transparent;
+  border: none;
+}
 .map-toplabel {
   transform: translate(-50%, -50%); /* centra o chip no ponto do polylabel */
   display: inline-block;
@@ -3775,9 +3829,22 @@ html:not(.dark-theme) .map-toplabel {
   font-size: 12.5px;
   color: var(--text-muted);
 }
-.map-legend-item { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
-.map-legend-item strong { color: var(--text-main); font-variant-numeric: tabular-nums; }
-.map-legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+}
+.map-legend-item strong {
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+.map-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
 
 /* Utilitário de acessibilidade: conteúdo só para leitores de tela.
    (A classe já era usada no app, porém nunca havia sido definida — o texto
@@ -3795,18 +3862,53 @@ html:not(.dark-theme) .map-toplabel {
 }
 
 /* --- Alternância e tabela territorial --- */
-.territorio-toggle { display: inline-flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2, rgba(148, 163, 184, 0.12)); }
-.territorio-toggle button { border: 0; background: transparent; padding: 6px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; color: var(--text-muted); }
-.territorio-toggle button.is-active { background: var(--bg-card); color: var(--primary); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+.territorio-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface-2, rgba(148, 163, 184, 0.12));
+}
+.territorio-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.territorio-toggle button.is-active {
+  background: var(--bg-card);
+  color: var(--primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
 
-.territorio-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
-.territorio-tabela th, .territorio-tabela td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
-.territorio-tabela tbody tr { cursor: pointer; transition: var(--transition); }
-.territorio-tabela tbody tr:hover, .territorio-tabela tbody tr:focus-visible { background: var(--surface-2, rgba(148, 163, 184, 0.10)); outline: none; }
-.territorio-tabela tbody tr.is-selected { background: var(--primary-light); }
+.territorio-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.territorio-tabela th,
+.territorio-tabela td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+.territorio-tabela tbody tr {
+  cursor: pointer;
+  transition: var(--transition);
+}
+.territorio-tabela tbody tr:hover,
+.territorio-tabela tbody tr:focus-visible {
+  background: var(--surface-2, rgba(148, 163, 184, 0.1));
+  outline: none;
+}
+.territorio-tabela tbody tr.is-selected {
+  background: var(--primary-light);
+}
 
 /* --- Mobile --- */
-
 
 /* --- Microcard Leaflet Tooltip & Pulso --- */
 .cre-tooltip-custom .map-tooltip-v2 {
@@ -3918,7 +4020,7 @@ html:not(.dark-theme) .map-toplabel {
    UNIFIED RESPONSIVE BREAKPOINT: 768px (M-cleanup)
    ========================================================================== */
 @media (max-width: 768px) {
-/* M-03: Sub-grids de KPIs no dashboard */
+  /* M-03: Sub-grids de KPIs no dashboard */
   .kpi-subgroups-grid {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
@@ -3927,25 +4029,25 @@ html:not(.dark-theme) .map-toplabel {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
   }
-  
+
   /* M-07: Table to Cards (Tabela de chamados em blocos verticais) */
-  .lists-table, 
-  .lists-table thead, 
-  .lists-table tbody, 
-  .lists-table th, 
-  .lists-table td, 
-  .lists-table tr { 
-    display: block !important; 
+  .lists-table,
+  .lists-table thead,
+  .lists-table tbody,
+  .lists-table th,
+  .lists-table td,
+  .lists-table tr {
+    display: block !important;
   }
-  
+
   /* Hide original table headers */
-  .lists-table thead tr { 
+  .lists-table thead tr {
     position: absolute !important;
     top: -9999px !important;
     left: -9999px !important;
   }
-  
-  .lists-table tr { 
+
+  .lists-table tr {
     border: 1px solid var(--border-color) !important;
     border-radius: var(--radius-xs) !important;
     margin-bottom: 16px !important;
@@ -3954,7 +4056,7 @@ html:not(.dark-theme) .map-toplabel {
     box-shadow: var(--shadow-sm) !important;
     border-left: 4px solid var(--border-color) !important; /* fallback default */
   }
-  
+
   /* Manter os alertas de borda lateral no formato card */
   .lists-table tr.lists-row-severe {
     border-left: 4px solid var(--color-red) !important;
@@ -3968,36 +4070,36 @@ html:not(.dark-theme) .map-toplabel {
   .lists-table tr.lists-row-age-warning {
     border-left: 4px solid var(--color-age-warn) !important;
   }
-  
-  .lists-table td { 
+
+  .lists-table td {
     border: none !important;
-    border-bottom: 1px solid var(--border-color) !important; 
+    border-bottom: 1px solid var(--border-color) !important;
     position: relative !important;
-    padding-left: 45% !important; 
+    padding-left: 45% !important;
     text-align: right !important;
     padding-top: 10px !important;
     padding-bottom: 10px !important;
     font-size: 13px !important;
     min-height: 40px !important;
   }
-  
+
   .lists-table td:last-child {
     border-bottom: 0 !important;
   }
-  
-  .lists-table td:before { 
+
+  .lists-table td:before {
     position: absolute !important;
     top: 10px !important;
     left: 12px !important;
-    width: 40% !important; 
-    padding-right: 10px !important; 
+    width: 40% !important;
+    padding-right: 10px !important;
     white-space: nowrap !important;
     text-align: left !important;
     font-weight: 700 !important;
     color: var(--text-muted) !important;
     content: attr(data-label) !important;
   }
-  
+
   /* M-08: Aba de Comunicações vertical */
   .email-composer-layout {
     grid-template-columns: 1fr !important;
@@ -4006,7 +4108,7 @@ html:not(.dark-theme) .map-toplabel {
   .template-list {
     max-height: 280px !important;
   }
-  
+
   /* Melhora alvos de toque dos botões na tabela mobile */
   .lists-table td button,
   .lists-table td a.ticket-id-link {
@@ -4016,7 +4118,7 @@ html:not(.dark-theme) .map-toplabel {
     display: inline-flex !important;
     align-items: center !important;
   }
-  
+
   /* M-09: Cabeçalho mobile compacto */
   .main-content {
     padding: 24px 12px !important;
@@ -4045,11 +4147,11 @@ html:not(.dark-theme) .map-toplabel {
     padding: 9px 12px !important;
   }
 
-.email-flow-steps {
+  .email-flow-steps {
     grid-template-columns: 1fr;
   }
 
-.lists-table-desktop-view {
+  .lists-table-desktop-view {
     display: none !important;
   }
   .lists-table-mobile-view {
@@ -4065,7 +4167,9 @@ html:not(.dark-theme) .map-toplabel {
     padding: 16px;
     margin-bottom: 14px;
     box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
   .mobile-ticket-card:hover {
     transform: translateY(-2px);
@@ -4192,10 +4296,14 @@ html:not(.dark-theme) .map-toplabel {
     display: none !important;
   }
 
-.op-map, .operational-map, .map-and-details-container .leaflet-container {
+  .op-map,
+  .operational-map,
+  .map-and-details-container .leaflet-container {
     height: clamp(280px, 42vh, 420px) !important;
   }
-  .map-and-details-container { flex-direction: column; }
+  .map-and-details-container {
+    flex-direction: column;
+  }
 }
 
 /* ============================================================
@@ -4218,31 +4326,31 @@ html:not(.dark-theme) .map-toplabel {
       --secondary-glow: oklch(0.58 0.13 175 / 0.16);
 
       --accent-magenta: oklch(0.62 0.24 340);
-      --accent-blue: oklch(0.60 0.19 250);
+      --accent-blue: oklch(0.6 0.19 250);
 
       /* Status colors — chroma P3 com acessibilidade WCAG AA mantida */
       --color-green: oklch(0.48 0.14 155);
       --color-amber: oklch(0.52 0.14 75);
       --color-orange: oklch(0.52 0.15 40);
-      --color-red: oklch(0.50 0.18 18);
+      --color-red: oklch(0.5 0.18 18);
       --color-blue: oklch(0.52 0.16 255);
       --color-age-warn: oklch(0.65 0.16 290);
-      --color-age-severe: oklch(0.60 0.20 295);
+      --color-age-severe: oklch(0.6 0.2 295);
 
       /* Tints P3 com chroma sutil */
       --color-green-tint: oklch(0.48 0.14 155 / 0.13);
       --color-amber-tint: oklch(0.55 0.14 75 / 0.15);
       --color-orange-tint: oklch(0.55 0.15 40 / 0.14);
-      --color-red-tint: oklch(0.50 0.18 18 / 0.13);
+      --color-red-tint: oklch(0.5 0.18 18 / 0.13);
       --color-blue-tint: oklch(0.52 0.16 255 / 0.13);
       --color-age-warn-tint: oklch(0.65 0.16 290 / 0.12);
-      --color-age-severe-tint: oklch(0.60 0.20 295 / 0.14);
+      --color-age-severe-tint: oklch(0.6 0.2 295 / 0.14);
     }
 
     /* ---- LIGHT THEME P3 enrichment ---- */
     :root:not(.dark-theme) {
       --bg-app: oklch(0.952 0.009 235);
-      --bg-card: oklch(1.00 0 0);
+      --bg-card: oklch(1 0 0);
       --surface: var(--bg-card);
       --border-color: oklch(0.85 0.01 235 / 0.35);
       --text-main: oklch(0.22 0.015 235);
@@ -4251,11 +4359,7 @@ html:not(.dark-theme) .map-toplabel {
     }
 
     html:not(.dark-theme) body {
-      background: linear-gradient(
-        180deg,
-        oklch(0.962 0.008 235) 0%,
-        oklch(0.942 0.010 235) 100%
-      );
+      background: linear-gradient(180deg, oklch(0.962 0.008 235) 0%, oklch(0.942 0.01 235) 100%);
     }
 
     /* ---- DARK THEME OLED — preto puro + glow colorido ---- */
@@ -4266,13 +4370,13 @@ html:not(.dark-theme) .map-toplabel {
       --surface: var(--bg-card);
 
       /* Bordas visíveis (alpha 0.08 original era invisível em OLED) */
-      --border-color: oklch(0.30 0.012 250 / 0.20);
-      --border-hover: oklch(0.55 0.10 220 / 0.28);
+      --border-color: oklch(0.3 0.012 250 / 0.2);
+      --border-hover: oklch(0.55 0.1 220 / 0.28);
 
       /* Texto com micro-chroma azulado para conforto visual */
       --text-main: oklch(0.96 0.008 240);
       --text-muted: oklch(0.78 0.012 240);
-      --text-light: oklch(0.70 0.010 240);
+      --text-light: oklch(0.7 0.01 240);
 
       /* Primárias clareadas para WCAG AA sobre preto */
       --primary: oklch(0.68 0.17 220);
@@ -4291,22 +4395,22 @@ html:not(.dark-theme) .map-toplabel {
 
       /* Tints OLED — alpha reforçado para visibilidade */
       --color-green-tint: oklch(0.55 0.12 155 / 0.18);
-      --color-amber-tint: oklch(0.60 0.14 75 / 0.20);
-      --color-orange-tint: oklch(0.58 0.14 40 / 0.20);
-      --color-red-tint: oklch(0.55 0.16 15 / 0.20);
-      --color-blue-tint: oklch(0.55 0.14 255 / 0.20);
+      --color-amber-tint: oklch(0.6 0.14 75 / 0.2);
+      --color-orange-tint: oklch(0.58 0.14 40 / 0.2);
+      --color-red-tint: oklch(0.55 0.16 15 / 0.2);
+      --color-blue-tint: oklch(0.55 0.14 255 / 0.2);
       --color-age-warn-tint: oklch(0.65 0.12 290 / 0.18);
-      --color-age-severe-tint: oklch(0.68 0.16 295 / 0.20);
+      --color-age-severe-tint: oklch(0.68 0.16 295 / 0.2);
 
       /* Sombras com GLOW colorido — preto sobre preto puro é invisível */
-      --shadow-sm: 0 2px 8px oklch(0.20 0.06 220 / 0.30);
-      --shadow-md: 0 8px 24px oklch(0.15 0.08 220 / 0.40);
-      --shadow-lg: 0 24px 48px oklch(0.10 0.10 220 / 0.50);
-      --elev-card: 0 2px 6px oklch(0.18 0.06 220 / 0.32),
-                   0 12px 28px -16px oklch(0.10 0.08 220 / 0.50);
-      --elev-card-hover: 0 4px 10px oklch(0.22 0.08 220 / 0.38),
-                         0 26px 46px -18px oklch(0.12 0.10 220 / 0.55);
-      --inner-highlight: inset 0 1px 0 oklch(1.00 0 0 / 0.06);
+      --shadow-sm: 0 2px 8px oklch(0.2 0.06 220 / 0.3);
+      --shadow-md: 0 8px 24px oklch(0.15 0.08 220 / 0.4);
+      --shadow-lg: 0 24px 48px oklch(0.1 0.1 220 / 0.5);
+      --elev-card:
+        0 2px 6px oklch(0.18 0.06 220 / 0.32), 0 12px 28px -16px oklch(0.1 0.08 220 / 0.5);
+      --elev-card-hover:
+        0 4px 10px oklch(0.22 0.08 220 / 0.38), 0 26px 46px -18px oklch(0.12 0.1 220 / 0.55);
+      --inner-highlight: inset 0 1px 0 oklch(1 0 0 / 0.06);
 
       --primary-glow: oklch(0.65 0.17 220 / 0.28);
     }
@@ -4315,8 +4419,8 @@ html:not(.dark-theme) .map-toplabel {
   /* HDR: chroma extra para monitores com dynamic-range alto */
   @media (dynamic-range: high) {
     :root {
-      --primary: oklch(0.70 0.21 220);
-      --primary-glow: oklch(0.70 0.21 220 / 0.30);
+      --primary: oklch(0.7 0.21 220);
+      --primary-glow: oklch(0.7 0.21 220 / 0.3);
       --accent-magenta: oklch(0.66 0.28 340);
     }
     .dark-theme {
@@ -4362,3 +4466,42 @@ html:not(.dark-theme) .map-toplabel {
   }
 }
 
+/* Release 2026-08: tokens semânticos de contraste WCAG */
+html:not(.dark-theme) {
+  --primary: hsl(201, 95%, 26%);
+  --primary-hover: hsl(201, 95%, 22%);
+  --secondary: hsl(175, 80%, 26%);
+  --secondary-hover: hsl(175, 80%, 22%);
+  --text-light: hsl(215, 21%, 34%);
+  --text-on-primary: hsl(0, 0%, 100%);
+  --color-orange: hsl(16, 85%, 37%);
+}
+
+.sidebar-brand-text span,
+.summary-badge-editorial,
+.priority-ticket-link,
+.theme-toggle-header,
+.theme-toggle-header span,
+.form-section-title,
+.form-section-title span {
+  color: var(--primary-active) !important;
+}
+
+.sidebar-footer,
+.sidebar-footer > div,
+.sidebar-footer span,
+.sidebar-footer a {
+  color: var(--text-muted) !important;
+}
+
+.sidebar-footer [style*='var(--primary)'] {
+  color: var(--primary-active) !important;
+}
+
+.local-warning-banner p {
+  opacity: 1 !important;
+}
+
+[title*='documento(s) anexo(s)'] {
+  color: var(--primary-active) !important;
+}
