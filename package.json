@@ -8,7 +8,7 @@
     "build": "npm run lint && npm run test && vite build",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
-    "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/school-dossier.test.mjs && node test/smoke.test.mjs && node test/map-risk.test.mjs && node test/domain.test.mjs && node test/services.test.mjs && node test/persistence-gateway.test.mjs && node test/dossier-refinements.test.mjs",
+    "test": "node test/logic.test.mjs && node test/attachments-deep.test.mjs && node test/school-dossier.test.mjs && node test/smoke.test.mjs && node test/map-risk.test.mjs && node test/domain.test.mjs && node test/services.test.mjs && node test/persistence-gateway.test.mjs && node test/dossier-refinements.test.mjs && node test/climate-survey.test.mjs",
     "test:firestore:rules": "npx --yes firebase-tools@15.26.0 emulators:exec --only firestore --project demo-controle-climatizacao-3cre \"node test/firestore-rules.test.mjs\"",
     "test:firestore": "npx --yes firebase-tools@15.26.0 emulators:exec --only firestore --project demo-controle-climatizacao-3cre \"node test/firestore-rules.test.mjs && node test/firestore-persistence.test.mjs\"",
     "test:e2e": "playwright test",
@@ -30,7 +30,6 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
-    "@eslint/js": "^10.0.1",
     "@firebase/rules-unit-testing": "^5.0.1",
     "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.18",
