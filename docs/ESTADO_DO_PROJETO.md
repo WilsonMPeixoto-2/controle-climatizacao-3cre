@@ -7,9 +7,11 @@
 
 Ferramenta de registro e monitoramento dos chamados de climatização das escolas da 3ª CRE para a GOP.
 
-O sistema registra e acompanha demandas, consulta por escola, apresenta painel/alertas/mapa, mantém histórico e auxilia a comunicação. Não é sistema de gestão patrimonial do parque de aparelhos e não possui login individual, por decisão funcional histórica preservada nesta migração.
+O sistema registra e acompanha demandas, consulta por escola, apresenta painel/alertas/mapa, mantém histórico e auxilia a comunicação. Não possui login individual, por decisão funcional histórica preservada nesta migração.
 
-## 2. Situação da migração em 16/08/2026
+A partir de 16/08/2026 também está em desenvolvimento um **Prontuário de Climatização por ambientes**, destinado ao levantamento físico simples dos aparelhos existentes em cada escola. Esse prontuário não é inventário patrimonial e, nesta fase, não cruza seus dados com chamados nem altera prioridade, status ou indicadores do sistema operacional.
+
+## 2. Situação da migração Firebase em 16/08/2026
 
 ### Concluído e validado
 
@@ -44,15 +46,57 @@ Execução final do gate de release em 16/08/2026:
 
 Commit remoto do hardening validado: `f3f77e93e1de7ea5155be5fe5c634fa3e4d11960`.
 
-## 3. O que NÃO está concluído ainda
+## 3. MVP do Prontuário de Climatização
+
+Branch de implementação: `feat/prontuario-climatizacao-mvp`.
+
+### Escopo desta primeira etapa
+
+O objetivo imediato é validar **layout, fluxo de preenchimento e estrutura futura de dados**, sem depender de conexão real com o Firebase.
+
+Implementado:
+
+- acesso por query string `/?levantamento={designacao}`;
+- identificação automática da escola a partir de `src/data/db.json`;
+- página independente do painel operacional;
+- layout claro e responsivo;
+- inclusão e exclusão de ambientes;
+- tipos de ambiente sugeridos com digitação livre;
+- identificação livre do ambiente, como `101`, `A` ou `Bloco B`;
+- quantidade de aparelhos por ambiente;
+- criação automática de um bloco para cada aparelho;
+- campos opcionais de modelo/marca, BTU, tipo e observações;
+- situação simples: `Não informado`, `Funcionando`, `Precisa de manutenção`;
+- persistência local em `localStorage` durante a fase de protótipo;
+- recarga do rascunho após atualizar a página;
+- domínio Zod e helpers testados;
+- coleção futura `levantamentos_climatizacao/{designacao}` preparada no adapter Firestore;
+- Security Rules dessa coleção preparadas e validadas no Emulator;
+- teste no Emulator para salvar e reabrir o prontuário por designação;
+- cenário Playwright de preenchimento e recarga do rascunho aprovado;
+- teste responsivo para viewport de celular incluído.
+
+### O que deliberadamente NÃO ocorre agora
+
+- nenhuma conexão com projeto Firebase real;
+- nenhum deploy de regras em ambiente real;
+- nenhum cruzamento com chamados;
+- nenhum uso dos totais históricos de aparelhos de `db.json` para preencher o novo prontuário;
+- nenhuma geração de prioridade ou criticidade;
+- nenhum vínculo patrimonial/tombamento;
+- nenhum upload de arquivos.
+
+Enquanto `VITE_FIREBASE_*` estiver vazio, o prontuário deve se apresentar como **rascunho local**, nunca como sincronizado online.
+
+## 4. O que NÃO está concluído ainda
 
 A migração de código está pronta, mas o **cutover de produção não deve ocorrer antes do provisionamento do Firebase real**.
 
 No momento desta atualização não foi localizado, nas integrações disponíveis, um projeto Firebase real já criado/configurado para este sistema nem a configuração Web App necessária para a Vercel.
 
-Sem isso, publicar a branch em `master` faria o frontend operar sem persistência Firestore real. Isso seria regressão, não migração concluída.
+Sem isso, publicar a branch de migração em `master` faria o frontend operar sem persistência Firestore real. Isso seria regressão, não migração concluída.
 
-### Único bloqueio externo obrigatório
+### Bloqueio externo obrigatório para a futura conexão
 
 É necessário provisionar uma vez, em conta Google/Firebase autenticada:
 
@@ -64,17 +108,17 @@ Sem isso, publicar a branch em `master` faria o frontend operar sem persistênci
 6. carga inicial validada das coleções;
 7. variáveis `VITE_FIREBASE_*` na Vercel.
 
-Após isso, a sequência é: validar Firestore real -> validar preview/deploy -> merge em `master` -> verificar produção -> encerrar o legado Supabase ativo.
+Após isso, a sequência será: validar Firestore real -> validar preview/deploy -> merge em `master` -> verificar produção -> encerrar o legado Supabase ativo.
 
-## 4. Produção atual
+## 5. Produção e previews
 
 A `master` e o domínio Vercel continuam deliberadamente na versão anterior enquanto o Firebase real não está provisionado.
 
 Isso preserva o funcionamento atual e evita trocar um backend pausado por uma interface que pareça online mas não consiga persistir dados.
 
-Os previews Vercel da branch apresentaram `Resource provisioning failed` antes de um build útil. O build da aplicação, entretanto, foi repetidamente aprovado no GitHub Actions. Essa falha de preview deve ser reavaliada no corte final, sem ser confundida com erro de compilação do projeto.
+Os previews Vercel das branches Firebase e do prontuário apresentaram `Resource provisioning failed` **antes de qualquer build útil**, enquanto o mesmo código compila e é testado no GitHub Actions. Essa falha está classificada como infraestrutura de preview, não como erro da aplicação, e deve ser reavaliada separadamente.
 
-## 5. Modelo Firestore aprovado
+## 6. Modelo Firestore preparado
 
 ```text
 escolas/{designacao}
@@ -82,24 +126,30 @@ chamados/{id_chamado}
 historico/{id_evento}
 modelos_email/{id}
 contadores/chamados-{AAAA}
+levantamentos_climatizacao/{designacao}
 ```
+
+O prontuário usa um documento por escola com ambientes e aparelhos aninhados. Essa coleção existe no contrato de código e nas Security Rules, porém **não existe ainda em um Firebase real conectado ao sistema**.
 
 Anexos não integram o primeiro cutover Spark.
 
-## 6. Regras que permanecem ancoradas
+## 7. Regras que permanecem ancoradas
 
-- sem login/autenticação individual;
+- sem login/autenticação individual nesta etapa;
 - GOP, não CTO;
 - regras de negócio não devem ser alteradas sem demanda funcional explícita;
 - código-fonte prevalece sobre documentação histórica;
 - simplicidade para o usuário final é requisito central;
 - Firebase Storage não deve ser introduzido enquanto o requisito for Spark sem meio de pagamento;
-- ID oficial só existe após persistência remota confirmada.
+- ID oficial de chamado só existe após persistência remota confirmada;
+- o novo prontuário não deve contaminar ou recalcular os chamados existentes nesta fase.
 
-## 7. Próximo marco
+## 8. Próximos marcos
 
-**Provisionar o Firebase real e realizar o cutover de produção.**
+Curto prazo do prontuário: **validar visualmente e funcionalmente o formulário local-first**.
 
-Não há nova refatoração arquitetural necessária antes desse marco. A release candidate já possui gates verdes de segurança, build, Firestore e navegador.
+Marco posterior da infraestrutura: **provisionar o Firebase real e realizar a conexão/cutover**, incluindo a nova coleção `levantamentos_climatizacao`.
 
-Referências: `README.md`, `docs/ARQUITETURA_FIREBASE.md`, `docs/MIGRACAO_SUPABASE_FIREBASE.md`, `firestore.rules`, `firebase.json`.
+Não há necessidade de conectar o Firebase para continuar refinando o layout do prontuário.
+
+Referências: `README.md`, `docs/ARQUITETURA_FIREBASE.md`, `docs/MIGRACAO_SUPABASE_FIREBASE.md`, `docs/superpowers/specs/2026-08-16-prontuario-climatizacao-mvp-design.md`, `firestore.rules`, `firebase.json`.
