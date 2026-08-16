@@ -24,12 +24,9 @@ import ClimateSurveyPage from './components/ClimateSurveyPage.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 const surveyDesignation = new URLSearchParams(window.location.search).get('levantamento');
-const RootApplication = surveyDesignation ? ClimateSurveyPage : App;
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ErrorBoundary>
-      <RootApplication />
-    </ErrorBoundary>
+    <ErrorBoundary>{surveyDesignation ? <ClimateSurveyPage /> : <App />}</ErrorBoundary>
   </StrictMode>
 );
