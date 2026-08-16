@@ -44,7 +44,7 @@ const cssPath = 'src/index.css';
 let css = read(cssPath);
 const marker = '/* Release 2026-08: tokens semânticos de contraste WCAG */';
 if (!css.includes(marker)) {
-  css += `\n\n${marker}\n.sidebar-brand-text span,\n.summary-badge-editorial,\n.priority-ticket-link {\n  color: var(--primary-active);\n}\n\n.sidebar-footer {\n  color: var(--text-muted);\n}\n\n.sidebar-footer [style*='var(--primary)'] {\n  color: var(--primary-active) !important;\n}\n`;
+  css += `\n\n${marker}\n.sidebar-brand-text span,\n.summary-badge-editorial,\n.priority-ticket-link {\n  color: var(--primary-active);\n}\n\n.sidebar-footer {\n  color: var(--text-muted);\n}\n\n.sidebar-footer [style*='var(--primary)'] {\n  color: var(--primary-active) !important;\n}\n\n.local-warning-banner p {\n  opacity: 1 !important;\n}\n`;
 }
 write(cssPath, css);
 
