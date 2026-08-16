@@ -73,8 +73,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      VITE_SUPABASE_URL: ''
-      VITE_SUPABASE_KEY: ''
+      VITE_FIREBASE_API_KEY: ''
+      VITE_FIREBASE_PROJECT_ID: ''
+      VITE_FIREBASE_APP_ID: ''
     steps:
       - name: Checkout
         uses: actions/checkout@v6
