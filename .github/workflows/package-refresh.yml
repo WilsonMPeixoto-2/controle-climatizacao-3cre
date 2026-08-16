@@ -13,7 +13,7 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout migration branch
         uses: actions/checkout@v4
@@ -26,68 +26,57 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Install current lockfile
         run: npm ci
 
-      - name: Refresh production dependencies
-        run: >-
-          npm install
-          @fontsource/inter@5.3.0
-          @fontsource/outfit@5.3.0
-          @supabase/supabase-js@2.112.2
-          lucide-react@1.31.0
-          polylabel@2.1.0
-          react@19.2.8
-          react-dom@19.2.8
+      - name: Apply release hardening mutations
+        run: node .github/scripts/release-hardening.mjs
 
-      - name: Refresh development dependencies
-        run: >-
-          npm install -D
-          @axe-core/playwright@4.12.1
-          @playwright/test@1.62.1
-          @types/react@19.2.18
-          @types/react-dom@19.2.4
-          @vitejs/plugin-react@6.0.5
-          eslint@10.8.1
-          globals@17.9.0
-          prettier@3.9.6
-          supabase@2.113.0
-          vite@8.2.1
-          vite-plugin-checker@0.14.5
+      - name: Format changed files
+        run: npx prettier --write src/index.css vite.config.js package.json .env.example .github/workflows/ci.yml
 
-      - name: Apply compatible audit fixes
-        run: npm audit fix
-
-      - name: Verify security gate
+      - name: Verify security audit
         run: npm audit --audit-level=high
 
-      - name: Verify lint, unit/domain tests and production build
+      - name: Verify application build
         run: npm run build
+
+      - name: Verify Firestore emulator suite
+        run: npm run test:firestore
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Record post-refresh diagnostics
-        shell: bash
+      - name: Refresh visual baselines
         env:
-          VITE_SUPABASE_URL: ''
-          VITE_SUPABASE_KEY: ''
-        run: |
-          mkdir -p docs/migration/package-refresh
-          npm outdated --json > docs/migration/package-refresh/npm-outdated-after.json || true
-          npm audit --json > docs/migration/package-refresh/npm-audit-after.json || true
-          npm run test:e2e -- --reporter=line > docs/migration/package-refresh/e2e-after.txt 2>&1 || true
+          VITE_FIREBASE_API_KEY: ''
+          VITE_FIREBASE_PROJECT_ID: ''
+          VITE_FIREBASE_APP_ID: ''
+        run: npx playwright test e2e/visual.spec.js --update-snapshots
 
-      - name: Commit verified dependency refresh
+      - name: Verify complete E2E suite
+        env:
+          VITE_FIREBASE_API_KEY: ''
+          VITE_FIREBASE_PROJECT_ID: ''
+          VITE_FIREBASE_APP_ID: ''
+        run: npm run test:e2e
+
+      - name: Commit verified release hardening
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json docs/migration/package-refresh
+          git add package.json package-lock.json vite.config.js .env.example .github/workflows/ci.yml src/index.css e2e
           if git diff --cached --quiet; then
-            echo "No dependency changes to commit."
+            echo "No release hardening changes to commit."
           else
-            git commit -m "chore: refresh dependencies before Firebase migration"
+            git commit -m "chore: harden Firebase release candidate"
             git pull --rebase origin feat/firebase-spark-migration
             git push origin HEAD:feat/firebase-spark-migration
           fi
