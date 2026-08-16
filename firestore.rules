@@ -125,6 +125,28 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/chamados/$(data.ultimoId)).data.criado_em == data.atualizado_em;
     }
 
+    function validClimateSurvey(data, schoolId) {
+      return data.keys().hasOnly([
+          'designacao',
+          'unidade_escolar',
+          'atualizado_em',
+          'ambientes'
+        ])
+        && data.keys().hasAll([
+          'designacao',
+          'unidade_escolar',
+          'atualizado_em',
+          'ambientes'
+        ])
+        && data.designacao == schoolId
+        && data.designacao is string
+        && data.unidade_escolar is string
+        && data.atualizado_em is string
+        && data.ambientes is list
+        && data.ambientes.size() <= 100
+        && exists(/databases/$(database)/documents/escolas/$(schoolId));
+    }
+
     match /escolas/{schoolId} {
       allow read: if true;
       allow create, update, delete: if false;
@@ -133,6 +155,12 @@ service cloud.firestore {
     match /modelos_email/{templateId} {
       allow read: if true;
       allow create, update, delete: if false;
+    }
+
+    match /levantamentos_climatizacao/{schoolId} {
+      allow read: if true;
+      allow create, update: if validClimateSurvey(request.resource.data, schoolId);
+      allow delete: if false;
     }
 
     match /chamados/{ticketId} {
