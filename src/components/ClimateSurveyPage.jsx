@@ -60,7 +60,7 @@ function loadLocalSurvey(storageKey, school) {
   };
 }
 
-function ApplianceCard({ environmentId, appliance, index, onChange, btuOptions, typeOptions }) {
+function ApplianceCard({ environmentId, appliance, index, onChange }) {
   const prefix = `${environmentId}-${appliance.id}`;
 
   return (
@@ -143,17 +143,6 @@ function ApplianceCard({ environmentId, appliance, index, onChange, btuOptions, 
           placeholder="Opcional"
         />
       </div>
-
-      <datalist id="climate-survey-btu-options">
-        {btuOptions.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
-      <datalist id="climate-survey-type-options">
-        {typeOptions.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
     </section>
   );
 }
@@ -219,6 +208,7 @@ export default function ClimateSurveyPage() {
   if (!school) {
     return (
       <main className="climate-survey-page">
+        <title>Prontuário de Climatização · 3ª CRE</title>
         <section className="climate-survey-shell climate-survey-error">
           <Snowflake size={36} />
           <h1>Prontuário de Climatização</h1>
@@ -324,6 +314,7 @@ export default function ClimateSurveyPage() {
 
   return (
     <main className="climate-survey-page">
+      <title>Prontuário de Climatização · {school.unidade_escolar}</title>
       <div className="climate-survey-shell">
         <header className="climate-survey-header">
           <div className="climate-survey-title-icon" aria-hidden="true">
@@ -348,6 +339,22 @@ export default function ClimateSurveyPage() {
           </div>
           <small>Designação {school.designacao}</small>
         </section>
+
+        <datalist id="climate-survey-environment-options">
+          {ENVIRONMENT_TYPE_OPTIONS.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+        <datalist id="climate-survey-btu-options">
+          {suggestions.btu.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+        <datalist id="climate-survey-type-options">
+          {suggestions.applianceTypes.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
 
         <nav className="climate-survey-environment-nav" aria-label="Ambientes cadastrados">
           <div className="climate-survey-environment-tabs">
@@ -379,11 +386,6 @@ export default function ClimateSurveyPage() {
                   onChange={(event) => updateEnvironmentField('tipo', event.target.value)}
                   autoComplete="off"
                 />
-                <datalist id="climate-survey-environment-options">
-                  {ENVIRONMENT_TYPE_OPTIONS.map((option) => (
-                    <option key={option} value={option} />
-                  ))}
-                </datalist>
               </div>
 
               <div className="climate-survey-field">
@@ -438,8 +440,6 @@ export default function ClimateSurveyPage() {
                     environmentId={activeEnvironment.id}
                     appliance={appliance}
                     index={index}
-                    btuOptions={suggestions.btu}
-                    typeOptions={suggestions.applianceTypes}
                     onChange={(field, value) => updateAppliance(appliance.id, field, value)}
                   />
                 ))}
