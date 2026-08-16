@@ -56,7 +56,19 @@ test.describe('Prontuário de Climatização - MVP', () => {
     await page.getByLabel('Identificação do ambiente').fill('Bloco B');
     await page.getByLabel('Quantidade de aparelhos').selectOption('1');
 
-    await expect(page.getByText('Laboratório Maker Bloco B')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Laboratório Maker Bloco B' })).toBeVisible();
     await expect(page.locator('[data-appliance-index="0"]')).toBeVisible();
+  });
+
+  test('mantém o formulário utilizável em tela de celular', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(SURVEY_URL);
+
+    await expect(page.getByRole('heading', { name: 'Prontuário de Climatização' })).toBeVisible();
+    await expect(page.getByLabel('Tipo de ambiente')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Salvar levantamento' })).toBeVisible();
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+    expect(overflow).toBe(false);
   });
 });
