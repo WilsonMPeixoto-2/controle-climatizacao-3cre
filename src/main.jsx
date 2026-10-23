@@ -18,6 +18,8 @@ import './styles/components.css';
 import './styles/dashboard.css';
 import './styles/dossier.css';
 import './styles/print-executive.css';
+// Acabamento operacional do painel, por último para prevalecer na cascata.
+import './styles/maturity-2026.css';
 
 import App from './App.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
