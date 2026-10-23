@@ -20,6 +20,8 @@ import './styles/dossier.css';
 import './styles/print-executive.css';
 // Acabamento operacional do painel, por último para prevalecer na cascata.
 import './styles/maturity-2026.css';
+// Refinamentos leves para o retorno do sistema; sem alterações funcionais.
+import './styles/return-polish-2026.css';
 
 import App from './App.jsx';
 import ClimateSurveyPage from './components/ClimateSurveyPage.jsx';
