@@ -241,17 +241,14 @@ html:not(.dark-theme) body::after {
 }
 
 .sidebar-logo {
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 800;
-  font-size: 18px;
-  box-shadow: 0 4px 14px var(--primary-glow);
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.16);
   transition:
     box-shadow 0.3s ease,
     transform 0.3s ease;
@@ -3964,18 +3961,25 @@ html:not(.dark-theme) .map-toplabel {
     border-right: none;
     border-bottom: 1px solid var(--border-color);
   }
-  .sidebar-brand-text,
   .sidebar-footer button span,
   .sidebar-user-info {
     display: none;
+  }
+  .sidebar-brand-text {
+    display: block;
+    font-size: 18px;
+  }
+  .sidebar-logo {
+    width: 50px;
+    height: 50px;
   }
   .sidebar-user {
     justify-content: center;
     padding: 10px;
   }
   .sidebar-brand {
-    justify-content: center;
-    margin-bottom: 24px;
+    justify-content: flex-start;
+    margin-bottom: 18px;
     padding-left: 0;
   }
   .sidebar-menu {
