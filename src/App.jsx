@@ -4809,7 +4809,7 @@ export default function App() {
                             <EmptyState
                               iconType="attachment"
                               title="Nenhum documento vinculado ainda"
-                              description="Anexe laudos, fotos ou PDFs para consolidar o histórico da demanda."
+                              description="A inclusão de laudos, fotografias e PDFs ainda não está disponível nesta versão."
                             />
                           )}
                         </div>
@@ -5873,11 +5873,11 @@ export default function App() {
                 <summary>Informações técnicas da migração</summary>
                 <div className="admin-warning">
                   <p>
-                    <strong>Banco:</strong> Cloud Firestore · plano alvo: Spark.
+                    <strong>Banco:</strong> Cloud Firestore.
                   </p>
                   <p>
-                    <strong>Anexos:</strong> Storage está adiado. Metadados legados continuam
-                    catalogados, sem upload/download nesta fase.
+                    <strong>Anexos:</strong> A inclusão e abertura de arquivos ainda não estão
+                    disponíveis no sistema.
                   </p>
                   <p>
                     <strong>Configuração:</strong> VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN,
@@ -6455,18 +6455,19 @@ export default function App() {
                       marginBottom: '20px'
                     }}
                   >
-                    <div
+                    <p
+                      role="note"
                       style={{
-                        fontSize: '12px',
-                        color: 'var(--color-orange)',
-                        fontWeight: '700',
-                        marginBottom: ticketAttachments.length ? '12px' : 0
+                        fontSize: '12.5px',
+                        lineHeight: 1.55,
+                        color: 'var(--text-muted)',
+                        fontWeight: 500,
+                        margin: ticketAttachments.length ? '0 0 12px' : 0
                       }}
                     >
-                      Upload, abertura, download e exclusão estão temporariamente indisponíveis na
-                      fase Firestore Spark. Os metadados existentes foram preservados para migração
-                      futura do Storage.
-                    </div>
+                      O envio e a abertura de arquivos não estão disponíveis nesta versão. O
+                      registro e a atualização dos chamados continuam funcionando normalmente.
+                    </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {ticketAttachments.map((anexo) => (
                         <div
