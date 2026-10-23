@@ -18,15 +18,20 @@ import './styles/components.css';
 import './styles/dashboard.css';
 import './styles/dossier.css';
 import './styles/print-executive.css';
+// Acabamento operacional do painel, por último para prevalecer na cascata.
+import './styles/maturity-2026.css';
 
 import App from './App.jsx';
 import ClimateSurveyPage from './components/ClimateSurveyPage.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
+
 const surveyDesignation = new URLSearchParams(window.location.search).get('levantamento');
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ErrorBoundary>{surveyDesignation ? <ClimateSurveyPage /> : <App />}</ErrorBoundary>
+    <ErrorBoundary>
+      {surveyDesignation ? <ClimateSurveyPage /> : <App />}
+    </ErrorBoundary>
   </StrictMode>
 );

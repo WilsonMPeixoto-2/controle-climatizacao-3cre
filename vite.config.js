@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import checker from 'vite-plugin-checker'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import checker from 'vite-plugin-checker';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -8,15 +8,15 @@ export default defineConfig({
     react({
       // React Compiler: memoização automática (alvo React 19)
       babel: {
-        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
-      },
+        plugins: [['babel-plugin-react-compiler', { target: '19' }]]
+      }
     }),
     checker({
       eslint: {
         useFlatConfig: true,
-        lintCommand: 'eslint .',
-      },
-    }),
+        lintCommand: 'eslint .'
+      }
+    })
   ],
   build: {
     rollupOptions: {
@@ -24,13 +24,13 @@ export default defineConfig({
         // Separa vendors de longa duração para cachearem entre deploys.
         // Vite 8/Rolldown exige manualChunks como função (não objeto).
         manualChunks(id) {
-          if (!id.includes('node_modules')) return
-          if (id.includes('@supabase')) return 'supabase-vendor'
-          if (id.includes('leaflet')) return 'leaflet-vendor'
-          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react-vendor'
-          return 'vendor'
-        },
-      },
-    },
-  },
-})
+          if (!id.includes('node_modules')) return;
+          if (id.includes('firebase') || id.includes('@firebase')) return 'firebase-vendor';
+          if (id.includes('leaflet')) return 'leaflet-vendor';
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react-vendor';
+          return 'vendor';
+        }
+      }
+    }
+  }
+});

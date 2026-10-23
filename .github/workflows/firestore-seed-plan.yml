@@ -1,0 +1,43 @@
+name: Firestore seed plan
+
+on:
+  push:
+    branches:
+      - feat/firebase-spark-migration
+    paths:
+      - .github/firestore-seed-plan-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/firebase-spark-migration
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Validate snapshot and build seed plan
+        run: node scripts/prepare-firestore-seed.mjs
+
+      - name: Commit seed plan
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/migration/firebase/seed-plan.json
+          if git diff --cached --quiet; then
+            echo "Seed plan unchanged."
+          else
+            git commit -m "docs: record Firestore seed validation plan"
+            git pull --rebase origin feat/firebase-spark-migration
+            git push origin HEAD:feat/firebase-spark-migration
+          fi
