@@ -232,12 +232,7 @@ html:not(.dark-theme) .lists-table tr:not([class*='lists-row-']):hover {
 .lists-row-age-warning:hover { background-color: var(--color-age-warn-tint) !important; }
 .lists-row-age-severe:hover { background-color: var(--color-age-severe-tint) !important; }
 
-/* A assinatura permanece pequena e abaixo do conteúdo. */
-.developer-signature {
-  border-top: 1px solid var(--return-hairline);
-  margin-top: auto;
-  padding-top: 32px;
-}
+/* A assinatura autoral original permanece discreta, sem novas molduras. */
 
 /* Modo escuro mantém tokens originais; não force fundos claros em superfícies. */
 .dark-theme .summary-chip {
