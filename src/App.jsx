@@ -340,11 +340,11 @@ export default function App() {
   const [theme, setTheme] = useState(() => {
     try {
       const savedTheme = localStorage.getItem('gop_theme');
-      return VALID_THEMES.includes(savedTheme) ? savedTheme : 'dark';
+      return VALID_THEMES.includes(savedTheme) ? savedTheme : 'light';
     } catch {
-      return 'dark';
+      return 'light';
     }
-  }); // 'dark' or 'light'
+  }); // Padrão claro; mantém a preferência escolhida pelo usuário.
 
   useEffect(() => {
     try {
