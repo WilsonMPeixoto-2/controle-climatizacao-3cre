@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-controle-climatizacao-3cre"
+    "default": "gestao-da-climatizacao-3-cre",
+    "emulator": "demo-controle-climatizacao-3cre"
   }
 }
