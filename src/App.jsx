@@ -1854,11 +1854,13 @@ export default function App() {
           </div>
         </div>
 
-        <nav style={{ flex: 1 }}>
+        <nav className="sidebar-navigation" aria-label="Navegação principal" style={{ flex: 1 }}>
+          <div className="sidebar-nav-label">Navegação</div>
           <ul className="sidebar-menu">
             <li>
               <button
                 className={`sidebar-item ${currentTab === 'dashboard' ? 'active' : ''}`}
+                aria-current={currentTab === 'dashboard' ? 'page' : undefined}
                 onClick={() => setCurrentTab('dashboard')}
                 aria-label="Painel Executivo"
                 title="Painel Executivo"
@@ -1870,6 +1872,7 @@ export default function App() {
             <li>
               <button
                 className={`sidebar-item ${currentTab === 'tickets' ? 'active' : ''}`}
+                aria-current={currentTab === 'tickets' ? 'page' : undefined}
                 onClick={() => setCurrentTab('tickets')}
                 aria-label="Lista de chamados"
                 title="Lista de chamados"
@@ -1881,6 +1884,7 @@ export default function App() {
             <li>
               <button
                 className={`sidebar-item ${currentTab === 'lookup' ? 'active' : ''}`}
+                aria-current={currentTab === 'lookup' ? 'page' : undefined}
                 onClick={() => setCurrentTab('lookup')}
                 aria-label="Consulta por Escola"
                 title="Consulta por Escola"
@@ -1892,6 +1896,7 @@ export default function App() {
             <li>
               <button
                 className={`sidebar-item ${currentTab === 'form' ? 'active' : ''}`}
+                aria-current={currentTab === 'form' ? 'page' : undefined}
                 onClick={() => setCurrentTab('form')}
                 aria-label="Registrar chamado"
                 title="Registrar chamado"
@@ -1903,6 +1908,7 @@ export default function App() {
             <li>
               <button
                 className={`sidebar-item ${currentTab === 'email' ? 'active' : ''}`}
+                aria-current={currentTab === 'email' ? 'page' : undefined}
                 onClick={() => setCurrentTab('email')}
                 aria-label="Comunicações"
                 title="Comunicações"
@@ -1914,6 +1920,7 @@ export default function App() {
             <li>
               <button
                 className={`sidebar-item ${currentTab === 'cloud' ? 'active' : ''}`}
+                aria-current={currentTab === 'cloud' ? 'page' : undefined}
                 onClick={() => {
                   try {
                     const isAuth = sessionStorage.getItem('gop_admin_authenticated') === 'true';
@@ -1950,13 +1957,27 @@ export default function App() {
         {/* Top Header */}
         <header className="main-header">
           <div className="header-title">
+            <div className="header-kicker">
+              <span className="header-kicker-mark" aria-hidden="true" />
+              3ª CRE <span className="header-kicker-separator" aria-hidden="true">/</span> GOP
+              <span className="header-kicker-caption">Painel operacional</span>
+            </div>
             <h1 className="main-portal-title">Gestão de Climatização Escolar</h1>
-            <p>
-              Gerência de Operações · Coordenadoria Regional de Educação (GOP/3ª CRE) · Data de
-              Referência: {formatDateBrazilian(todayRef().toISOString())}
+            <p className="header-subtitle">
+              Acompanhamento das demandas de manutenção e climatização das unidades escolares.
+              <span className="header-date">Atualizado em {formatDateBrazilian(todayRef().toISOString())}</span>
             </p>
           </div>
           <div className="header-actions">
+            <div
+              className={`header-cloud-status ${cloudConnected ? 'is-online' : isInitialLoad ? 'is-loading' : 'is-offline'}`}
+              role="status"
+              aria-live="polite"
+              title={cloudConnected ? 'Firestore conectado e com dados carregados' : 'Sem conexão online confirmada'}
+            >
+              <span className="header-cloud-dot" aria-hidden="true" />
+              <span>{cloudConnected ? 'Base online' : isInitialLoad ? 'Conectando…' : 'Modo local'}</span>
+            </div>
             <button
               className="btn btn-secondary theme-toggle-header"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -2039,6 +2060,15 @@ export default function App() {
                     <div
                       className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
                       onClick={() => setActiveListsView('all')}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Mostrar todos os chamados"
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          setActiveListsView('all');
+                        }
+                      }}
                       style={{ '--card-accent': 'var(--primary)' }}
                     >
                       <div className="stat-header">
@@ -2054,6 +2084,15 @@ export default function App() {
                     <div
                       className={`stat-card ${activeListsView === 'active' ? 'active' : ''}`}
                       onClick={() => setActiveListsView('active')}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Mostrar chamados ativos"
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          setActiveListsView('active');
+                        }
+                      }}
                       style={{ '--card-accent': 'var(--color-blue)' }}
                     >
                       <div className="stat-header">
@@ -2086,6 +2125,15 @@ export default function App() {
                         <div
                           className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
                           onClick={() => setActiveListsView('inactive7')}
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Mostrar chamados sem movimentação há mais de sete dias"
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setActiveListsView('inactive7');
+                            }
+                          }}
                           style={{ '--card-accent': 'var(--color-amber)' }}
                         >
                           <div className="stat-header">
@@ -2103,6 +2151,15 @@ export default function App() {
                         <div
                           className={`stat-card ${activeListsView === 'inactive15' ? 'active' : ''}`}
                           onClick={() => setActiveListsView('inactive15')}
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Mostrar chamados sem movimentação há mais de quinze dias"
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setActiveListsView('inactive15');
+                            }
+                          }}
                           style={{ '--card-accent': 'var(--color-red)' }}
                         >
                           <div className="stat-header">
@@ -2127,6 +2184,15 @@ export default function App() {
                         <div
                           className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
                           onClick={() => setActiveListsView('age30')}
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Mostrar chamados abertos há mais de trinta dias"
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setActiveListsView('age30');
+                            }
+                          }}
                           style={{ '--card-accent': 'var(--color-age-warn)' }}
                         >
                           <div className="stat-header">
@@ -2146,6 +2212,15 @@ export default function App() {
                         <div
                           className={`stat-card ${activeListsView === 'age60' ? 'active' : ''}`}
                           onClick={() => setActiveListsView('age60')}
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Mostrar chamados abertos há mais de sessenta dias"
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setActiveListsView('age60');
+                            }
+                          }}
                           style={{ '--card-accent': 'var(--color-age-severe)' }}
                         >
                           <div className="stat-header">
