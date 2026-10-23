@@ -42,3 +42,13 @@
 
 ## Rollback
 A implantação de produção anterior ao upgrade é `dpl_HD3oPFXQAT9LVdQfabeNE3UcNpLt`. Em caso de regressão, atribuir temporariamente o alias histórico a esse deploy, sem alterar os dados Firestore. **Não retornar à versão antiga conectada ao Supabase inativo.**
+
+
+## Encerramento da integração no GitHub — 23/10/2026
+- PR #20 (migração Firebase) integrado à `master` com sucesso. Merge GitHub: `9c8767c4335b6eeb13006669f4cd44d7c1d3dd9b`.
+- A integração preserva também o Prontuário de Climatização da antiga `master`: `ClimateSurveyPage`, lógica, CSS, teste unitário, E2E e seleção da página por `?levantamento=`.
+- Os conflitos em `src/main.jsx` e `package.json` foram resolvidos manualmente com os recursos das duas branches preservados.
+- Validação independente do commit intermediário `4feeec3595874644ed84436366c786a5c86218b8`: `npm ci` concluído; `npm run build` executou ESLint, todos os testes unitários incluindo `climate-survey.test.mjs`, e compilação Vite com êxito.
+- Teste **real** com `firebase@13.1.0`: leitura das 134 escolas e consulta do chamado fictício preexistente; CRUD isolado na coleção `diagnostico_integracao` (criar, ler, atualizar, reler, excluir, conferir exclusão), todas as etapas aprovadas. Nenhum chamado administrativo foi alterado; o teste foi removido.
+- A Vercel recusou **novos builds** do commit integrado por limite de builds da equipe (`build-rate-limit`), não por erro de código. Portanto o endereço público permaneceu no deploy READY `dpl_4CwnzFynwX62T8AEEhJYMEMkvtkD` com código `ff8a5eca`, que **já continha Firebase 13 e as dependências atualizadas**, mas ainda não contém a restauração do Prontuário feita no merge. Não declarar que o merge completo já foi publicado até nova compilação e troca de deploy confirmadas.
+- Testes Playwright de navegador e testes de emulador Firestore não foram integralmente executados nesta etapa; a validação substitutiva foi `npm run build` mais CRUD real do SDK 13.
