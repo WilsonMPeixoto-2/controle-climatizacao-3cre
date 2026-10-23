@@ -42,6 +42,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import dbData from './data/db.json';
+import logoTerceiraCre from './assets/logoTerceiraCre.js';
 import { Analytics } from '@vercel/analytics/react';
 import { track } from '@vercel/analytics';
 import {
@@ -1840,12 +1841,14 @@ export default function App() {
           style={{ cursor: 'pointer', userSelect: 'none' }}
           title="Ir para o Painel Executivo"
         >
-          <div
+          <img
             className="sidebar-logo"
-            style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}
-          >
-            GC
-          </div>
+            src={logoTerceiraCre}
+            alt="Logotipo da 3ª Coordenadoria Regional de Educação"
+            width="52"
+            height="52"
+            decoding="async"
+          />
           <div className="sidebar-brand-text">
             GOP <span>Clima</span>
           </div>
