@@ -22,13 +22,16 @@ import './styles/print-executive.css';
 import './styles/maturity-2026.css';
 
 import App from './App.jsx';
+import ClimateSurveyPage from './components/ClimateSurveyPage.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
+
+const surveyDesignation = new URLSearchParams(window.location.search).get('levantamento');
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      {surveyDesignation ? <ClimateSurveyPage /> : <App />}
     </ErrorBoundary>
   </StrictMode>
 );
