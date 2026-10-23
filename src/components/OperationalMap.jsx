@@ -5,6 +5,18 @@ import polylabel from 'polylabel';
 import creBairros from '../data/cre-bairros.geo.json';
 import { normalizeString, escapeHtml } from '../lib/logic.js';
 
+// A CARTO passou a exigir chave para tiles raster em 2026. Para o uso
+// interno de pequeno porte, OpenStreetMap é o provedor padrão sem chave.
+// Uma chave CARTO opcional restaura os estilos claro/escuro originais.
+const CARTO_BASEMAP_KEY = import.meta.env.VITE_CARTO_BASEMAP_KEY?.trim();
+const OPENSTREETMAP_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+function basemapTileUrl(theme) {
+  if (!CARTO_BASEMAP_KEY) return OPENSTREETMAP_TILE_URL;
+  const style = theme === 'dark' ? 'dark_nolabels' : 'light_nolabels';
+  return `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}.png?key=${encodeURIComponent(CARTO_BASEMAP_KEY)}`;
+}
+
 /**
  * Pintura sóbria dos bairros (padrão consolidado do projeto):
  * cor forte SOMENTE onde há chamado crítico ou em atenção; bairros com
@@ -182,19 +194,15 @@ export default function OperationalMap({
     });
     mapRef.current = map;
 
-    // Define tile layer inicial baseado no tema — tiles @2x retina para 4K/OLED
-    const isDark = theme === 'dark';
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png';
-
-    const tileLayer = L.tileLayer(tileUrl, {
-      subdomains: 'abcd',
+    // Mapa-base sem chave por padrão; não bloqueia a camada GeoJSON.
+    // Tiles de 256 px e sem detectRetina evitam requisições extras ao OSM.
+    const tileLayer = L.tileLayer(basemapTileUrl(theme), {
+      subdomains: CARTO_BASEMAP_KEY ? 'abcd' : '',
       maxZoom: 19,
-      tileSize: 512,
-      zoomOffset: -1,
-      detectRetina: true,
-      attribution: '© OpenStreetMap · © CARTO'
+      tileSize: 256,
+      attribution: CARTO_BASEMAP_KEY
+        ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; CARTO'
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
@@ -321,13 +329,10 @@ export default function OperationalMap({
   useEffect(() => {
     if (!mapRef.current || !geoJsonRef.current || !mapRef.current._loaded) return;
 
-    // Atualiza o Tile Layer para o tema correto — tiles @2x retina
-    if (tileLayerRef.current) {
-      const isDark = theme === 'dark';
-      const tileUrl = isDark
-        ? 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png';
-      tileLayerRef.current.setUrl(tileUrl);
+    // CARTO alterna estilo com o tema; OSM mantém a mesma URL em ambos.
+    // A camada de bairros continua alternando cores logo abaixo.
+    if (tileLayerRef.current && CARTO_BASEMAP_KEY) {
+      tileLayerRef.current.setUrl(basemapTileUrl(theme));
     }
 
     // Atualiza os estilos de cada polígono GeoJSON
