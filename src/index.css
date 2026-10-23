@@ -413,10 +413,60 @@ html:not(.dark-theme) body::after {
 /* Main window layout — expandido para 4K */
 .main-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   margin-left: clamp(280px, 15vw, 360px);
   padding: clamp(48px, 3vw, 72px);
   min-width: 0;
   max-width: clamp(1440px, 85vw, 2400px);
+}
+
+/* Assinatura autoral discreta: acompanha o fim do conteúdo, nunca sobrepõe os dados. */
+.developer-signature {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 9px;
+  margin-top: auto;
+  padding: clamp(36px, 4vw, 56px) 2px 4px;
+  color: var(--text-light);
+  line-height: 1.5;
+  text-align: right;
+  opacity: 0.74;
+  user-select: text;
+}
+
+.developer-signature-name {
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.developer-signature-org {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 768px) {
+  .developer-signature {
+    gap: 7px;
+    padding: 36px 2px 8px;
+  }
+  .developer-signature-name {
+    font-size: 11px;
+  }
+  .developer-signature-org {
+    font-size: 9px;
+  }
+}
+
+@media print {
+  .developer-signature {
+    display: none !important;
+  }
 }
 
 /* Top Header Actions */
