@@ -1,0 +1,519 @@
+/*
+ * CLIMATIZAÇÃO 3ª CRE | Polimento de retorno, outubro de 2026
+ *
+ * Acabamento incremental sobre maturity-2026.css.
+ * Sem novos componentes, alterações de navegação, lógica ou esquema Firebase.
+ * Intencionalmente não modifica Leaflet, GeoJSON ou indicadores de risco do mapa.
+ */
+
+:root {
+  --return-radius-sm: 10px;
+  --return-radius-md: 14px;
+  --return-hairline: color-mix(in srgb, var(--text-muted) 19%, transparent);
+}
+
+/* Ritmo editorial: títulos preservados, espaçamento mais previsível. */
+.header-title .main-portal-title {
+  line-height: 1.17;
+  letter-spacing: -0.035em;
+}
+
+.header-kicker {
+  margin-bottom: 9px;
+}
+
+.header-title .header-subtitle {
+  max-width: 78ch;
+  line-height: 1.6;
+}
+
+.screen-intro {
+  margin-top: 0;
+  margin-bottom: 20px;
+  line-height: 1.65;
+}
+
+.section-header {
+  gap: 14px;
+}
+
+.section-eyebrow {
+  line-height: 1.45;
+}
+
+.dashboard-section .section-header h3,
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* Ações primárias e secundárias: formas e resposta visual consistentes. */
+.header-actions .btn {
+  min-height: 40px;
+  border-radius: var(--return-radius-sm);
+}
+
+.btn-primary {
+  transition:
+    background-color 160ms ease,
+    box-shadow 180ms ease,
+    transform 160ms ease;
+}
+
+html:not(.dark-theme) .btn-primary {
+  box-shadow: 0 3px 10px -5px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+html:not(.dark-theme) .btn-secondary {
+  border-color: var(--return-hairline);
+}
+
+.btn:focus-visible,
+.view-tab:focus-visible,
+.select-filter:focus-visible,
+.form-control:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+/* Resumo operacional: superfície neutra, sem competir com a cartografia. */
+.operational-summary-card {
+  border-radius: var(--return-radius-md);
+  padding: clamp(18px, 1.7vw, 26px);
+  gap: 14px;
+}
+
+html:not(.dark-theme) .operational-summary-card {
+  background: #fff;
+  border-color: var(--ui-border);
+  border-left: 3px solid var(--primary);
+  box-shadow: var(--ui-shadow);
+}
+
+.operational-summary-card:hover {
+  box-shadow: var(--ui-shadow);
+}
+
+.summary-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: -.018em;
+}
+
+.summary-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.summary-chips-container {
+  gap: 8px;
+}
+
+.summary-chip {
+  min-height: 31px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-family: var(--font-text);
+  line-height: 1.4;
+}
+
+html:not(.dark-theme) .summary-chip {
+  background: #f7f9fc;
+  border-color: var(--ui-border);
+}
+
+/* Indicadores continuam clicáveis e mantêm cores funcionais de alerta. */
+.stat-card .stat-header {
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.stat-card .stat-header span {
+  max-width: 28ch;
+  line-height: 1.4;
+}
+
+.stat-card .stat-number {
+  line-height: 1.11;
+}
+
+.stat-card .stat-description {
+  line-height: 1.55;
+}
+
+.stat-card[role='button']:active {
+  transform: translateY(0);
+}
+
+.stat-card[role='button']:focus-visible {
+  outline: 2px solid var(--card-accent, var(--primary));
+  outline-offset: 3px;
+}
+
+/* Filtros, campos e abas: um vocabulário único, sem alterar o fluxo. */
+.select-filter,
+.form-control {
+  min-height: 40px;
+  border-radius: var(--return-radius-sm);
+}
+
+.select-filter {
+  padding-inline: 10px;
+  font-size: 13px;
+}
+
+.filter-label {
+  font-size: 12px;
+  letter-spacing: .01em;
+}
+
+.form-control {
+  font-family: var(--font-text);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+html:not(.dark-theme) .form-control:not(:disabled):not([readonly]),
+html:not(.dark-theme) .select-filter:not(:disabled) {
+  background-color: #fff !important;
+  border-color: color-mix(in srgb, var(--text-muted) 32%, transparent) !important;
+}
+
+html:not(.dark-theme) .form-control:focus-visible,
+html:not(.dark-theme) .select-filter:focus-visible {
+  border-color: var(--primary) !important;
+}
+
+/* Não desfazer estados desabilitados nem os avisos de validação.
+   Especificidade maior que a superfície branca do tema claro. */
+html:not(.dark-theme) .form-group.has-error .form-control:not(:disabled),
+html:not(.dark-theme) .form-group.has-error input:not(:disabled),
+html:not(.dark-theme) .form-group.has-error select:not(:disabled),
+html:not(.dark-theme) .form-group.has-error textarea:not(:disabled),
+.dark-theme .form-group.has-error .form-control,
+.dark-theme .form-group.has-error input,
+.dark-theme .form-group.has-error select,
+.dark-theme .form-group.has-error textarea {
+  border-color: var(--color-red) !important;
+}
+
+.view-tabs {
+  gap: 6px;
+}
+
+.view-tab {
+  border-radius: var(--return-radius-sm);
+  min-height: 39px;
+  font-weight: 650;
+}
+
+html:not(.dark-theme) .view-tab:not(.active) {
+  color: var(--text-muted);
+}
+
+/* Tabelas e listas: alinhamento numérico, cabeçalhos legíveis e linhas calmas. */
+.lists-table th {
+  font-family: var(--font-text);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .055em;
+  line-height: 1.5;
+}
+
+.lists-table td {
+  font-family: var(--font-text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.lists-table td:is([data-label='Dias'], [data-label='Prazo'], [data-label='Nº']) {
+  font-variant-numeric: tabular-nums;
+}
+
+html:not(.dark-theme) .lists-table th {
+  background: #f7f9fc;
+  border-bottom-color: var(--ui-border);
+}
+
+html:not(.dark-theme) .lists-table tr:not([class*='lists-row-']):hover {
+  background-color: color-mix(in srgb, var(--primary) 5%, white);
+}
+
+/* Preserve os avisos de prazo e severidade, mesmo no hover. */
+.lists-row-warning:hover { background-color: var(--color-amber-tint) !important; }
+.lists-row-severe:hover { background-color: var(--color-red-tint) !important; }
+.lists-row-age-warning:hover { background-color: var(--color-age-warn-tint) !important; }
+.lists-row-age-severe:hover { background-color: var(--color-age-severe-tint) !important; }
+
+/* A assinatura original permanece discreta e sem molduras adicionais. */
+
+/* Modo escuro mantém tokens originais; não force fundos claros em superfícies. */
+.dark-theme .summary-chip {
+  border-color: var(--ui-border);
+}
+
+.dark-theme .operational-summary-card {
+  border-left-width: 3px;
+}
+
+@media (max-width: 1024px) {
+  .operational-summary-card {
+    padding: 18px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-title .main-portal-title {
+    line-height: 1.2;
+  }
+
+  .header-title .header-subtitle {
+    line-height: 1.5;
+  }
+
+  .header-actions {
+    row-gap: 9px;
+  }
+
+  .summary-chips-container {
+    gap: 7px;
+  }
+
+  .summary-chip {
+    min-height: 32px;
+  }
+
+  .operational-summary-card {
+    padding: 16px;
+  }
+
+  .lists-table th,
+  .lists-table td {
+    font-size: 12.5px;
+  }
+
+  .view-tab {
+    min-height: 44px;
+  }
+
+  .form-control,
+  .select-filter {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary {
+    transition: none;
+  }
+
+  .stat-card[role='button']:active {
+    transform: none;
+  }
+}
+
+@media print {
+  .header-actions,
+  .developer-signature {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Rodada complementar: consistência de navegação, ações e leitura.
+   São refinamentos de interface; nenhum fluxo ou indicador é alterado.
+   ------------------------------------------------------------------ */
+
+/* Controles mantêm alvos confortáveis, mas sem alterar densidade do desktop. */
+.theme-toggle-header,
+.header-actions .btn {
+  padding-inline: 16px;
+  font-family: var(--font-text);
+}
+
+.theme-toggle-header svg,
+.header-actions .btn svg {
+  flex: 0 0 auto;
+}
+
+.sidebar-item {
+  line-height: 1.4;
+}
+
+.sidebar-item:focus-visible,
+.mobile-ticket-card:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Cartões de indicadores: sinal de interação sutil em vez de novo visual. */
+.stat-card[role='button'] {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.stat-card .stat-icon {
+  flex: 0 0 auto;
+  border-radius: var(--return-radius-sm);
+  transition: transform 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stat-card[role='button']:hover .stat-icon {
+    transform: translateY(-2px);
+  }
+}
+
+.stat-cards-instruction {
+  line-height: 1.55;
+  max-width: 82ch;
+}
+
+/* Superfícies operacionais levemente mais regulares. */
+.dashboard-section {
+  border-radius: var(--return-radius-md);
+}
+
+.dashboard-section > .section-header h3 {
+  line-height: 1.35;
+}
+
+.table-toolbar {
+  border-radius: var(--return-radius-sm) !important;
+}
+
+html:not(.dark-theme) .table-toolbar {
+  background: #f8fafd !important;
+  border-color: var(--ui-border) !important;
+}
+
+.dark-theme .table-toolbar {
+  background: var(--bg-app) !important;
+}
+
+.table-toolbar .filter-select-wrapper {
+  flex-wrap: wrap;
+  row-gap: 5px;
+}
+
+.table-toolbar .filter-label {
+  white-space: nowrap;
+}
+
+/* Linha de contexto que aparece ao clicar em um KPI. */
+.dashboard-kpi-result {
+  border-radius: var(--return-radius-md);
+}
+
+.dashboard-kpi-result-copy {
+  line-height: 1.5;
+}
+
+.dashboard-kpi-result-copy strong {
+  letter-spacing: -.015em;
+}
+
+html:not(.dark-theme) .dashboard-kpi-result {
+  background-color: #fbfdff;
+  box-shadow: var(--ui-shadow);
+}
+
+/* Abas continuam na mesma estrutura, mas mais fáceis de reconhecer. */
+.view-tabs {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.view-tab:not(.active):focus-visible {
+  outline-offset: 1px;
+}
+
+.view-tab:not(.active):hover {
+  border-color: transparent;
+}
+
+/* Listagens: preservar cores dos alertas existentes e facilitar leitura. */
+html:not(.dark-theme) .table-shell {
+  background: #fff;
+  border-color: var(--ui-border);
+  border-radius: var(--return-radius-md);
+}
+
+.lists-table th {
+  white-space: nowrap;
+}
+
+.lists-table tbody td {
+  border-bottom-color: var(--return-hairline);
+}
+
+.lists-table tbody tr:last-child td {
+  border-bottom-color: transparent;
+}
+
+.lists-legend-panel,
+.sector-summary-bar {
+  border-radius: var(--return-radius-sm);
+}
+
+/* Ações e alertas conservam todas as cores semânticas do sistema. */
+.btn-secondary {
+  font-family: var(--font-text);
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+@media (max-width: 768px) {
+  /* Controles para toque; não mexe no mapa nem nos cálculos. */
+  .header-actions .btn {
+    min-height: 44px;
+  }
+
+  .table-toolbar {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+
+  .table-toolbar .input-search {
+    flex: 1 1 220px;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .table-toolbar .input-search .form-control {
+    width: 100%;
+  }
+
+  .table-toolbar .filter-select-wrapper {
+    flex: 1 1 155px;
+    min-width: 0;
+  }
+
+  .mobile-ticket-card {
+    border-radius: var(--return-radius-md);
+  }
+
+  .mobile-ticket-card .card-meta-row {
+    line-height: 1.5;
+  }
+
+  .dashboard-kpi-result-copy {
+    min-width: 0;
+  }
+}
+
+@media (hover: none) {
+  .stat-card[role='button']:hover .stat-icon {
+    transform: none;
+  }
+
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: none;
+  }
+}
