@@ -6431,7 +6431,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Anexos: metadados legados preservados; Storage adiado na fase Spark. */}
+                  {ticketAttachments.length > 0 && (
+                    <>
                   <h4
                     style={{
                       fontSize: '13px',
@@ -6455,19 +6456,6 @@ export default function App() {
                       marginBottom: '20px'
                     }}
                   >
-                    <p
-                      role="note"
-                      style={{
-                        fontSize: '12.5px',
-                        lineHeight: 1.55,
-                        color: 'var(--text-muted)',
-                        fontWeight: 500,
-                        margin: ticketAttachments.length ? '0 0 12px' : 0
-                      }}
-                    >
-                      O envio e a abertura de arquivos não estão disponíveis nesta versão. O
-                      registro e a atualização dos chamados continuam funcionando normalmente.
-                    </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {ticketAttachments.map((anexo) => (
                         <div
@@ -6519,6 +6507,8 @@ export default function App() {
                       ))}
                     </div>
                   </div>
+                    </>
+                  )}
 
                   <h4
                     style={{
