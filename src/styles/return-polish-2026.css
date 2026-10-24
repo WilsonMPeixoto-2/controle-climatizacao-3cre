@@ -184,11 +184,16 @@ html:not(.dark-theme) .select-filter:focus-visible {
   border-color: var(--primary) !important;
 }
 
-/* Não desfazer estados desabilitados nem a indicação de validação do formulário. */
-.form-group.has-error .form-control,
-.form-group.has-error input,
-.form-group.has-error select,
-.form-group.has-error textarea {
+/* Não desfazer estados desabilitados nem os avisos de validação.
+   Especificidade maior que a superfície branca do tema claro. */
+html:not(.dark-theme) .form-group.has-error .form-control:not(:disabled),
+html:not(.dark-theme) .form-group.has-error input:not(:disabled),
+html:not(.dark-theme) .form-group.has-error select:not(:disabled),
+html:not(.dark-theme) .form-group.has-error textarea:not(:disabled),
+.dark-theme .form-group.has-error .form-control,
+.dark-theme .form-group.has-error input,
+.dark-theme .form-group.has-error select,
+.dark-theme .form-group.has-error textarea {
   border-color: var(--color-red) !important;
 }
 
