@@ -51,11 +51,11 @@ test('teclado aciona os indicadores e abre a lista correspondente', async ({ pag
 test('um filtro antigo não impede que o indicador mostre todos os chamados relacionados', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Lista de chamados' }).click();
-  await page.getByRole('textbox', { name: /buscar chamado/i }).fill('busca-inexistente-98765');
+  await page.getByPlaceholder('Buscar chamado...').fill('busca-inexistente-98765');
   await expect(page.getByText('Nenhum chamado encontrado').first()).toBeVisible();
 
   await page.getByRole('button', { name: 'Painel Executivo' }).click();
   await page.getByRole('button', { name: 'Mostrar todos os chamados' }).click();
-  await expect(page.getByRole('textbox', { name: /buscar chamado/i })).toHaveValue('');
+  await expect(page.getByPlaceholder('Buscar chamado...')).toHaveValue('');
   await expect(page.locator('.dashboard-kpi-result')).toContainText('Chamados registrados');
 });
