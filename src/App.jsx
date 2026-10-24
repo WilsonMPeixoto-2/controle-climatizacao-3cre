@@ -444,6 +444,7 @@ export default function App() {
   // Tickets tab states
   const [ticketSearch, setTicketSearch] = useState('');
   const [activeListsView, setActiveListsView] = useState('all');
+  const [dashboardMetricSelection, setDashboardMetricSelection] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSavingTicketPending, setIsSavingTicket] = useState(false);
@@ -857,6 +858,28 @@ export default function App() {
   // Computa uma única vez por render (memoizado pelo React Compiler) e reusado nos 5+ pontos de uso
   const filteredTickets = computeFilteredTickets();
   const getFilteredTickets = () => filteredTickets;
+
+  // Os indicadores são atalhos de navegação, não filtros invisíveis do dashboard.
+  // Limpar filtros antigos impede que o destino exiba menos chamados que o KPI.
+  const openDashboardMetric = (view) => {
+    setActiveListsView(view);
+    setDashboardMetricSelection(view);
+    setFilterPriority('');
+    setFilterStatus('');
+    setTicketSearch('');
+    setExpandedTicketId(null);
+    setCurrentTab('tickets');
+    window.scrollTo(0, 0);
+  };
+
+  const dashboardMetricTitles = {
+    all: 'Chamados registrados',
+    active: 'Chamados ativos',
+    inactive7: 'Sem movimentação há 7 dias ou mais',
+    inactive15: 'Sem movimentação há 15 dias ou mais',
+    age30: 'Em aberto há 30 dias ou mais',
+    age60: 'Em aberto há 60 dias ou mais'
+  };
 
   // Ranking dos chamados ativos mais parados (delegado ao módulo de lógica)
   const getDashboardStuckRanking = () => stuckRanking(tickets, todayRef(), 5);
@@ -2045,7 +2068,7 @@ export default function App() {
                   }}
                 >
                   <IconInfo style={{ width: '14px', height: '14px', color: 'var(--primary)' }} />
-                  <span>Clique em um indicador para filtrar a lista de chamados abaixo.</span>
+                  <span>Selecione um indicador para abrir a lista de chamados correspondente.</span>
                 </p>
                 <div className="kpi-group-container">
                   <div className="section-header">
@@ -2059,14 +2082,14 @@ export default function App() {
                   <div className="card-grid volume-grid">
                     <div
                       className={`stat-card ${activeListsView === 'all' ? 'active' : ''}`}
-                      onClick={() => setActiveListsView('all')}
+                      onClick={() => openDashboardMetric('all')}
                       role="button"
                       tabIndex={0}
                       aria-label="Mostrar todos os chamados"
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
-                          setActiveListsView('all');
+                          openDashboardMetric('all');
                         }
                       }}
                       style={{ '--card-accent': 'var(--primary)' }}
@@ -2083,14 +2106,14 @@ export default function App() {
 
                     <div
                       className={`stat-card ${activeListsView === 'active' ? 'active' : ''}`}
-                      onClick={() => setActiveListsView('active')}
+                      onClick={() => openDashboardMetric('active')}
                       role="button"
                       tabIndex={0}
                       aria-label="Mostrar chamados ativos"
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
-                          setActiveListsView('active');
+                          openDashboardMetric('active');
                         }
                       }}
                       style={{ '--card-accent': 'var(--color-blue)' }}
@@ -2124,14 +2147,14 @@ export default function App() {
                       <div className="card-grid subgroup-cards">
                         <div
                           className={`stat-card ${activeListsView === 'inactive7' || activeListsView === 'stuck' ? 'active' : ''}`}
-                          onClick={() => setActiveListsView('inactive7')}
+                          onClick={() => openDashboardMetric('inactive7')}
                           role="button"
                           tabIndex={0}
                           aria-label="Mostrar chamados sem movimentação há mais de sete dias"
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault();
-                              setActiveListsView('inactive7');
+                              openDashboardMetric('inactive7');
                             }
                           }}
                           style={{ '--card-accent': 'var(--color-amber)' }}
@@ -2150,14 +2173,14 @@ export default function App() {
 
                         <div
                           className={`stat-card ${activeListsView === 'inactive15' ? 'active' : ''}`}
-                          onClick={() => setActiveListsView('inactive15')}
+                          onClick={() => openDashboardMetric('inactive15')}
                           role="button"
                           tabIndex={0}
                           aria-label="Mostrar chamados sem movimentação há mais de quinze dias"
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault();
-                              setActiveListsView('inactive15');
+                              openDashboardMetric('inactive15');
                             }
                           }}
                           style={{ '--card-accent': 'var(--color-red)' }}
@@ -2183,14 +2206,14 @@ export default function App() {
                       <div className="card-grid subgroup-cards">
                         <div
                           className={`stat-card ${activeListsView === 'age30' ? 'active' : ''}`}
-                          onClick={() => setActiveListsView('age30')}
+                          onClick={() => openDashboardMetric('age30')}
                           role="button"
                           tabIndex={0}
                           aria-label="Mostrar chamados abertos há mais de trinta dias"
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault();
-                              setActiveListsView('age30');
+                              openDashboardMetric('age30');
                             }
                           }}
                           style={{ '--card-accent': 'var(--color-age-warn)' }}
@@ -2211,14 +2234,14 @@ export default function App() {
 
                         <div
                           className={`stat-card ${activeListsView === 'age60' ? 'active' : ''}`}
-                          onClick={() => setActiveListsView('age60')}
+                          onClick={() => openDashboardMetric('age60')}
                           role="button"
                           tabIndex={0}
                           aria-label="Mostrar chamados abertos há mais de sessenta dias"
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                               event.preventDefault();
-                              setActiveListsView('age60');
+                              openDashboardMetric('age60');
                             }
                           }}
                           style={{ '--card-accent': 'var(--color-age-severe)' }}
@@ -3099,6 +3122,33 @@ export default function App() {
                 </p>
               </div>
             </div>
+
+            {dashboardMetricSelection === activeListsView && (
+              <div
+                className="dashboard-kpi-result"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="dashboard-kpi-result-copy">
+                  <span className="dashboard-kpi-result-eyebrow">Indicador selecionado</span>
+                  <strong>{dashboardMetricTitles[activeListsView]}</strong>
+                  <span>
+                    {getFilteredTickets().length} de {tickets.length} chamados correspondentes
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setDashboardMetricSelection(null);
+                    setCurrentTab('dashboard');
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  Voltar ao painel
+                </button>
+              </div>
+            )}
 
             <div
               className="table-toolbar"
