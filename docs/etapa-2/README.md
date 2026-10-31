@@ -6,6 +6,11 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 
 - **[Carta de Princípios do Produto — v1.0](./concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md)** — filosofia, intenções, responsabilidades entre o site e os instrumentos de gestão, decisões consolidadas, exemplos não vinculantes e questões em aberto. Data-base: 31/10/2026.
 
+## Acervo de referências exploratórias
+
+- **[Primeira tentativa Gemini V8.9](./referencias/gemini-v8.9/README.md)** — registro histórico com o prompt original, a proposta funcional apresentada, o mapa de ideias candidatas e a avaliação das limitações do protótipo. **Não homologado; não é código para implantação.**
+- As referências são subordinadas à Carta de Princípios. Não transformar propostas, exemplos de interface ou números demonstrativos em requisitos aprovados.
+
 ## Regra de utilização
 
 1. **Primeiro, conceber o produto.** A próxima entrega é um plano textual que justifique capacidades, jornadas, simplificação da interface e escopo da primeira evolução.
