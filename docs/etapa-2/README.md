@@ -11,6 +11,12 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 - **[Primeira tentativa Gemini V8.9](./referencias/gemini-v8.9/README.md)** — registro histórico com o prompt original, a proposta funcional apresentada, o mapa de ideias candidatas e a avaliação das limitações do protótipo. **Não homologado; não é código para implantação.**
 - As referências são subordinadas à Carta de Princípios. Não transformar propostas, exemplos de interface ou números demonstrativos em requisitos aprovados.
 
+
+## Concepção funcional — proposta v1.0
+
+- [Registro da Concepção Funcional v1.0](./concepcao/REGISTRO_CONCEPCAO_FUNCIONAL_v1.0.md): síntese, escopo, ressalvas e roteiro de avaliação. **Ainda não homologada.**
+- Documento Word de 11 páginas, com diagramas e imagens, produzido separadamente; a inclusão do binário DOCX no GitHub continua pendente, conforme o registro.
+
 ## Regra de utilização
 
 1. **Primeiro, conceber o produto.** A próxima entrega é um plano textual que justifique capacidades, jornadas, simplificação da interface e escopo da primeira evolução.
