@@ -13,6 +13,7 @@
 export const REFERENCE_STATUS = Object.freeze({
   PENDING_CATALOG: 'catalogo_pendente',
   PENDING_EQUIPMENT: 'dados_tecnicos_pendentes',
+  PENDING_SCOPE: 'validacao_escopo_pendente',
   UNMATCHED: 'categoria_nao_identificada',
   AMBIGUOUS: 'catalogo_ambiguo',
   INVALID_CATALOG: 'catalogo_inconsistente',
@@ -67,13 +68,16 @@ export function parseCapacityBtu(input) {
  * - a função NÃO declara cobertura do serviço ou cria direito financeiro.
  */
 export function consultContractReference({ type, btu, outsideScope = false, outsideEvidence = '' } = {}, catalog = null) {
-  if (outsideScope === true && typeof outsideEvidence === 'string' && outsideEvidence.trim()) {
+  if (outsideScope === true) {
+    const validEvidence = typeof outsideEvidence === 'string' && outsideEvidence.trim();
     return {
-      status: REFERENCE_STATUS.OUTSIDE_CONFIRMED,
+      status: validEvidence ? REFERENCE_STATUS.OUTSIDE_CONFIRMED : REFERENCE_STATUS.PENDING_SCOPE,
       categoryCode: null,
       priceUnits4: null,
-      sourceRef: outsideEvidence.trim(),
-      message: 'Fora do escopo conforme referência de validação informada.'
+      sourceRef: validEvidence || null,
+      message: validEvidence
+        ? 'Fora do escopo conforme referência de validação informada.'
+        : 'Indicação de fora do escopo sem evidência de validação; verificar enquadramento.'
     };
   }
 
