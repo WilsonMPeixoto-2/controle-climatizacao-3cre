@@ -4,42 +4,43 @@
 **Base:** [Concepção Funcional v1.0](../concepcao/documento-integral-v1.0/README.md), [Carta de Princípios](../concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md) e [seleção útil do Gemini](../referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md).  
 **Arquitetura operacional atual:** React/Vite, módulos em `src/domain/`, serviços, Firestore e testes Node.  
 **Princípio:** evoluir o site existente, não recriá-lo.
+**Diretrizes complementares consolidadas:** [DP-001 — flexibilidade de gestão](../decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md) e [DP-002 — continuidade visual](../decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md).
 
 ## Recorte implementado nesta branch: E1 — fundação de referência
 
-- `src/domain/financialReference.js`: normalização estrita, consulta a catálogo validado com fonte/versão, estados de ausência e erro, representação decimal de quatro casas e soma de valores efetivamente informados.
+- `src/domain/financialReference.js`: normalização técnica, consulta a catálogos de referência **confirmados ou provisórios**, indicação de origem, ajuste manual consultivo, estados de ausência e precisão de quatro casas.
 - `test/financial-reference.test.mjs`: testes sem dados reais; valores fictícios explicitamente assinalados.
 - `package.json`: integra a suíte nova ao comando existente `npm test`.
 
-**Limites do incremento:** não há preço oficial carregado, nova coleção Firebase, autorização financeira, alteração de chamados nem modificação da navegação. O módulo não é utilizado pela produção e não executa faturamento. Toda operação com catálogo ainda depende de fonte e validação. Esse isolamento é deliberado para evitar regressão.
+**Limites do incremento:** não há preço oficial carregado, nova coleção Firebase, autorização financeira, alteração de chamados nem modificação da navegação. O módulo não é utilizado pela produção e não executa faturamento. A simulação aceita referências de trabalho identificadas como provisórias. Isso não torna o cálculo um atesto e não impede o gestor de ajustar dados quando necessário.
 
 ## E2 — referência na demanda, dentro do fluxo atual
 
-1. Definir fonte confiável de tipo, capacidade e identidade dos aparelhos sem confundir total por escola com inventário individual.
-2. Identificar qual serviço/atendimento pode receber preço consultivo e qual é coberto sem gerar novo valor faturável.
+1. Reaproveitar dados existentes de tipo, capacidade e identidade dos aparelhos, com alternativa simples para informar ou corrigir dados insuficientes, sem exigir inventário completo.
+2. Exibir referência automática, provisória ou informada pelo usuário; o responsável poderá ajustar os valores pertinentes sem transformar automaticamente um cálculo em valor faturável.
 3. Acrescentar detalhe discreto em Chamados e Consulta por Unidade, e prévia durante o registro de solicitação, mantendo o identificador transacional `GOP-AR-AAAA-NNNN`.
-4. Caso os dados sejam insuficientes, mostrar ausência de referência; **não preencher com valores demonstrativos**.
+4. Em caso de dados insuficientes, indicar a ausência da referência automática, mantendo o fluxo disponível para registros e ajuste manual; **não inventar valores silenciosamente**.
 5. Testar um e múltiplos aparelhos por demanda, identificadores inexistentes, retrocompatibilidade dos chamados e ausência de presunção de faturamento.
 
 ## E3 — previsão por competência, sem dupla contagem
 
 1. Modelar unidade financeira/remunerável separada de chamado operacional.
-2. Garantir uma programação ativa por unidade/ciclo na base consolidada; mudanças de competência redistribuem a previsão derivada.
-3. Tratar identidade não confiável como pendência de conciliação, nunca deduplicação por nome de sala.
+2. Permitir reprogramar competências, escolas, quantidades e ciclos; atualizar a projeção e sinalizar eventuais sobreposições para conferência, sem impor proibição administrativa automática.
+3. Indicar identificação incerta como alerta informativo, sem impedir o trabalho nem deduplicar arbitrariamente por nome de sala.
 4. Preservar a competência do serviço distinta da data de pagamento, e contagens parciais identificadas.
 5. Testar reprogramação e repetição de chamados sem duplicação ou supressão de serviços legítimos.
 
 ## E4 — uma única área "Gestão Financeira"
 
-1. Integrar à navegação existente, com componentes e estilo reais, sem dependência obrigatória de Recharts do protótipo.
+1. Integrar à navegação existente com os tokens e componentes de `src/index.css`, `src/styles/tokens.css`, `src/styles/components.css`, `src/styles/dashboard.css` e demais estilos vigentes; não copiar a sidebar, o tema Tailwind ou a identidade visual independente do Gemini.
 2. Começar por quatro perguntas: previsão, execução informada, faturamento/pagamentos e limites/empenhos.
 3. Definir escopo de cada indicador e filtros aplicáveis; métricas globais devem continuar identificadas como globais.
 4. Distinguir "sem dados" de "zero informado". Gráfico de caixa deve seguir **data de pagamento**, não competência de execução.
-5. Testar desktop largo, notebook e mobile com fontes confortáveis e orientação mínima na tela.
+5. Testar desktop largo/4K, notebook e mobile com a escala tipográfica existente, temas claro/escuro e ícones Lucide, assegurando continuidade de interação e orientação mínima na tela.
 
 ## E5 — registros financeiros com autorização real
 
-1. Definir registros de NF, apuração, liquidação informada e pagamentos, inclusive parciais e múltiplos por competência.
+1. Permitir registrar e corrigir resultados informados de apuração, NF, liquidação e pagamentos, inclusive parciais e múltiplos por competência, sem exigir coincidência obrigatória com uma estimativa.
 2. Preservar trilha autoral e fonte do registro sem reproduzir atos oficiais.
 3. Implementar controle de edição **no Firestore e no mecanismo de autenticação**, sem copiar o exemplo do Gemini e sem enfraquecer as regras atuais.
 4. Sem autorização efetiva, disponibilizar apenas leitura ou protótipo local: não publicar formulários de escrita financeira.
@@ -47,12 +48,14 @@
 
 ## Portões obrigatórios antes de publicação
 
-- Catálogo de preços e fontes contratuais validados independentemente.
+- Catálogo definitivo conferido para uso como referência contratual confirmada; **catálogos provisórios podem ser utilizados em planejamento com identificação explícita**, sem bloquear a utilização da ferramenta.
 - Nenhum número inventado nem campo em branco convertido em zero.
 - Nenhum evento operacional gera por si só valor faturável, NF ou pagamento.
 - Nenhum incremento prejudica o fluxo atual de chamados ou a integridade dos IDs.
 - Testes unitários, integração Firestore, lint, build, revisão visual e testes de navegação concluídos.
 - Revisão/aceite do usuário antes do merge e da publicação.
+- **Continuidade visual obrigatória:** utilizar componentes, tokens e padrões reais do site, conforme [DP-002](../decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md), sem copiar o shell do Gemini.
+- **Flexibilidade operacional:** quantidades, programações, referências e valores informados são ajustáveis, conforme [DP-001](../decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md); nenhum ato de atesto é produzido automaticamente.
 
 ## Resultado esperado desta rodada
 
