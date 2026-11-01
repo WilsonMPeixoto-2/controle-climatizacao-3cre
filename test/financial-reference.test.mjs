@@ -8,6 +8,7 @@ import {
   normalizeEquipmentType,
   parseCapacityBtu,
   consultContractReference,
+  createManualReference,
   formatReferenceUnits4,
   sumReportedValues
 } from '../src/domain/financialReference.js';
@@ -36,12 +37,12 @@ assert.equal(parseCapacityBtu('12.00'), null);
 assert.equal(parseCapacityBtu(''), null);
 assert.equal(parseCapacityBtu(0), null);
 
-// Nunca classificar sem dados, catálogo validado ou fonte rastreável.
+// Nunca classificar sem dados; catálogos de trabalho permitem simulação identificada.
 assert.equal(consultContractReference({ type: '', btu: 24000 }, catalog).status, REFERENCE_STATUS.PENDING_EQUIPMENT);
 assert.equal(consultContractReference({ type: 'SPLIT', btu: '' }, catalog).status, REFERENCE_STATUS.PENDING_EQUIPMENT);
 assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }).status, REFERENCE_STATUS.PENDING_CATALOG);
-assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }, { ...catalog, status: 'draft' }).status, REFERENCE_STATUS.PENDING_CATALOG);
-assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }, { ...catalog, sourceRef: '' }).status, REFERENCE_STATUS.PENDING_CATALOG);
+assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }, { ...catalog, status: 'draft' }).status, REFERENCE_STATUS.PROVISIONAL);
+assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }, { ...catalog, sourceRef: '' }).status, REFERENCE_STATUS.PROVISIONAL);
 assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000, outsideScope: true }, catalog).status, REFERENCE_STATUS.PENDING_SCOPE);
 
 // Faixas estritas, inclusive para Cassete e Piso-Teto.
@@ -69,6 +70,22 @@ assert.equal(
   consultContractReference({ type: 'SPLIT', btu: 24000 }, { ...catalog, categories: [{ code: 'X', type: 'SPLIT', minBtu: 0, maxBtu: 24000, priceUnits4: 111111 }] }).status,
   REFERENCE_STATUS.INVALID_CATALOG
 );
+
+// Um valor de trabalho pode ser consultado e ajustado sem virar atesto.
+const working = consultContractReference({ type: 'SPLIT', btu: '24.000' }, {
+  status: 'working',
+  categories: catalog.categories
+});
+assert.equal(working.status, REFERENCE_STATUS.PROVISIONAL);
+assert.equal(working.priceUnits4, 234567);
+assert.equal(working.sourceRef, null);
+const manual = createManualReference({ priceUnits4: 251789, label: 'valor atualizado pelo responsável' });
+assert.equal(manual.status, REFERENCE_STATUS.MANUAL);
+assert.equal(manual.priceUnits4, 251789);
+assert.equal(manual.sourceRef, null);
+assert.equal(createManualReference({ priceUnits4: -100 }).status, REFERENCE_STATUS.INVALID_MANUAL);
+assert.equal(createManualReference({ priceUnits4: NaN }).status, REFERENCE_STATUS.INVALID_MANUAL);
+assert.equal(createManualReference({ priceUnits4: 0 }).status, REFERENCE_STATUS.MANUAL);
 
 // Preservar precisão interna de 4 casas, sem arredondar o preço do contrato.
 assert.equal(formatReferenceUnits4(234567), '23.4567');
