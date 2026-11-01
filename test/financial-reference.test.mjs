@@ -42,6 +42,7 @@ assert.equal(consultContractReference({ type: 'SPLIT', btu: '' }, catalog).statu
 assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }).status, REFERENCE_STATUS.PENDING_CATALOG);
 assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }, { ...catalog, status: 'draft' }).status, REFERENCE_STATUS.PENDING_CATALOG);
 assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000 }, { ...catalog, sourceRef: '' }).status, REFERENCE_STATUS.PENDING_CATALOG);
+assert.equal(consultContractReference({ type: 'SPLIT', btu: 24000, outsideScope: true }, catalog).status, REFERENCE_STATUS.PENDING_SCOPE);
 
 // Faixas estritas, inclusive para Cassete e Piso-Teto.
 const identified = consultContractReference({ type: 'split', btu: '24.000 BTUs' }, catalog);
