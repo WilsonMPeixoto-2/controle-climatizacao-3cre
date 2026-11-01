@@ -18,6 +18,12 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 - [Registro resumido e estado do arquivo editável](./concepcao/REGISTRO_CONCEPCAO_FUNCIONAL_v1.0.md).
 - O Word original continua disponível como artefato editável fora do repositório; sua cópia binária no GitHub não foi efetuada. A versão textual integral está definitivamente versionada.
 
+## Diretrizes complementares consolidadas
+
+- **[DP-001 — Ferramenta de gestão não é instrumento regulatório](./decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md)**: permitir ajustes de quantidades, programação, referências e informações financeiras por quem executa a gestão, sem travas burocráticas artificiais. Preservar validação técnica e permissões reais.
+- **[DP-002 — Continuidade funcional, informacional e visual](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md)**: novos fluxos, dados e indicadores devem **herdar a identidade visual e os componentes do GOP Clima atual**, não criar aplicativo paralelo inspirado no Gemini.
+- **Regra de convergência:** o produto calcula e informa; o usuário decide e ajusta. O design integrado torna essa autonomia natural no fluxo já conhecido.
+
 ## Início da execução controlada
 
 - **[Seleção técnica do protótipo Gemini v1](./referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md)**: catálogo de padrões úteis e decisão expressa de não reutilizar o JSX defeituoso como código de produção.
@@ -30,14 +36,14 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 1. **Concepção como fonte principal.** A Carta de Princípios e a Concepção Funcional orientam os incrementos; os detalhes não homologados não se tornam requisitos apenas por aparecerem num protótipo.
 2. **Não traduzir o Excel em telas.** Aproveitar informações e recursos existentes, transferindo o cálculo e a complexidade ao sistema.
 3. **Não transformar exemplos em requisitos aprovados.** Possibilidades como botões de transição e fluxos de faturamento devem ser avaliadas na concepção.
-4. **Preservar o escopo.** A aplicação prioriza gestão operacional e inteligência financeira; as comprovações e os procedimentos administrativos formais permanecem nos instrumentos próprios.
-5. **Implementação incremental e isolada.** A fundação E1 pode avançar em branch sem dados financeiros reais; alterações de interface, permissões e publicação dependerão da validação correspondente.
+4. **Preservar o escopo e a autonomia do gestor.** A aplicação prioriza apoio operacional e financeiro; não determina automaticamente atos formais e permite ajustar as informações de trabalho.
+5. **Implementação incremental, flexível e visualmente integrada.** O núcleo E1 aceita referências de trabalho; telas futuras devem respeitar o design system real; permissões financeiras e publicação dependerão das verificações técnicas pertinentes.
 
 ## Organização prevista
 
 - `concepcao/`: filosofia do produto, concepção funcional e decisões de experiência, com versões.
 - `planejamento/`: roteiros de entrega e critérios de aceite dos incrementos (com hipóteses e decisões pendentes identificadas).
-- `decisoes/`: futuramente, registros de decisões alteradas ou aprovadas.
+- `decisoes/`: diretrizes consolidadas de flexibilidade operacional e continuidade de design; atualizações relevantes devem ser registradas de forma explícita.
 
 Pastas são criadas somente quando houver documento real. Evitar duplicações e propostas não aprovadas apresentadas como decisões.
 
