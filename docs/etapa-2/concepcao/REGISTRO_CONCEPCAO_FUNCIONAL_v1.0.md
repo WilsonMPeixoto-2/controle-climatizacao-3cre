@@ -36,6 +36,10 @@ As seis figuras do DOCX ilustram: evolução histórica, arquitetura em camadas,
 
 **Importante:** divergências entre cadastros e planilhas não podem ser corrigidas automaticamente, e uma simulação financeira não equivale a medição, nota fiscal, liquidação ou pagamento.
 
+## Versionamento do conteúdo integral
+
+A conversão fiel do Word para Markdown, com os diagramas representados em Mermaid, está disponível em **[documento-integral-v1.0/](./documento-integral-v1.0/README.md)**. A versão foi dividida em cinco partes e verificada mediante leitura de volta do GitHub. Não é apenas uma síntese: são os capítulos, quadros e anexos da versão textual integral. O DOCX original ainda não foi submetido como binário ao repositório.
+
 ## Próximo marco
 
 Revisão e discussão da concepção funcional antes de qualquer especificação ou implantação. A publicação do arquivo DOCX editável no repositório permanece **pendente**; não se deve declarar que o Word foi versionado até que o binário conste no histórico Git.
