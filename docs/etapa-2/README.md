@@ -14,8 +14,9 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 
 ## Concepção funcional — proposta v1.0
 
-- [Registro da Concepção Funcional v1.0](./concepcao/REGISTRO_CONCEPCAO_FUNCIONAL_v1.0.md): síntese, escopo, ressalvas e roteiro de avaliação. **Ainda não homologada.**
-- Documento Word de 11 páginas, com diagramas e imagens, produzido separadamente; a inclusão do binário DOCX no GitHub continua pendente, conforme o registro.
+- **[Documento integral convertido do Word](./concepcao/documento-integral-v1.0/README.md)** — conteúdo fiel, dividido em cinco partes, com tabelas e diagramas Mermaid nativos do GitHub. **Proposta em discussão, ainda não homologada.**
+- [Registro resumido e estado do arquivo editável](./concepcao/REGISTRO_CONCEPCAO_FUNCIONAL_v1.0.md).
+- O Word original continua disponível como artefato editável fora do repositório; sua cópia binária no GitHub não foi efetuada. A versão textual integral está definitivamente versionada.
 
 ## Regra de utilização
 
