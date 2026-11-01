@@ -2,8 +2,9 @@
  * GOP Clima — Etapa 2 — consulta de REFERÊNCIA contratual (E1, fundação).
  *
  * Funções puras: não acessam Firestore nem modificam chamados, notas, pagamentos ou histórico.
- * Nenhuma tabela de preços está embutida neste arquivo. Um catálogo só é consultável
- * quando explicitamente validado e acompanhado de fonte e versão.
+ * Nenhuma tabela de preços está embutida neste arquivo. O catálogo pode ser
+ * de trabalho/provisório ou confirmado; a origem é indicada e nenhuma situação
+ * autoriza o sistema a tomar decisões de atestação ou faturamento.
  *
  * ATENÇÃO: preço de categoria ≠ valor medido ≠ valor devido ≠ pagamento.
  * Tipo e BTUs podem identificar categoria, mas não demonstram, sozinhos,
@@ -18,6 +19,9 @@ export const REFERENCE_STATUS = Object.freeze({
   AMBIGUOUS: 'catalogo_ambiguo',
   INVALID_CATALOG: 'catalogo_inconsistente',
   IDENTIFIED: 'referencia_identificada',
+  PROVISIONAL: 'referencia_provisoria',
+  MANUAL: 'referencia_informada',
+  INVALID_MANUAL: 'referencia_manual_invalida',
   OUTSIDE_CONFIRMED: 'fora_do_escopo_confirmado'
 });
 
@@ -62,7 +66,8 @@ export function parseCapacityBtu(input) {
 
 /**
  * Regras de catálogo:
- * - status 'validated', identificador de versão e fonte documental são obrigatórios;
+ * - catálogos provisórios são aceitos para planejamento, claramente rotulados;
+ * - fonte e versão aprimoram a rastreabilidade, mas não bloqueiam a simulação;
  * - preço (quando expresso) usa unidades de R$ 0,0001, para não perder 4 casas;
  * - categorias devem ter tipo, intervalo íntegro e código não vazio;
  * - a função NÃO declara cobertura do serviço ou cria direito financeiro.
@@ -93,14 +98,13 @@ export function consultContractReference({ type, btu, outsideScope = false, outs
     };
   }
 
-  if (catalog?.status !== 'validated' || !String(catalog?.sourceRef || '').trim()
-    || !String(catalog?.version || '').trim() || !Array.isArray(catalog?.categories)) {
+  if (!Array.isArray(catalog?.categories)) {
     return {
       status: REFERENCE_STATUS.PENDING_CATALOG,
       categoryCode: null,
       priceUnits4: null,
       sourceRef: null,
-      message: 'Parâmetros contratuais ainda não validados; cálculo indisponível.'
+      message: 'Nenhuma tabela de referência disponível. Permanece possível registrar o chamado ou informar uma referência manual.'
     };
   }
 
@@ -115,7 +119,7 @@ export function consultContractReference({ type, btu, outsideScope = false, outs
       status: REFERENCE_STATUS.INVALID_CATALOG,
       categoryCode: null,
       priceUnits4: null,
-      sourceRef: catalog.sourceRef,
+      sourceRef: catalog.sourceRef || null,
       message: 'Tabela de referência inconsistente; não é seguro calcular.'
     };
   }
@@ -140,13 +144,43 @@ export function consultContractReference({ type, btu, outsideScope = false, outs
     };
   }
 
+  const confirmed = catalog.status === 'validated'
+    && typeof catalog.sourceRef === 'string' && Boolean(catalog.sourceRef.trim())
+    && typeof catalog.version === 'string' && Boolean(catalog.version.trim());
   return {
-    status: REFERENCE_STATUS.IDENTIFIED,
+    status: confirmed ? REFERENCE_STATUS.IDENTIFIED : REFERENCE_STATUS.PROVISIONAL,
     categoryCode: matches[0].code,
     priceUnits4: matches[0].priceUnits4,
-    sourceRef: catalog.sourceRef,
-    catalogVersion: catalog.version,
-    message: 'Categoria e preço de referência identificados. A cobertura e a apuração do serviço exigem verificação própria.'
+    sourceRef: typeof catalog.sourceRef === 'string' ? catalog.sourceRef.trim() || null : null,
+    catalogVersion: typeof catalog.version === 'string' ? catalog.version.trim() || null : null,
+    message: confirmed
+      ? 'Referência contratual identificada. O resultado não é valor atestado nem faturável automaticamente.'
+      : 'Referência provisória calculada para planejamento; o responsável pode ajustar o valor e a origem.'
+  };
+}
+
+/**
+ * Recebe valor de referência informado/ajustado pelo usuário sem exigir
+ * coincidência com cálculo automatizado ou documento externo prévio.
+ * Usar como valor informativo, NUNCA como atesto/faturamento automático.
+ */
+export function createManualReference({ priceUnits4, label = '', sourceRef = '' } = {}) {
+  if (!Number.isSafeInteger(priceUnits4) || priceUnits4 < 0) {
+    return {
+      status: REFERENCE_STATUS.INVALID_MANUAL,
+      categoryCode: null,
+      priceUnits4: null,
+      sourceRef: null,
+      message: 'Informe um valor numérico válido para a referência manual.'
+    };
+  }
+  return {
+    status: REFERENCE_STATUS.MANUAL,
+    categoryCode: null,
+    priceUnits4,
+    label: typeof label === 'string' ? label.trim() : '',
+    sourceRef: typeof sourceRef === 'string' ? sourceRef.trim() || null : null,
+    message: 'Referência informada pelo usuário; não significa atestação nem autorização de faturamento.'
   };
 }
 
