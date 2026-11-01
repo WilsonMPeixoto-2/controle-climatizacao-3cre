@@ -18,20 +18,27 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 - [Registro resumido e estado do arquivo editável](./concepcao/REGISTRO_CONCEPCAO_FUNCIONAL_v1.0.md).
 - O Word original continua disponível como artefato editável fora do repositório; sua cópia binária no GitHub não foi efetuada. A versão textual integral está definitivamente versionada.
 
+## Início da execução controlada
+
+- **[Seleção técnica do protótipo Gemini v1](./referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md)**: catálogo de padrões úteis e decisão expressa de não reutilizar o JSX defeituoso como código de produção.
+- **[Roteiro E1–E5](./planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md)**: incrementos de implementação, verificações e condições para publicação.
+- **E1 iniciado na branch `feat/etapa2-fundacao-financeira`**: `src/domain/financialReference.js`, testes e integração à suíte. Sem modificar telas, Firestore ou valores em produção; preços contratuais só poderão ser inseridos após validação documental.
+- A Concepção Funcional v1.0 permanece a base da evolução. O código do Gemini serve somente como fonte de ideias selecionadas.
+
 ## Regra de utilização
 
-1. **Primeiro, conceber o produto.** A próxima entrega é um plano textual que justifique capacidades, jornadas, simplificação da interface e escopo da primeira evolução.
+1. **Concepção como fonte principal.** A Carta de Princípios e a Concepção Funcional orientam os incrementos; os detalhes não homologados não se tornam requisitos apenas por aparecerem num protótipo.
 2. **Não traduzir o Excel em telas.** Aproveitar informações e recursos existentes, transferindo o cálculo e a complexidade ao sistema.
 3. **Não transformar exemplos em requisitos aprovados.** Possibilidades como botões de transição e fluxos de faturamento devem ser avaliadas na concepção.
 4. **Preservar o escopo.** A aplicação prioriza gestão operacional e inteligência financeira; as comprovações e os procedimentos administrativos formais permanecem nos instrumentos próprios.
-5. **Implementação vem depois.** Só após avaliar e aprovar a concepção deverão ser definidos desenho de interface, código, testes e publicação.
+5. **Implementação incremental e isolada.** A fundação E1 pode avançar em branch sem dados financeiros reais; alterações de interface, permissões e publicação dependerão da validação correspondente.
 
 ## Organização prevista
 
 - `concepcao/`: filosofia do produto, concepção funcional e decisões de experiência, com versões.
-- `planejamento/`: futuramente, planos de entrega e critérios de aceite **após aprovação da concepção**.
+- `planejamento/`: roteiros de entrega e critérios de aceite dos incrementos (com hipóteses e decisões pendentes identificadas).
 - `decisoes/`: futuramente, registros de decisões alteradas ou aprovadas.
 
-As pastas futuras só serão criadas quando houver um documento real a armazenar. Evitar duplicações e propostas não aprovadas apresentadas como decisões.
+Pastas são criadas somente quando houver documento real. Evitar duplicações e propostas não aprovadas apresentadas como decisões.
 
-**Nota:** documentação de orientação ao produto; não representa implantação ou alteração das funcionalidades do site.
+**Nota:** os documentos orientam o produto. A fundação E1 está em branch não integrada; não representa nova funcionalidade publicada no site.
