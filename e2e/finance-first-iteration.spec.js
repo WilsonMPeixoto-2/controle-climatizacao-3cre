@@ -341,7 +341,7 @@ test('E3: programação local por escola permite salvar, reprogramar e informar 
   await board.locator('#visit-planned').fill('2026-10-12');
   await board.getByRole('button', { name: 'Adicionar visita' }).click();
   await expect(board.getByText('Unidade de teste visual A')).toBeVisible();
-  await expect(board).toContainText('1 escola');
+  await expect(board.locator('.visit-board-summary > div:nth-child(2) strong')).toHaveText('1');
   await expect(board).toContainText('Execução ainda não informada');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
   expect(saved).toHaveLength(1);
@@ -365,7 +365,7 @@ test('E3: programação local por escola permite salvar, reprogramar e informar 
   await board.locator('#visit-board-month').fill('2026-11');
   await board.getByRole('button', { name: 'Exportar cópia JSON' }).click();
   await page.reload();
-  await expect(board).toContainText('1 escola');
+  await expect(board.locator('.visit-board-summary > div:nth-child(2) strong')).toHaveText('1');
   expect(await page.evaluate(() => localStorage.getItem('gop_tickets'))).toBe(beforeTickets);
 });
 
