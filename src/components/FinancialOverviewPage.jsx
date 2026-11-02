@@ -27,6 +27,8 @@ export default function FinancialOverviewPage({
   const withoutConclusion = overview.schools.reduce((sum, row) => sum + row.withoutConclusion, 0);
   const series = getOpeningTrend(tickets, { school, selectedMonth: filters.month });
   const maxCount = Math.max(1, ...series.map(item => item.count));
+  const chartTotal = series.reduce((total, item) => total + item.count, 0);
+  const undatedAcrossSchool = getOperationalSlice(tickets, { school }).undatedCount;
   const recent = [...slice.tickets]
     .sort((a, b) => (ticketOpeningDate(b) || '').localeCompare(ticketOpeningDate(a) || ''))
     .slice(0, 5);
@@ -61,6 +63,12 @@ export default function FinancialOverviewPage({
         <p id="finance-filter-scope" className="finance-hint">Período de abertura dos chamados, não competência de serviço ou pagamento.</p>
       </div>
 
+      <VisitPlanningBoard
+        schools={schools}
+        selectedSchoolId={filters.schoolId}
+        onOpenSchool={onOpenSchool}
+      />
+
       <section className="finance-intelligence" aria-label="Síntese operacional do período">
         <div className="finance-insight">
           <span className="finance-insight-label"><Activity size={16} aria-hidden="true" /> Atenção aos registros</span>
@@ -88,7 +96,7 @@ export default function FinancialOverviewPage({
               <h3>Aberturas ao longo do tempo</h3>
               <p>Selecione um mês para investigar os registros.</p>
             </div>
-            <span className="finance-trend-total tabular">{slice.tickets.length} <small>no recorte</small></span>
+            <span className="finance-trend-total tabular">{chartTotal} <small>nas barras</small></span>
           </div>
           {series.length ? (
             <div className="finance-trend-columns" role="group" aria-label="Evolução mensal interativa">
@@ -113,17 +121,11 @@ export default function FinancialOverviewPage({
           ) : (
             <div className="finance-trend-empty">Sem datas válidas de abertura para construir a tendência.</div>
           )}
-          <p className="finance-trend-caption">{school ? school.unidade_escolar : 'Todas as escolas'} · Abertura dos chamados</p>
+          <p className="finance-trend-caption">{school ? school.unidade_escolar : 'Todas as escolas'} · Seis meses de abertura{undatedAcrossSchool ? ` · ${undatedAcrossSchool} sem data, fora do gráfico` : ''}</p>
         </div>
       </section>
 
-      <VisitPlanningBoard
-        schools={schools}
-        initialSchoolId={filters.schoolId}
-        onOpenSchool={onOpenSchool}
-      />
-
-      <div className="finance-workbench">
+            <div className="finance-workbench">
         <div className="finance-workbench-primary" ref={reviewRef}>
           <SchoolRecordReview
             schools={schools}
