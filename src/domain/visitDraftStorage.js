@@ -20,7 +20,7 @@ export async function persistVisitDraft({ storage, locks, expectedRaw, rows, sav
     if (saveRecovery && currentRaw !== null) storage.setItem(VISIT_RECOVERY_KEY, currentRaw);
     const serialized = JSON.stringify(parsed);
     storage.setItem(VISIT_DRAFT_KEY, serialized);
-    return { status: 'saved', raw: serialized, rows: parsed };
+    return { status: 'saved', raw: serialized, rows: parsed, createdRecovery: saveRecovery && currentRaw !== null };
   });
 }
 
