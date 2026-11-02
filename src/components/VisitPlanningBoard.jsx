@@ -6,7 +6,7 @@ import {
 import { formatDateBrazilian } from '../lib/logic.js';
 import {
   createVisitDraft, updateVisitDraft, readVisitDrafts, writeVisitDrafts,
-  summarizeVisits, VISIT_TYPES
+  summarizeVisits, monthOf, VISIT_TYPES
 } from '../domain/schoolVisitPlan.js';
 
 const monthNow = () => {
@@ -84,6 +84,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
         ? rows.map(row => row.id === editingId ? updateVisitDraft(row, form, { now: timestamp }) : row)
         : [...rows, createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp })];
       if (commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída no rascunho deste dispositivo.')) {
+        setMonth(monthOf(form.plannedDate));
         setForm(null);
         setEditingId(null);
       }
