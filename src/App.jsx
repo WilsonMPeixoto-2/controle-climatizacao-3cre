@@ -2036,7 +2036,7 @@ export default function App() {
       </aside>
 
       {/* Main Container */}
-      <main id="conteudo" className="main-content">
+      <main id="conteudo" className={`main-content ${currentTab === 'finance' ? 'main-content--finance' : ''}`}>
         {/* Top Header */}
         <header className="main-header">
           <div className="header-title">
