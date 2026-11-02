@@ -173,7 +173,7 @@ test('conferência escolar diferencia ausência de registros e permite abrir dos
   await finance(page);
   const review = page.getByRole('region', { name: 'Conferência por escola' });
   await expect(review).toBeVisible();
-  await expect(review.getByText('A conferir', { exact: true })).toBeVisible();
+  await expect(review.getByRole('button', { name: 'A conferir' })).toBeVisible();
   await expect(review).toContainText('não falta comprovada de atendimento');
   await expect(review).toContainText('A execução e a medição contratual podem constar de registros externos.');
 
