@@ -97,6 +97,12 @@ Criar componente reutilizável de **referência informativa**, ex. `src/componen
 - Conferir screenshots em **desktop padrão (ex.: 1440×900), desktop largo/4K e mobile (~390px)**, ao menos em tema claro e escuro. Capturas devem evidenciar a convivência visual com telas preexistentes. Não basta compilar.
 - Registrar execução dos testes, falhas não resolvidas e screenshots/links verificáveis no PR. Não alegar CI verde antes de conferir.
 
+## 3.1. Diagnóstico CI pré-handoff — NÃO presumir suíte inteiramente aprovada
+
+Na consulta realizada para este handoff, o workflow da branch no commit `e9b31d6` apresentou: **Lint, unit tests and build = success; Firestore emulator = success; Playwright baseline = failure** (falha no passo `Run Playwright`). Confira os detalhes do [workflow anterior](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/actions/runs/41364576547) e do [job Playwright](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/actions/runs/41364576547/job/125021921595).
+
+Uma nova execução CI foi enfileirada após a atualização documental; **não confundir enfileirada com sucesso**. Na primeira execução do Codex: (a) conferir CI atual e logs; (b) reproduzir e identificar o erro Playwright; (c) corrigir regressões originadas da nova implementação; (d) documentar separadamente eventuais falhas preexistentes sem desviar o escopo para refatoração geral. Não promover PR enquanto a validação esperada não estiver satisfatória.
+
 ## 4. Itens de aceite objetivo da primeira rodada
 
 - [ ] Sidebar real contém **um** novo item Gestão Financeira e os itens anteriores permanecem funcionais.
