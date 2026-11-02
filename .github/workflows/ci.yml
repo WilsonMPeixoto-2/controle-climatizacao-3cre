@@ -8,6 +8,7 @@ on:
     branches:
       - master
       - feat/etapa2-fundacao-financeira
+      - feat/etapa2-primeira-interface
 
 permissions:
   contents: read
