@@ -360,6 +360,14 @@ test('E3: programação local por escola permite salvar, reprogramar e informar 
   expect(revised[0].history).toHaveLength(1);
   expect(revised[0].reportReference).toBe('Boletim interno de teste');
 
+  // A escola consultada reaproveita a programação do mesmo navegador.
+  await board.getByRole('button', { name: 'Abrir dossiê de Unidade de teste visual A' }).click();
+  const schoolSummary = page.getByRole('region', { name: 'Contexto financeiro da escola' });
+  await expect(schoolSummary).toContainText('1 visita programada');
+  await expect(schoolSummary).toContainText('Rascunho somente neste dispositivo');
+  await schoolSummary.getByRole('button', { name: 'Consultar Gestão Financeira' }).click();
+  await expect(board).toContainText('Execução informada em 06/11/2026');
+
   await board.locator('#visit-board-month').fill('2026-10');
   await expect(board).toContainText('1 visita(s) reprogramada(s) para outro mês');
   await board.locator('#visit-board-month').fill('2026-11');
