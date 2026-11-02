@@ -1,62 +1,27 @@
-# Etapa 2 — Concepção e evolução financeira do GOP Clima 3ª CRE
+# GOP Clima · Etapa 2 — Índice rápido
 
-Este diretório reúne, sob versionamento Git, os entendimentos e os documentos de planejamento **anteriores à implementação** da segunda etapa do site.
+**Para executar uma tarefa no Codex, comece pelo [`AGENTS.md`](../../AGENTS.md).** Ele contém o roteiro de quatro passos e aponta para a skill visual **somente quando a tarefa envolve interface**. Este diretório é um acervo de referência, não uma fila de leitura obrigatória.
 
-## Documento fundador
+## O que está em desenvolvimento (confirme o estado remoto)
 
-- **[Carta de Princípios do Produto — v1.0](./concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md)** — filosofia, intenções, responsabilidades entre o site e os instrumentos de gestão, decisões consolidadas, exemplos não vinculantes e questões em aberto. Data-base: 31/10/2026.
+| Entrega | PR | Resultado |
+|---|---|---|
+| Fundação de referência financeira E1 | [#24](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/24) | Cálculo de referência consultivo, sem atesto ou faturamento automático |
+| Integração visual F1–F4 | [#25](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/25) | Nova área financeira, contexto em chamados e consulta escolar |
+| Conferência operacional por escola | [#26](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/26) | Escolas com registros a conferir, dossiê e acesso aos chamados |
 
-## Acervo de referências exploratórias
+**São PRs empilhados, em rascunho e não publicados automaticamente.** O próximo trabalho deve verificar os testes, a interface renderizada e as regressões antes de abrir novas funcionalidades. **CI verde não substitui homologação visual.**
 
-- **[Primeira tentativa Gemini V8.9](./referencias/gemini-v8.9/README.md)** — registro histórico com o prompt original, a proposta funcional apresentada, o mapa de ideias candidatas e a avaliação das limitações do protótipo. **Não homologado; não é código para implantação.**
-- As referências são subordinadas à Carta de Princípios. Não transformar propostas, exemplos de interface ou números demonstrativos em requisitos aprovados.
+## Quando consultar qual referência
 
+- **Decisão ou dúvida de produto:** [Carta de Princípios](./concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md) e [Concepção Funcional v1.0](./concepcao/documento-integral-v1.0/README.md).
+- **Flexibilidade, integração e dashboards:** [DP-001](./decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md), [DP-003](./decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md).
+- **Tarefa com alteração visual:** [skill GOP Clima Visual Quality](../../.agents/skills/gop-clima-visual-quality/SKILL.md) e, **somente se precisar aprofundar**, [protocolo de ferramentas](./qualidade-visual/PROTOCOLO_VISUAL_E_FERRAMENTAS.md).
+- **Planejar E3–E5:** [roteiro técnico por entregas](./planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md). **Não refazer E1/F1–F4 que já estão em PR.**
+- **Conferência escolar:** [escopo e fontes](./implementacao/CONFERENCIA_REGISTROS_ESCOLAS.md).
 
-## Concepção funcional — proposta v1.0
+## Histórico, não instrução ativa
 
-- **[Documento integral convertido do Word](./concepcao/documento-integral-v1.0/README.md)** — conteúdo fiel, dividido em cinco partes, com tabelas e diagramas Mermaid nativos do GitHub. **Proposta em discussão, ainda não homologada.**
-- [Registro resumido e estado do arquivo editável](./concepcao/REGISTRO_CONCEPCAO_FUNCIONAL_v1.0.md).
-- O Word original continua disponível como artefato editável fora do repositório; sua cópia binária no GitHub não foi efetuada. A versão textual integral está definitivamente versionada.
+O [handoff inicial F1–F4](./planejamento/HANDOFF_CODEX_PRIMEIRA_IMPLEMENTACAO_VISUAL.md) e os arquivos de prototipação Gemini documentam decisões anteriores. **Não são um roteiro para reimplementar o que já foi construído.** O conjunto visual do Gemini foi reprovado, embora algumas ideias funcionais possam ser aproveitadas.
 
-## Diretrizes complementares consolidadas
-
-- **[DP-001 — Ferramenta de gestão não é instrumento regulatório](./decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md)**: permitir ajustes de quantidades, programação, referências e informações financeiras por quem executa a gestão, sem travas burocráticas artificiais. Preservar validação técnica e permissões reais.
-- **[DP-002 — Continuidade funcional, informacional e visual](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md)**: novos fluxos, dados e indicadores devem **herdar a identidade visual e os componentes do GOP Clima atual**, não criar aplicativo paralelo inspirado no Gemini.
-- **[DP-003 — Inteligência visual e exploração interativa](./decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md)**: dashboards modernos baseados em perguntas e fontes, filtros sincronizados, detalhamento até escolas/chamados e visualização financeira só quando houver dados válidos; preservar o design atual.
-- **Regra de convergência:** o produto calcula e informa; o usuário decide e ajusta. O design integrado torna essa autonomia natural no fluxo já conhecido.
-
-## Qualidade visual e habilidades reutilizadas
-
-- **[Protocolo visual e ferramentas](./qualidade-visual/PROTOCOLO_VISUAL_E_FERRAMENTAS.md):** inventário verificado, separação entre habilidades do CTRH e recursos efetivamente presentes no GOP Clima, seleção de Figma/Mobbin/Browser quando disponíveis, QA de UI e evidência real em desktop/4K/mobile.
-- **[Instruções permanentes para Codex e agentes](../../AGENTS.md):** leitura automática do contrato de produto e do fluxo de qualidade visual antes de modificar a interface.
-- **[Skill local GOP Clima Visual Quality](../../.agents/skills/gop-clima-visual-quality/SKILL.md):** coordena direção de arte, UX, críticas, acessibilidade, testes Playwright e homologação. Preserva a identidade GOP Clima e não presume que ferramentas do CTRH estejam instaladas aqui.
-
-## Handoff para implementação no Codex
-
-- **[Instruções completas para o Codex: primeira interface real da Etapa 2](./planejamento/HANDOFF_CODEX_PRIMEIRA_IMPLEMENTACAO_VISUAL.md)** — contexto de código e design system, tarefas F1–F4, verificação, controle de escopo, critérios de aceite e orientação para PR em rascunho.
-- **Base de código:** `feat/etapa2-fundacao-financeira` (PR #24). **Execução do Codex:** derivar branch própria dessa base, preservar produção e validar interface com testes e screenshots.
-
-## Início da execução controlada
-
-- **[Seleção técnica do protótipo Gemini v1](./referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md)**: catálogo de padrões úteis e decisão expressa de não reutilizar o JSX defeituoso como código de produção.
-- **[Roteiro E1–E5](./planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md)**: incrementos de implementação, verificações e condições para publicação.
-- **E1 iniciado na branch `feat/etapa2-fundacao-financeira`**: `src/domain/financialReference.js`, testes e integração à suíte. Sem modificar telas, Firestore ou valores em produção; preços contratuais só poderão ser inseridos após validação documental.
-- A Concepção Funcional v1.0 permanece a base da evolução. O código do Gemini serve somente como fonte de ideias selecionadas.
-
-## Regra de utilização
-
-1. **Concepção como fonte principal.** A Carta de Princípios e a Concepção Funcional orientam os incrementos; os detalhes não homologados não se tornam requisitos apenas por aparecerem num protótipo.
-2. **Não traduzir o Excel em telas.** Aproveitar informações e recursos existentes, transferindo o cálculo e a complexidade ao sistema.
-3. **Não transformar exemplos em requisitos aprovados.** Possibilidades como botões de transição e fluxos de faturamento devem ser avaliadas na concepção.
-4. **Preservar o escopo e a autonomia do gestor.** A aplicação prioriza apoio operacional e financeiro; não determina automaticamente atos formais e permite ajustar as informações de trabalho.
-5. **Implementação incremental, flexível e visualmente integrada.** O núcleo E1 aceita referências de trabalho; telas futuras devem respeitar o design system real; permissões financeiras e publicação dependerão das verificações técnicas pertinentes.
-
-## Organização prevista
-
-- `concepcao/`: filosofia do produto, concepção funcional e decisões de experiência, com versões.
-- `planejamento/`: roteiros de entrega e critérios de aceite dos incrementos (com hipóteses e decisões pendentes identificadas).
-- `decisoes/`: diretrizes consolidadas de flexibilidade operacional e continuidade de design; atualizações relevantes devem ser registradas de forma explícita.
-
-Pastas são criadas somente quando houver documento real. Evitar duplicações e propostas não aprovadas apresentadas como decisões.
-
-**Nota:** os documentos orientam o produto. A fundação E1 está em branch não integrada; não representa nova funcionalidade publicada no site.
+**Princípio permanente:** o sistema deve reduzir o trabalho do servidor, não aumentar leitura, cadastros, travas ou documentação.
