@@ -130,9 +130,9 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
       </header>
 
       <div className="visit-board-summary" aria-label="Resumo da programação local">
-        <div><strong className="tabular">{overview.visits}</strong><span>visitas previstas</span></div>
-        <div><strong className="tabular">{overview.schools}</strong><span>escolas na programação</span></div>
-        <div><strong className="tabular">{overview.reported.length}</strong><span>execuções informadas</span></div>
+        <div><strong className="tabular">{overview.visits}</strong><span>{overview.visits === 1 ? 'visita prevista' : 'visitas previstas'}</span></div>
+        <div><strong className="tabular">{overview.schools}</strong><span>{overview.schools === 1 ? 'escola na programação' : 'escolas na programação'}</span></div>
+        <div><strong className="tabular">{overview.reported.length}</strong><span>{overview.reported.length === 1 ? 'execução informada' : 'execuções informadas'}</span></div>
         <div className="visit-board-storage"><Info size={17} aria-hidden="true" />
           <span><strong>Rascunho local</strong> · salvo somente neste navegador, sem sincronização com o Firestore.</span>
         </div>
