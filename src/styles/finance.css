@@ -493,3 +493,22 @@
 @media (max-width: 370px) {
   .visit-board-row-actions .btn-primary { grid-column: 1 / -1; width: 100%; }
 }
+
+/* Acabamento da programação: campos estáveis durante gravação, leitura contida em telas amplas. */
+.visit-board-editor-lock { display: block; border: 0; padding: 0; margin: 0; min-width: 0; }
+.visit-board-editor-lock:disabled { opacity: .82; }
+.visit-board-heading p { max-width: 56ch; font-size: max(var(--text-sm), .875rem); line-height: 1.5; }
+.visit-board-row-main { max-width: 72ch; }
+.visit-board-row-main span { font-size: max(var(--text-sm), .875rem); line-height: 1.5; }
+.visit-board-row-main small { font-size: max(var(--text-xs), .8125rem); line-height: 1.5; }
+.visit-board-summary > div > span { font-size: max(var(--text-xs), .8125rem); line-height: 1.45; }
+.visit-board-actions .btn-primary:disabled { cursor: wait; }
+@media (min-width: 2100px) {
+  .visit-board-header, .visit-board-summary, .visit-board-list, .visit-board-footer { padding-left: clamp(24px, 2vw, 48px); padding-right: clamp(24px, 2vw, 48px); }
+  .visit-board-heading { max-width: 72ch; }
+  .visit-board-row-main { max-width: 80ch; }
+}
+@media (max-width: 720px) {
+  .visit-board-heading p { margin-top: 4px; }
+  .visit-board-summary > div > span { font-size: .8125rem; }
+}
