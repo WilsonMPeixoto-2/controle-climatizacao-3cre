@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  CalendarClock, CalendarPlus, CheckCheck, ChevronDown, Download,
+  CalendarClock, CalendarPlus, CheckCheck, ChevronDown, Download, Upload,
   FilePenLine, Info, MapPin, RotateCcw, Trash2, X
 } from 'lucide-react';
 import { formatDateBrazilian } from '../lib/logic.js';
 import {
   createVisitDraft, updateVisitDraft, readVisitDrafts, writeVisitDrafts,
-  summarizeVisits, monthOf, VISIT_TYPES
+  parseVisitBackup, summarizeVisits, monthOf, VISIT_TYPES, VISIT_DRAFT_KEY
 } from '../domain/schoolVisitPlan.js';
 
 const monthNow = () => {
@@ -20,27 +20,43 @@ const emptyForm = (schoolId = '') => ({
 const dateText = date => date ? formatDateBrazilian(date) : 'Data não informada';
 
 function loadInitial() {
-  try { return { rows: readVisitDrafts(window.localStorage), error: '' }; }
-  catch { return { rows: [], error: 'Não foi possível ler o rascunho armazenado. Nenhum dado será sobrescrito.' }; }
+  const raw = window.localStorage.getItem(VISIT_DRAFT_KEY);
+  try { return { rows: readVisitDrafts(window.localStorage), raw, error: '' }; }
+  catch { return { rows: [], raw, error: 'Não foi possível ler o rascunho armazenado. Nenhum dado será sobrescrito.' }; }
 }
 
-export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoolId = '' }) {
+export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '' }) {
   const initial = useState(loadInitial)[0];
   const [rows, setRows] = useState(initial.rows);
-  const [storageBlocked] = useState(Boolean(initial.error));
+  const [storageBlocked, setStorageBlocked] = useState(Boolean(initial.error));
+  const [stale, setStale] = useState(false);
+  const baseRawRef = useRef(initial.raw);
+  const importInputRef = useRef(null);
   const [error, setError] = useState(initial.error);
   const [notice, setNotice] = useState('');
   const [month, setMonth] = useState(monthNow);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-  const overview = summarizeVisits(rows, month, schools);
+  const overview = summarizeVisits(rows, month, schools, { schoolId: selectedSchoolId });
   const schoolById = new Map(schools.map(item => [String(item.designacao), item]));
+  const selectedSchool = schoolById.get(String(selectedSchoolId));
   const ordered = [...overview.active].sort((a, b) => a.plannedDate.localeCompare(b.plannedDate) || a.schoolId.localeCompare(b.schoolId));
+
+  useEffect(() => {
+    const onStorage = event => {
+      if (event.key === VISIT_DRAFT_KEY && event.newValue !== baseRawRef.current) {
+        setStale(true);
+        setError('A programação foi modificada em outra aba. Recarregue antes de editar ou salvar.');
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   function startNew() {
     setEditingId(null);
-    setForm(emptyForm(initialSchoolId));
+    setForm(emptyForm(selectedSchoolId));
     setShowDetails(false);
     setError('');
     setNotice('');
@@ -54,20 +70,66 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
   }
   function stopEdit() { setForm(null); setEditingId(null); setError(''); }
 
-  function commit(nextRows, message) {
-    if (storageBlocked) {
-      setError('O armazenamento existente não pôde ser lido. A gravação está desativada para protegê-lo.');
+  // Comparação otimista: evita sobrescrever um rascunho já alterado em outra aba.
+  // localStorage não oferece transação atômica; não substitui persistência institucional.
+  function commit(nextRows, message, { allowRecovery = false } = {}) {
+    if (storageBlocked && !allowRecovery) {
+      setError('O rascunho anterior está ilegível. Faça uma restauração explícita, sem sobrescrever silenciosamente.');
       return false;
     }
     try {
+      const currentRaw = window.localStorage.getItem(VISIT_DRAFT_KEY);
+      if (currentRaw !== baseRawRef.current) {
+        setStale(true);
+        setError('Outra aba alterou esta programação. Recarregue os dados antes de salvar.');
+        return false;
+      }
       writeVisitDrafts(window.localStorage, nextRows);
+      baseRawRef.current = window.localStorage.getItem(VISIT_DRAFT_KEY);
       setRows(nextRows);
+      setStale(false);
+      setStorageBlocked(false);
       setError('');
       setNotice(message);
       return true;
     } catch {
       setError('Não foi possível salvar neste navegador. Nada foi alterado.');
       return false;
+    }
+  }
+
+  function reloadLocal() {
+    if (form && !window.confirm('Descartar esta edição não salva e recarregar a programação de outra aba?')) return;
+    try {
+      const fresh = readVisitDrafts(window.localStorage);
+      baseRawRef.current = window.localStorage.getItem(VISIT_DRAFT_KEY);
+      setRows(fresh);
+      setStale(false);
+      setStorageBlocked(false);
+      setForm(null);
+      setEditingId(null);
+      setError('');
+      setNotice('Programação recarregada deste dispositivo.');
+    } catch {
+      setStorageBlocked(true);
+      setError('O conteúdo atualizado não pôde ser lido. Preserve o armazenamento e restaure uma cópia válida.');
+    }
+  }
+
+  async function restoreBackup(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      if (file.size > 2_000_000) throw new Error('Arquivo excede o limite de 2 MB.');
+      const imported = parseVisitBackup(await file.text());
+      if (!window.confirm(`Substituir as ${rows.length} visitas do rascunho local pelas ${imported.length} da cópia? Esta operação não afeta o Firestore.`)) return;
+      if (commit(imported, 'Cópia restaurada neste dispositivo.', { allowRecovery: true })) {
+        setForm(null);
+        setEditingId(null);
+      }
+    } catch (reason) {
+      setError(reason.message || 'Arquivo de cópia inválido.');
     }
   }
 
@@ -116,7 +178,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
         <div className="visit-board-heading">
           <span className="section-eyebrow"><CalendarClock size={15} aria-hidden="true" /> Programação de atendimento</span>
           <h3 id="visit-board-title">Planejamento por escola</h3>
-          <p>Organize visitas, reprogramações e informações de execução.</p>
+          <p>{selectedSchool ? `Programação de ${selectedSchool.unidade_escolar}` : 'Organize visitas, reprogramações e informações de execução.'}</p>
         </div>
         <div className="visit-board-actions">
           <label className="visit-month-control" htmlFor="visit-board-month">
@@ -132,7 +194,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
       <div className="visit-board-summary" aria-label="Resumo da programação local">
         <div><strong className="tabular">{overview.visits}</strong><span>visitas</span></div>
         <div><strong className="tabular">{overview.schools}</strong><span>escolas</span></div>
-        <div><strong className="tabular">{overview.reported.length}</strong><span>execuções informadas</span></div>
+        <div><strong className="tabular">{overview.executedInMonth.length}</strong><span>execuções informadas no mês</span></div>
         <div className="visit-board-storage"><Info size={17} aria-hidden="true" />
           <span><strong>Rascunho local</strong> · disponível apenas neste dispositivo.</span>
         </div>
@@ -140,6 +202,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
 
       {notice && <p className="visit-board-notice" role="status">{notice}</p>}
       {error && <p className="field-error visit-board-error" role="alert">{error}</p>}
+      {stale && <button type="button" className="btn btn-secondary visit-board-refresh" onClick={reloadLocal}>Recarregar alterações de outra aba</button>}
 
       {form && (
         <form className="visit-board-editor" onSubmit={submit} aria-label={editingId ? 'Editar programação' : 'Adicionar programação'}>
@@ -239,7 +302,11 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
       )}
       <footer className="visit-board-footer">
         <span><CheckCheck size={15} aria-hidden="true" /> {overview.inReview.length} {overview.inReview.length === 1 ? 'visita' : 'visitas'} sem execução informada</span>
-        <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length}><Download size={15} aria-hidden="true" /> Exportar cópia JSON</button>
+        <div className="visit-board-backups">
+          <input ref={importInputRef} type="file" accept=".json,application/json" className="visit-board-file-input" aria-label="Escolher cópia de segurança da programação" onChange={restoreBackup} />
+          <button type="button" className="visit-board-export" onClick={() => importInputRef.current?.click()}><Upload size={15} aria-hidden="true" /> Restaurar cópia</button>
+          <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length}><Download size={15} aria-hidden="true" /> Baixar cópia de segurança</button>
+        </div>
       </footer>
     </section>
   );
