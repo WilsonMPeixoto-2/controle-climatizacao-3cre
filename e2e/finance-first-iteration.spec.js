@@ -165,3 +165,34 @@ for (const theme of ['light', 'dark']) {
     });
   }
 }
+
+
+test('conferência escolar diferencia ausência de registros e permite abrir dossiê e chamados reais', async ({ page }) => {
+  await seed(page);
+  const previousTickets = await page.evaluate(() => localStorage.getItem('gop_tickets'));
+  await finance(page);
+  const review = page.getByRole('region', { name: 'Conferência por escola' });
+  await expect(review).toBeVisible();
+  await expect(review.getByText('A conferir', { exact: true })).toBeVisible();
+  await expect(review).toContainText('não falta comprovada de atendimento');
+  await expect(review).toContainText('A execução e a medição contratual podem constar de registros externos.');
+
+  // A revisão mensal usa DATA DE ABERTURA e não inventa competência contratual.
+  await page.getByLabel('Mês de abertura').fill('2026-09');
+  await review.getByRole('button', { name: /Sem solicitação/ }).click();
+  await expect(review).toContainText('Unidade de teste visual B');
+  await expect(review).not.toContainText('Unidade de teste visual A');
+  await review.getByRole('button', { name: 'Abrir dossiê de Unidade de teste visual B' }).click();
+  await expect(nav(page, 'Consulta por Escola')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByPlaceholder('Nome ou designação...')).toHaveValue('Unidade de teste visual B');
+
+  // Retorno preserva filtros anteriores; a navegação para a lista usa a busca original.
+  await finance(page);
+  await expect(page.getByLabel('Mês de abertura')).toHaveValue('2026-09');
+  await review.getByRole('button', { name: /A conferir/ }).click();
+  await expect(review).toContainText('Unidade de teste visual A');
+  await review.getByRole('button', { name: 'Ver chamados de Unidade de teste visual A' }).click();
+  await expect(nav(page, 'Lista de chamados')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('GOP-AR-2026-9001').first()).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('gop_tickets'))).toBe(previousTickets);
+});
