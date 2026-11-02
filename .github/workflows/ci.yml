@@ -10,6 +10,7 @@ on:
       - feat/etapa2-fundacao-financeira
       - feat/etapa2-primeira-interface
       - feat/etapa2-conferencia-escolas
+      - feat/etapa2-experiencia-inteligente
 
 permissions:
   contents: read
