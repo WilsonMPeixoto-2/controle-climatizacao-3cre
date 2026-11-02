@@ -899,6 +899,25 @@ export default function App() {
     );
   };
 
+  // Navegação contextual da conferência escolar: reutiliza as telas e dados existentes.
+  // Não edita status, não informa atendimento contratual nem cria atestação.
+  const openFinancialReviewSchool = (school) => {
+    setSelectedSchool(school);
+    setLookupSchoolQuery(school.unidade_escolar);
+    setShowLookupSuggestions(false);
+    setCurrentTab('lookup');
+    window.scrollTo(0, 0);
+  };
+
+  const openFinancialReviewRequests = (school) => {
+    setActiveListsView('all');
+    setFilterPriority('');
+    setFilterStatus('');
+    setTicketSearch(school.unidade_escolar);
+    setCurrentTab('tickets');
+    window.scrollTo(0, 0);
+  };
+
   const goToCommunicationForTicket = (ticket, type) => {
     let templateIndex = 0;
     if (type === 'cto') {
@@ -2047,6 +2066,8 @@ export default function App() {
             filters={financeFilters}
             onFiltersChange={setFinanceFilters}
             onOpenTicket={openTicketEdit}
+            onOpenSchool={openFinancialReviewSchool}
+            onOpenSchoolRequests={openFinancialReviewRequests}
           />
         )}
 
