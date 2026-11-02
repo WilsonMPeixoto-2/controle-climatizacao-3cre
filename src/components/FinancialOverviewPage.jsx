@@ -90,7 +90,7 @@ export default function FinancialOverviewPage({
             <span className="finance-trend-total tabular">{slice.tickets.length} <small>no recorte</small></span>
           </div>
           {series.length ? (
-            <div className="finance-trend-columns" role="group" aria-label="Filtrar solicitações pelo mês de abertura">
+            <div className="finance-trend-columns" role="group" aria-label="Evolução mensal interativa">
               {series.map(item => (
                 <button
                   type="button"
