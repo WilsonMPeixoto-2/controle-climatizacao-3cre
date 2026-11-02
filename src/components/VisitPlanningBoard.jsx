@@ -45,6 +45,13 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   const [error, setError] = useState(initial.error);
   const [notice, setNotice] = useState('');
   const [month, setMonth] = useState(monthNow);
+  const monthInteractionRef = useRef(0);
+  const savingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const changeMonth = nextMonth => {
+    monthInteractionRef.current += 1;
+    setMonth(nextMonth);
+  };
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -154,7 +161,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
 
   async function submit(event) {
     event.preventDefault();
-    if (!form) return;
+    if (!form || savingRef.current) return;
     if (!schools.some(school => String(school.designacao) === String(form.schoolId))) {
       setError('Selecione uma unidade do cadastro atual.');
       return;
@@ -163,17 +170,28 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       setError('Para programar outra escola, altere o filtro de escola da página.');
       return;
     }
+    savingRef.current = true;
+    setIsSaving(true);
+    const monthInteractionAtSubmission = monthInteractionRef.current;
     try {
       const timestamp = new Date().toISOString();
       const next = editingId
         ? rows.map(row => row.id === editingId ? updateVisitDraft(row, form, { now: timestamp }) : row)
         : [...rows, createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp })];
       if (await commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída na programação local.')) {
-        setMonth(monthOf(form.plannedDate));
+        // A navegação escolhida enquanto o Web Lock estava pendente tem prioridade.
+        if (monthInteractionRef.current === monthInteractionAtSubmission) {
+          setMonth(monthOf(form.plannedDate));
+        }
         setForm(null);
         setEditingId(null);
       }
-    } catch (reason) { setError(reason.message || 'Revise os dados informados.'); }
+    } catch (reason) {
+      setError(reason.message || 'Revise os dados informados.');
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
   }
 
   async function remove(entry) {
@@ -224,7 +242,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         <div className="visit-board-actions">
           <label className="visit-month-control" htmlFor="visit-board-month">
             <span>Mês da programação</span>
-            <input id="visit-board-month" type="month" value={month} onChange={event => setMonth(event.target.value)} />
+            <input id="visit-board-month" type="month" value={month} onChange={event => changeMonth(event.target.value)} />
           </label>
           <button className="btn btn-primary" type="button" onClick={startNew} disabled={storageBlocked}>
             <CalendarPlus size={17} aria-hidden="true" /> Programar visita
@@ -249,8 +267,9 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         <form className="visit-board-editor" onSubmit={submit} aria-label={editingId ? 'Editar programação' : 'Adicionar programação'}>
           <div className="visit-board-editor-title">
             <h4>{editingId ? 'Editar visita planejada' : 'Programar visita'}</h4>
-            <button type="button" className="visit-board-close" onClick={stopEdit} aria-label="Fechar edição"><X size={18} /></button>
+            <button type="button" className="visit-board-close" onClick={stopEdit} disabled={isSaving} aria-label="Fechar edição"><X size={18} /></button>
           </div>
+          <fieldset className="visit-board-editor-lock" disabled={isSaving}>
           <div className="visit-board-editor-fields">
             <div className="form-group">
               <label htmlFor="visit-school">Unidade escolar</label>
@@ -296,9 +315,10 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
               <p className="finance-hint visit-board-note">A data de execução é apenas uma informação lançada no rascunho; não constitui atesto ou medição.</p>
             </div>
           </details>
+          </fieldset>
           <div className="visit-board-editor-footer">
-            <button type="button" className="btn btn-secondary" onClick={stopEdit}>Cancelar</button>
-            <button className="btn btn-primary" type="submit">{editingId ? 'Salvar alterações' : 'Adicionar visita'}</button>
+            <button type="button" className="btn btn-secondary" onClick={stopEdit} disabled={isSaving}>Cancelar</button>
+            <button className="btn btn-primary" type="submit" disabled={isSaving}>{isSaving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Adicionar visita'}</button>
           </div>
         </form>
       )}
@@ -342,7 +362,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
           {overview.executedInMonth.filter(item => monthOf(item.plannedDate) !== month).map(item => (
             <div className="visit-board-cross-month" key={item.id}>
               <span>{schoolById.get(item.schoolId)?.unidade_escolar || item.schoolId} · Execução em {dateText(item.reportedDate)} · Prevista para {dateText(item.plannedDate)}</span>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMonth(monthOf(item.plannedDate))}>Abrir programação</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => changeMonth(monthOf(item.plannedDate))}>Abrir programação</button>
             </div>
           ))}
         </section>
