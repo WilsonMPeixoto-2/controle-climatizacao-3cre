@@ -73,6 +73,9 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     setShowDetails(showReport || Boolean(entry.reportedDate || entry.cycle || entry.note));
     setError('');
     setNotice('');
+    if (showReport) {
+      window.requestAnimationFrame(() => document.getElementById('visit-reported')?.focus());
+    }
   }
   function stopEdit() { setForm(null); setEditingId(null); setError(''); }
 
@@ -212,11 +215,11 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         </div>
         <div className="visit-board-actions">
           <label className="visit-month-control" htmlFor="visit-board-month">
-            <span>Competência planejada</span>
+            <span>Mês da programação</span>
             <input id="visit-board-month" type="month" value={month} onChange={event => setMonth(event.target.value)} />
           </label>
           <button className="btn btn-primary" type="button" onClick={startNew} disabled={storageBlocked}>
-            <CalendarPlus size={17} aria-hidden="true" /> Programar
+            <CalendarPlus size={17} aria-hidden="true" /> Programar visita
           </button>
         </div>
       </header>
@@ -311,6 +314,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
                 </div>
                 <div className="visit-board-row-actions">
                   {school && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onOpenSchool(school)} aria-label={`Abrir dossiê de ${school.unidade_escolar}`}><MapPin size={15} aria-hidden="true" /> Escola</button>}
+                  {!entry.reportedDate && <button type="button" className="btn btn-primary btn-sm" onClick={() => startEdit(entry, true)} aria-label={`Informar execução da visita de ${school?.unidade_escolar || entry.schoolId}`}>Informar execução</button>}
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(entry)} aria-label={`Editar visita de ${school?.unidade_escolar || entry.schoolId}`}><FilePenLine size={15} aria-hidden="true" /> Editar</button>
                   <button type="button" className="visit-board-delete" onClick={() => remove(entry)} aria-label={`Excluir rascunho da visita de ${school?.unidade_escolar || entry.schoolId}`} title="Excluir rascunho"><Trash2 size={17} /></button>
                 </div>
@@ -320,8 +324,20 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         </div>
       ) : (
         <div className="visit-board-empty"><CalendarClock size={22} aria-hidden="true" />
-          <div><strong>Nenhuma visita programada neste mês.</strong><span>Use “Programar” para incluir a primeira visita nesta competência.</span></div>
+          <div><strong>Nenhuma visita programada neste mês.</strong><span>Use “Programar visita” para incluir uma data neste mês.</span></div>
         </div>
+      )}
+
+      {overview.executedInMonth.some(item => monthOf(item.plannedDate) !== month) && (
+        <section className="visit-board-other-month" aria-label="Execuções informadas neste mês com programação em outra competência">
+          <h4>Execuções deste mês programadas em outras competências</h4>
+          {overview.executedInMonth.filter(item => monthOf(item.plannedDate) !== month).map(item => (
+            <div className="visit-board-cross-month" key={item.id}>
+              <span>{schoolById.get(item.schoolId)?.unidade_escolar || item.schoolId} · Execução em {dateText(item.reportedDate)} · Prevista para {dateText(item.plannedDate)}</span>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMonth(monthOf(item.plannedDate))}>Abrir programação</button>
+            </div>
+          ))}
+        </section>
       )}
 
       {overview.movedOut.length > 0 && (
