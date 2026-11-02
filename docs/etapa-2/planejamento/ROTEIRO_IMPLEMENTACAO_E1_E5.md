@@ -4,7 +4,7 @@
 **Base:** [Concepção Funcional v1.0](../concepcao/documento-integral-v1.0/README.md), [Carta de Princípios](../concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md) e [seleção útil do Gemini](../referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md).  
 **Arquitetura operacional atual:** React/Vite, módulos em `src/domain/`, serviços, Firestore e testes Node.  
 **Princípio:** evoluir o site existente, não recriá-lo.
-**Diretrizes complementares consolidadas:** [DP-001 — flexibilidade de gestão](../decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md) e [DP-002 — continuidade visual](../decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md).
+**Diretrizes complementares consolidadas:** [DP-001 — flexibilidade de gestão](../decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002 — continuidade visual](../decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md) e [DP-003 — inteligência visual interativa](../decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md).
 
 ## Recorte implementado nesta branch: E1 — fundação de referência
 
@@ -37,6 +37,8 @@
 3. Definir escopo de cada indicador e filtros aplicáveis; métricas globais devem continuar identificadas como globais.
 4. Distinguir "sem dados" de "zero informado". Gráfico de caixa deve seguir **data de pagamento**, não competência de execução.
 5. Testar desktop largo/4K, notebook e mobile com a escala tipográfica existente, temas claro/escuro e ícones Lucide, assegurando continuidade de interação e orientação mínima na tela.
+6. **Exploração visual interativa (DP-003):** indicadores e gráficos respondem a perguntas, têm origem e escopo explícitos e permitem navegar para escola, chamado ou registros financeiros relacionados. Começar com métricas operacionais já sustentadas pelos dados; adicionar gráficos financeiros somente com dados efetivamente informados.
+7. **Não adotar biblioteca de gráficos por antecipação:** avaliar necessidade, peso, acessibilidade, tema e desempenho antes da escolha; manter a identidade visual já implementada.
 
 ## E5 — registros financeiros com autorização real
 
