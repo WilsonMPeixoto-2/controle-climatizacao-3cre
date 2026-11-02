@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   createVisitDraft, updateVisitDraft, readVisitDrafts, writeVisitDrafts,
-  summarizeVisits, isCivilDate, monthOf, VISIT_DRAFT_KEY
+  summarizeVisits, parseVisitBackup, isCivilDate, monthOf, VISIT_DRAFT_KEY
 } from '../src/domain/schoolVisitPlan.js';
 
 const schools = [{ designacao: '03.01.001', unidade_escolar: 'Escola A' }, { designacao: '03.01.002', unidade_escolar: 'Escola B' }];
@@ -52,4 +52,25 @@ raw.set(VISIT_DRAFT_KEY, JSON.stringify([second, second]));
 assert.throws(() => readVisitDrafts(storage), /repetidos/);
 assert.throws(() => writeVisitDrafts({ setItem: () => { throw new Error('quota'); } }, []), /quota/);
 assert.equal(summarizeVisits([informed], '2026-10', []).orphaned, 1);
+
+// O filtro de escola aplica-se a todas as contagens e à lista, sem duplicar escolas.
+const another = createVisitDraft({ ...start, schoolId: '03.01.002', plannedDate: '2026-10-10', reportedDate: '2026-09-30' }, { id: 'visit-B' });
+const filteredA = summarizeVisits([informed, another], '2026-10', schools, { schoolId: '03.01.001' });
+assert.equal(filteredA.visits, 1);
+assert.equal(filteredA.schools, 1);
+assert.equal(filteredA.active[0].schoolId, '03.01.001');
+assert.equal(filteredA.executedInMonth.length, 1);
+const filteredB = summarizeVisits([informed, another], '2026-10', schools, { schoolId: '03.01.002' });
+assert.equal(filteredB.visits, 1);
+assert.equal(filteredB.executedInMonth.length, 0);
+assert.equal(summarizeVisits([another], '2026-09', schools).reported.length, 0);
+assert.equal(summarizeVisits([another], '2026-09', schools).executedInMonth.length, 1); // execução ≠ competência planejada
+
+const backup = JSON.stringify({ format: 'gop-clima-visit-draft-v1', exportedAt: '2026-10-11T00:00:00Z', rows: [second, informed] });
+assert.deepEqual(parseVisitBackup(backup), [second, informed]);
+assert.throws(() => parseVisitBackup(JSON.stringify({ format: 'outro', rows: [] })), /cópia de segurança/);
+assert.throws(() => parseVisitBackup(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: [second, second] })), /repetidos/);
+assert.throws(() => parseVisitBackup('inválido'));
+assert.throws(() => parseVisitBackup(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: [{ id: 'X', schoolId: '' }] })), /escola/);
+
 console.log('E3 | Programação: reprogramação, execução informada, duplicidades legítimas e armazenamento local passaram.');
