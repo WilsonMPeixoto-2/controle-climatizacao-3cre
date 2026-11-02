@@ -100,7 +100,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       }
       baseRawRef.current = result.raw;
       setRows(result.rows);
-      setHasRecovery(previous => previous || saveRecovery);
+      setHasRecovery(previous => previous || result.createdRecovery);
       setStale(false);
       setStorageBlocked(false);
       setError('');
