@@ -112,7 +112,7 @@ export default function SchoolRecordReview({
                     ? 'Nenhuma solicitação registrada neste recorte'
                     : `${requests} ${requests === 1 ? 'chamado' : 'chamados'} · ${withoutConclusion || withConclusion} ${withoutConclusion ? 'sem' : 'com'} conclusão`}
                   {lastOpening && <span> · Última abertura: {formatDateBrazilian(lastOpening)}</span>}
-                  {month && undatedRecords > 0 && <span> · {undatedRecords} sem data válida fora do recorte mensal</span>
+                  {month && undatedRecords > 0 && <span> · {undatedRecords} sem data válida fora do recorte mensal</span>}
                 </div>
               </div>
               {requests > 0 && (
