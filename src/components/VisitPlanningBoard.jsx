@@ -5,9 +5,11 @@ import {
 } from 'lucide-react';
 import { formatDateBrazilian } from '../lib/logic.js';
 import {
-  createVisitDraft, updateVisitDraft, readVisitDrafts, writeVisitDrafts,
-  parseVisitBackup, summarizeVisits, monthOf, VISIT_TYPES, VISIT_DRAFT_KEY
+  createVisitDraft, updateVisitDraft, createVisitBackup,
+  parseVisitBackup, summarizeVisits, monthOf, VISIT_TYPES,
+  VISIT_DRAFT_KEY, VISIT_RECOVERY_KEY, MAX_VISIT_BACKUP_BYTES
 } from '../domain/schoolVisitPlan.js';
+import { persistVisitDraft, loadVisitSnapshot, readVisitRecovery } from '../domain/visitDraftStorage.js';
 
 const monthNow = () => {
   const date = new Date();
@@ -20,15 +22,19 @@ const emptyForm = (schoolId = '') => ({
 const dateText = date => date ? formatDateBrazilian(date) : 'Data não informada';
 
 function loadInitial() {
-  const raw = window.localStorage.getItem(VISIT_DRAFT_KEY);
-  try { return { rows: readVisitDrafts(window.localStorage), raw, error: '' }; }
-  catch { return { rows: [], raw, error: 'Não foi possível ler o rascunho armazenado. Nenhum dado será sobrescrito.' }; }
+  try {
+    const snapshot = loadVisitSnapshot(window.localStorage);
+    return { ...snapshot, hasRecovery: window.localStorage.getItem(VISIT_RECOVERY_KEY) !== null, error: '' };
+  } catch {
+    return { rows: [], raw: null, hasRecovery: false, error: 'Não foi possível ler o rascunho. Os dados existentes foram preservados.' };
+  }
 }
 
 export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '' }) {
   const initial = useState(loadInitial)[0];
   const [rows, setRows] = useState(initial.rows);
   const [storageBlocked, setStorageBlocked] = useState(Boolean(initial.error));
+  const [hasRecovery, setHasRecovery] = useState(initial.hasRecovery);
   const [stale, setStale] = useState(false);
   const baseRawRef = useRef(initial.raw);
   const importInputRef = useRef(null);
@@ -45,7 +51,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
 
   useEffect(() => {
     const onStorage = event => {
-      if (event.key === VISIT_DRAFT_KEY && event.newValue !== baseRawRef.current) {
+      if ((event.key === VISIT_DRAFT_KEY || event.key === null) && event.newValue !== baseRawRef.current) {
         setStale(true);
         setError('A programação foi modificada em outra aba. Recarregue antes de editar ou salvar.');
       }
@@ -70,30 +76,31 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
   function stopEdit() { setForm(null); setEditingId(null); setError(''); }
 
-  // Comparação otimista: evita sobrescrever um rascunho já alterado em outra aba.
-  // localStorage não oferece transação atômica; não substitui persistência institucional.
-  function commit(nextRows, message, { allowRecovery = false } = {}) {
+  async function commit(nextRows, message, { allowRecovery = false, saveRecovery = false } = {}) {
     if (storageBlocked && !allowRecovery) {
-      setError('O rascunho anterior está ilegível. Faça uma restauração explícita, sem sobrescrever silenciosamente.');
+      setError('O rascunho está ilegível. Restaure uma cópia antes de modificar os registros.');
       return false;
     }
     try {
-      const currentRaw = window.localStorage.getItem(VISIT_DRAFT_KEY);
-      if (currentRaw !== baseRawRef.current) {
+      const result = await persistVisitDraft({
+        storage: window.localStorage, locks: window.navigator.locks,
+        expectedRaw: baseRawRef.current, rows: nextRows, saveRecovery
+      });
+      if (result.status === 'conflict') {
         setStale(true);
-        setError('Outra aba alterou esta programação. Recarregue os dados antes de salvar.');
+        setError('Outra aba atualizou esta programação. Sua edição continua aqui; recarregue quando decidir.');
         return false;
       }
-      writeVisitDrafts(window.localStorage, nextRows);
-      baseRawRef.current = window.localStorage.getItem(VISIT_DRAFT_KEY);
-      setRows(nextRows);
+      baseRawRef.current = result.raw;
+      setRows(result.rows);
+      setHasRecovery(previous => previous || saveRecovery);
       setStale(false);
       setStorageBlocked(false);
       setError('');
       setNotice(message);
       return true;
-    } catch {
-      setError('Não foi possível salvar neste navegador. Nada foi alterado.');
+    } catch (reason) {
+      setError(reason.message || 'Não foi possível salvar. A edição continua aberta.');
       return false;
     }
   }
@@ -101,9 +108,9 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   function reloadLocal() {
     if (form && !window.confirm('Descartar esta edição não salva e recarregar a programação de outra aba?')) return;
     try {
-      const fresh = readVisitDrafts(window.localStorage);
-      baseRawRef.current = window.localStorage.getItem(VISIT_DRAFT_KEY);
-      setRows(fresh);
+      const latest = loadVisitSnapshot(window.localStorage);
+      baseRawRef.current = latest.raw;
+      setRows(latest.rows);
       setStale(false);
       setStorageBlocked(false);
       setForm(null);
@@ -121,10 +128,10 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     event.target.value = '';
     if (!file) return;
     try {
-      if (file.size > 2_000_000) throw new Error('Arquivo excede o limite de 2 MB.');
+      if (file.size > MAX_VISIT_BACKUP_BYTES) throw new Error('Arquivo excede o limite de 2 MB.');
       const imported = parseVisitBackup(await file.text());
-      if (!window.confirm(`Substituir as ${rows.length} visitas do rascunho local pelas ${imported.length} da cópia? Esta operação não afeta o Firestore.`)) return;
-      if (commit(imported, 'Cópia restaurada neste dispositivo.', { allowRecovery: true })) {
+      if (!window.confirm(`A cópia contém ${imported.length} visitas. Substituir as ${rows.length} visitas locais (incluindo escolas fora do filtro)? A versão anterior ficará disponível para recuperação neste navegador.`)) return;
+      if (await commit(imported, 'Cópia restaurada. A versão anterior pode ser recuperada.', { allowRecovery: true, saveRecovery: true })) {
         if (imported.length) setMonth(monthOf(imported[0].plannedDate));
         setForm(null);
         setEditingId(null);
@@ -134,7 +141,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     }
   }
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
     if (!form) return;
     if (!schools.some(school => String(school.designacao) === String(form.schoolId))) {
@@ -150,7 +157,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       const next = editingId
         ? rows.map(row => row.id === editingId ? updateVisitDraft(row, form, { now: timestamp }) : row)
         : [...rows, createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp })];
-      if (commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída na programação local.')) {
+      if (await commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída na programação local.')) {
         setMonth(monthOf(form.plannedDate));
         setForm(null);
         setEditingId(null);
@@ -158,23 +165,41 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     } catch (reason) { setError(reason.message || 'Revise os dados informados.'); }
   }
 
-  function remove(entry) {
+  async function remove(entry) {
     if (!window.confirm('Excluir esta visita apenas do rascunho deste dispositivo?')) return;
-    commit(rows.filter(row => row.id !== entry.id), 'Visita excluída do rascunho local.');
-    if (editingId === entry.id) stopEdit();
+    const saved = await commit(rows.filter(row => row.id !== entry.id), 'Visita excluída do rascunho local.');
+    if (saved && editingId === entry.id) stopEdit();
   }
 
   function exportDraft() {
-    const blob = new Blob([JSON.stringify({
-      format: 'gop-clima-visit-draft-v1', exportedAt: new Date().toISOString(), rows
-    }, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `gop-clima-programacao-rascunho-${month}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setNotice('Cópia do rascunho exportada. Não é documento oficial nem sincronização.');
+    try {
+      const blob = new Blob([createVisitBackup(rows)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `gop-clima-programacao-rascunho-${month}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setError('');
+      setNotice('Cópia de toda a programação local baixada, inclusive das escolas ocultas pelo filtro.');
+    } catch (reason) {
+      setError(reason.message || 'Não foi possível gerar a cópia.');
+    }
+  }
+
+  async function recoverPrevious() {
+    try {
+      const previous = readVisitRecovery(window.localStorage);
+      if (!previous) throw new Error('Não há versão anterior disponível neste navegador.');
+      if (!window.confirm(`Recuperar ${previous.rows.length} visitas da versão anterior? A programação atual será preservada como versão de recuperação.`)) return;
+      if (await commit(previous.rows, 'Versão anterior recuperada neste dispositivo.', { allowRecovery: true, saveRecovery: true })) {
+        if (previous.rows.length) setMonth(monthOf(previous.rows[0].plannedDate));
+        setForm(null);
+        setEditingId(null);
+      }
+    } catch (reason) {
+      setError(reason.message || 'A versão anterior não pôde ser recuperada.');
+    }
   }
 
   return (
@@ -201,7 +226,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         <div><strong className="tabular">{overview.schools}</strong><span>escolas</span></div>
         <div><strong className="tabular">{overview.executedInMonth.length}</strong><span>execuções informadas no mês</span></div>
         <div className="visit-board-storage"><Info size={17} aria-hidden="true" />
-          <span><strong>Rascunho local</strong> · disponível apenas neste dispositivo.</span>
+          <span><strong>Rascunho local</strong> · disponível apenas neste navegador, sem sincronização.</span>
         </div>
       </div>
 
@@ -311,6 +336,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
           <input ref={importInputRef} type="file" accept=".json,application/json" className="visit-board-file-input" aria-label="Escolher cópia de segurança da programação" onChange={restoreBackup} />
           <button type="button" className="visit-board-export" onClick={() => importInputRef.current?.click()}><Upload size={15} aria-hidden="true" /> Restaurar cópia</button>
           <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length}><Download size={15} aria-hidden="true" /> Baixar cópia de segurança</button>
+          {hasRecovery && <button type="button" className="visit-board-export" onClick={recoverPrevious}><RotateCcw size={15} aria-hidden="true" /> Recuperar versão anterior</button>
         </div>
       </footer>
     </section>
