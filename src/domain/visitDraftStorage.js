@@ -4,6 +4,8 @@ import {
 } from './schoolVisitPlan.js';
 
 export const VISIT_LOCK_NAME = 'gop-clima-visit-drafts-v1';
+// O evento nativo storage só alcança outras páginas, não leitores da mesma página.
+export const VISIT_DRAFT_UPDATED_EVENT = 'gop-clima:visit-draft-updated';
 
 /**
  * Serializa operações cooperativas entre abas da mesma origem usando Web Locks.

@@ -458,7 +458,7 @@ test('E3: alterações em outra aba não podem sobrescrever silenciosamente o ra
     await expect(b).toContainText('Sua edição continua aqui');
     expect(await second.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(1);
     second.once('dialog', dialog => dialog.accept());
-    await b.getByRole('button', { name: 'Recarregar alterações de outra aba' }).click();
+    await b.getByRole('button', { name: 'Recarregar programação local' }).click();
     await expect(b).toContainText('Programação recarregada');
     await b.getByRole('button', { name: 'Programar visita', exact: true }).click();
     await b.locator('#visit-school').selectOption('900002');
@@ -584,4 +584,180 @@ test('E3: salvar com Web Lock pendente preserva o mês escolhido após o clique'
   expect(rows).toHaveLength(1);
   expect(rows[0].reportedDate).toBe('2026-11-05');
   expect(rows[0].plannedDate).toBe('2026-10-12');
+});
+
+async function holdVisitLock(page) {
+  await page.evaluate(() => new Promise(resolve => {
+    navigator.locks.request('gop-clima-visit-drafts-v1', () => new Promise(unlock => {
+      window.__releaseVisitLockForTest = unlock;
+      resolve();
+    }));
+  }));
+}
+
+async function addPlannedVisit(page, schoolId, plannedDate) {
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await board.getByRole('button', { name: 'Programar visita', exact: true }).click();
+  await board.locator('#visit-school').selectOption(schoolId);
+  await board.locator('#visit-planned').fill(plannedDate);
+  await board.getByRole('button', { name: 'Adicionar visita', exact: true }).click();
+  await expect(board.getByRole('form')).toHaveCount(0);
+}
+
+test('E3 regressão: restauração pendente bloqueia edições e preserva o mês escolhido', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await addPlannedVisit(page, '900001', '2026-11-12');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  const backup = rows => ({
+    name: 'programacao.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows }))
+  });
+  // Uma restauração concluída disponibiliza também a ação de recuperação.
+  page.once('dialog', dialog => dialog.accept());
+  await board.locator('.visit-board-file-input').setInputFiles(backup(saved));
+  await expect(board.getByRole('status')).toContainText('Cópia restaurada');
+  await expect(board.getByRole('button', { name: 'Recuperar versão anterior' })).toBeVisible();
+  await board.getByRole('button', { name: 'Editar visita de Unidade de teste visual A' }).click();
+  await board.getByText('Informações complementares').click();
+  await board.locator('#visit-note').fill('Edição anterior à confirmação de restaurar.');
+
+  await holdVisitLock(page);
+  try {
+    page.once('dialog', dialog => dialog.accept());
+    await board.locator('.visit-board-file-input').setInputFiles(backup([
+      { ...saved[0], plannedDate: '2026-12-10' }
+    ]));
+    await expect.poll(() => page.evaluate(async () =>
+      (await navigator.locks.query()).pending.length
+    )).toBe(1);
+    for (const name of [
+      'Programar visita', 'Editar visita de Unidade de teste visual A',
+      'Informar execução da visita de Unidade de teste visual A',
+      'Excluir rascunho da visita de Unidade de teste visual A',
+      'Restaurar cópia', 'Recuperar versão anterior', 'Cancelar', 'Fechar edição'
+    ]) {
+      await expect(board.getByRole('button', { name, exact: true })).toBeDisabled();
+    }
+    await expect(board.locator('#visit-school')).toBeDisabled();
+    await expect(board.locator('#visit-planned')).toBeDisabled();
+    await expect(board.locator('#visit-note')).toBeDisabled();
+    await expect(board.locator('button[type="submit"]')).toBeDisabled();
+    await board.locator('#visit-board-month').fill('2026-10');
+  } finally {
+    await page.evaluate(() => window.__releaseVisitLockForTest?.());
+  }
+  await expect(board.getByRole('form')).toHaveCount(0);
+  await expect(board.getByRole('status')).toContainText('Cópia restaurada');
+  await expect(board.locator('#visit-board-month')).toHaveValue('2026-10');
+  const restored = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  expect(restored).toHaveLength(1);
+  expect(restored[0].plannedDate).toBe('2026-12-10');
+});
+
+test('E3 regressão: voltar durante gravação pendente recebe o novo snapshot sem falso conflito', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await addPlannedVisit(page, '900001', '2026-10-12');
+  await board.getByRole('button', { name: 'Editar visita de Unidade de teste visual A' }).click();
+  await board.locator('#visit-planned').fill('2026-10-20');
+  await holdVisitLock(page);
+  try {
+    await board.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await expect(board.getByRole('button', { name: 'Salvando…', exact: true })).toBeDisabled();
+    await nav(page, 'Lista de chamados').click();
+    await finance(page);
+    await board.locator('#visit-board-month').fill('2026-10');
+    await expect(board.locator('.visit-board-date strong')).toHaveText('12');
+  } finally {
+    await page.evaluate(() => window.__releaseVisitLockForTest?.());
+  }
+  await expect(board.locator('.visit-board-date strong')).toHaveText('20');
+  await expect(board.getByRole('alert')).toHaveCount(0);
+  await board.getByRole('button', { name: 'Editar visita de Unidade de teste visual A' }).click();
+  await board.locator('#visit-planned').fill('2026-10-21');
+  await board.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+  await expect(board.getByRole('form')).toHaveCount(0);
+  await expect(board.locator('.visit-board-date strong')).toHaveText('21');
+  await expect(board.getByRole('alert')).toHaveCount(0);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  expect(saved).toHaveLength(1);
+  expect(saved[0].plannedDate).toBe('2026-10-21');
+});
+
+test('E3 regressão: novo snapshot preserva formulário aberto após voltar à programação', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await addPlannedVisit(page, '900001', '2026-10-12');
+  await board.getByRole('button', { name: 'Editar visita de Unidade de teste visual A' }).click();
+  await board.locator('#visit-planned').fill('2026-10-20');
+  await holdVisitLock(page);
+  try {
+    await board.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await expect(board.getByRole('button', { name: 'Salvando…', exact: true })).toBeDisabled();
+    await nav(page, 'Lista de chamados').click();
+    await finance(page);
+    await board.getByRole('button', { name: 'Programar visita', exact: true }).click();
+    await board.locator('#visit-school').selectOption('900002');
+    await board.locator('#visit-planned').fill('2026-10-25');
+    await board.getByText('Informações complementares').click();
+    await board.locator('#visit-note').fill('Preservar esta edição não salva.');
+  } finally {
+    await page.evaluate(() => window.__releaseVisitLockForTest?.());
+  }
+  await expect(board.getByRole('alert')).toBeVisible();
+  await expect(board.getByRole('button', { name: 'Recarregar programação local' })).toBeVisible();
+  await expect(board.getByRole('form', { name: 'Adicionar programação' })).toBeVisible();
+  await expect(board.locator('#visit-school')).toHaveValue('900002');
+  await expect(board.locator('#visit-planned')).toHaveValue('2026-10-25');
+  await expect(board.locator('#visit-note')).toHaveValue('Preservar esta edição não salva.');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  expect(saved).toHaveLength(1);
+  expect(saved[0].plannedDate).toBe('2026-10-20');
+});
+
+test('E3 regressão: cópia com histórico inválido é rejeitada sem alterar a programação', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await addPlannedVisit(page, '900001', '2026-11-12');
+  const previousRaw = await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'));
+  const malformed = JSON.parse(previousRaw).map(row => ({ ...row, history: [null] }));
+  // Caso uma regressão aceite o arquivo, o diálogo não pode bloquear o teste.
+  page.once('dialog', dialog => dialog.accept());
+  await board.locator('.visit-board-file-input').setInputFiles({
+    name: 'historico-invalido.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: malformed }))
+  });
+  await expect(board.getByRole('alert')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(previousRaw);
+  await board.locator('#visit-board-month').fill('2026-10');
+  await expect(board).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ocorreu um erro inesperado' })).toHaveCount(0);
+});
+
+test('E3 regressão: dossiê aberto durante gravação recebe atualização sem recarregar', async ({ page }) => {
+  await seed(page);
+  const original = await page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')]);
+  await finance(page);
+  await addPlannedVisit(page, '900001', '2026-11-12');
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await board.getByRole('button', { name: 'Editar visita de Unidade de teste visual A' }).click();
+  await board.locator('#visit-planned').fill('2026-11-20');
+  const summary = page.getByRole('region', { name: 'Contexto financeiro da escola' });
+  await holdVisitLock(page);
+  try {
+    await board.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await expect(board.getByRole('button', { name: 'Salvando…', exact: true })).toBeDisabled();
+    await chooseSchool(page);
+    await expect(summary).toContainText('12/11/2026');
+  } finally {
+    await page.evaluate(() => window.__releaseVisitLockForTest?.());
+  }
+  await expect(summary).toContainText('20/11/2026');
+  await expect(summary).not.toContainText('12/11/2026');
+  expect(await page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')])).toEqual(original);
 });

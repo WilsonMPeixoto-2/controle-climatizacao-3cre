@@ -60,6 +60,22 @@ export function updateVisitDraft(current, patch, { now } = {}) {
       : previous
   };
 }
+function isHistoryTimestamp(value) {
+  return typeof value === 'string'
+    && /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.test(value)
+    && isCivilDate(value.slice(0, 10)) && Number.isFinite(Date.parse(value));
+}
+function validateHistory(history) {
+  if (history === undefined) return []; // compatibilidade com linhas antigas
+  if (!Array.isArray(history)) throw new Error('Rascunho contém histórico de reprogramação inválido.');
+  for (const revision of history) {
+    if (!revision || typeof revision !== 'object' || Array.isArray(revision)
+      || !isCivilDate(revision.from) || !isCivilDate(revision.to) || !isHistoryTimestamp(revision.at)) {
+      throw new Error('Rascunho contém histórico de reprogramação inválido.');
+    }
+  }
+  return history;
+}
 export function validateVisitRows(rows) {
   if (!Array.isArray(rows)) throw new Error('Rascunho de programação possui formato inválido.');
   if (rows.length > 10000) throw new Error('Quantidade excessiva de registros na cópia.');
@@ -67,7 +83,7 @@ export function validateVisitRows(rows) {
   return rows.map(row => {
     if (!row || !textValue(row.id) || ids.has(row.id)) throw new Error('Rascunho contém registros repetidos ou inválidos.');
     ids.add(row.id);
-    return { ...row, ...validate(row), history: Array.isArray(row.history) ? row.history : [] };
+    return { ...row, ...validate(row), history: validateHistory(row.history) };
   });
 }
 export function parseStoredVisitDrafts(raw) {

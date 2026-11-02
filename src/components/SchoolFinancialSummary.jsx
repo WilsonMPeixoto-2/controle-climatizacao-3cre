@@ -1,8 +1,22 @@
+import { useEffect, useReducer } from 'react';
 import { CalendarClock, Wallet } from 'lucide-react';
 import { formatDateBrazilian } from '../lib/logic.js';
-import { readVisitDrafts } from '../domain/schoolVisitPlan.js';
+import { readVisitDrafts, VISIT_DRAFT_KEY } from '../domain/schoolVisitPlan.js';
+import { VISIT_DRAFT_UPDATED_EVENT } from '../domain/visitDraftStorage.js';
 
 export default function SchoolFinancialSummary({ school, onOpenFinance }) {
+  const [, refreshDraft] = useReducer(version => version + 1, 0);
+  useEffect(() => {
+    const onStorage = event => {
+      if (event.key === VISIT_DRAFT_KEY || event.key === null) refreshDraft();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(VISIT_DRAFT_UPDATED_EVENT, refreshDraft);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(VISIT_DRAFT_UPDATED_EVENT, refreshDraft);
+    };
+  }, []);
   let visits = [];
   let draftUnreadable = false;
   try {

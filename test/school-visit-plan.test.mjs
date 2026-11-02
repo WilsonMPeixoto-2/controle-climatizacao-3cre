@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import {
   createVisitDraft, updateVisitDraft, readVisitDrafts, writeVisitDrafts,
-  summarizeVisits, parseVisitBackup, isCivilDate, monthOf, VISIT_DRAFT_KEY
+  summarizeVisits, parseVisitBackup, parseStoredVisitDrafts, createVisitBackup,
+  isCivilDate, monthOf, VISIT_DRAFT_KEY, VISIT_RECOVERY_KEY
 } from '../src/domain/schoolVisitPlan.js';
+import { persistVisitDraft } from '../src/domain/visitDraftStorage.js';
 
 const schools = [{ designacao: '03.01.001', unidade_escolar: 'Escola A' }, { designacao: '03.01.002', unidade_escolar: 'Escola B' }];
 const start = { schoolId: '03.01.001', plannedDate: '2026-09-17', kind: 'preventiva', equipmentCount: '', cycle: 'Primeiro ciclo', note: '' };
@@ -72,5 +74,51 @@ assert.throws(() => parseVisitBackup(JSON.stringify({ format: 'outro', rows: [] 
 assert.throws(() => parseVisitBackup(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: [second, second] })), /repetidos/);
 assert.throws(() => parseVisitBackup('inválido'));
 assert.throws(() => parseVisitBackup(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: [{ id: 'X', schoolId: '' }] })), /escola/);
+
+// Histórico corrompido deve ser rejeitado, nunca descartado ou persistido.
+const revision = moved.history[0];
+const invalidHistories = [
+  [null], null, {}, 'inválido', [[]], ['inválido'], [{}],
+  [{ ...revision, from: '2026-02-30' }],
+  [{ ...revision, to: '2026-13-01' }],
+  [{ from: revision.from, to: revision.to }],
+  [{ ...revision, at: 123 }],
+  [{ ...revision, at: 'inválido' }],
+  [{ ...revision, at: '2026-02-30T12:00:00Z' }],
+  [{ ...revision, at: '2026-09-12T24:00:00Z' }],
+  [{ ...revision, at: '2026-09-12' }]
+];
+for (const history of invalidHistories) {
+  const invalidRows = [{ ...informed, history }];
+  assert.throws(() => parseVisitBackup(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: invalidRows })), /histórico/i);
+  assert.throws(() => parseStoredVisitDrafts(JSON.stringify(invalidRows)), /histórico/i);
+}
+
+writeVisitDrafts(storage, [second, informed]);
+raw.set(VISIT_RECOVERY_KEY, JSON.stringify([second]));
+const beforeInvalidWrite = [...raw];
+const brokenRows = [{ ...informed, history: [null] }];
+assert.throws(() => writeVisitDrafts(storage, brokenRows), /histórico/i);
+assert.throws(() => createVisitBackup(brokenRows), /histórico/i);
+let requestedLocks = 0;
+await assert.rejects(persistVisitDraft({
+  storage,
+  locks: { request: () => { requestedLocks += 1; throw new Error('Lock não deve ser solicitado.'); } },
+  expectedRaw: storage.getItem(VISIT_DRAFT_KEY), rows: brokenRows, saveRecovery: true
+}), /histórico/i);
+assert.equal(requestedLocks, 0);
+assert.deepEqual([...raw], beforeInvalidWrite); // rascunho e recuperação permanecem intocados
+
+// Linhas antigas sem histórico continuam legíveis; revisões válidas fazem roundtrip.
+const legacy = { ...second };
+delete legacy.history;
+assert.deepEqual(parseStoredVisitDrafts(JSON.stringify([legacy])), [second]);
+assert.deepEqual(parseVisitBackup(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: [legacy] })), [second]);
+const twiceMoved = updateVisitDraft(informed, { plannedDate: '2026-12-01' });
+const roundtrip = parseVisitBackup(createVisitBackup([second, twiceMoved]));
+assert.deepEqual(roundtrip, [second, twiceMoved]);
+writeVisitDrafts(storage, roundtrip);
+assert.deepEqual(readVisitDrafts(storage), [second, twiceMoved]);
+assert.equal(summarizeVisits(roundtrip, '2026-09', schools).movedOut.length, 1);
 
 console.log('E3 | Programação: reprogramação, execução informada, duplicidades legítimas e armazenamento local passaram.');

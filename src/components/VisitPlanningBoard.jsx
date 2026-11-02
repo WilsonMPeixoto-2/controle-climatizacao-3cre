@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
   CalendarClock, CalendarPlus, CheckCheck, ChevronDown, Download, Upload,
   FilePenLine, Info, MapPin, RotateCcw, Trash2, X
@@ -9,7 +9,7 @@ import {
   parseVisitBackup, summarizeVisits, monthOf, VISIT_TYPES,
   VISIT_DRAFT_KEY, VISIT_RECOVERY_KEY, MAX_VISIT_BACKUP_BYTES, parseStoredVisitDrafts
 } from '../domain/schoolVisitPlan.js';
-import { persistVisitDraft, loadVisitSnapshot, readVisitRecovery } from '../domain/visitDraftStorage.js';
+import { persistVisitDraft, loadVisitSnapshot, readVisitRecovery, VISIT_DRAFT_UPDATED_EVENT } from '../domain/visitDraftStorage.js';
 
 const monthNow = () => {
   const date = new Date();
@@ -60,6 +60,28 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   const selectedSchool = schoolById.get(String(selectedSchoolId));
   const ordered = [...overview.active].sort((a, b) => a.plannedDate.localeCompare(b.plannedDate) || a.schoolId.localeCompare(b.schoolId));
 
+  const readLocalUpdate = useEffectEvent(() => {
+    try {
+      const latest = loadVisitSnapshot(window.localStorage);
+      if (latest.raw === baseRawRef.current) return;
+      if (form || savingRef.current) {
+        setStale(true);
+        setError('A programação foi atualizada nesta página. Sua edição continua aqui; recarregue quando decidir.');
+        return;
+      }
+      baseRawRef.current = latest.raw;
+      setRows(latest.rows);
+      setHasRecovery(window.localStorage.getItem(VISIT_RECOVERY_KEY) !== null);
+      setStorageBlocked(false);
+      setStale(false);
+      setError('');
+      setNotice('Programação atualizada neste dispositivo.');
+    } catch {
+      setStorageBlocked(true);
+      setError('A programação atualizada não pôde ser lida. Preserve o armazenamento e restaure uma cópia válida.');
+    }
+  });
+
   useEffect(() => {
     const onStorage = event => {
       if ((event.key === VISIT_DRAFT_KEY || event.key === null) && event.newValue !== baseRawRef.current) {
@@ -67,11 +89,28 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         setError('A programação foi modificada em outra aba. Recarregue antes de editar ou salvar.');
       }
     };
+    const onLocalUpdate = () => readLocalUpdate();
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener(VISIT_DRAFT_UPDATED_EVENT, onLocalUpdate);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(VISIT_DRAFT_UPDATED_EVENT, onLocalUpdate);
+    };
   }, []);
 
+  function beginSaving() {
+    if (savingRef.current) return false;
+    savingRef.current = true;
+    setIsSaving(true);
+    setNotice('');
+    return true;
+  }
+  function finishSaving() {
+    savingRef.current = false;
+    setIsSaving(false);
+  }
   function startNew() {
+    if (savingRef.current) return;
     setEditingId(null);
     setForm(emptyForm(selectedSchoolId));
     setShowDetails(false);
@@ -79,6 +118,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     setNotice('');
   }
   function startEdit(entry, showReport = false) {
+    if (savingRef.current) return;
     setEditingId(entry.id);
     setForm({ ...entry, equipmentCount: entry.equipmentCount ?? '' });
     setShowDetails(showReport || Boolean(entry.reportedDate || entry.cycle || entry.note));
@@ -88,7 +128,10 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       window.requestAnimationFrame(() => document.getElementById('visit-reported')?.focus());
     }
   }
-  function stopEdit() { setForm(null); setEditingId(null); setError(''); }
+  function stopEdit() {
+    if (savingRef.current) return;
+    setForm(null); setEditingId(null); setError('');
+  }
 
   async function commit(nextRows, message, { allowRecovery = false, saveRecovery = false } = {}) {
     if (storageBlocked && !allowRecovery) {
@@ -112,6 +155,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       setStorageBlocked(false);
       setError('');
       setNotice(message);
+      window.dispatchEvent(new Event(VISIT_DRAFT_UPDATED_EVENT));
       return true;
     } catch (reason) {
       setError(reason.message || 'Não foi possível salvar. A edição continua aberta.');
@@ -120,6 +164,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
 
   function reloadLocal() {
+    if (savingRef.current) return;
     if (form && !window.confirm('Descartar esta edição não salva e recarregar a programação de outra aba?')) return;
     try {
       const latest = loadVisitSnapshot(window.localStorage);
@@ -141,6 +186,8 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     const input = event.currentTarget;
     const file = input.files?.[0];
     if (!file) return;
+    if (!beginSaving()) { input.value = ''; return; }
+    const monthInteractionAtSubmission = monthInteractionRef.current;
     try {
       if (file.size > MAX_VISIT_BACKUP_BYTES) throw new Error('Arquivo excede o limite de 2 MB.');
       // Manter a seleção até concluir a leitura evita perder a referência ao File.
@@ -148,7 +195,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       const imported = parseVisitBackup(content);
       if (!window.confirm(`A cópia contém ${imported.length} visitas. Substituir as ${rows.length} visitas locais (incluindo escolas fora do filtro)? A versão anterior ficará disponível para recuperação neste navegador.`)) return;
       if (await commit(imported, 'Cópia restaurada. A versão anterior pode ser recuperada.', { allowRecovery: true, saveRecovery: true })) {
-        if (imported.length) setMonth(monthOf(imported[0].plannedDate));
+        if (imported.length && monthInteractionRef.current === monthInteractionAtSubmission) setMonth(monthOf(imported[0].plannedDate));
         setForm(null);
         setEditingId(null);
       }
@@ -156,6 +203,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       setError(reason.message || 'Arquivo de cópia inválido.');
     } finally {
       input.value = '';
+      finishSaving();
     }
   }
 
@@ -170,8 +218,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       setError('Para programar outra escola, altere o filtro de escola da página.');
       return;
     }
-    savingRef.current = true;
-    setIsSaving(true);
+    if (!beginSaving()) return;
     const monthInteractionAtSubmission = monthInteractionRef.current;
     try {
       const timestamp = new Date().toISOString();
@@ -189,18 +236,22 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     } catch (reason) {
       setError(reason.message || 'Revise os dados informados.');
     } finally {
-      savingRef.current = false;
-      setIsSaving(false);
+      finishSaving();
     }
   }
 
   async function remove(entry) {
+    if (savingRef.current) return;
     if (!window.confirm('Excluir esta visita apenas do rascunho deste dispositivo?')) return;
-    const saved = await commit(rows.filter(row => row.id !== entry.id), 'Visita excluída do rascunho local.');
-    if (saved && editingId === entry.id) stopEdit();
+    if (!beginSaving()) return;
+    try {
+      const saved = await commit(rows.filter(row => row.id !== entry.id), 'Visita excluída do rascunho local.');
+      if (saved && editingId === entry.id) { setForm(null); setEditingId(null); }
+    } finally { finishSaving(); }
   }
 
   function exportDraft() {
+    if (savingRef.current) return;
     try {
       const blob = new Blob([createVisitBackup(rows)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -217,22 +268,24 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
 
   async function recoverPrevious() {
+    if (!beginSaving()) return;
+    const monthInteractionAtSubmission = monthInteractionRef.current;
     try {
       const previous = readVisitRecovery(window.localStorage);
       if (!previous) throw new Error('Não há versão anterior disponível neste navegador.');
       if (!window.confirm(`Recuperar ${previous.rows.length} visitas da versão anterior? A programação atual será preservada como versão de recuperação.`)) return;
       if (await commit(previous.rows, 'Versão anterior recuperada neste dispositivo.', { allowRecovery: true, saveRecovery: true })) {
-        if (previous.rows.length) setMonth(monthOf(previous.rows[0].plannedDate));
+        if (previous.rows.length && monthInteractionRef.current === monthInteractionAtSubmission) setMonth(monthOf(previous.rows[0].plannedDate));
         setForm(null);
         setEditingId(null);
       }
     } catch (reason) {
       setError(reason.message || 'A versão anterior não pôde ser recuperada.');
-    }
+    } finally { finishSaving(); }
   }
 
   return (
-    <section className="visit-board" aria-labelledby="visit-board-title">
+    <section className="visit-board" aria-labelledby="visit-board-title" aria-busy={isSaving}>
       <header className="visit-board-header">
         <div className="visit-board-heading">
           <span className="section-eyebrow"><CalendarClock size={15} aria-hidden="true" /> Programação de atendimento</span>
@@ -244,7 +297,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
             <span>Mês da programação</span>
             <input id="visit-board-month" type="month" value={month} onChange={event => changeMonth(event.target.value)} />
           </label>
-          <button className="btn btn-primary" type="button" onClick={startNew} disabled={storageBlocked}>
+          <button className="btn btn-primary" type="button" onClick={startNew} disabled={storageBlocked || isSaving}>
             <CalendarPlus size={17} aria-hidden="true" /> Programar visita
           </button>
         </div>
@@ -260,8 +313,9 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       </div>
 
       {notice && <p className="visit-board-notice" role="status">{notice}</p>}
+      {isSaving && !form && <p className="visit-board-notice" role="status">Salvando alterações neste dispositivo…</p>}
       {error && <p className="field-error visit-board-error" role="alert">{error}</p>}
-      {stale && <button type="button" className="btn btn-secondary visit-board-refresh" onClick={reloadLocal}>Recarregar alterações de outra aba</button>}
+      {stale && <button type="button" className="btn btn-secondary visit-board-refresh" onClick={reloadLocal} disabled={isSaving}>Recarregar programação local</button>}
 
       {form && (
         <form className="visit-board-editor" onSubmit={submit} aria-label={editingId ? 'Editar programação' : 'Adicionar programação'}>
@@ -342,9 +396,9 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
                 </div>
                 <div className="visit-board-row-actions">
                   {school && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onOpenSchool(school)} aria-label={`Abrir dossiê de ${school.unidade_escolar}`}><MapPin size={15} aria-hidden="true" /> Escola</button>}
-                  {!entry.reportedDate && <button type="button" className="btn btn-primary btn-sm" onClick={() => startEdit(entry, true)} aria-label={`Informar execução da visita de ${school?.unidade_escolar || entry.schoolId}`}>Informar execução</button>}
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(entry)} aria-label={`Editar visita de ${school?.unidade_escolar || entry.schoolId}`}><FilePenLine size={15} aria-hidden="true" /> Editar</button>
-                  <button type="button" className="visit-board-delete" onClick={() => remove(entry)} aria-label={`Excluir rascunho da visita de ${school?.unidade_escolar || entry.schoolId}`} title="Excluir rascunho"><Trash2 size={17} /></button>
+                  {!entry.reportedDate && <button type="button" className="btn btn-primary btn-sm" onClick={() => startEdit(entry, true)} disabled={isSaving} aria-label={`Informar execução da visita de ${school?.unidade_escolar || entry.schoolId}`}>Informar execução</button>}
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(entry)} disabled={isSaving} aria-label={`Editar visita de ${school?.unidade_escolar || entry.schoolId}`}><FilePenLine size={15} aria-hidden="true" /> Editar</button>
+                  <button type="button" className="visit-board-delete" onClick={() => remove(entry)} disabled={isSaving} aria-label={`Excluir rascunho da visita de ${school?.unidade_escolar || entry.schoolId}`} title="Excluir rascunho"><Trash2 size={17} /></button>
                 </div>
               </article>
             );
@@ -377,10 +431,10 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       <footer className="visit-board-footer">
         <span><CheckCheck size={15} aria-hidden="true" /> {overview.inReview.length} {overview.inReview.length === 1 ? 'visita' : 'visitas'} sem execução informada</span>
         <div className="visit-board-backups">
-          <input ref={importInputRef} type="file" accept=".json,application/json" className="visit-board-file-input" aria-label="Escolher cópia de segurança da programação" onChange={restoreBackup} />
-          <button type="button" className="visit-board-export" onClick={() => importInputRef.current?.click()}><Upload size={15} aria-hidden="true" /> Restaurar cópia</button>
-          <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length}><Download size={15} aria-hidden="true" /> Baixar cópia de segurança</button>
-          {hasRecovery && <button type="button" className="visit-board-export" onClick={recoverPrevious}><RotateCcw size={15} aria-hidden="true" /> Recuperar versão anterior</button>}
+          <input ref={importInputRef} type="file" accept=".json,application/json" className="visit-board-file-input" aria-label="Escolher cópia de segurança da programação" onChange={restoreBackup} disabled={isSaving} />
+          <button type="button" className="visit-board-export" onClick={() => importInputRef.current?.click()} disabled={isSaving}><Upload size={15} aria-hidden="true" /> Restaurar cópia</button>
+          <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length || isSaving}><Download size={15} aria-hidden="true" /> Baixar cópia de segurança</button>
+          {hasRecovery && <button type="button" className="visit-board-export" onClick={recoverPrevious} disabled={isSaving}><RotateCcw size={15} aria-hidden="true" /> Recuperar versão anterior</button>}
         </div>
       </footer>
     </section>
