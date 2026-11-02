@@ -1,6 +1,7 @@
 import { Wallet, CalendarDays, ClipboardList, Receipt, Landmark, RotateCcw, FolderOpen } from 'lucide-react';
 import { getOperationalSlice, ticketOpeningDate } from '../domain/financialPresentation.js';
 import { formatDateBrazilian } from '../lib/logic.js';
+import SchoolRecordReview from './SchoolRecordReview.jsx';
 
 const groups = [
   { title: 'Previsão', Icon: CalendarDays, text: 'Estimativas e programação financeira ainda não registradas.', scope: 'Sem valores por escola ou competência' },
@@ -9,7 +10,7 @@ const groups = [
   { title: 'Limites e empenhos', Icon: Landmark, text: 'Referências contratuais e empenhos ainda não informados.', scope: 'Âmbito global · não filtrado por escola ou mês' }
 ];
 
-export default function FinancialOverviewPage({ schools, tickets, filters, onFiltersChange, onOpenTicket }) {
+export default function FinancialOverviewPage({ schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests }) {
   const school = schools.find(item => String(item.designacao) === filters.schoolId) || null;
   const slice = getOperationalSlice(tickets, { school, month: filters.month });
   const recent = [...slice.tickets].sort((a, b) => (ticketOpeningDate(b) || '').localeCompare(ticketOpeningDate(a) || '')).slice(0, 5);
@@ -56,6 +57,15 @@ export default function FinancialOverviewPage({ schools, tickets, filters, onFil
         <h3 className="empty-state-title">Informações financeiras ainda não registradas</h3>
         <p className="empty-state-hint">As solicitações continuam disponíveis para acompanhamento. Nenhum valor é calculado a partir do total de aparelhos ou do status de atendimento.</p>
       </div>
+
+      <SchoolRecordReview
+        schools={schools}
+        tickets={tickets}
+        month={filters.month}
+        schoolId={filters.schoolId}
+        onOpenSchool={onOpenSchool}
+        onOpenSchoolRequests={onOpenSchoolRequests}
+      />
 
       <section className="dashboard-section finance-history" aria-labelledby="finance-history-title">
         <div className="section-header">
