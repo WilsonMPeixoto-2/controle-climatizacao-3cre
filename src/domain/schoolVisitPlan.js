@@ -1,6 +1,8 @@
 // Planejamento consultivo local. Não representa OS, medição, atesto ou registro oficial.
 // O calendário do atendimento é independente da data de abertura dos chamados.
 export const VISIT_DRAFT_KEY = 'gop_clima_programacao_rascunho_v1';
+export const VISIT_RECOVERY_KEY = 'gop_clima_programacao_antes_restauracao_v1';
+export const MAX_VISIT_BACKUP_BYTES = 2_000_000;
 export const VISIT_TYPES = Object.freeze([
   { value: 'preventiva', label: 'Preventiva' },
   { value: 'corretiva', label: 'Corretiva' },
@@ -58,7 +60,7 @@ export function updateVisitDraft(current, patch, { now } = {}) {
       : previous
   };
 }
-function validateRows(rows) {
+export function validateVisitRows(rows) {
   if (!Array.isArray(rows)) throw new Error('Rascunho de programação possui formato inválido.');
   if (rows.length > 10000) throw new Error('Quantidade excessiva de registros na cópia.');
   const ids = new Set();
@@ -68,10 +70,12 @@ function validateRows(rows) {
     return { ...row, ...validate(row), history: Array.isArray(row.history) ? row.history : [] };
   });
 }
+export function parseStoredVisitDrafts(raw) {
+  if (raw == null || raw === '') return [];
+  return validateVisitRows(JSON.parse(raw));
+}
 export function readVisitDrafts(storage) {
-  const raw = storage?.getItem(VISIT_DRAFT_KEY);
-  if (!raw) return [];
-  return validateRows(JSON.parse(raw));
+  return parseStoredVisitDrafts(storage?.getItem(VISIT_DRAFT_KEY));
 }
 /** Só aceita o formato exportado pelo próprio módulo; importação nunca sincroniza Firestore. */
 export function parseVisitBackup(raw) {
@@ -79,13 +83,22 @@ export function parseVisitBackup(raw) {
   if (!data || data.format !== 'gop-clima-visit-draft-v1') {
     throw new Error('Arquivo não é uma cópia de segurança da programação GOP Clima.');
   }
-  return validateRows(data.rows);
+  return validateVisitRows(data.rows);
+}
+export function createVisitBackup(rows, exportedAt = new Date().toISOString()) {
+  const validated = validateVisitRows(rows);
+  const text = JSON.stringify({ format: 'gop-clima-visit-draft-v1', exportedAt, rows: validated });
+  if (new TextEncoder().encode(text).byteLength > MAX_VISIT_BACKUP_BYTES) {
+    throw new Error('A cópia excede 2 MB. Reduza o volume antes de exportar.');
+  }
+  return text;
 }
 export function writeVisitDrafts(storage, rows) {
   if (!storage?.setItem) throw new Error('Armazenamento local indisponível.');
-  if (!Array.isArray(rows)) throw new Error('Rascunho inválido.');
-  storage.setItem(VISIT_DRAFT_KEY, JSON.stringify(rows));
-  return rows;
+  const validated = validateVisitRows(rows);
+  createVisitBackup(validated); // todos os dados gravados poderão ser exportados e restaurados
+  storage.setItem(VISIT_DRAFT_KEY, JSON.stringify(validated));
+  return validated;
 }
 export function summarizeVisits(rows, month, knownSchools = [], { schoolId = '' } = {}) {
   const schoolIds = new Set((Array.isArray(knownSchools) ? knownSchools : []).map(item => textValue(item.designacao)));
