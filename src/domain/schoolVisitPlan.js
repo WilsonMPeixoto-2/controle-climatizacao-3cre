@@ -58,11 +58,9 @@ export function updateVisitDraft(current, patch, { now } = {}) {
       : previous
   };
 }
-export function readVisitDrafts(storage) {
-  const raw = storage?.getItem(VISIT_DRAFT_KEY);
-  if (!raw) return [];
-  const rows = JSON.parse(raw);
+function validateRows(rows) {
   if (!Array.isArray(rows)) throw new Error('Rascunho de programação possui formato inválido.');
+  if (rows.length > 10000) throw new Error('Quantidade excessiva de registros na cópia.');
   const ids = new Set();
   return rows.map(row => {
     if (!row || !textValue(row.id) || ids.has(row.id)) throw new Error('Rascunho contém registros repetidos ou inválidos.');
@@ -70,20 +68,34 @@ export function readVisitDrafts(storage) {
     return { ...row, ...validate(row), history: Array.isArray(row.history) ? row.history : [] };
   });
 }
+export function readVisitDrafts(storage) {
+  const raw = storage?.getItem(VISIT_DRAFT_KEY);
+  if (!raw) return [];
+  return validateRows(JSON.parse(raw));
+}
+/** Só aceita o formato exportado pelo próprio módulo; importação nunca sincroniza Firestore. */
+export function parseVisitBackup(raw) {
+  const data = JSON.parse(raw);
+  if (!data || data.format !== 'gop-clima-visit-draft-v1') {
+    throw new Error('Arquivo não é uma cópia de segurança da programação GOP Clima.');
+  }
+  return validateRows(data.rows);
+}
 export function writeVisitDrafts(storage, rows) {
   if (!storage?.setItem) throw new Error('Armazenamento local indisponível.');
   if (!Array.isArray(rows)) throw new Error('Rascunho inválido.');
   storage.setItem(VISIT_DRAFT_KEY, JSON.stringify(rows));
   return rows;
 }
-export function summarizeVisits(rows, month, knownSchools = []) {
+export function summarizeVisits(rows, month, knownSchools = [], { schoolId = '' } = {}) {
   const schoolIds = new Set((Array.isArray(knownSchools) ? knownSchools : []).map(item => textValue(item.designacao)));
-  const all = Array.isArray(rows) ? rows : [];
+  const all = (Array.isArray(rows) ? rows : []).filter(item => !schoolId || item.schoolId === String(schoolId));
   const active = all.filter(item => monthOf(item.plannedDate) === month);
   const movedOut = all.filter(item => monthOf(item.plannedDate) !== month && item.history?.some(rev => monthOf(rev.from) === month));
   const reported = active.filter(item => Boolean(item.reportedDate));
+  const executedInMonth = all.filter(item => monthOf(item.reportedDate) === month);
   const inReview = active.filter(item => !item.reportedDate);
   const schoolCount = new Set(active.map(item => item.schoolId)).size;
   const orphaned = active.filter(item => !schoolIds.has(item.schoolId)).length;
-  return { active, movedOut, reported, inReview, visits: active.length, schools: schoolCount, orphaned };
+  return { active, movedOut, reported, executedInMonth, inReview, visits: active.length, schools: schoolCount, orphaned };
 }
