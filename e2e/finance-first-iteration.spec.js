@@ -476,7 +476,10 @@ test('E3: cópia de segurança válida pode ser restaurada com consentimento; fo
   await board.locator('#visit-school').selectOption('900001');
   await board.locator('#visit-planned').fill('2026-10-12');
   await board.getByRole('button', { name: 'Adicionar visita' }).click();
+  await expect(board.getByRole('status')).toContainText('Visita incluída');
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
   const draft = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  expect(draft).toHaveLength(1);
   page.once('dialog', dialog => dialog.accept());
   await board.getByRole('button', { name: 'Excluir rascunho da visita de Unidade de teste visual A' }).click();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')).length)).toBe(0);
@@ -523,6 +526,7 @@ test('E3: execução informada diretamente pela visita e contada no mês real', 
   await expect(board.locator('#visit-reported')).toBeFocused();
   await board.locator('#visit-reported').fill('2026-11-05');
   await board.getByRole('button', { name: 'Salvar alterações' }).click();
+  await expect(board.getByRole('status')).toContainText('Programação atualizada');
   await expect(board.locator('.visit-board-summary > div:nth-child(3) strong')).toHaveText('0');
   await board.locator('#visit-board-month').fill('2026-11');
   await expect(board.locator('.visit-board-summary > div:nth-child(3) strong')).toHaveText('1');
@@ -541,4 +545,43 @@ test('E3: escola e mês de abertura pertencem a filtros independentes', async ({
   await expect(page.getByText('Este filtro controla somente os chamados')).toBeVisible();
   await page.getByRole('button', { name: 'Limpar mês' }).click();
   await expect(board.locator('#visit-board-month')).toHaveValue('2026-10');
+});
+
+
+test('E3: salvar com Web Lock pendente preserva o mês escolhido após o clique', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  const month = board.locator('#visit-board-month');
+  await month.fill('2026-10');
+  await board.getByRole('button', { name: 'Programar visita', exact: true }).click();
+  await board.locator('#visit-school').selectOption('900001');
+  await board.locator('#visit-planned').fill('2026-10-12');
+  await board.getByRole('button', { name: 'Adicionar visita' }).click();
+  await expect(board.getByRole('status')).toContainText('Visita incluída');
+  await board.getByRole('button', { name: /Informar execução da visita de Unidade de teste visual A/ }).click();
+  await board.locator('#visit-reported').fill('2026-11-05');
+
+  // Segura a trava da mesma origem para simular uma persistência de duração variável.
+  await page.evaluate(() => new Promise(resolve => {
+    navigator.locks.request('gop-clima-visit-drafts-v1', () => new Promise(unlock => {
+      window.__releaseVisitLockForTest = unlock;
+      resolve();
+    }));
+  }));
+  try {
+    await board.getByRole('button', { name: 'Salvar alterações' }).click();
+    await expect(board.getByRole('button', { name: 'Salvando…' })).toBeDisabled();
+    await month.fill('2026-11');
+    await expect(month).toHaveValue('2026-11');
+  } finally {
+    await page.evaluate(() => window.__releaseVisitLockForTest?.());
+  }
+  await expect(board.getByRole('status')).toContainText('Programação atualizada');
+  await expect(month).toHaveValue('2026-11');
+  await expect(board.locator('.visit-board-summary > div:nth-child(3) strong')).toHaveText('1');
+  const rows = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  expect(rows).toHaveLength(1);
+  expect(rows[0].reportedDate).toBe('2026-11-05');
+  expect(rows[0].plannedDate).toBe('2026-10-12');
 });
