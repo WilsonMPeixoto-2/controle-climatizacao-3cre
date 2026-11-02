@@ -8,6 +8,7 @@ import { getSchoolRecordReview } from '../domain/schoolRecordReview.js';
 import { getOpeningTrend } from '../domain/operationalPulse.js';
 import { formatDateBrazilian } from '../lib/logic.js';
 import SchoolRecordReview from './SchoolRecordReview.jsx';
+import VisitPlanningBoard from './VisitPlanningBoard.jsx';
 
 const groups = [
   { title: 'Previsão', Icon: CalendarDays, text: 'Estimativas e programação.', scope: 'Por escola e período' },
@@ -115,6 +116,12 @@ export default function FinancialOverviewPage({
           <p className="finance-trend-caption">{school ? school.unidade_escolar : 'Todas as escolas'} · Abertura dos chamados</p>
         </div>
       </section>
+
+      <VisitPlanningBoard
+        schools={schools}
+        initialSchoolId={filters.schoolId}
+        onOpenSchool={onOpenSchool}
+      />
 
       <div className="finance-workbench">
         <div className="finance-workbench-primary" ref={reviewRef}>
