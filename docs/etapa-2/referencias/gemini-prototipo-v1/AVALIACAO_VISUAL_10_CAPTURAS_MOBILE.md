@@ -5,6 +5,32 @@
 **Natureza:** referências visuais selecionáveis, **não** screenshots da aplicação React/Firestore real nem prova de funcionamento, autorização financeira ou aderência às regras contratuais.  
 **Decisão:** preservar padrões úteis; **não** copiar a aplicação, CSS ou lógica financeira do Gemini. Integração regida pelas [DP-001](../../decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002](../../decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md) e [DP-003](../../decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md).
 
+## Parecer global do usuário — REPROVADO
+
+**Registro posterior à primeira leitura das dez capturas:** o usuário esclareceu que enviou as imagens exclusivamente para identificar *eventuais ideias aproveitáveis*, **não** para recomendar nem aprovar a aparência do protótipo. Sua avaliação do conjunto foi **negativa**: design pouco elaborado, aparência de sistema antigo, identidade visual fraca, baixa inteligência da informação, excesso de texto e tarefas manuais incompatíveis com a proposta de automação.
+
+**Correção da leitura inicial:** os aspectos pontualmente aproveitáveis abaixo referem-se a **conceitos funcionais**, como separar datas e valores, navegar do gráfico ao registro e permitir usar um valor calculado como sugestão. **Não representam aprovação dos gráficos, layouts, cartões, tabelas, diálogos, cores, estética ou experiência geral do Gemini.** Nenhuma captura é referência visual a ser reproduzida com fidelidade.
+
+### Deficiências de produto que precisam orientar o GOP Clima
+
+- **Excesso de leitura e pouco resultado:** cabeçalhos longos, descrições técnicas e vários cartões exigem interpretação que o software poderia entregar como conclusão breve e contextualizada.
+- **Apresentação em vez de automação:** tabelas e gráficos representam os registros, mas não orientam suficientemente o servidor para a ação útil seguinte.
+- **Formulários excessivamente manuais:** concentrar muitos campos de medição, NF e OB é reproduzir a burocracia em tela; dados relacionados devem ser recuperados automaticamente quando disponíveis, com conferência e correção pelo usuário.
+- **Hierarquia de importância insuficiente:** informações principais, secundárias e detalhes de auditoria competem por espaço visual semelhante.
+- **Identidade e direção de arte genéricas:** cartões brancos, fundo cinza, azul-marinho e verde isolados não representam uma evolução refinada do design system já estabelecido no GOP Clima.
+- **Responsividade deficitária observada nas imagens:** tabelas cortadas, rótulos densos, tooltips excedentes e campos estreitos. A moldura do Gemini pode agravar estes problemas e não permite conclusões sobre todos os breakpoints.
+
+### Como selecionar as ideias sem repetir o erro
+
+1. Partir da **tarefa do usuário e da pergunta a responder**, não do tipo de gráfico ou do formulário que o Gemini desenhou.
+2. Preferir **resposta, próximo passo e evidência sob demanda** à sequência de tabelas, textos e indicadores estáticos.
+3. Reaproveitar o contexto já conhecido (escola, competência, chamado, equipamento), reduzindo redigitação, sem inferir ou atestar valores silenciosamente.
+4. Apresentar **exceções relevantes**, mudanças e pendências com ação contextual; a pessoa decide, ajusta ou ignora conforme suas atribuições.
+5. Utilizar exclusivamente a **identidade visual real do GOP Clima**, com composição moderna, hierarquia tipográfica, ritmo, espaços, componentes e interações coerentes.
+6. Exigir ganho perceptível de esforço/clareza em cada recurso incluído. Se o usuário precisa ler mais para obter a mesma resposta, a solução piorou.
+
+**Julgamento:** aproveitamento seletivo de *conceitos*, com **reprovação expressa do protótipo como referência estética, de UX ou de arquitetura de produto**.
+
 ## 1. O que as imagens acrescentam concretamente
 
 | Imagens de referência | Recurso visual observado | Decisão para GOP Clima |
@@ -51,6 +77,6 @@
 
 ## 5. Escopo e estado
 
-Estas capturas **enriquecem a DP-003, mas não substituem a Concepção Funcional v1.0**. Não se justifica corrigir o protótipo Gemini ou replicar integralmente seus gráficos e formulários.
+Estas capturas oferecem **ideias pontuais a examinar, mas o conjunto visual foi reprovado**. Não substituem a Concepção Funcional v1.0 nem a identidade visual do GOP Clima. Não se justifica corrigir o protótipo Gemini ou replicar integralmente seus gráficos e formulários.
 
 **Não autorizar merge, deploy, mudança de Firestore ou inclusão de dados falsos a partir desta avaliação visual.** O PR #25 continua sendo a primeira integração consultiva. Os elementos acima orientam incrementos futuros e revisão estética do código real, priorizando poucas melhorias com alto valor perceptível.
