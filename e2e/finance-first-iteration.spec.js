@@ -104,7 +104,7 @@ test('financeiro usa recorte real, preserva ausências e retorna à ficha existe
 test('tendência de abertura usa registros reais e permite filtrar', async ({ page }) => {
   await seed(page);
   await finance(page);
-  const trend = page.getByRole('group', { name: 'Filtrar solicitações pelo mês de abertura' });
+  const trend = page.getByRole('group', { name: 'Evolução mensal interativa' });
   await expect(trend).toBeVisible();
   const september = trend.getByRole('button', { name: /em set de 2026/ });
   await expect(september).toHaveAttribute('aria-pressed', 'false');
@@ -316,7 +316,7 @@ test('conferência explora categorias, busca, expansão e registros sem vínculo
   await expect(completed).toHaveAttribute('aria-pressed', 'true');
   await expect(review.locator('.school-review-item')).toHaveCount(1);
   await expect(review).toContainText('Unidade de teste concluída');
-  await expect(review).toContainText('0 sem conclusão · 1 com conclusão');
+  await expect(review).toContainText('1 chamado · 1 com conclusão');
   await review.getByRole('button', { name: /Sem solicitação/ }).click();
   await expect(review).toContainText('Unidade de teste sem solicitação');
   await expect(review.getByRole('button', { name: /Ver chamados de/ })).toHaveCount(0);
