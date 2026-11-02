@@ -48,7 +48,7 @@ export default function SchoolRecordReview({
         <div className="section-heading">
           <span className="section-eyebrow"><Building2 size={16} aria-hidden="true" /> Acompanhamento operacional</span>
           <h3 id="school-review-title" className="section-title">Conferência por escola</h3>
-          <p className="section-subtitle">Encontre registros que precisam de atualização e abra a ficha da escola ou os chamados relacionados.</p>
+          <p className="section-subtitle">Escolha uma situação e abra os registros da unidade.</p>
         </div>
       </div>
 
@@ -85,14 +85,14 @@ export default function SchoolRecordReview({
         </span>
       </div>
 
-      <div className="school-review-context">
-        <Info size={17} aria-hidden="true" />
+      <details className="school-review-context">
+        <summary><Info size={17} aria-hidden="true" /> Como interpretar estes números?</summary>
         <p>
           <strong>A conferir</strong> indica chamados sem conclusão registrada no site, não falta comprovada de atendimento.
           <strong> Sem solicitação</strong> indica apenas ausência de chamados no recorte.
           A execução e a medição contratual podem constar de registros externos.
         </p>
-      </div>
+      </details>
 
       {overview.unmatchedRecords > 0 && (
         <p className="finance-hint school-review-unmatched">
@@ -109,12 +109,17 @@ export default function SchoolRecordReview({
                 <strong>{school.unidade_escolar}</strong>
                 <div className="school-review-meta">
                   {view === 'no_request'
-                    ? 'Nenhuma solicitação de qualquer modalidade encontrada no recorte.'
-                    : `${requests} ${requests === 1 ? 'chamado' : 'chamados'} · ${withoutConclusion} sem conclusão · ${withConclusion} com conclusão`}
+                    ? 'Nenhuma solicitação registrada neste recorte'
+                    : `${requests} ${requests === 1 ? 'chamado' : 'chamados'} · ${withoutConclusion ? `${withoutConclusion} sem conclusão` : `${withConclusion} com conclusão`}`}
                   {lastOpening && <span> · Última abertura: {formatDateBrazilian(lastOpening)}</span>}
-                  {month && undatedRecords > 0 && <span> · {undatedRecords} sem data válida fora do recorte mensal</span>}
+                  {month && undatedRecords > 0 && <span> · {undatedRecords} sem data válida fora do recorte mensal</span>
                 </div>
               </div>
+              {requests > 0 && (
+                <div className="school-review-progress" role="img" aria-label={`${withoutConclusion} de ${requests} chamados sem conclusão registrada`}>
+                  <span style={{ width: `${100 * withoutConclusion / requests}%` }} />
+                </div>
+              )}
               <div className="school-review-actions">
                 <button className="btn btn-secondary btn-sm" type="button"
                   onClick={() => onOpenSchool(school)}
@@ -145,8 +150,7 @@ export default function SchoolRecordReview({
         </button>
       )}
       <p className="finance-hint school-review-footnote">
-        Base: escolas e chamados disponíveis no GOP Clima. {month ? 'Filtro temporal: mês de abertura do chamado.' : 'Consulta sem filtro de mês.'}
-        A categoria “Com conclusão” considera o status operacional do chamado, não um atesto de manutenção.
+        Situações baseadas nos chamados registrados. Conclusão no site não equivale a atesto contratual.
       </p>
     </section>
   );
