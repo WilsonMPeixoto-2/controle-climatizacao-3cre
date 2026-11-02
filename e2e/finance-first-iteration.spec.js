@@ -327,3 +327,45 @@ test('conferência explora categorias, busca, expansão e registros sem vínculo
   await expect(review.getByRole('status').filter({ hasText: '13 escolas' })).toBeVisible();
   expect(await page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')])).toEqual(previous);
 });
+
+test('E3: programação local por escola permite salvar, reprogramar e informar execução sem alterar chamados', async ({ page }) => {
+  await seed(page);
+  const beforeTickets = await page.evaluate(() => localStorage.getItem('gop_tickets'));
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await expect(board).toBeVisible();
+  await expect(board).toContainText('Rascunho local');
+  await board.locator('#visit-board-month').fill('2026-10');
+  await board.getByRole('button', { name: 'Programar', exact: true }).click();
+  await board.locator('#visit-school').selectOption('900001');
+  await board.locator('#visit-planned').fill('2026-10-12');
+  await board.getByRole('button', { name: 'Adicionar visita' }).click();
+  await expect(board.getByText('Unidade de teste visual A')).toBeVisible();
+  await expect(board).toContainText('1 escola');
+  await expect(board).toContainText('Execução ainda não informada');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  expect(saved).toHaveLength(1);
+  expect(saved[0]).toMatchObject({ schoolId: '900001', plannedDate: '2026-10-12', kind: 'preventiva', reportedDate: '' });
+
+  await board.getByRole('button', { name: 'Editar visita de Unidade de teste visual A' }).click();
+  await board.locator('#visit-planned').fill('2026-11-05');
+  await board.getByText('Informações complementares').click();
+  await board.locator('#visit-reported').fill('2026-11-06');
+  await board.locator('#visit-reference').fill('Boletim interno de teste');
+  await board.getByRole('button', { name: 'Salvar alterações' }).click();
+  await expect(board.locator('#visit-board-month')).toHaveValue('2026-11');
+  await expect(board).toContainText('Execução informada em 06/11/2026');
+  await expect(board).toContainText('Reprogramada 1x');
+  const revised = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  expect(revised[0].history).toHaveLength(1);
+  expect(revised[0].reportReference).toBe('Boletim interno de teste');
+
+  await board.locator('#visit-board-month').fill('2026-10');
+  await expect(board).toContainText('1 visita(s) reprogramada(s) para outro mês');
+  await board.locator('#visit-board-month').fill('2026-11');
+  await board.getByRole('button', { name: 'Exportar cópia JSON' }).click();
+  await page.reload();
+  await expect(board).toContainText('1 escola');
+  expect(await page.evaluate(() => localStorage.getItem('gop_tickets'))).toBe(beforeTickets);
+});
+
