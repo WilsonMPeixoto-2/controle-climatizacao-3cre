@@ -352,7 +352,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
           <input ref={importInputRef} type="file" accept=".json,application/json" className="visit-board-file-input" aria-label="Escolher cópia de segurança da programação" onChange={restoreBackup} />
           <button type="button" className="visit-board-export" onClick={() => importInputRef.current?.click()}><Upload size={15} aria-hidden="true" /> Restaurar cópia</button>
           <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length}><Download size={15} aria-hidden="true" /> Baixar cópia de segurança</button>
-          {hasRecovery && <button type="button" className="visit-board-export" onClick={recoverPrevious}><RotateCcw size={15} aria-hidden="true" /> Recuperar versão anterior</button>
+          {hasRecovery && <button type="button" className="visit-board-export" onClick={recoverPrevious}><RotateCcw size={15} aria-hidden="true" /> Recuperar versão anterior</button>}
         </div>
       </footer>
     </section>
