@@ -17,6 +17,7 @@ import {
   Search,
   FileText,
   Mail,
+  Wallet,
   Sun,
   Moon,
   Plus,
@@ -69,6 +70,9 @@ import {
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import FinancialOverviewPage from './components/FinancialOverviewPage.jsx';
+import FinancialReferenceCard from './components/FinancialReferenceCard.jsx';
+import SchoolFinancialSummary from './components/SchoolFinancialSummary.jsx';
 // Carregado sob demanda: o mapa (Leaflet + GeoJSON) só baixa quando a aba é aberta
 const OperationalMap = lazy(() => import('./components/OperationalMap.jsx'));
 // Títulos por aba (React 19 hoista <title> para o <head>)
@@ -77,6 +81,7 @@ const TAB_TITLES = {
   tickets: 'Chamados',
   lookup: 'Consulta por Unidade',
   form: 'Registrar Chamado',
+  finance: 'Gestão Financeira',
   email: 'Modelos de E-mail',
   cloud: 'Base Online'
 };
@@ -256,7 +261,7 @@ const EmptyState = ({ iconType, title, description, style = {} }) => {
 const IconCloud = () => <Cloud size={18} strokeWidth={2} />;
 const IconInfo = (props) => <AlertTriangle {...props} size={18} strokeWidth={2} />;
 
-const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'email', 'cloud'];
+const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'finance', 'email', 'cloud'];
 const VALID_THEMES = ['dark', 'light'];
 
 function rotuloNivel(nivel) {
@@ -447,6 +452,7 @@ export default function App() {
   const [dashboardMetricSelection, setDashboardMetricSelection] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [financeFilters, setFinanceFilters] = useState({ schoolId: '', month: '' });
   const [isSavingTicketPending, setIsSavingTicket] = useState(false);
   const [isSavingHistoryPending, setIsSavingHistory] = useState(false);
 
@@ -1930,6 +1936,18 @@ export default function App() {
             </li>
             <li>
               <button
+                className={`sidebar-item ${currentTab === 'finance' ? 'active' : ''}`}
+                aria-current={currentTab === 'finance' ? 'page' : undefined}
+                onClick={() => setCurrentTab('finance')}
+                aria-label="Gestão Financeira"
+                title="Gestão Financeira"
+              >
+                <Wallet aria-hidden="true" />
+                <span>Gestão Financeira</span>
+              </button>
+            </li>
+            <li>
+              <button
                 className={`sidebar-item ${currentTab === 'email' ? 'active' : ''}`}
                 aria-current={currentTab === 'email' ? 'page' : undefined}
                 onClick={() => setCurrentTab('email')}
@@ -2021,6 +2039,16 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        {currentTab === 'finance' && (
+          <FinancialOverviewPage
+            schools={schools}
+            tickets={tickets}
+            filters={financeFilters}
+            onFiltersChange={setFinanceFilters}
+            onOpenTicket={openTicketEdit}
+          />
+        )}
 
         {/* Dashboard Tab */}
         {currentTab === 'dashboard' && (
@@ -4594,6 +4622,14 @@ export default function App() {
                         </div>
                       </div>
 
+                      <SchoolFinancialSummary
+                        school={selectedSchool}
+                        onOpenFinance={() => {
+                          setFinanceFilters({ schoolId: String(selectedSchool.designacao), month: '' });
+                          setCurrentTab('finance');
+                        }}
+                      />
+
                       {/* Bloco de Chamados */}
                       <div className="dashboard-section dossier-section">
                         <div className="section-header">
@@ -5510,6 +5546,8 @@ export default function App() {
                   </div>
                 </div>
 
+                <FinancialReferenceCard ticket={newTicket} school={formSelectedSchool} compact />
+
                 {/* 3. SEÇÃO ADMINISTRATIVA */}
                 <div className="form-section-title">
                   <IconFileText />
@@ -6009,6 +6047,7 @@ export default function App() {
             </div>
 
             <div className="modal-body">
+              <FinancialReferenceCard ticket={editingTicket} />
               {/* Two column detail lookup layout */}
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
                 {/* Left side: Editors */}

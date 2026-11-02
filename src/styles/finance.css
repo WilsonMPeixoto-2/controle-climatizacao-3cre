@@ -1,0 +1,60 @@
+/* Etapa 2: somente as novas superfícies; tokens e componentes do GOP Clima. */
+.finance-page, .finance-reference, .finance-school-summary {
+  min-width: 0;
+  font-family: var(--font-text);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-main);
+}
+.finance-page > * + * { margin-top: var(--space-5); }
+.finance-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(170px, 1fr) auto;
+  align-items: end;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+.finance-filters .form-group { min-width: 0; margin: 0; }
+.finance-filters .form-control { width: 100%; min-width: 0; }
+.finance-filters > .finance-hint { grid-column: 1 / -1; }
+.finance-hint, .finance-context-school { color: var(--text-muted); font-size: var(--text-sm); line-height: 1.6; }
+.finance-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+.finance-metrics .stat-card { min-width: 0; }
+.finance-metrics .stat-header { align-items: start; gap: var(--space-2); }
+.finance-metrics .stat-header h3 { font: 600 var(--text-base)/1.4 var(--font-text); color: var(--text-muted); }
+.finance-metrics .stat-header svg { flex-shrink: 0; color: var(--primary); }
+.finance-missing { font: 600 var(--text-xl)/1.25 var(--font-display); color: var(--text-main); }
+.finance-metrics .stat-description { font-size: var(--text-sm); color: var(--text-muted); }
+.finance-metric-scope { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--hairline); font-size: var(--text-xs); color: var(--text-muted); }
+.finance-empty { padding: var(--space-7) var(--space-5); }
+.finance-empty .empty-state-hint { max-width: 72ch; font-size: var(--text-base); color: var(--text-muted); }
+.finance-empty .empty-state-title { font-size: var(--text-lg); color: var(--text-main); }
+.finance-count { font-size: var(--text-2xl); font-weight: 700; color: var(--primary); }
+.finance-selection { padding-bottom: var(--space-3); border-bottom: 1px solid var(--hairline); margin-bottom: var(--space-3); color: var(--text-muted); overflow-wrap: anywhere; }
+.finance-ticket-list { list-style: none; padding: 0; margin: var(--space-2) 0 0; }
+.finance-ticket-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-4) 0; border-bottom: 1px solid var(--hairline); }
+.finance-ticket-list li:last-child { border-bottom: 0; }
+.finance-ticket-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.finance-ticket-list .btn { flex-shrink: 0; }
+.finance-no-tickets { padding: var(--space-5) 0; color: var(--text-muted); }
+.finance-reference, .finance-school-summary { padding: var(--space-5); margin-bottom: var(--space-5); }
+.finance-reference h3, .finance-school-summary h3 { display: flex; gap: var(--space-2); align-items: center; font: 600 var(--text-lg)/1.4 var(--font-display); }
+.finance-reference h3 svg, .finance-school-summary h3 svg, .finance-reference summary svg { color: var(--primary); flex-shrink: 0; }
+.finance-reference-content { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+.finance-reference summary { cursor: pointer; font-weight: 600; }
+.finance-reference summary svg { vertical-align: middle; margin-right: var(--space-2); }
+.finance-reference summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.finance-equipment { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.finance-equipment dt { font-size: var(--text-xs); color: var(--text-muted); }
+.finance-equipment dd { margin: 0; font-size: var(--text-base); font-weight: 600; overflow-wrap: anywhere; }
+.finance-school-summary .section-header { align-items: center; flex-wrap: wrap; }
+.finance-school-summary .finance-hint { margin-top: var(--space-2); }
+@media (max-width: 1200px) {
+  .finance-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .finance-filters, .finance-equipment { grid-template-columns: minmax(0, 1fr); }
+  .finance-ticket-list li { align-items: start; flex-direction: column; }
+  .finance-metrics { grid-template-columns: minmax(0, 1fr); }
+  .finance-filters > .btn { width: 100%; }
+}
