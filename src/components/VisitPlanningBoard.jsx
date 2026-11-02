@@ -7,7 +7,7 @@ import { formatDateBrazilian } from '../lib/logic.js';
 import {
   createVisitDraft, updateVisitDraft, createVisitBackup,
   parseVisitBackup, summarizeVisits, monthOf, VISIT_TYPES,
-  VISIT_DRAFT_KEY, VISIT_RECOVERY_KEY, MAX_VISIT_BACKUP_BYTES
+  VISIT_DRAFT_KEY, VISIT_RECOVERY_KEY, MAX_VISIT_BACKUP_BYTES, parseStoredVisitDrafts
 } from '../domain/schoolVisitPlan.js';
 import { persistVisitDraft, loadVisitSnapshot, readVisitRecovery } from '../domain/visitDraftStorage.js';
 
@@ -22,11 +22,15 @@ const emptyForm = (schoolId = '') => ({
 const dateText = date => date ? formatDateBrazilian(date) : 'Data não informada';
 
 function loadInitial() {
+  let raw = null;
   try {
-    const snapshot = loadVisitSnapshot(window.localStorage);
-    return { ...snapshot, hasRecovery: window.localStorage.getItem(VISIT_RECOVERY_KEY) !== null, error: '' };
+    raw = window.localStorage.getItem(VISIT_DRAFT_KEY);
+    const rows = parseStoredVisitDrafts(raw);
+    return { rows, raw, hasRecovery: window.localStorage.getItem(VISIT_RECOVERY_KEY) !== null, error: '' };
   } catch {
-    return { rows: [], raw: null, hasRecovery: false, error: 'Não foi possível ler o rascunho. Os dados existentes foram preservados.' };
+    // Guarda a versão bruta mesmo se o JSON estiver danificado; uma restauração
+    // deliberada poderá preservar o conteúdo anterior antes da substituição.
+    return { rows: [], raw, hasRecovery: false, error: 'Não foi possível ler o rascunho. Os dados existentes foram preservados.' };
   }
 }
 
