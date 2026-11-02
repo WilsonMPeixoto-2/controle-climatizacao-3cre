@@ -194,9 +194,14 @@ for (const theme of ['light', 'dark']) {
       await finance(page);
       await page.getByLabel('Escola', { exact: true }).focus();
       await page.keyboard.press('Tab');
-      await expect(page.getByLabel('Mês de abertura')).toBeFocused();
-      await page.keyboard.press('Tab'); // month input tem segmentos nativos por plataforma
-      await page.getByRole('button', { name: 'Limpar filtros' }).focus();
+      // A ação principal está antes dos gráficos; o mês de abertura é filtro secundário.
+      await expect(page.locator('#visit-board-month')).toBeFocused();
+      await page.getByRole('button', { name: 'Programar visita', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('form', { name: 'Adicionar programação' })).toBeVisible();
+      await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+      await page.getByLabel('Mês de abertura dos chamados').fill('2030-01');
+      await page.getByRole('button', { name: 'Limpar mês' }).focus();
       await page.keyboard.press('Enter');
       await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
       // O axe deve medir os tokens finais, não a opacidade intermediária de cardFadeUp.
@@ -450,7 +455,7 @@ test('E3: alterações em outra aba não podem sobrescrever silenciosamente o ra
     await b.locator('#visit-school').selectOption('900002');
     await b.locator('#visit-planned').fill('2026-10-14');
     await b.getByRole('button', { name: 'Adicionar visita' }).click();
-    await expect(b).toContainText('Recarregue os dados antes de salvar');
+    await expect(b).toContainText('Sua edição continua aqui');
     expect(await second.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(1);
     second.once('dialog', dialog => dialog.accept());
     await b.getByRole('button', { name: 'Recarregar alterações de outra aba' }).click();
