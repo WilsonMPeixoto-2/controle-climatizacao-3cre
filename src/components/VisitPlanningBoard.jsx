@@ -131,12 +131,14 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
 
   async function restoreBackup(event) {
-    const file = event.target.files?.[0];
-    event.target.value = '';
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
     try {
       if (file.size > MAX_VISIT_BACKUP_BYTES) throw new Error('Arquivo excede o limite de 2 MB.');
-      const imported = parseVisitBackup(await file.text());
+      // Manter a seleção até concluir a leitura evita perder a referência ao File.
+      const content = await file.text();
+      const imported = parseVisitBackup(content);
       if (!window.confirm(`A cópia contém ${imported.length} visitas. Substituir as ${rows.length} visitas locais (incluindo escolas fora do filtro)? A versão anterior ficará disponível para recuperação neste navegador.`)) return;
       if (await commit(imported, 'Cópia restaurada. A versão anterior pode ser recuperada.', { allowRecovery: true, saveRecovery: true })) {
         if (imported.length) setMonth(monthOf(imported[0].plannedDate));
@@ -145,6 +147,8 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       }
     } catch (reason) {
       setError(reason.message || 'Arquivo de cópia inválido.');
+    } finally {
+      input.value = '';
     }
   }
 
