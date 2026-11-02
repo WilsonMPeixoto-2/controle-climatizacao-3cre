@@ -33,7 +33,8 @@ export default function FinancialOverviewPage({
     .sort((a, b) => (ticketOpeningDate(b) || '').localeCompare(ticketOpeningDate(a) || ''))
     .slice(0, 5);
   const monthLabel = filters.month ? `${filters.month.slice(5)}/${filters.month.slice(0, 4)}` : 'Todos os períodos';
-  const clearFilters = () => onFiltersChange({ schoolId: '', month: '' });
+  const clearSchool = () => onFiltersChange({ ...filters, schoolId: '' });
+  const clearTicketMonth = () => onFiltersChange({ ...filters, month: '' });
   const jumpToReview = () => reviewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
@@ -47,7 +48,7 @@ export default function FinancialOverviewPage({
         <span className="finance-source-label">Dados do GOP Clima <span aria-hidden="true">·</span> consulta</span>
       </header>
 
-      <div className="surface-card finance-filters" aria-label="Filtrar registros por escola e abertura">
+      <div className="surface-card finance-filters finance-school-filter" aria-label="Escola para programação e consulta">
         <div className="form-group">
           <label htmlFor="finance-school">Escola</label>
           <select id="finance-school" className="form-control" value={filters.schoolId} onChange={event => onFiltersChange({ ...filters, schoolId: event.target.value })}>
@@ -55,12 +56,7 @@ export default function FinancialOverviewPage({
             {schools.map(item => <option key={item.designacao} value={String(item.designacao)}>{item.designacao} · {item.unidade_escolar}</option>)}
           </select>
         </div>
-        <div className="form-group">
-          <label htmlFor="finance-month">Mês de abertura</label>
-          <input id="finance-month" type="month" className="form-control" value={filters.month} aria-describedby="finance-filter-scope" onChange={event => onFiltersChange({ ...filters, month: event.target.value })} />
-        </div>
-        <button type="button" className="btn btn-secondary" onClick={clearFilters}><RotateCcw size={16} aria-hidden="true" />Limpar filtros</button>
-        <p id="finance-filter-scope" className="finance-hint">Período de abertura dos chamados, não competência de serviço ou pagamento.</p>
+        <button type="button" className="btn btn-secondary" onClick={clearSchool} disabled={!filters.schoolId}><RotateCcw size={16} aria-hidden="true" />Limpar escola</button>
       </div>
 
       <VisitPlanningBoard
@@ -68,6 +64,19 @@ export default function FinancialOverviewPage({
         selectedSchoolId={filters.schoolId}
         onOpenSchool={onOpenSchool}
       />
+
+      <header className="finance-operations-heading">
+        <h3>Chamados e solicitações</h3>
+        <p>Consulta complementar aos registros de manutenção, sem alterar a competência das visitas.</p>
+      </header>
+      <div className="surface-card finance-filters finance-ticket-filters" aria-label="Filtrar chamados por abertura">
+        <div className="form-group">
+          <label htmlFor="finance-month">Mês de abertura dos chamados</label>
+          <input id="finance-month" type="month" className="form-control" value={filters.month} aria-describedby="finance-filter-scope" onChange={event => onFiltersChange({ ...filters, month: event.target.value })} />
+        </div>
+        <button type="button" className="btn btn-secondary" onClick={clearTicketMonth} disabled={!filters.month}><RotateCcw size={16} aria-hidden="true" />Limpar mês</button>
+        <p id="finance-filter-scope" className="finance-hint">Este filtro controla somente os chamados, não o planejamento nem os pagamentos.</p>
+      </div>
 
       <section className="finance-intelligence" aria-label="Síntese operacional do período">
         <div className="finance-insight">
@@ -176,7 +185,7 @@ export default function FinancialOverviewPage({
               <ChevronDown className="finance-availability-chevron" size={18} aria-hidden="true" />
             </summary>
             <div className="finance-availability-content">
-              <p className="finance-hint">Não há valores financeiros registrados nesta etapa. Nada é presumido a partir dos chamados.</p>
+              <p className="finance-hint">Nesta versão você pode programar visitas e consultar chamados. O registro de valores será disponibilizado em outra entrega; nenhum valor é presumido.</p>
               <div className="finance-metrics">
                 {groups.map(({ title, Icon, text, scope }) => (
                   <article className="finance-metric" key={title}>
