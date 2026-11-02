@@ -7,7 +7,7 @@
 **Aplicação:** painéis operacionais existentes, nova área Gestão Financeira, consulta por unidade, detalhes do chamado e relatórios gerenciais.  
 **Complementa:** [DP-001 (flexibilidade)](./DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002 (continuidade visual)](./DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md), [Concepção Funcional v1.0](../concepcao/documento-integral-v1.0/README.md).
 
-**Complemento visual:** [análise de dez capturas do protótipo Gemini](../referencias/gemini-prototipo-v1/AVALIACAO_VISUAL_10_CAPTURAS_MOBILE.md), com seleção de recursos úteis e correções de responsividade para orientar a implementação real. A referência não autoriza copiar o protótipo.
+**Complemento crítico:** [análise das dez capturas do protótipo Gemini](../referencias/gemini-prototipo-v1/AVALIACAO_VISUAL_10_CAPTURAS_MOBILE.md). O usuário **reprovou expressamente o conjunto visual e a experiência** por design genérico, excesso de texto e pouca inteligência operacional. Somente conceitos isolados podem ser reaproveitados; **nenhuma tela do Gemini é referência estética aprovada**.
 
 ## 1. Decisão
 
@@ -27,6 +27,24 @@ O projeto **já utiliza**:
 - O `package.json` **não inclui hoje** biblioteca externa de gráficos; o gráfico circular do Painel é SVG feito com componentes existentes. Isso **não obriga** a adotá-lo em todos os gráficos; escolher biblioteca somente após avaliar peso, acessibilidade, manutenção e coerência visual.
 
 **Não afirmar** que a nova Gestão Financeira já possui previsões e faturamento reais: o PR #25 é uma interface consultiva inicial sem persistência financeira.
+
+## 2.1. Nova prioridade: resultado e automação antes de visualização
+
+**O objetivo não é enriquecer o dashboard com mais gráficos, textos ou formulários; é reduzir o trabalho administrativo por meio da informação contextual.** Toda nova peça da Etapa 2 deve responder ao teste: *que pergunta ou tarefa será resolvida com menos leitura e menos ações do que antes?*
+
+**Sequência de experiência recomendada:**
+
+1. **Resposta imediata:** mostrar o resultado principal, com unidade, escopo e período, em linguagem curta e natural.
+2. **Exceção prioritária:** destacar o que mudou ou requer atenção, somente se sustentado pelos dados disponíveis; não transformar toda divergência em irregularidade.
+3. **Próxima ação contextual:** ir à escola, chamado, programação editável ou registro informado, com o contexto já selecionado.
+4. **Detalhes sob demanda:** disponibilizar memória de cálculo, fonte, listas, gráficos e documentos relacionados no aprofundamento, em vez de ocupar a tela principal.
+5. **Conferência humana:** sugerir preenchimentos e recuperar dados existentes, preservando a possibilidade de alterar, rejeitar ou corrigir; nunca atestar automaticamente.
+
+**Critério operacional de aprovação:** o usuário precisa ler menos, digitar menos e navegar menos para fazer a mesma tarefa, sem perder controle e rastreabilidade. Para design, avaliar tempo para localizar a resposta, número de campos preenchidos manualmente, número de passos e erros de interpretação, além do acabamento visual.
+
+**Antipadrão explícito:** uma página longa, com múltiplos cards de valores semelhantes, títulos técnicos extensos, gráficos estáticos e formulário de NF/OB que exige redigitar dados já associados à competência. **Isso não atende à DP-003, mesmo quando tecnicamente funcional.**
+
+**Prioridade visual:** tipografia clara e distinta, organização editorial madura, poucos elementos relevantes, microinterações funcionais, gráficos responsivos e consistência com Outfit/Inter, Lucide, temas e tokens do GOP Clima. Evitar composição genérica de template administrativo.
 
 ## 3. Gramática analítica: pergunta → gráfico → ação
 
