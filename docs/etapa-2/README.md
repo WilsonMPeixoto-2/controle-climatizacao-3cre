@@ -22,6 +22,7 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 
 - **[DP-001 — Ferramenta de gestão não é instrumento regulatório](./decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md)**: permitir ajustes de quantidades, programação, referências e informações financeiras por quem executa a gestão, sem travas burocráticas artificiais. Preservar validação técnica e permissões reais.
 - **[DP-002 — Continuidade funcional, informacional e visual](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md)**: novos fluxos, dados e indicadores devem **herdar a identidade visual e os componentes do GOP Clima atual**, não criar aplicativo paralelo inspirado no Gemini.
+- **[DP-003 — Inteligência visual e exploração interativa](./decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md)**: dashboards modernos baseados em perguntas e fontes, filtros sincronizados, detalhamento até escolas/chamados e visualização financeira só quando houver dados válidos; preservar o design atual.
 - **Regra de convergência:** o produto calcula e informa; o usuário decide e ajusta. O design integrado torna essa autonomia natural no fluxo já conhecido.
 
 ## Handoff para implementação no Codex
