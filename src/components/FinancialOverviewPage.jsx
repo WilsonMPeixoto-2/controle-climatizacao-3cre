@@ -4,10 +4,10 @@ import { formatDateBrazilian } from '../lib/logic.js';
 import SchoolRecordReview from './SchoolRecordReview.jsx';
 
 const groups = [
-  { title: 'Previsão', Icon: CalendarDays, text: 'Estimativas e programação financeira ainda não registradas.', scope: 'Sem valores por escola ou competência' },
-  { title: 'Apuração informada', Icon: ClipboardList, text: 'Valores apurados pelo responsável ainda não registrados.', scope: 'Independente do status dos chamados' },
-  { title: 'Faturamento e pagamentos', Icon: Receipt, text: 'Notas fiscais e pagamentos ainda não registrados.', scope: 'Sem faturamento ou pagamento presumido' },
-  { title: 'Limites e empenhos', Icon: Landmark, text: 'Referências contratuais e empenhos ainda não informados.', scope: 'Âmbito global · não filtrado por escola ou mês' }
+  { title: 'Previsão', Icon: CalendarDays, text: 'Estimativas e programação.', scope: 'Por escola e período' },
+  { title: 'Apuração informada', Icon: ClipboardList, text: 'Valores apurados pelo responsável.', scope: 'Independente do status dos chamados' },
+  { title: 'Faturamento e pagamentos', Icon: Receipt, text: 'Notas fiscais e pagamentos.', scope: 'Sem cobrança presumida' },
+  { title: 'Limites e empenhos', Icon: Landmark, text: 'Referências contratuais e empenhos.', scope: 'Âmbito global · não filtrado por escola ou mês' }
 ];
 
 export default function FinancialOverviewPage({ schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests }) {
@@ -41,9 +41,9 @@ export default function FinancialOverviewPage({ schools, tickets, filters, onFil
         <p id="finance-filter-scope" className="finance-hint">Os filtros recortam as solicitações históricas pela data de abertura; não definem competência de serviço ou de pagamento.</p>
       </div>
 
-      <div className="finance-metrics">
+      <div className="surface-card finance-metrics">
         {groups.map(({ title, Icon, text, scope }) => (
-          <article className="stat-card" key={title}>
+          <article className="finance-metric" key={title}>
             <div className="stat-header"><h3>{title}</h3><Icon size={20} aria-hidden="true" /></div>
             <p className="finance-missing">Não informado</p>
             <p className="stat-description">{text}</p>
@@ -52,10 +52,9 @@ export default function FinancialOverviewPage({ schools, tickets, filters, onFil
         ))}
       </div>
 
-      <div className="surface-card empty-state finance-empty">
-        <Wallet aria-hidden="true" />
-        <h3 className="empty-state-title">Informações financeiras ainda não registradas</h3>
-        <p className="empty-state-hint">As solicitações continuam disponíveis para acompanhamento. Nenhum valor é calculado a partir do total de aparelhos ou do status de atendimento.</p>
+      <div className="finance-empty">
+        <Wallet size={20} aria-hidden="true" />
+        <p><strong>Informações financeiras ainda não registradas.</strong> Nenhum valor é calculado a partir do total de aparelhos ou do status de atendimento.</p>
       </div>
 
       <SchoolRecordReview

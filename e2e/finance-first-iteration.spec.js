@@ -13,7 +13,7 @@ const tickets = [
   { id_chamado: 'GOP-AR-2026-9004', ...schools[0], tipo_demanda: 'Manutenção Preventiva', criado_em: '', status_atual: '1 - Recebido — em triagem' }
 ].map(ticket => ({ ...ticket, setor_responsavel: 'GOP', local_demanda: 'Sala de teste', prioridade: 'Média', proxima_providencia: 'Conferir solicitação de teste.', informacao_validada: 'Pendente de Vistoria', resultado_aptidao: 'Pendente', modificado_em: '2026-10-20', observacoes: 'Registro sintético para teste de interface.' }));
 
-async function seed(page, theme = 'light') {
+async function seed(page, theme = 'light', data = { schools, tickets }) {
   await page.addInitScript(({ schools, tickets, theme }) => {
     if (!localStorage.getItem('finance_test_seeded')) {
       localStorage.setItem('gop_schools', JSON.stringify(schools));
@@ -21,7 +21,7 @@ async function seed(page, theme = 'light') {
       localStorage.setItem('gop_theme', theme);
       localStorage.setItem('finance_test_seeded', 'true');
     }
-  }, { schools, tickets, theme });
+  }, { ...data, theme });
   await page.goto('/');
 }
 const nav = (page, name) => page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('button', { name, exact: true });
@@ -34,6 +34,34 @@ async function chooseSchool(page) {
   await page.getByPlaceholder('Nome ou designação...').fill('900001');
   await page.locator('.suggestion-item').filter({ hasText: 'Unidade de teste visual A' }).click();
 }
+
+test('sair do painel durante o zoom do mapa não deixa callbacks em uma tela removida', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await seed(page);
+  await page.locator('.leaflet-control-zoom-in').scrollIntoViewIfNeeded();
+  // Termina o ajuste inicial (80 ms) e o primeiro zoom (250 ms) antes do zoom testado.
+  await page.waitForTimeout(350);
+  // Acompanha o início real do zoom; sai pela navegação antes do timeout do Leaflet.
+  await page.locator('.leaflet-map-pane').evaluate(pane => new Promise(resolve => {
+    const observer = new MutationObserver(() => {
+      if (!pane.classList.contains('leaflet-zoom-anim')) return;
+      observer.disconnect();
+      const buttons = document.querySelectorAll('nav[aria-label="Navegação principal"] button');
+      [...buttons].find(button => button.textContent.trim() === 'Gestão Financeira').click();
+      resolve();
+    });
+    observer.observe(pane, { attributes: true, attributeFilter: ['class'] });
+    document.querySelector('.leaflet-control-zoom-in').click();
+  }));
+  await expect(page.getByRole('heading', { name: 'Gestão Financeira', exact: true })).toBeVisible();
+  // Leaflet agenda o fim do zoom em 250 ms; observar esse prazo detecta o callback órfão.
+  await page.waitForTimeout(350);
+  expect(errors).toEqual([]);
+  await nav(page, 'Painel Executivo').click();
+  await expect(page.locator('.leaflet-control-zoom-in')).toBeVisible();
+});
 
 test('financeiro usa recorte real, preserva ausências e retorna à ficha existente', async ({ page }) => {
   await seed(page);
@@ -52,7 +80,7 @@ test('financeiro usa recorte real, preserva ausências e retorna à ficha existe
   await page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9001' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByText('Referência financeira de manutenção', { exact: true })).toBeVisible();
+  await dialog.locator('.finance-reference summary').click();
   await expect(dialog.getByText('Consulta a partir de', { exact: false })).toContainText('BTU existente');
   await expect(dialog.getByText('12.000 BTU', { exact: true })).toBeVisible();
   await expect(dialog.getByText('18.000 BTU', { exact: true })).toBeVisible();
@@ -89,6 +117,7 @@ test('mantém navegação histórica e contexto escolar sem inventário financei
   await expect(page.getByLabel('Escola', { exact: true })).toHaveValue('900001');
   await expect(page.getByLabel('3 solicitações no recorte')).toBeVisible();
   await page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9002' }).click();
+  await page.getByRole('dialog').locator('.finance-reference summary').click();
   await expect(page.getByRole('dialog')).toContainText('Referência financeira de manutenção não aplicável automaticamente a este tipo de demanda');
 });
 
@@ -114,8 +143,28 @@ test('registro continua possível sem tipo conhecido, BTUs ou tabela de preços'
   expect(created).not.toHaveProperty('priceUnits4');
 });
 
+test('ficha recebe e contém o foco, abre referência pelo teclado e devolve foco ao fechar', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const origin = page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9001' });
+  await origin.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'Fechar ficha do chamado' })).toBeFocused();
+  await dialog.getByRole('button', { name: 'Copiar resumo do chamado' }).focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(dialog.getByRole('button', { name: 'Fechar', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Copiar resumo do chamado' })).toBeFocused();
+  await dialog.locator('.finance-reference summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(dialog.getByText('Valor de referência: Não informado.')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(origin).toBeFocused();
+});
+
 for (const theme of ['light', 'dark']) {
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 3840, height: 2160 }, { width: 390, height: 844 }]) {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1920, height: 1080 }, { width: 3840, height: 2160 }, { width: 390, height: 844 }, { width: 320, height: 812 }]) {
     test(`interfaces ${theme} ${viewport.width}px: teclado, responsividade e capturas`, async ({ page }, testInfo) => {
       await page.setViewportSize(viewport);
       const errors = [];
@@ -148,8 +197,24 @@ for (const theme of ['light', 'dark']) {
         await testInfo.attach(`${name}-${viewport.width}-${theme}`, { path, contentType: 'image/png' });
       };
       await capture('finance');
+      await page.getByRole('region', { name: 'Conferência por escola' }).evaluate(element => element.scrollIntoView({ block: 'start' }));
+      await capture('school-review');
       await page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9001' }).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog.locator('.finance-reference')).not.toHaveAttribute('open');
+      await capture('ticket-initial');
+      // A ficha precisa conter todos os botões e campos mesmo no celular estreito.
+      expect(await dialog.locator('.modal-body').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+      const dialogBox = await dialog.boundingBox();
+      for (const button of await dialog.locator('.modal-footer button').all()) {
+        const box = await button.boundingBox();
+        expect(box.x).toBeGreaterThanOrEqual(dialogBox.x);
+        expect(box.x + box.width).toBeLessThanOrEqual(dialogBox.x + dialogBox.width);
+      }
+      await dialog.locator('.finance-reference summary').click();
       await expect(page.getByRole('dialog').getByText('Valor de referência: Não informado.')).toBeVisible();
+      const dialogScan = await new AxeBuilder({ page }).include('.modal-container').withTags(['wcag2a', 'wcag2aa']).analyze();
+      expect(dialogScan.violations).toEqual([]);
       await capture('ticket-reference');
       await page.getByRole('button', { name: 'Fechar ficha do chamado' }).click();
       await chooseSchool(page);
@@ -195,4 +260,51 @@ test('conferência escolar diferencia ausência de registros e permite abrir dos
   await expect(nav(page, 'Lista de chamados')).toHaveAttribute('aria-current', 'page');
   await expect(page.getByText('GOP-AR-2026-9001').first()).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('gop_tickets'))).toBe(previousTickets);
+});
+
+test('conferência explora categorias, busca, expansão e registros sem vínculo sem alterar a base', async ({ page }) => {
+  const extraSchools = Array.from({ length: 9 }, (_, index) => ({
+    designacao: String(900010 + index), unidade_escolar: `Unidade de teste adicional ${index + 1}`, bairro: 'Bairro de expansão'
+  }));
+  const concluded = { designacao: '900003', unidade_escolar: 'Unidade de teste concluída', bairro: 'Concluídos' };
+  const empty = { designacao: '900004', unidade_escolar: 'Unidade de teste sem solicitação', bairro: 'Sem registros' };
+  const data = {
+    schools: [...schools, concluded, empty, ...extraSchools],
+    tickets: [...tickets,
+      { ...tickets[0], ...concluded, id_chamado: 'GOP-AR-2026-9005', status_atual: '10 - Concluído' },
+      ...extraSchools.map((school, index) => ({ ...tickets[0], ...school, id_chamado: `GOP-AR-2026-${9010 + index}` })),
+      { ...tickets[0], id_chamado: 'GOP-AR-2026-9999', designacao: '999999', unidade_escolar: 'Sem vínculo cadastral' }
+    ]
+  };
+  await seed(page, 'light', data);
+  const previous = await page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')]);
+  await finance(page);
+  const review = page.getByRole('region', { name: 'Conferência por escola' });
+  await expect(review).toContainText('1 chamado não pôde ser associado');
+  await expect(review.locator('.school-review-item')).toHaveCount(8);
+  await review.getByRole('button', { name: 'Ver mais 3 escolas' }).click();
+  await expect(review.locator('.school-review-item')).toHaveCount(11);
+  const search = review.getByRole('searchbox', { name: 'Localizar escola' });
+  await search.fill('900001');
+  await expect(review.locator('.school-review-item')).toHaveCount(1);
+  await expect(review).toContainText('Unidade de teste visual A');
+  await search.fill('BAIRRO DE EXPANSÃO');
+  await expect(review.locator('.school-review-item')).toHaveCount(8);
+  await search.clear();
+  const completed = review.getByRole('button', { name: /Com conclusão/ });
+  await completed.focus();
+  await page.keyboard.press('Enter');
+  await expect(completed).toHaveAttribute('aria-pressed', 'true');
+  await expect(review.locator('.school-review-item')).toHaveCount(1);
+  await expect(review).toContainText('Unidade de teste concluída');
+  await expect(review).toContainText('0 sem conclusão · 1 com conclusão');
+  await review.getByRole('button', { name: /Sem solicitação/ }).click();
+  await expect(review).toContainText('Unidade de teste sem solicitação');
+  await expect(review.getByRole('button', { name: /Ver chamados de/ })).toHaveCount(0);
+  await search.fill('Inexistente');
+  await expect(review.getByText('Nenhuma escola encontrada para esta seleção.', { exact: false })).toBeVisible();
+  await search.clear();
+  await page.getByLabel('Mês de abertura').fill('2030-01');
+  await expect(review.getByRole('status').filter({ hasText: '13 escolas' })).toBeVisible();
+  expect(await page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')])).toEqual(previous);
 });

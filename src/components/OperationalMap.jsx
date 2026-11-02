@@ -312,6 +312,10 @@ export default function OperationalMap({
         }
 
         try {
+          // Leaflet 1.9 mantém um timeout de 250 ms após o zoom CSS. remove()
+          // destrói o pane, mas não cancela esse estado; o callback deve encerrar
+          // sem tentar mover o mapa já desmontado ao trocar de tela.
+          mapRef.current._animatingZoom = false;
           mapRef.current.remove();
         } catch (e) {
           console.warn('Leaflet: Erro ao remover mapa no cleanup:', e);

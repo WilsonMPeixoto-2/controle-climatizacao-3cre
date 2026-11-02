@@ -452,6 +452,7 @@ export default function App() {
   const [dashboardMetricSelection, setDashboardMetricSelection] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const ticketDialogRef = useRef(null);
   const [financeFilters, setFinanceFilters] = useState({ schoolId: '', month: '' });
   const [isSavingTicketPending, setIsSavingTicket] = useState(false);
   const [isSavingHistoryPending, setIsSavingHistory] = useState(false);
@@ -571,7 +572,7 @@ export default function App() {
     }
   }, [theme]);
 
-  // Fecha o modal de edição com Esc e trava o scroll do fundo enquanto aberto
+  // Fecha com Esc, contém/restaura o foco e trava o scroll do fundo enquanto aberto.
   // useEffectEvent (React 19.2): o listener lê isSavingTicketPending/isSavingHistoryPending atuais sem
   // re-anexar a cada salvamento — o efeito só re-roda quando o modal abre/fecha.
   const onEscapeCloseModal = useEffectEvent((e) => {
@@ -582,11 +583,33 @@ export default function App() {
   useEffect(() => {
     if (!showEditModal) return undefined;
     const prevOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement;
+    const dialog = ticketDialogRef.current;
+    dialog?.querySelector('.modal-close-btn')?.focus({ preventScroll: true });
+    const containFocus = (event) => {
+      if (event.key !== 'Tab' || !dialog) return;
+      const focusable = [...dialog.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, a[href], [tabindex]:not([tabindex="-1"])'
+      )].filter(element => element.getClientRects().length > 0);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first) return;
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
     document.addEventListener('keydown', onEscapeCloseModal);
+    document.addEventListener('keydown', containFocus);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onEscapeCloseModal);
+      document.removeEventListener('keydown', containFocus);
       document.body.style.overflow = prevOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
     };
   }, [showEditModal]);
 
@@ -6015,6 +6038,7 @@ export default function App() {
         >
           <div
             className="modal-container"
+            ref={ticketDialogRef}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -6068,9 +6092,9 @@ export default function App() {
             </div>
 
             <div className="modal-body">
-              <FinancialReferenceCard ticket={editingTicket} />
+              <FinancialReferenceCard ticket={editingTicket} compact />
               {/* Two column detail lookup layout */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
+              <div className="ticket-detail-grid">
                 {/* Left side: Editors */}
                 <div>
                   <h4
@@ -6249,7 +6273,6 @@ export default function App() {
                         <label
                           htmlFor="edit-ticket-validation"
                           className="sr-only"
-                          style={{ display: 'none' }}
                         >
                           Validação
                         </label>
@@ -6793,21 +6816,9 @@ export default function App() {
                 <span>Minutar E-mail</span>
               </button>
               {!persistence && (
-                <div
-                  style={{
-                    color: 'hsl(38, 92%, 50%)',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    textAlign: 'right',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1px',
-                    marginRight: '12px',
-                    alignItems: 'flex-end'
-                  }}
-                >
+                <div className="ticket-local-status">
                   <span>⚠ Edição bloqueada em modo local</span>
-                  <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>
+                  <span>
                     Conecte a base online para salvar.
                   </span>
                 </div>
