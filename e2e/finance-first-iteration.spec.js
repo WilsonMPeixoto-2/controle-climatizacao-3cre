@@ -464,7 +464,7 @@ test('E3: alterações em outra aba não podem sobrescrever silenciosamente o ra
     await b.locator('#visit-school').selectOption('900002');
     await b.locator('#visit-planned').fill('2026-10-14');
     await b.getByRole('button', { name: 'Adicionar visita' }).click();
-    expect(await second.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(2);
+    await expect.poll(() => second.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')).length)).toBe(2);
   } finally { await second.close(); }
 });
 
@@ -479,7 +479,7 @@ test('E3: cópia de segurança válida pode ser restaurada com consentimento; fo
   const draft = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
   page.once('dialog', dialog => dialog.accept());
   await board.getByRole('button', { name: 'Excluir rascunho da visita de Unidade de teste visual A' }).click();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(0);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')).length)).toBe(0);
   await board.locator('.visit-board-file-input').setInputFiles({
     name: 'invalido.json', mimeType: 'application/json', buffer: Buffer.from('{"format":"outro","rows":[]}')
   });
@@ -496,7 +496,7 @@ test('E3: cópia de segurança válida pode ser restaurada com consentimento; fo
   page.once('dialog', dialog => dialog.accept());
   await board.getByRole('button', { name: 'Recuperar versão anterior' }).click();
   await expect(board.locator('.visit-board-row')).toHaveCount(0);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(0);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')).length)).toBe(0);
 });
 
 test('E3: gráfico destaca exclusivamente a soma das barras e identifica registros sem data', async ({ page }) => {
