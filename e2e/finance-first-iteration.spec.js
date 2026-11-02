@@ -369,3 +369,30 @@ test('E3: programação local por escola permite salvar, reprogramar e informar 
   expect(await page.evaluate(() => localStorage.getItem('gop_tickets'))).toBe(beforeTickets);
 });
 
+
+
+for (const sample of [
+  { width: 320, height: 812, theme: 'light' },
+  { width: 390, height: 844, theme: 'light' },
+  { width: 1440, height: 900, theme: 'dark' },
+  { width: 3840, height: 2160, theme: 'light' }
+]) {
+  test(`E3: programação preenchida ${sample.width}px ${sample.theme}, acessibilidade e captura`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: sample.width, height: sample.height });
+    await seed(page, sample.theme);
+    await finance(page);
+    const board = page.getByRole('region', { name: 'Planejamento por escola' });
+    await board.getByRole('button', { name: 'Programar', exact: true }).click();
+    await board.locator('#visit-school').selectOption('900001');
+    await board.locator('#visit-planned').fill('2026-11-12');
+    await board.getByRole('button', { name: 'Adicionar visita' }).click();
+    await expect(board.getByText('Unidade de teste visual A')).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    const scan = await new AxeBuilder({ page }).include('.visit-board').withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(scan.violations).toEqual([]);
+    expect(await board.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    const path = testInfo.outputPath(`programacao-preenchida-${sample.width}-${sample.theme}.png`);
+    await board.screenshot({ path, animations: 'disabled' });
+    await testInfo.attach('programacao-preenchida', { path, contentType: 'image/png' });
+  });
+}
