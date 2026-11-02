@@ -426,8 +426,15 @@
 }
 @media(max-width: 370px) {
   .visit-board-summary { grid-template-columns: repeat(3,minmax(0,1fr)); }
-  .visit-board-summary span { overflow-wrap: anywhere; }
-  .visit-board-row-actions { flex-wrap: wrap; }
+  .visit-board-summary span { overflow-wrap: normal; }
+  .visit-board-row-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) 36px;
+    gap: var(--space-2);
+  }
+  .visit-board-row-actions .btn { min-width: 0; padding: 8px 6px; }
+  .visit-board-row-actions .visit-board-delete { min-width: 36px; }
 }
 @media(prefers-reduced-motion:reduce) {
   .visit-board-extra > summary svg { transition: none; }
