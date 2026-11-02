@@ -469,3 +469,27 @@
 @media (max-width: 370px) {
   .visit-board-backups { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Escopos de filtro explícitos: escola comum, competência de visitas e aberturas de chamados. */
+.finance-school-filter { grid-template-columns: minmax(0, 1fr) auto; }
+.finance-ticket-filters { grid-template-columns: minmax(170px, 280px) auto minmax(0,1fr); }
+.finance-ticket-filters > .finance-hint { grid-column: auto; align-self: center; }
+.finance-operations-heading { margin-top: var(--space-6); }
+.finance-operations-heading h3 { font: 680 var(--text-xl)/1.25 var(--font-display); letter-spacing: -.02em; }
+.finance-operations-heading p { margin-top: 5px; color: var(--text-muted); font-size: var(--text-sm); }
+.visit-board-other-month { padding: var(--space-3) var(--space-5); border-top: 1px solid var(--hairline); }
+.visit-board-other-month h4 { font: 650 var(--text-sm)/1.45 var(--font-display); margin-bottom: 8px; }
+.visit-board-cross-month { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--hairline); }
+.visit-board-cross-month:last-child { border-bottom: 0; }
+.visit-board-cross-month span { font-size: var(--text-sm); overflow-wrap: anywhere; }
+.visit-board-row-actions .btn-primary { display: inline-flex; align-items: center; justify-content: center; font-size: var(--text-xs); min-height: 36px; }
+.visit-board-backups { max-width: 100%; }
+@media (max-width: 720px) {
+  .finance-school-filter, .finance-ticket-filters { grid-template-columns: minmax(0, 1fr); }
+  .finance-ticket-filters > .finance-hint { grid-column: 1; }
+  .visit-board-other-month { padding: var(--space-3) var(--space-4); }
+  .visit-board-row-actions .btn-primary { width: 100%; flex: 1 0 100%; }
+}
+@media (max-width: 370px) {
+  .visit-board-row-actions .btn-primary { grid-column: 1 / -1; width: 100%; }
+}
