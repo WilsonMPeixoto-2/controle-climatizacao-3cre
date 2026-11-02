@@ -371,7 +371,7 @@ test('E3: programação local por escola permite salvar, reprogramar e informar 
   await board.locator('#visit-board-month').fill('2026-10');
   await expect(board).toContainText('1 visita(s) reprogramada(s) para outro mês');
   await board.locator('#visit-board-month').fill('2026-11');
-  await board.getByRole('button', { name: 'Exportar cópia JSON' }).click();
+  await board.getByRole('button', { name: 'Baixar cópia de segurança' }).click();
   await page.reload();
   await expect(board.locator('.visit-board-summary > div:nth-child(2) strong')).toHaveText('1');
   expect(await page.evaluate(() => localStorage.getItem('gop_tickets'))).toBe(beforeTickets);
@@ -404,3 +404,96 @@ for (const sample of [
     await testInfo.attach('programacao-preenchida', { path, contentType: 'image/png' });
   });
 }
+
+
+test('E3: filtro da escola é aplicado aos totais, às visitas e aos resultados de execução', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await board.locator('#visit-board-month').fill('2026-10');
+  for (const schoolId of ['900001', '900002']) {
+    await board.getByRole('button', { name: 'Programar', exact: true }).click();
+    await board.locator('#visit-school').selectOption(schoolId);
+    await board.locator('#visit-planned').fill('2026-10-12');
+    await board.getByRole('button', { name: 'Adicionar visita' }).click();
+  }
+  await expect(board.locator('.visit-board-row')).toHaveCount(2);
+  await page.locator('#finance-school').selectOption('900001');
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
+  await expect(board.locator('.visit-board-summary > div:nth-child(2) strong')).toHaveText('1');
+  await expect(board).toContainText('Programação de Unidade de teste visual A');
+  await expect(board.locator('.visit-board-row')).not.toContainText('Unidade de teste visual B');
+  await board.getByRole('button', { name: 'Programar', exact: true }).click();
+  await expect(board.locator('#visit-school')).toHaveValue('900001');
+  await board.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await page.locator('#finance-school').selectOption('900002');
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
+  await expect(board.locator('.visit-board-row')).toContainText('Unidade de teste visual B');
+});
+
+test('E3: alterações em outra aba não podem sobrescrever silenciosamente o rascunho', async ({ page, context }) => {
+  await seed(page);
+  await finance(page);
+  const second = await context.newPage();
+  try {
+    await second.goto('/');
+    await finance(second);
+    const a = page.getByRole('region', { name: 'Planejamento por escola' });
+    const b = second.getByRole('region', { name: 'Planejamento por escola' });
+    await a.getByRole('button', { name: 'Programar', exact: true }).click();
+    await a.locator('#visit-school').selectOption('900001');
+    await a.locator('#visit-planned').fill('2026-10-12');
+    await a.getByRole('button', { name: 'Adicionar visita' }).click();
+    await expect(b).toContainText('outra aba');
+    await b.getByRole('button', { name: 'Programar', exact: true }).click();
+    await b.locator('#visit-school').selectOption('900002');
+    await b.locator('#visit-planned').fill('2026-10-14');
+    await b.getByRole('button', { name: 'Adicionar visita' }).click();
+    await expect(b).toContainText('Recarregue os dados antes de salvar');
+    expect(await second.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(1);
+    second.once('dialog', dialog => dialog.accept());
+    await b.getByRole('button', { name: 'Recarregar alterações de outra aba' }).click();
+    await expect(b).toContainText('Programação recarregada');
+    await b.getByRole('button', { name: 'Programar', exact: true }).click();
+    await b.locator('#visit-school').selectOption('900002');
+    await b.locator('#visit-planned').fill('2026-10-14');
+    await b.getByRole('button', { name: 'Adicionar visita' }).click();
+    expect(await second.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(2);
+  } finally { await second.close(); }
+});
+
+test('E3: cópia de segurança válida pode ser restaurada com consentimento; formato inválido é rejeitado', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  await board.getByRole('button', { name: 'Programar', exact: true }).click();
+  await board.locator('#visit-school').selectOption('900001');
+  await board.locator('#visit-planned').fill('2026-10-12');
+  await board.getByRole('button', { name: 'Adicionar visita' }).click();
+  const draft = await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')));
+  page.once('dialog', dialog => dialog.accept());
+  await board.getByRole('button', { name: 'Excluir rascunho da visita de Unidade de teste visual A' }).click();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(0);
+  await board.locator('.visit-board-file-input').setInputFiles({
+    name: 'invalido.json', mimeType: 'application/json', buffer: Buffer.from('{"format":"outro","rows":[]}')
+  });
+  await expect(board.getByRole('alert')).toContainText('não é uma cópia');
+  page.once('dialog', dialog => dialog.accept());
+  await board.locator('.visit-board-file-input').setInputFiles({
+    name: 'programacao.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ format: 'gop-clima-visit-draft-v1', rows: draft }))
+  });
+  await expect(board).toContainText('Cópia restaurada');
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('gop_clima_programacao_rascunho_v1')))).toHaveLength(1);
+});
+
+test('E3: gráfico destaca exclusivamente a soma das barras e identifica registros sem data', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const chart = page.locator('.finance-trend');
+  await expect(chart.locator('.finance-trend-total')).toContainText('3');
+  await expect(chart.locator('.finance-trend-caption')).toContainText('1 sem data, fora do gráfico');
+  const bars = await chart.locator('.finance-trend-number').allTextContents();
+  expect(bars.map(Number).reduce((sum, count) => sum + count, 0)).toBe(3);
+});
