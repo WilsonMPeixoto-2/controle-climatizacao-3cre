@@ -25,6 +25,12 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 - **[DP-003 — Inteligência visual e exploração interativa](./decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md)**: dashboards modernos baseados em perguntas e fontes, filtros sincronizados, detalhamento até escolas/chamados e visualização financeira só quando houver dados válidos; preservar o design atual.
 - **Regra de convergência:** o produto calcula e informa; o usuário decide e ajusta. O design integrado torna essa autonomia natural no fluxo já conhecido.
 
+## Qualidade visual e habilidades reutilizadas
+
+- **[Protocolo visual e ferramentas](./qualidade-visual/PROTOCOLO_VISUAL_E_FERRAMENTAS.md):** inventário verificado, separação entre habilidades do CTRH e recursos efetivamente presentes no GOP Clima, seleção de Figma/Mobbin/Browser quando disponíveis, QA de UI e evidência real em desktop/4K/mobile.
+- **[Instruções permanentes para Codex e agentes](../../AGENTS.md):** leitura automática do contrato de produto e do fluxo de qualidade visual antes de modificar a interface.
+- **[Skill local GOP Clima Visual Quality](../../.agents/skills/gop-clima-visual-quality/SKILL.md):** coordena direção de arte, UX, críticas, acessibilidade, testes Playwright e homologação. Preserva a identidade GOP Clima e não presume que ferramentas do CTRH estejam instaladas aqui.
+
 ## Handoff para implementação no Codex
 
 - **[Instruções completas para o Codex: primeira interface real da Etapa 2](./planejamento/HANDOFF_CODEX_PRIMEIRA_IMPLEMENTACAO_VISUAL.md)** — contexto de código e design system, tarefas F1–F4, verificação, controle de escopo, critérios de aceite e orientação para PR em rascunho.
