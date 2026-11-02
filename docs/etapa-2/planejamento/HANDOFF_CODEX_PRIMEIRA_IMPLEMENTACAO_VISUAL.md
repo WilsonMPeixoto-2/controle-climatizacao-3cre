@@ -1,5 +1,7 @@
 # Handoff operacional para o Codex — Etapa 2, primeira entrega visual integrada
 
+> **REGISTRO HISTÓRICO — NÃO REEXECUTAR.** As tarefas F1–F4 aqui descritas já originaram o [PR #25](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/25). Para qualquer nova execução, **comece por [`AGENTS.md`](../../../AGENTS.md)**, confirme a branch/PR atual e siga a tarefa específica. Este arquivo permanece arquivado para rastreabilidade, não como fila ativa.
+
 **Projeto:** GOP Clima — 3ª CRE / SME-RJ  
 **Objetivo:** começar a implementação REAL das novas capacidades financeiras, diretamente na aplicação React/Vite/Firestore existente, **sem reconstruir a UI** e **sem publicar em produção**.  
 **Natureza:** instrução executável para desenvolvimento, não nova rodada de concepção.  
