@@ -83,7 +83,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
       const next = editingId
         ? rows.map(row => row.id === editingId ? updateVisitDraft(row, form, { now: timestamp }) : row)
         : [...rows, createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp })];
-      if (commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída no rascunho deste dispositivo.')) {
+      if (commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída na programação local.')) {
         setMonth(monthOf(form.plannedDate));
         setForm(null);
         setEditingId(null);
@@ -116,7 +116,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
         <div className="visit-board-heading">
           <span className="section-eyebrow"><CalendarClock size={15} aria-hidden="true" /> Programação de atendimento</span>
           <h3 id="visit-board-title">Planejamento por escola</h3>
-          <p>Datas, reprogramações e execuções informadas pelo responsável, sem confundir com os chamados.</p>
+          <p>Organize visitas, reprogramações e informações de execução.</p>
         </div>
         <div className="visit-board-actions">
           <label className="visit-month-control" htmlFor="visit-board-month">
@@ -130,11 +130,11 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
       </header>
 
       <div className="visit-board-summary" aria-label="Resumo da programação local">
-        <div><strong className="tabular">{overview.visits}</strong><span>{overview.visits === 1 ? 'visita prevista' : 'visitas previstas'}</span></div>
-        <div><strong className="tabular">{overview.schools}</strong><span>{overview.schools === 1 ? 'escola na programação' : 'escolas na programação'}</span></div>
-        <div><strong className="tabular">{overview.reported.length}</strong><span>{overview.reported.length === 1 ? 'execução informada' : 'execuções informadas'}</span></div>
+        <div><strong className="tabular">{overview.visits}</strong><span>visitas</span></div>
+        <div><strong className="tabular">{overview.schools}</strong><span>escolas</span></div>
+        <div><strong className="tabular">{overview.reported.length}</strong><span>execuções informadas</span></div>
         <div className="visit-board-storage"><Info size={17} aria-hidden="true" />
-          <span><strong>Rascunho local</strong> · salvo somente neste navegador, sem sincronização com o Firestore.</span>
+          <span><strong>Rascunho local</strong> · disponível apenas neste dispositivo.</span>
         </div>
       </div>
 
@@ -238,7 +238,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, initialSchoo
         </details>
       )}
       <footer className="visit-board-footer">
-        <span><CheckCheck size={15} aria-hidden="true" /> {overview.inReview.length} visita(s) sem execução informada no rascunho</span>
+        <span><CheckCheck size={15} aria-hidden="true" /> {overview.inReview.length} {overview.inReview.length === 1 ? 'visita' : 'visitas'} sem execução informada</span>
         <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length}><Download size={15} aria-hidden="true" /> Exportar cópia JSON</button>
       </footer>
     </section>
