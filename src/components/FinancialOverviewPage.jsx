@@ -39,102 +39,109 @@ export default function FinancialOverviewPage({
 
   return (
     <section className="finance-page" aria-labelledby="finance-title">
-      <header className="finance-heading">
-        <div>
-          <span className="section-eyebrow"><Wallet aria-hidden="true" /> Gestão integrada</span>
-          <h2 className="section-title" id="finance-title">Gestão Financeira</h2>
-          <p className="section-subtitle">Uma visão dos registros operacionais, com acesso direto às escolas e solicitações.</p>
-        </div>
-        <span className="finance-source-label">Dados do GOP Clima <span aria-hidden="true">·</span> consulta</span>
-      </header>
+      <div className="finance-commandbar">
+        <header className="finance-heading">
+          <div>
+            <span className="section-eyebrow"><Wallet aria-hidden="true" /> Gestão integrada</span>
+            <h2 className="section-title" id="finance-title">Gestão Financeira</h2>
+            <p className="section-subtitle">Programe visitas, acompanhe a execução informada e consulte os chamados de cada escola.</p>
+          </div>
+        </header>
 
-      <div className="surface-card finance-filters finance-school-filter" aria-label="Escola para programação e consulta">
-        <div className="form-group">
-          <label htmlFor="finance-school">Escola</label>
-          <select id="finance-school" className="form-control" value={filters.schoolId} onChange={event => onFiltersChange({ ...filters, schoolId: event.target.value })}>
-            <option value="">Todas as escolas</option>
-            {schools.map(item => <option key={item.designacao} value={String(item.designacao)}>{item.designacao} · {item.unidade_escolar}</option>)}
-          </select>
+        <div className="surface-card finance-filters finance-school-filter" aria-label="Escola para programação e consulta">
+          <div className="form-group">
+            <label htmlFor="finance-school">Escola</label>
+            <select id="finance-school" className="form-control" value={filters.schoolId} onChange={event => onFiltersChange({ ...filters, schoolId: event.target.value })}>
+              <option value="">Todas as escolas</option>
+              {schools.map(item => <option key={item.designacao} value={String(item.designacao)}>{item.designacao} · {item.unidade_escolar}</option>)}
+            </select>
+          </div>
+          <button type="button" className="btn btn-secondary" onClick={clearSchool} disabled={!filters.schoolId}><RotateCcw size={16} aria-hidden="true" />Limpar escola</button>
         </div>
-        <button type="button" className="btn btn-secondary" onClick={clearSchool} disabled={!filters.schoolId}><RotateCcw size={16} aria-hidden="true" />Limpar escola</button>
+
       </div>
 
-      <VisitPlanningBoard
-        schools={schools}
-        selectedSchoolId={filters.schoolId}
-        onOpenSchool={onOpenSchool}
-      />
+      <div className="finance-planning-layout">
+        <VisitPlanningBoard
+          schools={schools}
+          selectedSchoolId={filters.schoolId}
+          onOpenSchool={onOpenSchool}
+        />
 
-      <header className="finance-operations-heading">
-        <h3>Chamados e solicitações</h3>
-        <p>Consulta complementar aos registros de manutenção, sem alterar a competência das visitas.</p>
-      </header>
-      <div className="surface-card finance-filters finance-ticket-filters" aria-label="Filtrar chamados por abertura">
-        <div className="form-group">
-          <label htmlFor="finance-month">Mês de abertura dos chamados</label>
-          <input id="finance-month" type="month" className="form-control" value={filters.month} aria-describedby="finance-filter-scope" onChange={event => onFiltersChange({ ...filters, month: event.target.value })} />
-        </div>
-        <button type="button" className="btn btn-secondary" onClick={clearTicketMonth} disabled={!filters.month}><RotateCcw size={16} aria-hidden="true" />Limpar mês</button>
-        <p id="finance-filter-scope" className="finance-hint">Este filtro controla somente os chamados, não o planejamento nem os pagamentos.</p>
-      </div>
-
-      <section className="finance-intelligence" aria-label="Síntese operacional do período">
-        <div className="finance-insight">
-          <span className="finance-insight-label"><Activity size={16} aria-hidden="true" /> Atenção aos registros</span>
-          <div className="finance-insight-main">
-            <strong className="finance-insight-count tabular">{overview.toReview}</strong>
-            <div className="finance-insight-heading">
-              <h3>{overview.toReview === 1 ? 'escola com chamados a conferir' : 'escolas com chamados a conferir'}</h3>
-              <p>{overview.toReview > 0
-                ? `${withoutConclusion} ${withoutConclusion === 1 ? 'chamado sem conclusão registrada' : 'chamados sem conclusão registrada'} neste recorte.`
-                : 'Nenhum chamado sem conclusão nas escolas deste recorte.'}</p>
+        <section className="finance-operations" aria-label="Consulta de chamados">
+          <header className="finance-operations-heading">
+            <h3>Chamados e solicitações</h3>
+            <p>Consulta complementar aos registros de manutenção, sem alterar a competência das visitas.</p>
+          </header>
+          <div className="surface-card finance-filters finance-ticket-filters" aria-label="Filtrar chamados por abertura">
+            <div className="form-group">
+              <label htmlFor="finance-month">Mês de abertura dos chamados</label>
+              <input id="finance-month" type="month" className="form-control" value={filters.month} aria-describedby="finance-filter-scope" onChange={event => onFiltersChange({ ...filters, month: event.target.value })} />
             </div>
+            <button type="button" className="btn btn-secondary" onClick={clearTicketMonth} disabled={!filters.month}><RotateCcw size={16} aria-hidden="true" />Limpar mês</button>
+            <p id="finance-filter-scope" className="finance-hint">Este filtro controla somente os chamados, não o planejamento nem os pagamentos.</p>
           </div>
-          <div className="finance-insight-footer">
-            <span><CheckCircle2 size={16} aria-hidden="true" /> {overview.withConclusion} {overview.withConclusion === 1 ? 'escola só com chamados concluídos' : 'escolas só com chamados concluídos'}</span>
-            <button className="finance-insight-action" type="button" onClick={jumpToReview}>
-              Examinar escolas <ArrowRight size={17} aria-hidden="true" />
-            </button>
-          </div>
-          <span className="finance-insight-disclaimer">Situação dos chamados no sistema, não confirmação de atendimento contratual.</span>
-        </div>
 
-        <div className="finance-trend">
-          <div className="finance-trend-header">
-            <div>
-              <h3>Aberturas ao longo do tempo</h3>
-              <p>Selecione um mês para investigar os registros.</p>
-            </div>
-            <span className="finance-trend-total tabular">{chartTotal} <small>nas barras</small></span>
-          </div>
-          {series.length ? (
-            <div className="finance-trend-columns" role="group" aria-label="Evolução mensal interativa">
-              {series.map(item => (
-                <button
-                  type="button"
-                  key={item.month}
-                  aria-pressed={filters.month === item.month}
-                  aria-label={`${item.count} ${item.count === 1 ? 'chamado aberto' : 'chamados abertos'} em ${item.label} de ${item.year}${filters.month === item.month ? ', mês selecionado, ativar para limpar' : ', ativar filtro'}`}
-                  title={`${item.label}/${item.year}: ${item.count} ${item.count === 1 ? 'abertura' : 'aberturas'}`}
-                  className={`finance-trend-column ${filters.month === item.month ? 'is-selected' : ''}`}
-                  onClick={() => onFiltersChange({ ...filters, month: filters.month === item.month ? '' : item.month })}
-                >
-                  <span className="finance-trend-number tabular">{item.count}</span>
-                  <span className="finance-trend-bar-track">
-                    <span className="finance-trend-bar" style={{ height: `${item.count ? Math.max(10, (item.count / maxCount) * 100) : 3}%` }} />
-                  </span>
-                  <span className="finance-trend-month">{item.label}</span>
+          <section className="finance-intelligence" aria-label="Síntese operacional do período">
+            <div className="finance-insight">
+              <span className="finance-insight-label"><Activity size={16} aria-hidden="true" /> Atenção aos registros</span>
+              <div className="finance-insight-main">
+                <strong className="finance-insight-count tabular">{overview.toReview}</strong>
+                <div className="finance-insight-heading">
+                  <h3>{overview.toReview === 1 ? 'escola com chamados a conferir' : 'escolas com chamados a conferir'}</h3>
+                  <p>{overview.toReview > 0
+                    ? `${withoutConclusion} ${withoutConclusion === 1 ? 'chamado sem conclusão registrada' : 'chamados sem conclusão registrada'} neste recorte.`
+                    : 'Nenhum chamado sem conclusão nas escolas deste recorte.'}</p>
+                </div>
+              </div>
+              <div className="finance-insight-footer">
+                <span><CheckCircle2 size={16} aria-hidden="true" /> {overview.withConclusion} {overview.withConclusion === 1 ? 'escola só com chamados concluídos' : 'escolas só com chamados concluídos'}</span>
+                <button className="finance-insight-action" type="button" onClick={jumpToReview}>
+                  Examinar escolas <ArrowRight size={17} aria-hidden="true" />
                 </button>
-              ))}
+              </div>
+              <span className="finance-insight-disclaimer">Situação dos chamados no sistema, não confirmação de atendimento contratual.</span>
             </div>
-          ) : (
-            <div className="finance-trend-empty">Sem datas válidas de abertura para construir a tendência.</div>
-          )}
-          <p className="finance-trend-caption">{school ? school.unidade_escolar : 'Todas as escolas'} · Seis meses de abertura{undatedAcrossSchool ? ` · ${undatedAcrossSchool} sem data, fora do gráfico` : ''}</p>
-        </div>
-      </section>
 
-            <div className="finance-workbench">
+            <div className="finance-trend">
+              <div className="finance-trend-header">
+                <div>
+                  <h3>Aberturas ao longo do tempo</h3>
+                  <p>Selecione um mês para investigar os registros.</p>
+                </div>
+                <span className="finance-trend-total tabular">{chartTotal} <small>nas barras</small></span>
+              </div>
+              {series.length ? (
+                <div className="finance-trend-columns" role="group" aria-label="Evolução mensal interativa">
+                  {series.map(item => (
+                    <button
+                      type="button"
+                      key={item.month}
+                      aria-pressed={filters.month === item.month}
+                      aria-label={`${item.count} ${item.count === 1 ? 'chamado aberto' : 'chamados abertos'} em ${item.label} de ${item.year}${filters.month === item.month ? ', mês selecionado, ativar para limpar' : ', ativar filtro'}`}
+                      title={`${item.label}/${item.year}: ${item.count} ${item.count === 1 ? 'abertura' : 'aberturas'}`}
+                      className={`finance-trend-column ${filters.month === item.month ? 'is-selected' : ''}`}
+                      onClick={() => onFiltersChange({ ...filters, month: filters.month === item.month ? '' : item.month })}
+                    >
+                      <span className="finance-trend-number tabular">{item.count}</span>
+                      <span className="finance-trend-bar-track">
+                        <span className="finance-trend-bar" style={{ height: `${item.count ? Math.max(10, (item.count / maxCount) * 100) : 3}%` }} />
+                      </span>
+                      <span className="finance-trend-month">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="finance-trend-empty">Sem datas válidas de abertura para construir a tendência.</div>
+              )}
+              <p className="finance-trend-caption">{school ? school.unidade_escolar : 'Todas as escolas'} · Seis meses de abertura{undatedAcrossSchool ? ` · ${undatedAcrossSchool} sem data, fora do gráfico` : ''}</p>
+            </div>
+          </section>
+
+        </section>
+      </div>
+
+      <div className="finance-workbench">
         <div className="finance-workbench-primary" ref={reviewRef}>
           <SchoolRecordReview
             schools={schools}

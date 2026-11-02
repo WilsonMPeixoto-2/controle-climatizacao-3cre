@@ -14,6 +14,14 @@ const tickets = [
 ].map(ticket => ({ ...ticket, setor_responsavel: 'GOP', local_demanda: 'Sala de teste', prioridade: 'Média', proxima_providencia: 'Conferir solicitação de teste.', informacao_validada: 'Pendente de Vistoria', resultado_aptidao: 'Pendente', modificado_em: '2026-10-20', observacoes: 'Registro sintético para teste de interface.' }));
 
 async function seed(page, theme = 'light', data = { schools, tickets }) {
+  // Fixtures de terceiros: estes testes verificam os fluxos financeiros e a navegação,
+  // não a disponibilidade do analytics ou das imagens externas do mapa.
+  // O código do Leaflet e seus eventos continuam reais; erros do aplicativo seguem verificados.
+  await page.context().route('https://va.vercel-scripts.com/**', route => route.fulfill({ contentType: 'application/javascript', body: '' }));
+  await page.context().route('https://tile.openstreetmap.org/**', route => route.fulfill({
+    contentType: 'image/png',
+    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+  }));
   await page.addInitScript(({ schools, tickets, theme }) => {
     if (!localStorage.getItem('finance_test_seeded')) {
       localStorage.setItem('gop_schools', JSON.stringify(schools));
@@ -760,4 +768,47 @@ test('E3 regressão: dossiê aberto durante gravação recebe atualização sem 
   await expect(summary).toContainText('20/11/2026');
   await expect(summary).not.toContainText('12/11/2026');
   expect(await page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')])).toEqual(original);
+});
+
+test('legibilidade: instruções principais e campos da programação têm tamanho confortável', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await seed(page);
+  await finance(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola' });
+  const instruction = board.getByText('Organize visitas, reprogramações e informações de execução.');
+  expect(await instruction.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+  await board.getByRole('button', { name: 'Programar visita', exact: true }).click();
+  const schoolField = board.getByLabel('Unidade escolar', { exact: true });
+  expect(await schoolField.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+  expect(await board.locator('label[for="visit-school"]').evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+});
+
+test('identidade tipográfica: ações da programação usam a fonte institucional', async ({ page }) => {
+  await seed(page);
+  await finance(page);
+  const action = page.getByRole('button', { name: 'Programar visita', exact: true });
+  expect(await action.evaluate(el => getComputedStyle(el).fontFamily)).toContain('Inter');
+  const backup = page.getByRole('button', { name: 'Restaurar cópia', exact: true });
+  expect(await backup.evaluate(el => getComputedStyle(el).fontFamily)).toContain('Inter');
+});
+
+test('resumo em tablet distribui os três indicadores sem coluna vazia', async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 1000 });
+  await seed(page);
+  await finance(page);
+  const summary = page.locator('.visit-board-summary');
+  const row = await summary.boundingBox();
+  const lastMetric = await summary.locator(':scope > div').nth(2).boundingBox();
+  expect(row.x + row.width - lastMetric.x - lastMetric.width).toBeLessThan(32);
+});
+
+test('nomes longos de escolas mantêm leitura confortável em notebook', async ({ page }) => {
+  await page.setViewportSize({ width: 1251, height: 1000 });
+  const longName = 'Escola Municipal de Demonstração Professora Maria da Conceição de Albuquerque';
+  const data = { schools: [{ ...schools[0], unidade_escolar: longName }], tickets: [{ ...tickets[0], unidade_escolar: longName }] };
+  await seed(page, 'light', data);
+  await finance(page);
+  const name = page.locator('.school-review-details').getByText(longName, { exact: true });
+  const bounds = await name.boundingBox();
+  expect(bounds.height).toBeLessThan(150);
 });

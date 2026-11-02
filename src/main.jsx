@@ -23,6 +23,7 @@ import './styles/maturity-2026.css';
 // Polimento preliminar do retorno do sistema, importado por último na cascata.
 import './styles/return-polish-2026.css';
 import './styles/finance.css';
+import './styles/finance-polish.css';
 
 import App from './App.jsx';
 import ClimateSurveyPage from './components/ClimateSurveyPage.jsx';
