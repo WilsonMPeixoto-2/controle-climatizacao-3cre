@@ -24,6 +24,11 @@ Este diretório reúne, sob versionamento Git, os entendimentos e os documentos 
 - **[DP-002 — Continuidade funcional, informacional e visual](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md)**: novos fluxos, dados e indicadores devem **herdar a identidade visual e os componentes do GOP Clima atual**, não criar aplicativo paralelo inspirado no Gemini.
 - **Regra de convergência:** o produto calcula e informa; o usuário decide e ajusta. O design integrado torna essa autonomia natural no fluxo já conhecido.
 
+## Handoff para implementação no Codex
+
+- **[Instruções completas para o Codex: primeira interface real da Etapa 2](./planejamento/HANDOFF_CODEX_PRIMEIRA_IMPLEMENTACAO_VISUAL.md)** — contexto de código e design system, tarefas F1–F4, verificação, controle de escopo, critérios de aceite e orientação para PR em rascunho.
+- **Base de código:** `feat/etapa2-fundacao-financeira` (PR #24). **Execução do Codex:** derivar branch própria dessa base, preservar produção e validar interface com testes e screenshots.
+
 ## Início da execução controlada
 
 - **[Seleção técnica do protótipo Gemini v1](./referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md)**: catálogo de padrões úteis e decisão expressa de não reutilizar o JSX defeituoso como código de produção.
