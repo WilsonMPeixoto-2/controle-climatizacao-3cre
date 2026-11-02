@@ -7,6 +7,8 @@
 **Aplicação:** painéis operacionais existentes, nova área Gestão Financeira, consulta por unidade, detalhes do chamado e relatórios gerenciais.  
 **Complementa:** [DP-001 (flexibilidade)](./DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002 (continuidade visual)](./DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md), [Concepção Funcional v1.0](../concepcao/documento-integral-v1.0/README.md).
 
+**Complemento visual:** [análise de dez capturas do protótipo Gemini](../referencias/gemini-prototipo-v1/AVALIACAO_VISUAL_10_CAPTURAS_MOBILE.md), com seleção de recursos úteis e correções de responsividade para orientar a implementação real. A referência não autoriza copiar o protótipo.
+
 ## 1. Decisão
 
 > **O site é a superfície privilegiada de inteligência visual do GOP Clima.** Não deve limitar-se a reproduzir tabelas ou cartões estáticos: gráficos, mapas, tendências, comparações, filtros e detalhes navegáveis precisam transformar registros operacionais e financeiros em informação acionável.
