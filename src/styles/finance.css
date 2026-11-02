@@ -454,3 +454,18 @@
 .finance-school-program-mini li:last-child { border-bottom: none; }
 .finance-school-program-mini li span { font-size: var(--text-sm); }
 .finance-school-program-mini li small { color: var(--text-muted); font-size: var(--text-xs); }
+
+/* Revisão de uso: a programação é a tarefa principal; o gráfico é secundário. */
+.visit-board-refresh { margin: var(--space-3) var(--space-5); }
+.visit-board-backups { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.visit-board-file-input { display: none; }
+.visit-board-backups .visit-board-export { min-height: 40px; }
+.visit-board-summary > div:nth-child(3) span { max-width: 20ch; }
+.finance-trend-caption { overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .visit-board-backups { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .visit-board-backups .visit-board-export { padding: 8px 5px; justify-content: center; text-align: center; }
+}
+@media (max-width: 370px) {
+  .visit-board-backups { grid-template-columns: minmax(0, 1fr); }
+}
