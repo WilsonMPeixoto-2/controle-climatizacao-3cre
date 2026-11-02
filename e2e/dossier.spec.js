@@ -47,22 +47,24 @@ test.describe('GOP Clima E2E tests', () => {
   test('deve alternar entre temas claro/escuro e persistir', async ({ page }) => {
     await page.goto('/');
 
-    // Verifica o tema inicial (padrão dark-theme)
+    // Sem preferência salva, o produto abre no tema claro.
     const htmlElement = page.locator('html');
+    const themeBtn = page.locator('.theme-toggle-header');
+    await expect(themeBtn).toHaveText('Modo Escuro');
+    await expect(htmlElement).not.toHaveClass(/dark-theme/);
+
+    await themeBtn.click();
+    await expect(htmlElement).toHaveClass(/dark-theme/);
+    await expect(themeBtn).toHaveText('Modo Claro');
+    await page.reload();
+    await expect(themeBtn).toHaveText('Modo Claro');
     await expect(htmlElement).toHaveClass(/dark-theme/);
 
-    // Clica no botão de alternar tema (.theme-toggle-header)
-    const themeBtn = page.locator('.theme-toggle-header');
-    if (await themeBtn.count() > 0) {
-      await themeBtn.click();
-      // Verifica se o tema mudou para light (remove dark-theme class)
-      await expect(htmlElement).not.toHaveClass(/dark-theme/);
-      
-      // Recarrega a página
-      await page.reload();
-      // Confirma que persiste como light (sem dark-theme)
-      await expect(htmlElement).not.toHaveClass(/dark-theme/);
-    }
+    await themeBtn.click();
+    await expect(htmlElement).not.toHaveClass(/dark-theme/);
+    await page.reload();
+    await expect(themeBtn).toHaveText('Modo Escuro');
+    await expect(htmlElement).not.toHaveClass(/dark-theme/);
   });
 
   test('deve exibir estimativa financeira, atalho de e-mail e filtros de timeline no dossiê', async ({ page }) => {

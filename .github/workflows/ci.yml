@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - master
+      - feat/etapa2-fundacao-financeira
 
 permissions:
   contents: read
@@ -94,3 +95,14 @@ jobs:
 
       - name: Run Playwright
         run: npm run test:e2e
+
+      - name: Upload Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
