@@ -125,6 +125,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       const imported = parseVisitBackup(await file.text());
       if (!window.confirm(`Substituir as ${rows.length} visitas do rascunho local pelas ${imported.length} da cópia? Esta operação não afeta o Firestore.`)) return;
       if (commit(imported, 'Cópia restaurada neste dispositivo.', { allowRecovery: true })) {
+        if (imported.length) setMonth(monthOf(imported[0].plannedDate));
         setForm(null);
         setEditingId(null);
       }
@@ -138,6 +139,10 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     if (!form) return;
     if (!schools.some(school => String(school.designacao) === String(form.schoolId))) {
       setError('Selecione uma unidade do cadastro atual.');
+      return;
+    }
+    if (selectedSchoolId && String(form.schoolId) !== String(selectedSchoolId)) {
+      setError('Para programar outra escola, altere o filtro de escola da página.');
       return;
     }
     try {
@@ -213,7 +218,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
           <div className="visit-board-editor-fields">
             <div className="form-group">
               <label htmlFor="visit-school">Unidade escolar</label>
-              <select id="visit-school" className="form-control" value={form.schoolId} onChange={event => setForm({ ...form, schoolId: event.target.value })} required>
+              <select id="visit-school" className="form-control" value={form.schoolId} onChange={event => setForm({ ...form, schoolId: event.target.value })} disabled={Boolean(selectedSchoolId)} required>
                 <option value="">Selecione a escola</option>
                 {schools.map(school => <option key={school.designacao} value={school.designacao}>{school.designacao} · {school.unidade_escolar}</option>)}
               </select>
