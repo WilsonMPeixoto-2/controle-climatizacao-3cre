@@ -8,10 +8,10 @@
 .forecast-heading .section-eyebrow { display:inline-flex; gap:8px; align-items:center; font-size:var(--text-xs); color:var(--primary-active,var(--primary)); font-weight:700; }
 .forecast-heading h3 { margin-top:8px; font:650 clamp(21px,1.5vw,27px)/1.25 var(--font-display); letter-spacing:-.025em; }
 .forecast-heading p { margin-top:6px; color:var(--text-muted); font-size:var(--text-sm); }
-.forecast-month-control { flex-shrink:0; display:grid; gap:6px; min-width:180px; }
+.forecast-month-control { flex-shrink:0; display:grid; gap:6px; min-width:0; max-width:100%; }
 .forecast-month-control label { color:var(--text-muted); font-size:var(--text-xs); font-weight:650; }
-.forecast-month-controls { display:flex; gap:8px; align-items:center; }
-.forecast-month-controls input { width:155px; min-width:0; color:var(--text-main); }
+.forecast-month-controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.forecast-month-controls input { width:200px; min-width:190px; color:var(--text-main); }
 .forecast-month-controls .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:38px; white-space:nowrap; }
 .forecast-connection { display:flex; gap:9px; align-items:start; margin:0 26px 16px!important; padding:11px 13px; border:1px solid var(--hairline); border-radius:8px; color:var(--text-muted); font-size:var(--text-sm); }
 .forecast-connection svg { flex-shrink:0; }
@@ -56,6 +56,10 @@
   .forecast-totals > div { padding:16px; }
 }
 @media(max-width:550px) {
+  .forecast-month-control { width:100%; }
+  .forecast-month-controls { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; }
+  .forecast-month-controls input { width:100%; min-width:0; }
+  .forecast-month-controls .btn { justify-self:start; }
   .forecast-header,.forecast-trend,.forecast-drill { padding:18px 15px; }
   .forecast-connection { margin:0 15px 12px!important; }
   .forecast-totals { grid-template-columns:1fr; }
