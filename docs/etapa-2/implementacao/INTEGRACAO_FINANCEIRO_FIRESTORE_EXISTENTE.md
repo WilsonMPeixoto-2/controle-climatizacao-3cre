@@ -8,7 +8,7 @@ O GOP Clima já possui um projeto Firebase operacional. **Usá-lo também para a
 
 ## O que muda no código
 
-- `attendanceDevelopmentClient.js`: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` e demais valores usados pela aplicação operacional agora também alimentam a persistência financeira. A mesma instância nomeada Firebase é reaproveitada, evitando aplicativo paralelo.
+- `attendanceDevelopmentClient.js`: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID` e na `.firebaserc` (`gestao-da-climatizacao-3-cre`), `VITE_FIREBASE_APP_ID` e demais valores usados pela aplicação operacional agora também alimentam a persistência financeira. A mesma instância nomeada Firebase é reaproveitada, evitando aplicativo paralelo.
 - A variável `VITE_FINANCE_FIRESTORE_EMULATOR=127.0.0.1:8082` continua selecionando **explicitamente** o emulador local isolado para testes e desenvolvimento, sem modificar o Firebase remoto.
 - `attendancePersistence.js` continua usando transação com revisão esperada, snapshots imutáveis e `onSnapshot`, sem migrar valores ou alterar chamados.
 - `firestore.rules` recebeu validadores de `atendimentos_economicos` e `revisoes` já testados localmente. Regras anteriores das escolas/chamados/contadores/históricos permanecem inalteradas. Esta etapa não configura perfis ou cadastros de login.
@@ -21,10 +21,10 @@ A publicação da interface na Vercel **não atualiza as regras do Firebase**. A
 2. Após o CI verde do PR #34, aplicar as regras versionadas pelo Firebase CLI autenticado, **no mesmo projeto**:
 
    ```bash
-   npx firebase-tools@15.26.0 deploy --only firestore:rules --project ID_DO_FIREBASE_JA_USADO
+   npx firebase-tools@15.26.0 deploy --only firestore:rules --project gestao-da-climatizacao-3-cre
    ```
 
-   O operador deve substituir `ID_DO_FIREBASE_JA_USADO` pelo ID real existente, obtido nas configurações do Firebase. A implantação exige autorização administrativa na conta Firebase, não login dos futuros usuários do GOP Clima.
+   A `.firebaserc` do repositório identifica esse projeto como padrão. Antes do deploy, confirme que a variável de produção `VITE_FIREBASE_PROJECT_ID` aponta para o mesmo ID. A implantação exige autorização administrativa na conta Firebase, não login dos futuros usuários do GOP Clima.
 3. Verificar no console Firebase que as regras estão publicadas e que os caminhos `atendimentos_economicos` e `revisoes` estão contemplados; **não afirmar deploy concluído sem essa evidência**.
 4. Realizar merge do PR e publicar no projeto Vercel `climatizacao-firebase-homologacao`, com SHA da `master` verificado.
 5. **Prova remota de aceitação:** abrir o endereço publicado em dois navegadores/dispositivos; criar atendimento econômico **sintético**, identificar ID, revisão e data; observar atualização em ambos; editar quantidade/competência no segundo; confirmar apenas uma versão corrente, versões anteriores no histórico e a previsão mensal alterada. Atualização concorrente deve preservar erro de conflito; o teste não pode criar nota fiscal, pagamento ou atesto.
