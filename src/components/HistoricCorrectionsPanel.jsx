@@ -31,6 +31,7 @@ export default function HistoricCorrectionsPanel({
   selectedSchoolId = '', schools = [], onOpenSchool
 }) {
   const [selectedMonth,setSelectedMonth] = useState('');
+  const [showAllSchools,setShowAllSchools] = useState(false);
   const all = useMemo(()=>aggregateHistoricCorrections({schoolId:selectedSchoolId}),[selectedSchoolId]);
   const selected = useMemo(()=>aggregateHistoricCorrections({
     schoolId:selectedSchoolId,month:selectedMonth
@@ -39,6 +40,7 @@ export default function HistoricCorrectionsPanel({
     (b.byStatus.emAndamento+b.byStatus.imprestabilidade+b.byStatus.pendente)-
     (a.byStatus.emAndamento+a.byStatus.imprestabilidade+a.byStatus.pendente) ||
     b.total-a.total || a.schoolId.localeCompare(b.schoolId));
+  const visibleGroups = showAllSchools ? grouped : grouped.slice(0,8);
   const schoolMap = new Map(schools.map(item=>[String(item.designacao),item]));
   const global = aggregateHistoricCorrections();
   const monthly = global.byMonth;
@@ -103,8 +105,8 @@ export default function HistoricCorrectionsPanel({
           <span>{grouped.length} agrupamentos escola/mês</span>
         </div>
         {grouped.length ? (
-          <div className="historic-rows">
-            {grouped.map(item=>{
+          <div className="historic-rows" id="historic-school-groups">
+            {visibleGroups.map(item=>{
               const school=schoolMap.get(item.schoolId);
               const issues=item.byStatus.emAndamento+item.byStatus.imprestabilidade+item.byStatus.pendente;
               return (
@@ -142,6 +144,17 @@ export default function HistoricCorrectionsPanel({
             })}
           </div>
         ):<p className="historic-empty">Nenhum lançamento correspondente ao recorte escolhido. Isso não comprova ausência de atendimento.</p>}
+        {grouped.length>8&&(
+          <div className="historic-show-more">
+            <button type="button" className="btn btn-secondary btn-sm"
+              aria-expanded={showAllSchools}
+              aria-controls="historic-school-groups"
+              onClick={()=>setShowAllSchools(previous=>!previous)}>
+              {showAllSchools?'Mostrar apenas os prioritários':'Mostrar todos os '+grouped.length+' agrupamentos'}
+            </button>
+            {!showAllSchools&&<small>8 agrupamentos prioritários exibidos · os demais continuam disponíveis.</small>}
+          </div>
+        )}
       </div>
 
       <footer className="historic-note">
