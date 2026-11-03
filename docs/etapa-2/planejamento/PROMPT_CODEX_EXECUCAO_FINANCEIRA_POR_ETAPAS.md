@@ -105,6 +105,18 @@ Se a persistência compartilhada ainda não existir, trate-a como dependência d
 - A estimativa pode ser consultada no contexto escolar/operacional sem repetir dados já conhecidos.
 - O usuário consegue identificar a origem do resultado; nenhum status operacional transforma a estimativa em valor devido.
 
+### Testes semânticos obrigatórios sobre a composição
+
+Além dos aceites anteriores, implemente **testes automatizados de domínio** para os seguintes cenários antes de considerar a Etapa 1 concluída. Esses cenários apontam inconsistências reproduzidas no trecho local de `normalizeItem`/`calculateAttendance`; **verifique a versão integral efetiva antes de alterá-la**:
+
+1. **Cobertura `incluido`, sem preço unitário:** a existência de `sourceRef` por si só **não comprova que o preço econômico do serviço é zero nem que a cobertura foi validada**. Se a regra de produto adotar valor incremental zero, exiba essa natureza explicitamente e mantenha preço nominal ausente ou identificado separadamente.
+2. **Natureza `informada` sem preço:** não rotule como referência econômica completa quando `unitPriceUnits4 === null`; preservar o estado de informação pendente sem converter ausência em zero.
+3. **Cobertura `a_confirmar` com preço e quantidade:** permitir estimativa aritmética preliminar, mas **não declarar cobertura confirmada** apenas por `complete: true`. Separar completude da composição e situação da cobertura, ainda que a interface exiba o aviso de modo compacto.
+4. **Cobertura `incluido` com preço unitário conhecido:** conservar o preço nominal e sua origem mesmo quando o valor **adicional** aplicável seja zero. Não perder informação necessária para compreender o custo contratual ou revisão posterior.
+5. **Origem do preço e confirmação da cobertura:** `sourceRef` de preço e referência da decisão de cobertura podem ser documentos distintos; não reutilizar o mesmo campo como prova automática de dois fatos diferentes.
+
+Os testes devem afirmar **grandeza e natureza** dos números (`preço nominal`, `estimativa`, `incremento adicional`, `pendência de cobertura`), não apenas a igualdade aritmética. A escolha jurídica/contratual de incidência e cobrança permanece com o responsável; nenhuma regra deve criar faturamento ou impedir alteração legítima (DP-001). Evite criar uma nova camada extensa de formulários apenas para expressar esses estados.
+
 Faça commits pequenos e mantenha um PR de revisão atualizado. Se houver impedimento externo, entregue o código e os testes executáveis já concluídos, identifique o requisito faltante e marque o aceite afetado como pendente. Não afirme sucesso em uma persistência que não foi demonstrada.
 
 ## 5. Etapa 2 — Previsão mensal com leitura visual e navegação
