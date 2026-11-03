@@ -12,6 +12,7 @@
 .forecast-month-control label { color:var(--text-muted); font-size:var(--text-xs); font-weight:650; }
 .forecast-month-controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .forecast-month-controls input { width:200px; min-width:190px; color:var(--text-main); }
+.dark-theme .forecast-month-controls input { color-scheme:dark; }
 .forecast-month-controls .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:38px; white-space:nowrap; }
 .forecast-connection { display:flex; gap:9px; align-items:start; margin:0 26px 16px!important; padding:11px 13px; border:1px solid var(--hairline); border-radius:8px; color:var(--text-muted); font-size:var(--text-sm); }
 .forecast-connection svg { flex-shrink:0; }
