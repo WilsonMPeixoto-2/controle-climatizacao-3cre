@@ -32,8 +32,8 @@ export default function MonthlyForecast({
   const schoolsById = new Map(schools.map(item => [String(item.designacao), item]));
   const totalRecords = forecast.months.reduce((count, item) => count + item.recordCount, 0);
 
-  // Em site sem emulador não renderizar um painel de valores fictícios/vazios.
-  // A visão completa só é exibida quando o backend de desenvolvimento responde.
+  // Sem conexão Firestore, não apresentar valores financeiros fictícios/vazios.
+  // A visão completa só é exibida depois do primeiro snapshot real.
   if (!ready) {
     return (
       <section className="monthly-forecast surface-card" aria-label="Previsão mensal por competência">
@@ -47,8 +47,8 @@ export default function MonthlyForecast({
         <p className="forecast-unavailable" role="status">
           <Info size={18} aria-hidden="true" />
           {connection?.status === 'connecting'
-            ? 'Conectando à base de desenvolvimento…'
-            : 'A previsão compartilhada está disponível no ambiente de desenvolvimento isolado. Nenhum valor financeiro foi presumido no site publicado.'}
+            ? 'Conectando ao Firestore financeiro…'
+            : 'Conexão financeira indisponível. Nenhum valor foi presumido; confira a configuração do Firestore.'}
         </p>
       </section>
     );
@@ -82,7 +82,7 @@ export default function MonthlyForecast({
       {!ready && (
         <p className="forecast-connection" role="status">
           <Info size={16} aria-hidden="true" />
-          A previsão compartilhada depende do Firestore de desenvolvimento. Sem conexão, nenhum valor é presumido.
+          A previsão depende do Firestore financeiro. Sem conexão, nenhum valor é presumido.
         </p>
       )}
 

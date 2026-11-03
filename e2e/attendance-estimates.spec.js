@@ -35,7 +35,7 @@ async function openApp(page, theme = 'light') {
   }, { schools: attendanceSchools, tickets: attendanceTickets, theme });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Gestão Financeira', exact: true })).toBeVisible();
-  await expect(estimates(page).getByRole('status').filter({ hasText: 'Base de desenvolvimento compartilhada' })).toBeVisible();
+  await expect(estimates(page).getByRole('status').filter({ hasText: 'Firestore financeiro conectado' })).toBeVisible();
 }
 
 async function startEstimate(page, school = SCHOOL_A) {
@@ -66,7 +66,7 @@ async function saveEstimate(page, revision = 1) {
   const form = editor(page);
   await form.getByRole('button', { name: /^(Salvar atendimento|Salvar alterações)$/ }).click();
   await expect(form).toHaveCount(0);
-  await expect(estimates(page).getByRole('status').filter({ hasText: 'Atendimento salvo na base compartilhada de desenvolvimento · versão ' + revision + '.' })).toBeVisible();
+  await expect(estimates(page).getByRole('status').filter({ hasText: 'Atendimento salvo no Firestore compartilhado · versão ' + revision + '.' })).toBeVisible();
 }
 
 async function backendSnapshot() {

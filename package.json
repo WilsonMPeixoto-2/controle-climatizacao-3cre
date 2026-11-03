@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "preview": "vite preview",
+    "test:finance:cloud-rules": "npx --yes firebase-tools@15.26.0 emulators:exec --only firestore --project demo-controle-climatizacao-3cre \"TEST_FINANCE_CLOUD_RULES=1 node test/firestore-attendance.test.mjs\"",
     "test:finance:backend": "npx --yes firebase-tools@15.26.0 emulators:exec --only firestore --config firebase.development.json --project demo-gop-clima-financeiro \"node test/firestore-attendance.test.mjs\"",
     "test:finance:e2e": "npx --yes firebase-tools@15.26.0 emulators:exec --only firestore --config firebase.development.json --project demo-gop-clima-financeiro \"node scripts/seed-attendance-development.mjs --synthetic && playwright test --config playwright.attendance.config.js\"",
     "dev:finance": "npx --yes firebase-tools@15.26.0 emulators:exec --only firestore --config firebase.development.json --project demo-gop-clima-financeiro \"node scripts/seed-attendance-development.mjs && VITE_FINANCE_FIRESTORE_EMULATOR=127.0.0.1:8082 vite --port 5175\""

@@ -35,7 +35,7 @@ const conflictError = (expectedRevision, actualRevision) => Object.assign(
 
 /**
  * Fronteira de persistência financeira. A configuração de desenvolvimento
- * conecta este adapter ao emulador isolado; autorização individual é futura
+ * seleciona o Firestore existente ou o emulador explícito de testes; autorização individual é futura
  * (DP-004). Responsável informado e sessão não comprovam identidade.
  */
 export function createAttendancePersistence(db) {
