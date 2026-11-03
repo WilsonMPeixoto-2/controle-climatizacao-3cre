@@ -71,6 +71,58 @@ test('sair do painel durante o zoom do mapa não deixa callbacks em uma tela rem
   await expect(page.locator('.leaflet-control-zoom-in')).toBeVisible();
 });
 
+test('base histórica setembro/outubro preserva a origem e mantém agregações visuais acessíveis', async ({ page }, testInfo) => {
+  await seed(page);
+  await finance(page);
+  const history = page.getByRole('region', { name: 'Histórico de corretivas de setembro e outubro' });
+  await expect(history).toBeVisible();
+  await expect(history.getByRole('group', { name: 'Selecionar mês dos registros históricos' })).toBeVisible();
+  await expect(history.getByText('85', { exact: true })).toBeVisible();
+  await expect(history.getByText('25', { exact: true })).toBeVisible();
+  await expect(history.getByText('SETEMBRO.xlsx', { exact: false }).first()).toBeVisible();
+
+  const october = history.getByRole('button', { name: /^Filtrar outubro de 2026/ });
+  const september = history.getByRole('button', { name: /^Filtrar setembro de 2026/ });
+  await expect(october).toHaveAttribute('aria-pressed', 'false');
+  await october.click();
+  await expect(october).toHaveAttribute('aria-pressed', 'true');
+  await expect(history).toContainText('44 linhas · 14 escolas');
+  const ce = history.locator('.historic-school').filter({ hasText: 'EM Ceará' });
+  await ce.locator('summary').click();
+  await expect(ce).toContainText('10 linha(s)');
+  await expect(ce).toContainText('linhas 56, 57, 58');
+  await expect(ce).toContainText('2 designação(ões) recuperada(s)');
+
+  await september.click();
+  await expect(history).toContainText('41 linhas');
+  await expect(september).toHaveAttribute('aria-pressed', 'true');
+  await history.getByRole('button', { name: 'Mostrar os dois meses' }).click();
+  await expect(history).toContainText('85 linhas');
+
+  for (const viewport of [
+    { width: 320, height: 800 }, { width: 1440, height: 900 }, { width: 3840, height: 2160 }
+  ]) {
+    await page.setViewportSize(viewport);
+    const path = testInfo.outputPath('historico-corretivas-' + viewport.width + '-claro.png');
+    await history.screenshot({ path, animations: 'disabled' });
+    await testInfo.attach('histórico real ' + viewport.width + 'px claro, fonte SETEMBRO.xlsx', { path, contentType: 'image/png' });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  }
+  await page.evaluate(() => localStorage.setItem('gop_theme', 'dark'));
+  await page.reload();
+  await finance(page);
+  const dark = page.getByRole('region', { name: 'Histórico de corretivas de setembro e outubro' });
+  for (const viewport of [
+    { width: 320, height: 800 }, { width: 1440, height: 900 }, { width: 3840, height: 2160 }
+  ]) {
+    await page.setViewportSize(viewport);
+    const path = testInfo.outputPath('historico-corretivas-' + viewport.width + '-escuro.png');
+    await dark.screenshot({ path, animations: 'disabled' });
+    await testInfo.attach('histórico real ' + viewport.width + 'px escuro, fonte SETEMBRO.xlsx', { path, contentType: 'image/png' });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  }
+});
+
 test('financeiro usa recorte real, preserva ausências e retorna à ficha existente', async ({ page }) => {
   await seed(page);
   const original = await page.evaluate(() => localStorage.getItem('gop_tickets'));
