@@ -368,6 +368,13 @@ test('previsão mensal sincroniza escolas e reprogramação entre sessões sem s
       { width: 3840, height: 2160 }
     ]) {
       await page.setViewportSize(viewport);
+      // A ausência de overflow global não descarta corte interno de controles ou rótulos.
+      const forecastBox = await forecast.boundingBox();
+      const monthInput = await forecast.getByLabel('Competência', { exact: true }).boundingBox();
+      const resetButton = await forecast.getByRole('button', { name: 'Voltar ao mês mais recente' }).boundingBox();
+      expect(monthInput.width).toBeGreaterThanOrEqual(180);
+      expect(resetButton.x + resetButton.width).toBeLessThanOrEqual(forecastBox.x + forecastBox.width + 1);
+      await expect(forecast.locator('.forecast-month-count')).toHaveText(['0', '0', '0', '0', '0', '1']);
       const path = testInfo.outputPath('previsao-mensal-' + viewport.width + '-claro.png');
       await forecast.screenshot({ path, animations: 'disabled' });
       await testInfo.attach('previsao-mensal-' + viewport.width + '-dados-sinteticos', { path, contentType: 'image/png' });
