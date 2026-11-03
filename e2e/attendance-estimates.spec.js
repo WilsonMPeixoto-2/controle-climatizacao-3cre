@@ -397,6 +397,7 @@ test('previsão mensal sincroniza escolas e reprogramação entre sessões sem s
       await testInfo.attach('previsao-mensal-' + viewport.width + '-escuro-sintetico', { path, contentType: 'image/png' });
       const controlsBox = await forecast.boundingBox();
       const inputBox = await forecast.getByLabel('Competência', { exact: true }).boundingBox();
+      await expect(forecast.getByLabel('Competência', { exact: true })).toHaveCSS('color-scheme', 'dark');
       const buttonBox = await forecast.getByRole('button', { name: 'Voltar ao mês mais recente' }).boundingBox();
       expect(inputBox.width).toBeGreaterThanOrEqual(180);
       expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(controlsBox.x + controlsBox.width + 1);
