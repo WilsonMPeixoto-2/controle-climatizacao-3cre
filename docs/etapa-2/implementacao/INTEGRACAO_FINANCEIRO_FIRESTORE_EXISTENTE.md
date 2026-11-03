@@ -1,6 +1,6 @@
 # Correção de arquitetura — gravação financeira no Firebase existente
 
-**Data:** 03/11/2026 · **Revisão:** PR #34 · **Situação:** implementação versionada; ativação remota depende de implantar regras e validar persistência no Firebase cloud.
+**Data:** 03/11/2026 · **Revisão:** PR #34 · **Situação:** regras publicadas manualmente pelo responsável e acesso financeiro comprovado no Firestore cloud; publicação do frontend e aceite no domínio público em conclusão.
 
 ## Decisão expressa do responsável pelo produto
 
@@ -43,3 +43,19 @@ A publicação da interface na Vercel **não atualiza as regras do Firebase**. A
 Este incremento apenas conecta atendimentos econômicos, suas revisões e previsões ao banco já existente. A programação de visitas ainda tem seu próprio rascunho local; medição, atesto, glosa, faturamento, liquidação e pagamento não são criados automaticamente. Não se presume autenticidade individual de ações sem login.
 
 **Regra de governança:** uma alteração no modelo de persistência ou no escopo operacional deverá ser comunicada ao responsável e por ele decidida antes da execução, sem tratar experimentos técnicos como decisões de produto.
+
+## Verificação de ativação — 03/11/2026
+
+O responsável informou a publicação de `firestore.rules` da branch deste PR no projeto `gestao-da-climatizacao-3-cre`, banco `(default)`. A conferência independente foi funcional, sem credencial administrativa para baixar o texto da release: leitura, criação/edição atômica em `atendimentos_economicos`, consulta de `revisoes`, recusa HTTP 403 de alteração de revisão antiga e de incremento sem snapshot correspondente. SHA-256 do arquivo versionado: `e2ffb276659a94bbbff83a7144eebef50b08288627157ad93ca9f52e4d371dc3`.
+
+Antes do deploy, o build do PR #34 conectado ao **Firebase remoto** comprovou duas sessões, recarga, histórico, conflito por versão desatualizada e reconciliação da previsão. Registro sintético exclusivo `06202454-8de2-4fc4-9e2c-8202ba7a82f7`, identificado como teste, competências 2099-12/2099-11; referência fictícia de R$ 12,3456, composição de 2 → 3 unidades (R$ 24,6912 → R$ 37,0368). A comparação canônica dos documentos confirmou escolas, chamados e atendimentos anteriores inalterados. A execução final no site deve encerrar esse registro com valor corrente zero, preservando suas revisões de teste.
+
+O checkpoint `e30625d` foi comparado com a `master`/PR #34. Contém outra implementação da previsão mensal, não correções do acesso Firestore. A previsão vigente já veio do PR #33; portanto o checkpoint permanece preservado em `feat/etapa2-previsao-mensal-compartilhada`, sem cherry-pick nem duplicação de componentes nesta entrega.
+
+A verificação reproduzível está em `scripts/verify-finance-remote.mjs`. É **manual e escreve um registro sintético**, não integra o CI nem altera cadastros existentes. Reutilize a mesma pasta de evidências para continuar o mesmo registro:
+
+```bash
+NODE_USE_ENV_PROXY=1 node scripts/verify-finance-remote.mjs https://climatizacao-firebase-homologacao.vercel.app /caminho/privado/evidencias-financeiro
+```
+
+O script usa apenas o acesso público previsto nas regras, sem autenticação individual; salva IDs, resultados e capturas. As verificações locais de regras continuam usando exclusivamente emuladores. A confirmação de publicação e os resultados no domínio serão registrados abaixo após o deployment READY.
