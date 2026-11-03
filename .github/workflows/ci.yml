@@ -14,6 +14,7 @@ on:
       - feat/etapa2-programacao-por-escola
       - feat/etapa2-acabamento-visual
       - docs/etapa2-execucao-financeira
+      - feat/etapa2-atendimento-referencia-compartilhada
 
 permissions:
   contents: read

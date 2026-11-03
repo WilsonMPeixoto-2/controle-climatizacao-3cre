@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import {
-  ArrowRight, CalendarDays, ChevronDown, ClipboardList, FolderOpen,
+  ArrowRight, ChevronDown, ClipboardList, FolderOpen,
   Landmark, Receipt, RotateCcw, Wallet, Activity, CheckCircle2
 } from 'lucide-react';
 import { getOperationalSlice, ticketOpeningDate } from '../domain/financialPresentation.js';
@@ -10,9 +10,10 @@ import { formatDateBrazilian } from '../lib/logic.js';
 import SchoolRecordReview from './SchoolRecordReview.jsx';
 import VisitPlanningBoard from './VisitPlanningBoard.jsx';
 import AttendanceEstimates from './AttendanceEstimates.jsx';
+import ForecastOverview from './ForecastOverview.jsx';
+import { buildAttendanceForecast, getForecastYearMonths, summarizeAttendanceForecast } from '../domain/attendanceForecast.js';
 
 const groups = [
-  { title: 'Previsão', Icon: CalendarDays, text: 'Estimativas e programação.', scope: 'Por escola e período' },
   { title: 'Apuração informada', Icon: ClipboardList, text: 'Valores apurados pelo responsável.', scope: 'Independente do status dos chamados' },
   { title: 'Faturamento e pagamentos', Icon: Receipt, text: 'Notas fiscais e pagamentos.', scope: 'Sem cobrança presumida' },
   { title: 'Limites e empenhos', Icon: Landmark, text: 'Referências contratuais e empenhos.', scope: 'Âmbito global · não filtrado por escola ou mês' }
@@ -23,6 +24,39 @@ export default function FinancialOverviewPage({
   attendances, attendanceContext, onAttendanceContextConsumed, onStartAttendance
 }) {
   const reviewRef = useRef(null);
+  const attendanceDetailsRef = useRef(null);
+  const year = filters.forecastYear || String(new Date().getFullYear());
+  const plannedMonth = filters.plannedMonth || '';
+  const measure = filters.forecastMeasure || 'nominal';
+  const detailFilter = filters.forecastDetailFilter || 'all';
+  const forecastResult = useMemo(() => {
+    try {
+      return { forecast: buildAttendanceForecast(attendances.records, {
+        schoolId: filters.schoolId, month: plannedMonth, months: getForecastYearMonths(year)
+      }), error: '' };
+    } catch (error) {
+      return { forecast: null, error: error.message };
+    }
+  }, [attendances.records, filters.schoolId, plannedMonth, year]);
+  const forecast = forecastResult.forecast;
+  const detailRecordIds = forecast?.records.filter(record => {
+    if (detailFilter === 'all') return true;
+    const metric = summarizeAttendanceForecast(record)[measure];
+    return detailFilter === 'pending' ? metric.missingGroupCount > 0 : metric.knownGroupCount > 0;
+  }).map(record => record.id) || [];
+  const inspectForecast = (selection = {}) => {
+    onFiltersChange({
+      ...filters,
+      schoolId: selection.schoolId ?? filters.schoolId,
+      plannedMonth: selection.plannedMonth ?? plannedMonth,
+      forecastMeasure: selection.measure ?? measure,
+      forecastDetailFilter: selection.detailFilter || 'all'
+    });
+    requestAnimationFrame(() => {
+      attendanceDetailsRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      attendanceDetailsRef.current?.focus({ preventScroll: true });
+    });
+  };
   const school = schools.find(item => String(item.designacao) === filters.schoolId) || null;
   const slice = getOperationalSlice(tickets, { school, month: filters.month });
   const overview = getSchoolRecordReview(schools, tickets, filters);
@@ -46,7 +80,7 @@ export default function FinancialOverviewPage({
           <div>
             <span className="section-eyebrow"><Wallet aria-hidden="true" /> Gestão integrada</span>
             <h2 className="section-title" id="finance-title">Gestão Financeira</h2>
-            <p className="section-subtitle">Programe visitas, acompanhe a execução informada e consulte os chamados de cada escola.</p>
+            <p className="section-subtitle">Consulte a previsão por competência e confira os atendimentos que compõem cada valor.</p>
           </div>
         </header>
 
@@ -63,6 +97,41 @@ export default function FinancialOverviewPage({
 
       </div>
 
+      <ForecastOverview
+        schools={schools}
+        forecast={forecast}
+        connection={forecastResult.error ? { status: 'error', error: forecastResult.error } : attendances.connection}
+        schoolId={filters.schoolId}
+        year={year}
+        plannedMonth={plannedMonth}
+        measure={measure}
+        onYearChange={value => onFiltersChange({ ...filters, forecastYear: value, plannedMonth: '', forecastDetailFilter: 'all' })}
+        onMonthChange={value => onFiltersChange({ ...filters, plannedMonth: value, forecastYear: value ? value.slice(0, 4) : year, forecastDetailFilter: 'all' })}
+        onMeasureChange={value => onFiltersChange({ ...filters, forecastMeasure: value, forecastDetailFilter: 'all' })}
+        onInspect={inspectForecast}
+      />
+
+      <div className="forecast-attendance-details" ref={attendanceDetailsRef} tabIndex={-1} role="region" aria-label="Atendimentos da previsão">
+        <div className="forecast-detail-scope">
+          <p>{plannedMonth ? `${plannedMonth.slice(5)}/${plannedMonth.slice(0, 4)}` : year} · {school?.unidade_escolar || 'Todas as escolas'} · {detailFilter === 'pending' ? 'Com informação pendente' : detailFilter === 'known' ? 'Com parcelas conhecidas' : 'Todos os atendimentos do período'}</p>
+          {detailFilter !== 'all' && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onFiltersChange({ ...filters, forecastDetailFilter: 'all' })}>Mostrar todos do período</button>}
+        </div>
+          <AttendanceEstimates
+            schools={schools}
+            tickets={tickets}
+            records={attendances.records}
+            selectedSchoolId={filters.schoolId}
+            selectedMonth={plannedMonth}
+            selectedRecordIds={detailRecordIds}
+            forecastMeasure={measure}
+            connection={attendances.connection}
+            onSave={attendances.onSave}
+            loadRevisions={attendances.loadRevisions}
+            context={attendanceContext}
+            onContextConsumed={onAttendanceContextConsumed}
+          />
+      </div>
+
       <div className="finance-planning-layout">
         <div className="finance-planning-primary">
           <VisitPlanningBoard
@@ -73,18 +142,6 @@ export default function FinancialOverviewPage({
               schoolId: visit.schoolId, visitId: visit.id, plannedDate: visit.plannedDate,
               cycle: visit.cycle, serviceKind: visit.kind, quantity: visit.equipmentCount
             })}
-          />
-
-          <AttendanceEstimates
-            schools={schools}
-            tickets={tickets}
-            records={attendances.records}
-            selectedSchoolId={filters.schoolId}
-            connection={attendances.connection}
-            onSave={attendances.onSave}
-            loadRevisions={attendances.loadRevisions}
-            context={attendanceContext}
-            onContextConsumed={onAttendanceContextConsumed}
           />
         </div>
 
@@ -208,11 +265,11 @@ export default function FinancialOverviewPage({
           <details className="surface-card finance-availability">
             <summary>
               <span className="finance-availability-icon"><Wallet size={19} aria-hidden="true" /></span>
-              <span><strong>Registros financeiros</strong><small>4 grupos ainda não informados</small></span>
+              <span><strong>Registros financeiros</strong><small>3 grupos ainda não informados</small></span>
               <ChevronDown className="finance-availability-chevron" size={18} aria-hidden="true" />
             </summary>
             <div className="finance-availability-content">
-              <p className="finance-hint">As estimativas por atendimento estão disponíveis na composição contextual. Previsão consolidada, apuração, faturamento e pagamentos ficam para as próximas etapas.</p>
+              <p className="finance-hint">A previsão acima utiliza os atendimentos compartilhados. Apuração, faturamento e pagamentos serão registrados nas próximas etapas.</p>
               <div className="finance-metrics">
                 {groups.map(({ title, Icon, text, scope }) => (
                   <article className="finance-metric" key={title}>

@@ -3,7 +3,7 @@ import { CalendarClock, Wallet } from 'lucide-react';
 import { formatDateBrazilian } from '../lib/logic.js';
 import { readVisitDrafts, VISIT_DRAFT_KEY } from '../domain/schoolVisitPlan.js';
 import { VISIT_DRAFT_UPDATED_EVENT } from '../domain/visitDraftStorage.js';
-import { calculateAttendance, formatMoneyUnits4 } from '../domain/attendanceEstimate.js';
+import { summarizeAttendanceForecast, formatForecastMoneyUnits4 } from '../domain/attendanceForecast.js';
 
 export default function SchoolFinancialSummary({
   school, onOpenFinance, attendanceRecords = [], attendanceConnection, onEstimate, onOpenAttendance
@@ -65,13 +65,13 @@ export default function SchoolFinancialSummary({
         </div>
         {estimates.length ? <ul className="finance-ticket-list">
           {estimates.map(record => {
-            const estimate = calculateAttendance(record);
+            const estimate = summarizeAttendanceForecast(record);
             return <li key={record.id}>
               <div>
-                <strong>{record.plannedMonth.slice(5)}/{record.plannedMonth.slice(0, 4)} · {estimate.complete
-                  ? formatMoneyUnits4(estimate.totalUnits4)
-                  : estimate.knownSubtotalUnits4 === null ? 'Referência não informada' : `${formatMoneyUnits4(estimate.knownSubtotalUnits4)} · parcial`}</strong>
-                <p className="finance-hint">{record.items.length} {record.items.length === 1 ? 'grupo' : 'grupos'} · {estimate.lines.every(line => line.amountNature === 'incremento_adicional') ? 'acréscimo estimado' : 'estimativa consultiva'} · revisão {record.revision}{estimate.coveragePendingCount > 0 ? ' · cobertura pendente' : ''}</p>
+                <strong>{record.plannedMonth.slice(5)}/{record.plannedMonth.slice(0, 4)}</strong>
+                <p>Referência nominal: {formatForecastMoneyUnits4(estimate.nominal.knownSubtotalUnits4)}{estimate.nominal.missingGroupCount > 0 ? ' · parcial' : ''}</p>
+                <p>Acréscimo adicional: {formatForecastMoneyUnits4(estimate.additional.knownSubtotalUnits4)}{estimate.additional.missingGroupCount > 0 ? ' · parcial' : ''}</p>
+                <p className="finance-hint">{record.items.length} {record.items.length === 1 ? 'grupo' : 'grupos'} · revisão {record.revision}{estimate.coveragePendingCount > 0 ? ' · cobertura pendente' : ''}</p>
               </div>
               {onOpenAttendance && <button type="button" className="btn btn-secondary btn-sm no-print" onClick={() => onOpenAttendance(record)}>Abrir composição</button>}
             </li>;

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './e2e', testMatch: 'attendance-estimates.spec.js',
+  testDir: './e2e', testMatch: ['attendance-estimates.spec.js', 'attendance-forecast.spec.js'],
   fullyParallel: false, workers: 1, retries: 0, forbidOnly: !!process.env.CI,
   outputDir: 'test-results-attendance',
   reporter: [['list'], ['html', { outputFolder: 'playwright-report-attendance', open: 'never' }]],

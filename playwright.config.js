@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: 'attendance-estimates.spec.js',
+  testIgnore: ['attendance-estimates.spec.js', 'attendance-forecast.spec.js'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

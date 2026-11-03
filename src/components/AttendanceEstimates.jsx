@@ -9,6 +9,8 @@ import {
 } from '../domain/attendanceEstimate.js';
 import { parseCapacityBtu } from '../domain/financialReference.js';
 import { matchesSchool } from '../lib/logic.js';
+import { summarizeAttendanceForecast } from '../domain/attendanceForecast.js';
+import { ForecastMetricValue } from './ForecastOverview.jsx';
 import '../styles/attendance-estimates.css';
 
 const SERVICE_LABELS = { preventiva: 'Preventiva', corretiva: 'Corretiva', outra: 'Outra atividade' };
@@ -45,7 +47,7 @@ function newForm(schoolId = '', context = null, tickets = [], school = null) {
   const demand = String(ticket?.tipo_demanda || '').toLocaleLowerCase('pt-BR');
   const plannedDate = context?.plannedDate || '';
   return {
-    schoolId, plannedMonth: plannedDate.slice(0, 7) || currentMonth(), plannedDate,
+    schoolId, plannedMonth: plannedDate.slice(0, 7) || context?.plannedMonth || currentMonth(), plannedDate,
     serviceKind: Object.hasOwn(SERVICE_LABELS, context?.serviceKind || '') ? context.serviceKind
       : demand.includes('corretiva') ? 'corretiva' : demand.includes('preventiva') ? 'preventiva' : ticket ? 'outra' : 'preventiva',
     cycle: context?.cycle || '', visitId: context?.visitId || '',
@@ -118,7 +120,8 @@ function calculationOf(content, draft = false) {
 function formCalculation(form) {
   if (!form.schoolId) return { result: null, error: 'Selecione uma escola para visualizar a estimativa.' };
   try {
-    return calculationOf(formContent(form), true);
+    const content = formContent(form);
+    return { ...calculationOf(content, true), content };
   } catch (reason) {
     return { result: null, error: reason.message };
   }
@@ -163,6 +166,19 @@ function EstimateValue({ calculation, className = '' }) {
   );
 }
 
+function ForecastValues({ content, draft = false }) {
+  if (!content) return <p className="attendance-hint">Valores ainda não calculados.</p>;
+  try {
+    const summary = summarizeAttendanceForecast(content, { draft });
+    return <div className="attendance-forecast-values">
+      <ForecastMetricValue metric={summary.nominal} label="Referência nominal prevista" />
+      <ForecastMetricValue metric={summary.additional} label="Acréscimo adicional estimado" />
+    </div>;
+  } catch (error) {
+    return <p className="attendance-hint">{error.message}</p>;
+  }
+}
+
 function Composition({ content, calculation, preview = false }) {
   const lines = calculation?.lines || content.items;
   return (
@@ -196,7 +212,7 @@ function Composition({ content, calculation, preview = false }) {
   );
 }
 
-function AttendanceHistory({ record, loadRevisions }) {
+function AttendanceHistory({ record, loadRevisions, forecastMeasure }) {
   const [open, setOpen] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [history, setHistory] = useState(null);
@@ -230,7 +246,7 @@ function AttendanceHistory({ record, loadRevisions }) {
             return <li key={revision.revision}>
               <strong>Versão {revision.revision} · {dateTimeText(revision.updatedAtISO || revision.updatedAt)}</strong>
               <p>Responsável informado: {revision.responsibleLabel || 'Não informado'} · {monthText(revision.plannedMonth)}</p>
-              <EstimateValue calculation={revisionCalculation.result} />
+              {forecastMeasure ? <ForecastValues content={revision} /> : <EstimateValue calculation={revisionCalculation.result} />}
               <Composition content={revision} calculation={revisionCalculation.result} />
             </li>;
           })}
@@ -242,7 +258,8 @@ function AttendanceHistory({ record, loadRevisions }) {
 }
 
 export default function AttendanceEstimates({
-  schools = [], tickets = [], records = [], selectedSchoolId = '',
+  schools = [], tickets = [], records = [], selectedSchoolId = '', selectedMonth = '',
+  selectedRecordIds = null, forecastMeasure = null,
   connection = { status: 'unconfigured' }, onSave, loadRevisions,
   context = null, onContextConsumed
 }) {
@@ -267,6 +284,7 @@ export default function AttendanceEstimates({
   const schoolTickets = formSchool ? tickets.filter(ticket => matchesSchool(ticket, formSchool)) : [];
   const visibleRecords = records
     .filter(record => !selectedSchoolId || record.schoolId === String(selectedSchoolId))
+    .filter(record => selectedRecordIds === null || selectedRecordIds.includes(record.id))
     .toSorted((a, b) => String(b.updatedAtISO || b.updatedAt || b.plannedMonth).localeCompare(String(a.updatedAtISO || a.updatedAt || a.plannedMonth)));
   const preview = form ? formCalculation(form) : null;
   const latestEditingRecord = editing ? records.find(record => record.id === editing.id) : null;
@@ -289,7 +307,7 @@ export default function AttendanceEstimates({
       creationIdRef.current = contextRecord || context.attendanceId ? null : crypto.randomUUID();
       // Uma nova chave é um pedido de navegação do pai, consumido uma única vez.
       setForm(contextRecord ? recordForm(contextRecord)
-        : context.attendanceId ? null : newForm(contextSchool ? String(contextSchool.designacao) : '', context, tickets, contextSchool));
+        : context.attendanceId ? null : newForm(contextSchool ? String(contextSchool.designacao) : '', { plannedMonth: selectedMonth, ...context }, tickets, contextSchool));
       setEditing(contextRecord ? { id: contextRecord.id, revision: contextRecord.revision } : null);
       setError(context.attendanceId && !contextRecord ? 'Atendimento não encontrado na base de desenvolvimento.' : '');
       setNotice('');
@@ -303,13 +321,13 @@ export default function AttendanceEstimates({
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [context, isSaving, onContextConsumed, schools, tickets, records, connection.status]);
+  }, [context, isSaving, onContextConsumed, schools, tickets, records, connection.status, selectedMonth]);
 
   function startNew(event) {
     if (savingRef.current) return;
     returnFocusRef.current = event?.currentTarget || newButtonRef.current;
     creationIdRef.current = crypto.randomUUID();
-    setForm(newForm(selectedSchool ? String(selectedSchool.designacao) : ''));
+    setForm(newForm(selectedSchool ? String(selectedSchool.designacao) : '', { plannedMonth: selectedMonth }));
     setEditing(null);
     setError('');
     setNotice('');
@@ -607,12 +625,12 @@ export default function AttendanceEstimates({
           </fieldset>
 
           <section className="attendance-preview" aria-label="Prévia da estimativa" aria-live="polite" aria-atomic="true">
-            <EstimateValue calculation={preview.result} />
+            {forecastMeasure ? <ForecastValues content={preview.content} draft /> : <EstimateValue calculation={preview.result} />}
             <div className="attendance-preview-context">
               <span>Estimativa ≠ cobrança.</span>
               <p>Não constitui execução, apuração, atesto, nota fiscal ou pagamento.</p>
               {preview.error && <p className="attendance-hint">{preview.error}</p>}
-              {!preview.error && form.items.some(item => (item.priceText.trim() || item.coverage === 'incluido') && !item.sourceRef.trim()) && <p className="attendance-hint">Informe a origem para completar a referência e salvar.</p>}
+              {!preview.error && form.items.some(item => item.priceText.trim() && !item.sourceRef.trim()) && <p className="attendance-hint">Informe a origem do preço para completar a referência e salvar.</p>}
             </div>
           </section>
           <Composition content={form} calculation={preview.result} preview />
@@ -641,7 +659,7 @@ export default function AttendanceEstimates({
                     <span className="attendance-record-nature">{reference.nature}</span>
                     <p className="attendance-record-source">Origem: {reference.source}</p>
                   </div>
-                  <EstimateValue calculation={calculation.result} />
+                  {forecastMeasure ? <ForecastValues content={record} /> : <EstimateValue calculation={calculation.result} />}
                   <button type="button" className="btn btn-secondary" disabled={isSaving} onClick={event => startEdit(record, event)} aria-label={'Abrir e editar atendimento de ' + (school?.unidade_escolar || record.schoolId) + ', ' + monthText(record.plannedMonth)}>
                     <FilePenLine size={16} aria-hidden="true" /> Abrir / editar
                   </button>
@@ -652,7 +670,7 @@ export default function AttendanceEstimates({
                   <span>Versão {record.revision} · {dateTimeText(record.updatedAtISO || record.updatedAt)}</span>
                   <span>{record.ticketIds?.length ? record.ticketIds.length + ' chamado(s) vinculado(s)' : 'Atendimento sem chamado vinculado'}{record.visitId ? ' · com programação vinculada' : ''}</span>
                 </div>
-                {loadRevisions && <AttendanceHistory record={record} loadRevisions={loadRevisions} />}
+                {loadRevisions && <AttendanceHistory record={record} loadRevisions={loadRevisions} forecastMeasure={forecastMeasure} />}
               </article>
             );
           })}

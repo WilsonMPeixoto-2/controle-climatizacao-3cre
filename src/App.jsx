@@ -458,7 +458,10 @@ export default function App() {
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const ticketDialogRef = useRef(null);
-  const [financeFilters, setFinanceFilters] = useState({ schoolId: '', month: '' });
+  const [financeFilters, setFinanceFilters] = useState(() => ({
+    schoolId: '', month: '', forecastYear: String(new Date().getFullYear()),
+    plannedMonth: '', forecastMeasure: 'nominal', forecastDetailFilter: 'all'
+  }));
   const [isSavingTicketPending, setIsSavingTicket] = useState(false);
   const [isSavingHistoryPending, setIsSavingHistory] = useState(false);
 
@@ -948,7 +951,13 @@ export default function App() {
 
   const openAttendanceEstimate = (context) => {
     setAttendanceContext({ ...context, key: crypto.randomUUID() });
-    setFinanceFilters(previous => ({ ...previous, schoolId: String(context.schoolId || '') }));
+    if (!context.preserveFinanceFilters) {
+      const plannedMonth = context.plannedDate?.slice(0, 7) || context.plannedMonth;
+      setFinanceFilters(previous => ({
+        ...previous, schoolId: String(context.schoolId || ''), forecastDetailFilter: 'all',
+        ...(plannedMonth ? { plannedMonth, forecastYear: plannedMonth.slice(0, 4) } : {})
+      }));
+    }
     setShowEditModal(false);
     setCurrentTab('finance');
   };
@@ -4701,9 +4710,9 @@ export default function App() {
                         attendanceRecords={attendances.records}
                         attendanceConnection={attendances.connection}
                         onEstimate={() => openAttendanceEstimate({ schoolId: String(selectedSchool.designacao) })}
-                        onOpenAttendance={record => openAttendanceEstimate({ attendanceId: record.id, schoolId: record.schoolId })}
+                        onOpenAttendance={record => openAttendanceEstimate({ attendanceId: record.id, schoolId: record.schoolId, plannedMonth: record.plannedMonth })}
                         onOpenFinance={() => {
-                          setFinanceFilters({ schoolId: String(selectedSchool.designacao), month: '' });
+                          setFinanceFilters(previous => ({ ...previous, schoolId: String(selectedSchool.designacao), month: '', forecastDetailFilter: 'all' }));
                           setCurrentTab('finance');
                         }}
                       />
