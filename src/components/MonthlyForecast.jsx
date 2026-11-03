@@ -32,6 +32,28 @@ export default function MonthlyForecast({
   const schoolsById = new Map(schools.map(item => [String(item.designacao), item]));
   const totalRecords = forecast.months.reduce((count, item) => count + item.recordCount, 0);
 
+  // Em site sem emulador não renderizar um painel de valores fictícios/vazios.
+  // A visão completa só é exibida quando o backend de desenvolvimento responde.
+  if (!ready) {
+    return (
+      <section className="monthly-forecast surface-card" aria-label="Previsão mensal por competência">
+        <header className="forecast-header">
+          <div className="forecast-heading">
+            <span className="section-eyebrow"><CalendarDays size={16} aria-hidden="true" /> Previsão de referências</span>
+            <h3>Previsão mensal por competência</h3>
+            <p>Composições e valores previstos, com acesso ao atendimento de origem.</p>
+          </div>
+        </header>
+        <p className="forecast-unavailable" role="status">
+          <Info size={18} aria-hidden="true" />
+          {connection?.status === 'connecting'
+            ? 'Conectando à base de desenvolvimento…'
+            : 'A previsão compartilhada está disponível no ambiente de desenvolvimento isolado. Nenhum valor financeiro foi presumido no site publicado.'}
+        </p>
+      </section>
+    );
+  }
+
   function chooseMonth(value) {
     setMonth(value);
     requestAnimationFrame(() => detailsRef.current?.scrollIntoView({ block: 'nearest' }));
@@ -67,17 +89,17 @@ export default function MonthlyForecast({
       <div className="forecast-totals" aria-label={'Síntese de ' + labelMonth(selected.month, { long: true })}>
         <div>
           <span>Acréscimos informados</span>
-          <strong className="tabular">{amount(selected.additionalUnits4, selected.overflow)}</strong>
+          <strong className="tabular">{amount(selected.additionalUnits4, selected.overflowByNature.additional)}</strong>
           <small>Cobertura adicional com referência identificada</small>
         </div>
         <div>
           <span>Referência nominal</span>
-          <strong className="tabular">{amount(selected.nominalUnits4, selected.overflow)}</strong>
+          <strong className="tabular">{amount(selected.nominalUnits4, selected.overflowByNature.nominal)}</strong>
           <small>Inclui preços nominais de serviços cobertos</small>
         </div>
         <div>
           <span>Cobertura a confirmar</span>
-          <strong className="tabular">{amount(selected.pendingUnits4, selected.overflow)}</strong>
+          <strong className="tabular">{amount(selected.pendingUnits4, selected.overflowByNature.pending)}</strong>
           <small>Referências ainda sem enquadramento confirmado</small>
         </div>
       </div>
@@ -102,8 +124,8 @@ export default function MonthlyForecast({
               key={item.month}
               aria-pressed={selected.month === item.month}
               aria-label={'Selecionar ' + labelMonth(item.month, { long: true }) + ': ' + item.recordCount +
-                ' atendimentos; acréscimos ' + amount(item.additionalUnits4, item.overflow) +
-                '; pendentes ' + amount(item.pendingUnits4, item.overflow)}
+                ' atendimentos; acréscimos ' + amount(item.additionalUnits4, item.overflowByNature?.additional || item.overflow) +
+                '; pendentes ' + amount(item.pendingUnits4, item.overflowByNature?.pending || item.overflow)}
               onClick={() => chooseMonth(item.month)}
             >
               <span className="forecast-month-count tabular">{item.recordCount || '·'} {item.recordCount === 1 ? 'registro' : 'registros'}</span>
@@ -141,7 +163,7 @@ export default function MonthlyForecast({
                       item.incomplete ? 'Referências ou cobertura pendentes' : 'Composição informada'}
                       {' · '}Versão {item.record.revision || 1}
                     </span>
-                    <small>Acréscimo: {amount(item.additionalUnits4, item.overflow)}
+                    <small>Acréscimo: {amount(item.additionalUnits4, item.overflowByNature?.additional || item.overflow)}
                       {' · '}Referência nominal: {amount(item.nominalUnits4, item.overflow)}
                     </small>
                     {item.error && <small role="status">{item.error}</small>}
