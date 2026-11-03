@@ -71,3 +71,7 @@
   .forecast-records .btn { align-self:flex-start; }
   .forecast-footer { padding:12px 15px; }
 }
+
+.forecast-unavailable { display:flex; align-items:start; gap:11px; padding:18px 26px; border-top:1px solid var(--hairline); color:var(--text-muted); font-size:var(--text-sm); line-height:1.6; }
+.forecast-unavailable svg { flex-shrink:0; margin-top:3px; color:var(--primary); }
+@media(max-width:550px) { .forecast-unavailable { padding:16px 15px; } }
