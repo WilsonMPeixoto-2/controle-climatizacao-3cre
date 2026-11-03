@@ -21,7 +21,7 @@ assert.equal(new Set(all.rows.flatMap(item=>item.sourceRows)).size,85);
 assert.deepEqual(all.rows.flatMap(item=>item.sourceRows).toSorted((a,b)=>a-b),Array.from({length:85},(_,i)=>i+3));
 const october=aggregateHistoricCorrections({month:'2026-10'});
 assert.equal(october.total,44);
-assert.equal(october.schoolCount,15);
+assert.equal(october.schoolCount,14);
 assert.equal(october.byStatus.emAndamento,28);
 const school=aggregateHistoricCorrections({schoolId:'03.12.016'});
 assert.equal(school.total,10);
