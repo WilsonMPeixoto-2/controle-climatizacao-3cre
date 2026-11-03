@@ -11,6 +11,7 @@ import SchoolRecordReview from './SchoolRecordReview.jsx';
 import VisitPlanningBoard from './VisitPlanningBoard.jsx';
 import AttendanceEstimates from './AttendanceEstimates.jsx';
 import MonthlyForecast from './MonthlyForecast.jsx';
+import HistoricCorrectionsPanel from './HistoricCorrectionsPanel.jsx';
 
 const groups = [
   { title: 'Apuração informada', Icon: ClipboardList, text: 'Valores apurados pelo responsável.', scope: 'Independente do status dos chamados' },
@@ -73,6 +74,11 @@ export default function FinancialOverviewPage({
             onOpenAttendance={record => onStartAttendance({
               schoolId: record.schoolId, attendanceId: record.id
             })}
+          />
+          <HistoricCorrectionsPanel
+            schools={schools}
+            selectedSchoolId={filters.schoolId}
+            onOpenSchool={onOpenSchool}
           />
           <VisitPlanningBoard
             schools={schools}
