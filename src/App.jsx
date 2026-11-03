@@ -954,6 +954,7 @@ export default function App() {
   };
 
   const estimateTicket = (ticket) => {
+    if (isSavingTicketPending || isSavingHistoryPending) return;
     const school = schools.find(item => matchesSchool(ticket, item));
     openAttendanceEstimate({
       schoolId: String(school?.designacao || ''),
@@ -6125,7 +6126,7 @@ export default function App() {
             </div>
 
             <div className="modal-body">
-              <FinancialReferenceCard ticket={editingTicket} compact onEstimate={() => estimateTicket(editingTicket)} />
+              <FinancialReferenceCard ticket={editingTicket} compact onEstimate={() => estimateTicket(editingTicket)} estimateDisabled={isSavingTicketPending || isSavingHistoryPending} />
               {/* Two column detail lookup layout */}
               <div className="ticket-detail-grid">
                 {/* Left side: Editors */}

@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 import { getTicketReferenceContext } from '../domain/financialPresentation.js';
 import { REFERENCE_STATUS } from '../domain/financialReference.js';
 
-export default function FinancialReferenceCard({ ticket, school, compact = false, onEstimate }) {
+export default function FinancialReferenceCard({ ticket, school, compact = false, onEstimate, estimateDisabled = false }) {
   const titleId = useId();
   const context = getTicketReferenceContext(ticket);
   const capacity = value => value === null ? 'Não informado' : `${value.toLocaleString('pt-BR')} BTU`;
@@ -29,7 +29,7 @@ export default function FinancialReferenceCard({ ticket, school, compact = false
         </>
       )}
       <p className="finance-hint">A composição do atendimento pode usar referências informadas ou provisórias. O registro do chamado continua disponível, sem gerar cobrança pelo seu status.</p>
-      {onEstimate && <button type="button" className="btn btn-secondary btn-sm" onClick={onEstimate}>Estimar atendimento deste chamado</button>}
+      {onEstimate && <button type="button" className="btn btn-secondary btn-sm" onClick={onEstimate} disabled={estimateDisabled}>Estimar atendimento deste chamado</button>}
     </div>
   );
   if (compact) {
