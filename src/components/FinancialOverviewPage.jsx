@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import {
-  ArrowRight, CalendarDays, ChevronDown, ClipboardList, FolderOpen,
+  ArrowRight, ChevronDown, ClipboardList, FolderOpen,
   Landmark, Receipt, RotateCcw, Wallet, Activity, CheckCircle2
 } from 'lucide-react';
 import { getOperationalSlice, ticketOpeningDate } from '../domain/financialPresentation.js';
@@ -10,9 +10,9 @@ import { formatDateBrazilian } from '../lib/logic.js';
 import SchoolRecordReview from './SchoolRecordReview.jsx';
 import VisitPlanningBoard from './VisitPlanningBoard.jsx';
 import AttendanceEstimates from './AttendanceEstimates.jsx';
+import MonthlyForecast from './MonthlyForecast.jsx';
 
 const groups = [
-  { title: 'Previsão', Icon: CalendarDays, text: 'Estimativas e programação.', scope: 'Por escola e período' },
   { title: 'Apuração informada', Icon: ClipboardList, text: 'Valores apurados pelo responsável.', scope: 'Independente do status dos chamados' },
   { title: 'Faturamento e pagamentos', Icon: Receipt, text: 'Notas fiscais e pagamentos.', scope: 'Sem cobrança presumida' },
   { title: 'Limites e empenhos', Icon: Landmark, text: 'Referências contratuais e empenhos.', scope: 'Âmbito global · não filtrado por escola ou mês' }
@@ -65,6 +65,15 @@ export default function FinancialOverviewPage({
 
       <div className="finance-planning-layout">
         <div className="finance-planning-primary">
+          <MonthlyForecast
+            records={attendances.records}
+            schools={schools}
+            selectedSchoolId={filters.schoolId}
+            connection={attendances.connection}
+            onOpenAttendance={record => onStartAttendance({
+              schoolId: record.schoolId, attendanceId: record.id
+            })}
+          />
           <VisitPlanningBoard
             schools={schools}
             selectedSchoolId={filters.schoolId}
@@ -208,11 +217,11 @@ export default function FinancialOverviewPage({
           <details className="surface-card finance-availability">
             <summary>
               <span className="finance-availability-icon"><Wallet size={19} aria-hidden="true" /></span>
-              <span><strong>Registros financeiros</strong><small>4 grupos ainda não informados</small></span>
+              <span><strong>Registros financeiros</strong><small>3 áreas ainda não informadas</small></span>
               <ChevronDown className="finance-availability-chevron" size={18} aria-hidden="true" />
             </summary>
             <div className="finance-availability-content">
-              <p className="finance-hint">As estimativas por atendimento estão disponíveis na composição contextual. Previsão consolidada, apuração, faturamento e pagamentos ficam para as próximas etapas.</p>
+              <p className="finance-hint">A previsão de referências econômicas por competência está disponível acima. Apuração, faturamento e pagamentos ficam para etapas posteriores.</p>
               <div className="finance-metrics">
                 {groups.map(({ title, Icon, text, scope }) => (
                   <article className="finance-metric" key={title}>
