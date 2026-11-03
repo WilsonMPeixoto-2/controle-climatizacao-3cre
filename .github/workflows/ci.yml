@@ -75,6 +75,9 @@ jobs:
       - name: Test Firestore rules and persistence adapter
         run: npm run test:firestore
 
+      - name: Test finance writes against integrated operational rules
+        run: npm run test:finance:cloud-rules
+
   e2e:
     name: Playwright baseline
     runs-on: ubuntu-latest
