@@ -18,14 +18,17 @@ import {
 import { normalizeAttendance } from '../src/domain/attendanceEstimate.js';
 import { createAttendancePersistence } from '../src/infrastructure/firebase/attendancePersistence.js';
 
-const PROJECT_ID = 'demo-gop-clima-financeiro';
+const CLOUD_INTEGRATION = process.env.TEST_FINANCE_CLOUD_RULES === '1';
+const PROJECT_ID = CLOUD_INTEGRATION ? 'demo-controle-climatizacao-3cre' : 'demo-gop-clima-financeiro';
 const COLLECTION = 'atendimentos_economicos';
-const rules = fs.readFileSync(new URL('../firestore.development.rules', import.meta.url), 'utf8');
+const rules = fs.readFileSync(new URL(
+  CLOUD_INTEGRATION ? '../firestore.rules' : '../firestore.development.rules', import.meta.url
+), 'utf8');
 // As recusas esperadas são verificadas por assertFails, sem dezenas de logs do SDK.
 setLogLevel('silent');
 const testEnv = await initializeTestEnvironment({
   projectId: PROJECT_ID,
-  firestore: { host: '127.0.0.1', port: 8082, rules }
+  firestore: { host: '127.0.0.1', port: CLOUD_INTEGRATION ? 8080 : 8082, rules }
 });
 
 // Valores exclusivamente sintéticos: não são preços do contrato.
