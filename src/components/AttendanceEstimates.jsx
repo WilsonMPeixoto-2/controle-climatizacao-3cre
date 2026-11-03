@@ -222,7 +222,7 @@ function AttendanceHistory({ record, loadRevisions }) {
     <details className="attendance-history" onToggle={event => setOpen(event.currentTarget.open)}>
       <summary><History size={15} aria-hidden="true" /><span>Histórico de alterações</span><ChevronDown size={15} aria-hidden="true" /></summary>
       <div className="attendance-history-content">
-        {!current && <p role="status">Consultando versões na base de desenvolvimento…</p>}
+        {!current && <p role="status">Consultando versões no Firestore…</p>}
         {current && history.error && <div><p role="alert">{history.error}</p><button type="button" className="btn btn-secondary btn-sm" onClick={() => setAttempt(previous => previous + 1)}>Tentar consultar novamente</button></div>}
         {current && !history.error && (history.rows.length ? <ol>
           {history.rows.map(revision => {
@@ -291,7 +291,7 @@ export default function AttendanceEstimates({
       setForm(contextRecord ? recordForm(contextRecord)
         : context.attendanceId ? null : newForm(contextSchool ? String(contextSchool.designacao) : '', context, tickets, contextSchool));
       setEditing(contextRecord ? { id: contextRecord.id, revision: contextRecord.revision } : null);
-      setError(context.attendanceId && !contextRecord ? 'Atendimento não encontrado na base de desenvolvimento.' : '');
+      setError(context.attendanceId && !contextRecord ? 'Atendimento não encontrado na base financeira.' : '');
       setNotice('');
       returnFocusRef.current = null;
       onContextConsumed?.();
@@ -380,7 +380,7 @@ export default function AttendanceEstimates({
     setNotice('');
     setError('');
     if (!ready || typeof onSave !== 'function') {
-      setError('Base de desenvolvimento indisponível. A prévia permanece editável; aguarde a conexão para salvar.');
+      setError('Firestore financeiro indisponível. A prévia permanece editável; confira a conexão antes de salvar.');
       focusFeedback();
       return;
     }
@@ -415,7 +415,7 @@ export default function AttendanceEstimates({
       creationIdRef.current = null;
       setForm(null);
       setEditing(null);
-      setNotice('Atendimento salvo na base compartilhada de desenvolvimento · versão ' + saved.revision + '.');
+      setNotice('Atendimento salvo no Firestore compartilhado · versão ' + saved.revision + '.');
       focusFeedback();
     } catch (reason) {
       setError(reason.message || 'Não foi possível salvar. Sua edição foi preservada para tentar novamente.');
@@ -441,7 +441,7 @@ export default function AttendanceEstimates({
 
       <div className={'attendance-connection ' + (ready ? 'is-ready' : '')} role="status">
         {ready ? <CheckCheck size={17} aria-hidden="true" /> : <Info size={17} aria-hidden="true" />}
-        <span>{ready ? 'Base de desenvolvimento compartilhada' : connection.status === 'connecting' ? 'Conectando à base de desenvolvimento…' : 'Base de desenvolvimento indisponível'}
+        <span>{ready ? 'Firestore financeiro conectado' : connection.status === 'connecting' ? 'Conectando ao Firestore financeiro…' : 'Firestore financeiro indisponível'}
           {!ready && connection.status !== 'connecting' && <small>A prévia pode ser editada. O salvamento ficará disponível com a conexão.</small>}
           {connection.status === 'error' && connection.error && <small>{typeof connection.error === 'string' ? connection.error : connection.error.message}</small>}
         </span>
