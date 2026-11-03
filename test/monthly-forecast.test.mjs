@@ -69,7 +69,7 @@ const record = (id, plannedMonth, items, schoolId = '03.12.001', revision = 1) =
 {
   // Uma soma monetária além da precisão segura não pode ser apresentada arredondada.
   const huge = Array.from({ length: 30 }, (_, i) =>
-    record('r-' + i, '2026-11', [price('i-' + i, 1000000, 10000000000, 'adicional', 'Informado')]));
+    record('r-' + i, '2026-11', [price('i-' + i, 45000, 10000000000, 'adicional', 'Informado')]));
   const result = buildMonthlyForecast(huge, { selectedMonth: '2026-11' });
   assert.equal(result.selected.additionalUnits4, null);
   assert.equal(result.selected.overflow, true);
