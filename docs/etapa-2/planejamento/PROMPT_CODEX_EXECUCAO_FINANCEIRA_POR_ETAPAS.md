@@ -6,9 +6,15 @@ Você está trabalhando no repositório `WilsonMPeixoto-2/controle-climatizacao-
 
 Desenvolva a evolução financeira do GOP Clima por incrementos pequenos, úteis e verificáveis. O resultado esperado é uma ferramenta que relaciona dados, calcula referências, consolida previsões, apresenta análises e facilita o acompanhamento financeiro com poucas ações do servidor.
 
-**Nesta execução, leia as referências obrigatórias, confira o estado real e implemente somente a Etapa 1 deste prompt.** As etapas 2–5 orientam a arquitetura e as próximas entregas; não execute todas em uma única rodada. Se a Etapa 1 já estiver comprovadamente entregue, identifique a evidência e retome o primeiro incremento pendente, sem refazer o trabalho.
+**Nesta execução, leia as referências obrigatórias, confira o estado real e implemente somente a Etapa 1 deste prompt.** As etapas 2–5 orientam a arquitetura e as próximas entregas; não execute todas em uma única rodada. **Conforme DP-004, autenticação individual é fase final e não deve ser implementada agora.** Se a Etapa 1 já estiver comprovadamente entregue, identifique a evidência e retome o primeiro incremento pendente, sem refazer o trabalho.
 
 Preserve o avanço funcional e visual existente. Entregue código integrado à aplicação real e um PR de revisão. Não encerre com apenas um plano, componentes vazios, cálculo isolado sem conexão à tela ou um protótipo independente.
+
+## DP-004 — decisão posterior e obrigatória sobre autenticação
+
+**O responsável pelo produto decidiu expressamente adiar login, cadastro e autorização individual para a fase final anterior à entrega aos servidores. Esta decisão está formalizada em [DP-004 — Autenticação adiada durante o desenvolvimento](../decisoes/DP-004_AUTENTICACAO_ADIADA_DURANTE_DESENVOLVIMENTO.md). Leia-a integralmente e aplique-a antes da Etapa 1.**
+
+**Não interrompa ou desvie a execução para implementar autenticação.** A persistência compartilhada em ambiente de desenvolvimento, os cálculos, a interface e os testes entre sessões continuam obrigatórios, **sem exigir contas de usuários**. Regras temporárias de teste não deverão expor dados reais sensíveis publicamente nem ser promovidas para produção. A futura autenticação é um **portão de entrega institucional**, não um bloqueio de desenvolvimento. Esta decisão prevalece quanto ao cronograma de autenticação sobre exigências anteriores deste próprio prompt e do roteiro E1–E5.
 
 ## 1. Leitura obrigatória antes de implementar
 
@@ -26,7 +32,8 @@ Todos os caminhos desta relação partem da raiz do repositório. Leia o conteú
 | 8 | `docs/etapa-2/decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md` | Edição flexível, referências provisórias, autonomia e alertas proporcionais. |
 | 9 | `docs/etapa-2/decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md` | Reutilização de cadastros, jornadas e identidade do GOP Clima. |
 | 10 | `docs/etapa-2/decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md` | Pergunta → resultado → ação → registros de origem; gráficos e comparações úteis. |
-| 11 | `docs/etapa-2/planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md` | Sequência técnica, dependências e limites de cada entrega. |
+| 11 | `docs/etapa-2/decisoes/DP-004_AUTENTICACAO_ADIADA_DURANTE_DESENVOLVIMENTO.md` | Sem login na fase de desenvolvimento; persistência compartilhada em ambiente de teste, sem enfraquecer produção. | 
+| 12 | `docs/etapa-2/planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md` | Sequência técnica, dependências e limites de cada entrega. |
 
 Para intervenções de interface, leia também `.agents/skills/gop-clima-visual-quality/SKILL.md` e examine os componentes/tokens efetivamente utilizados, inclusive `src/styles/finance-polish.css`, quando presente.
 
@@ -63,8 +70,8 @@ Leia os trechos pertinentes de `src/App.jsx`, `src/components/FinancialOverviewP
 4. Admita valores de referência provisórios ou informados pelo responsável, com origem e natureza visíveis. Não espere um inventário completo para permitir trabalho válido; não invente dados técnicos.
 5. Trabalhe com precisão monetária coerente com as referências existentes. Preserve ausência e zero informado como situações distintas. Totais parciais devem informar o que falta.
 6. Reprogramação atualiza o planejamento e preserva histórico. Possível sobreposição é assunto de conferência, sem apagar serviços legítimos. Alterar uma referência não deve reescrever silenciosamente resultados financeiros já registrados; preserve a versão aplicada.
-7. Dados compartilhados devem usar a persistência do projeto. LocalStorage, Web Locks e exportação JSON não constituem integração financeira institucional.
-8. Proteja novas edições financeiras na autenticação e nas regras do backend. Evite reformular o acesso operacional inteiro por consequência. Não presuma que esconder um botão é autorização.
+7. Dados compartilhados devem usar a persistência do projeto em ambiente de desenvolvimento. LocalStorage, Web Locks e exportação JSON não constituem persistência compartilhada. Sem autenticação atual, não se deve alegar auditoria individual de autoria.
+8. **Aplicar DP-004:** durante desenvolvimento, **não implementar autenticação/login/perfis**; validar tecnicamente tipos, identificadores, valores e vínculos no backend de desenvolvimento e testar dados compartilhados entre sessões sem login. Projetar fronteira de autorização futura, sem antecipar sua implementação. Não liberar regras temporárias permissivas nem dados reais sensíveis em produção; autenticação definitiva será exigida antes da entrega institucional.
 9. Use React/Vite, serviços, domínio, Firestore e identidade existentes. Mantenha cálculos testáveis separados da apresentação. Não instale uma biblioteca de gráficos sem necessidade demonstrada.
 10. O site apoia decisões. Documentação integral de OES, IMR, atestação, CMMS e processo administrativo continua fora desta entrega.
 
@@ -79,14 +86,14 @@ Entregue o seguinte percurso completo:
 - Um atendimento pode conter mais de um grupo/item com referências diferentes; não transforme toda a escola numa única categoria de preço.
 - A referência vem de catálogo pertinente ou de informação editável e identificada. Reaproveite o domínio E1 e conecte-o efetivamente à interface.
 - O usuário vê a estimativa, sua natureza e origem. A composição fica disponível sob demanda.
-- O registro é salvo no backend, pode ser reaberto e corrigido e aparece em outra sessão autorizada. O dossiê/contexto escolar apresenta o resultado pertinente.
+- O registro é salvo no backend **de desenvolvimento**, pode ser reaberto e corrigido e aparece em outra sessão de desenvolvimento **sem login**, com dados e regras adequados ao ambiente de teste. O dossiê/contexto escolar apresenta o resultado pertinente.
 - O registro permite futura consolidação por competência, sem exigir nesta etapa um painel financeiro completo.
 
 Modele o atendimento/composição separadamente do chamado operacional. Preserve as ligações necessárias com escola, competência prevista, ciclo quando pertinente, itens, quantidades, referência/versão utilizada, responsável e alterações. Não exponha essa estrutura inteira como um formulário técnico.
 
 Se faltarem parâmetros oficiais, permita referências provisórias identificadas. Valores fictícios ficam restritos a testes/demonstração. Confirme as fontes antes de apresentá-los como contratuais. A estimativa preliminar de aquisição/adequação já existente no dossiê não é a tabela de manutenção.
 
-Se a edição controlada e a persistência compartilhada ainda não existirem, trate-as como dependência deste incremento. Valide em emulador/homologação e identifique a configuração necessária ao ambiente real. Uma simulação exclusivamente no navegador deve ser descrita como parcial, não como conclusão desta etapa.
+Se a persistência compartilhada ainda não existir, trate-a como dependência deste incremento. **Não criar login ou perfis para viabilizar o teste.** Valide em emulador/projeto Firebase de desenvolvimento com regras apropriadas a esse ambiente, identifique a configuração necessária ao uso futuro e não exponha dados reais sensíveis em endpoints permissivos. Uma simulação exclusivamente no navegador deve ser descrita como parcial, não como conclusão desta etapa.
 
 **Aceite da Etapa 1:**
 
@@ -94,7 +101,7 @@ Se a edição controlada e a persistência compartilhada ainda não existirem, t
 - Referência provisória, ausência de parâmetro e zero informado recebem tratamentos corretos.
 - Correção de quantidade ou referência atualiza a estimativa sem alterar a escola ou duplicar o atendimento.
 - Falta de cadastro individual não obriga inventar equipamento ou recadastrar a escola.
-- Gravação, releitura e acesso por outra sessão autorizada preservam os dados; edição não autorizada é rejeitada pelo backend.
+- Gravação, releitura e acesso por **outra sessão de desenvolvimento sem login** preservam os dados no backend de teste; estruturas inválidas são rejeitadas por validações técnicas. **A rejeição por identidade/perfil autenticado não é requisito desta etapa, conforme DP-004.**
 - A estimativa pode ser consultada no contexto escolar/operacional sem repetir dados já conhecidos.
 - O usuário consegue identificar a origem do resultado; nenhum status operacional transforma a estimativa em valor devido.
 
