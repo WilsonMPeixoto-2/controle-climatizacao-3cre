@@ -19,7 +19,12 @@ async function waitForThemeTransition(page) {
 }
 
 test.describe('Acessibilidade (WCAG 2.1)', () => {
-  test('painel - tema escuro (padrão)', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
+    // O padrão do produto é claro. Cada cenário desta suíte começa explicitamente no escuro.
+    await page.addInitScript(() => localStorage.setItem('gop_theme', 'dark'));
+  });
+
+  test('painel - tema escuro', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('html')).toHaveClass(/dark-theme/);
     await expect(page.getByText('Volume Geral')).toBeVisible();

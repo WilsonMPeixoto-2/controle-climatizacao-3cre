@@ -41,6 +41,42 @@
 .section-actions { display: inline-flex; gap: var(--space-2); flex-shrink: 0; }
 
 /* ---------- Superfícies utilitárias ---------- */
+.ticket-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-6);
+}
+.ticket-detail-grid > * { min-width: 0; }
+.ticket-local-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  margin-right: var(--space-3);
+  color: var(--color-amber);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  text-align: right;
+}
+@media (max-width: 768px) {
+  .ticket-detail-grid { grid-template-columns: minmax(0, 1fr); }
+  .modal-header, .modal-body { padding: var(--space-4); }
+  .modal-header > div { min-width: 0; }
+  .modal-title-group span { overflow-wrap: anywhere; }
+  .modal-close-btn { flex-shrink: 0; }
+  .modal-footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: var(--space-3); gap: var(--space-2); }
+  .modal-footer > .btn { min-width: 0; width: 100%; padding: 10px 8px; justify-content: center; }
+  .modal-footer > .btn:first-child { grid-column: 1 / -1; }
+  .modal-footer > .btn svg { flex-shrink: 0; }
+  .ticket-local-status {
+    order: -1;
+    grid-column: 1 / -1;
+    align-items: flex-start;
+    text-align: left;
+    margin-right: 0;
+  }
+}
+
 .surface-card {
   background: var(--surface-1);
   border: 1px solid var(--hairline);

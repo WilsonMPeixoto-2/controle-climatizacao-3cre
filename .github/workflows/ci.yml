@@ -7,6 +7,13 @@ on:
   pull_request:
     branches:
       - master
+      - feat/etapa2-fundacao-financeira
+      - feat/etapa2-primeira-interface
+      - feat/etapa2-conferencia-escolas
+      - feat/etapa2-experiencia-inteligente
+      - feat/etapa2-programacao-por-escola
+      - feat/etapa2-acabamento-visual
+      - docs/etapa2-execucao-financeira
 
 permissions:
   contents: read
@@ -94,3 +101,57 @@ jobs:
 
       - name: Run Playwright
         run: npm run test:e2e
+
+      - name: Upload Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  finance-development:
+    name: Financial development backend and browser flows
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Test development rules and shared persistence without login
+        run: npm run test:finance:backend
+
+      - name: Test integrated attendance estimates in two browser sessions
+        run: npm run test:finance:e2e
+
+      - name: Upload financial interface evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: financial-development-evidence
+          path: |
+            playwright-report-attendance/
+            test-results-attendance/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,37 +1,27 @@
-# Etapa 2 — Concepção e evolução financeira do GOP Clima 3ª CRE
+# GOP Clima · Etapa 2 — Índice rápido
 
-Este diretório reúne, sob versionamento Git, os entendimentos e os documentos de planejamento **anteriores à implementação** da segunda etapa do site.
+**Para executar uma tarefa no Codex, comece pelo [`AGENTS.md`](../../AGENTS.md).** Ele contém o roteiro de quatro passos e aponta para a skill visual **somente quando a tarefa envolve interface**. Este diretório é um acervo de referência, não uma fila de leitura obrigatória.
 
-## Documento fundador
+## O que está em desenvolvimento (confirme o estado remoto)
 
-- **[Carta de Princípios do Produto — v1.0](./concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md)** — filosofia, intenções, responsabilidades entre o site e os instrumentos de gestão, decisões consolidadas, exemplos não vinculantes e questões em aberto. Data-base: 31/10/2026.
+| Entrega | PR | Resultado |
+|---|---|---|
+| Fundação de referência financeira E1 | [#24](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/24) | Cálculo de referência consultivo, sem atesto ou faturamento automático |
+| Integração visual F1–F4 | [#25](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/25) | Nova área financeira, contexto em chamados e consulta escolar |
+| Conferência operacional por escola | [#26](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/26) | Escolas com registros a conferir, dossiê e acesso aos chamados |
 
-## Acervo de referências exploratórias
+**São PRs empilhados, em rascunho e não publicados automaticamente.** O próximo trabalho deve verificar os testes, a interface renderizada e as regressões antes de abrir novas funcionalidades. **CI verde não substitui homologação visual.**
 
-- **[Primeira tentativa Gemini V8.9](./referencias/gemini-v8.9/README.md)** — registro histórico com o prompt original, a proposta funcional apresentada, o mapa de ideias candidatas e a avaliação das limitações do protótipo. **Não homologado; não é código para implantação.**
-- As referências são subordinadas à Carta de Princípios. Não transformar propostas, exemplos de interface ou números demonstrativos em requisitos aprovados.
+## Quando consultar qual referência
 
+- **Decisão ou dúvida de produto:** [Carta de Princípios](./concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md) e [Concepção Funcional v1.0](./concepcao/documento-integral-v1.0/README.md).
+- **Flexibilidade, integração e dashboards:** [DP-001](./decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md), [DP-003](./decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md).
+- **Tarefa com alteração visual:** [skill GOP Clima Visual Quality](../../.agents/skills/gop-clima-visual-quality/SKILL.md) e, **somente se precisar aprofundar**, [protocolo de ferramentas](./qualidade-visual/PROTOCOLO_VISUAL_E_FERRAMENTAS.md).
+- **Planejar E3–E5:** [roteiro técnico por entregas](./planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md). **Não refazer E1/F1–F4 que já estão em PR.**
+- **Conferência escolar:** [escopo e fontes](./implementacao/CONFERENCIA_REGISTROS_ESCOLAS.md).
 
-## Concepção funcional — proposta v1.0
+## Histórico, não instrução ativa
 
-- **[Documento integral convertido do Word](./concepcao/documento-integral-v1.0/README.md)** — conteúdo fiel, dividido em cinco partes, com tabelas e diagramas Mermaid nativos do GitHub. **Proposta em discussão, ainda não homologada.**
-- [Registro resumido e estado do arquivo editável](./concepcao/REGISTRO_CONCEPCAO_FUNCIONAL_v1.0.md).
-- O Word original continua disponível como artefato editável fora do repositório; sua cópia binária no GitHub não foi efetuada. A versão textual integral está definitivamente versionada.
+O [handoff inicial F1–F4](./planejamento/HANDOFF_CODEX_PRIMEIRA_IMPLEMENTACAO_VISUAL.md) e os arquivos de prototipação Gemini documentam decisões anteriores. **Não são um roteiro para reimplementar o que já foi construído.** O conjunto visual do Gemini foi reprovado, embora algumas ideias funcionais possam ser aproveitadas.
 
-## Regra de utilização
-
-1. **Primeiro, conceber o produto.** A próxima entrega é um plano textual que justifique capacidades, jornadas, simplificação da interface e escopo da primeira evolução.
-2. **Não traduzir o Excel em telas.** Aproveitar informações e recursos existentes, transferindo o cálculo e a complexidade ao sistema.
-3. **Não transformar exemplos em requisitos aprovados.** Possibilidades como botões de transição e fluxos de faturamento devem ser avaliadas na concepção.
-4. **Preservar o escopo.** A aplicação prioriza gestão operacional e inteligência financeira; as comprovações e os procedimentos administrativos formais permanecem nos instrumentos próprios.
-5. **Implementação vem depois.** Só após avaliar e aprovar a concepção deverão ser definidos desenho de interface, código, testes e publicação.
-
-## Organização prevista
-
-- `concepcao/`: filosofia do produto, concepção funcional e decisões de experiência, com versões.
-- `planejamento/`: futuramente, planos de entrega e critérios de aceite **após aprovação da concepção**.
-- `decisoes/`: futuramente, registros de decisões alteradas ou aprovadas.
-
-As pastas futuras só serão criadas quando houver um documento real a armazenar. Evitar duplicações e propostas não aprovadas apresentadas como decisões.
-
-**Nota:** documentação de orientação ao produto; não representa implantação ou alteração das funcionalidades do site.
+**Princípio permanente:** o sistema deve reduzir o trabalho do servidor, não aumentar leitura, cadastros, travas ou documentação.

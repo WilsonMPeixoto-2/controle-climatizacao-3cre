@@ -4,8 +4,10 @@ test.describe('Regressão Visual', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
   test('deve capturar screenshot da home no tema escuro', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('gop_theme', 'dark'));
     await page.goto('/');
     await page.waitForSelector('text=Resumo operacional');
+    await expect(page.locator('html')).toHaveClass(/dark-theme/);
 
     // Aguarda um tempo para assentar as animações de carregamento inicial
     await page.waitForTimeout(1000);
@@ -27,14 +29,10 @@ test.describe('Regressão Visual', () => {
   });
 
   test('deve capturar screenshot da home no tema claro', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('gop_theme', 'light'));
     await page.goto('/');
     await page.waitForSelector('text=Resumo operacional');
-
-    // Alterna para o tema claro
-    const themeBtn = page.locator('.theme-toggle-header');
-    if (await themeBtn.count() > 0) {
-      await themeBtn.click();
-    }
+    await expect(page.locator('html')).not.toHaveClass(/dark-theme/);
 
     await page.waitForTimeout(1000);
 

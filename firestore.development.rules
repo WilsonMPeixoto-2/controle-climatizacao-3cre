@@ -1,0 +1,189 @@
+rules_version = '2';
+
+// SOMENTE DESENVOLVIMENTO: emulador isolado demo-gop-clima-financeiro.
+// DP-004 adia autenticação individual. Estas regras não são as de produção
+// e não devem ser publicadas para bases reais ou sensíveis.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function validId(value) {
+      // matches só é aplicável a strings; também recusa tipos incorretos.
+      return value.matches('^[A-Za-z0-9_.:-]{1,128}$');
+    }
+
+    function text(value, maxLength) {
+      return value is string && value.size() <= maxLength;
+    }
+
+    function validItem(item, itemId) {
+      let quantity = item.quantity;
+      let price = item.unitPriceUnits4;
+      let total = item.lineTotalUnits4;
+      let capacity = item.capacityBtu;
+      let source = item.sourceRef;
+      let coverageSource = item.coverageSourceRef;
+      let coverage = item.coverage;
+      let nature = item.referenceNature;
+      let hasSource = source.matches('^[\\s\\S]*\\S[\\s\\S]*$');
+      let calculated = quantity == null ? null
+        : (coverage == 'incluido' && coverageSource.matches('^[\\s\\S]*\\S[\\s\\S]*$')) ? 0
+        : price == null ? null : quantity * price;
+      // Todos os campos permitidos são lidos abaixo: ausentes também recusam
+      // a escrita. hasOnly impede extras sem repetir toda a lista em hasAll.
+      return item.keys().hasOnly([
+          'id', 'description', 'equipmentType', 'capacityBtu', 'equipmentRef',
+          'quantity', 'coverage', 'coverageSourceRef', 'referenceNature', 'unitPriceUnits4',
+          'sourceRef', 'referenceVersion', 'catalogId', 'categoryCode', 'lineTotalUnits4'
+        ])
+        && validId(item.id) && item.id == itemId
+        && item.description.matches('^[\\s\\S]{0,500}$')
+        && item.equipmentType.matches('^[\\s\\S]{0,120}$')
+        && item.equipmentRef.matches('^[\\s\\S]{0,120}$')
+        && (capacity == null || (capacity is int && capacity >= 1 && capacity <= 9007199254740991))
+        && (quantity == null || (quantity is int && quantity >= 0 && quantity <= 1000000))
+        && (price == null || (price is int && price >= 0 && price <= 10000000000
+          && hasSource && nature != 'nao_informada'
+          && (quantity == null || quantity * price <= 450000000000000)))
+        // O cálculo abaixo já garante total >= 0 pelos operandos validados.
+        && (total == null || (total is int && total <= 450000000000000))
+        && coverage in ['a_confirmar', 'incluido', 'adicional']
+        && nature in ['nao_informada', 'provisoria', 'informada', 'contratual_informada']
+        && source.matches('^[\\s\\S]{0,300}$')
+        && coverageSource.matches('^[\\s\\S]{0,300}$')
+        && item.referenceVersion.matches('^[\\s\\S]{0,120}$')
+        && item.catalogId.matches('^[\\s\\S]{0,120}$')
+        && item.categoryCode.matches('^[\\s\\S]{0,120}$')
+        && (nature != 'contratual_informada' || (
+          hasSource && item.referenceVersion.matches('^[\\s\\S]*\\S[\\s\\S]*$')
+          && item.catalogId.matches('^[\\s\\S]*\\S[\\s\\S]*$')
+        ))
+        && total == calculated;
+    }
+
+    function validItemsHead(data) {
+      let items = data.items;
+      let itemIds = data.itemIds;
+      let count = items.size();
+      // Teto técnico desta etapa: quatro grupos por atendimento. A validação
+      // completa foi medida contra o limite de 1.000 expressões das Rules.
+      return items is list && count >= 1 && count <= 4
+        && itemIds is list && itemIds.size() == count
+        && itemIds.toSet().size() == count
+        && validItem(items[0], itemIds[0]);
+    }
+
+    function validItemsTail(data) {
+      let items = data.items;
+      let itemIds = data.itemIds;
+      let count = items.size();
+      // O main valida shape/IDs e o primeiro item; a revisão valida os demais.
+      // A igualdade getAfter nos dois sentidos exige ambos atomicamente,
+      // mantendo o schema inteiro validado sem duplicar expressões.
+      return (count <= 1 || validItem(items[1], itemIds[1]))
+        && (count <= 2 || validItem(items[2], itemIds[2]))
+        && (count <= 3 || validItem(items[3], itemIds[3]));
+    }
+
+    function ticketSchool(ticketId, schoolId) {
+      return validId(ticketId)
+        && get(/databases/$(database)/documents/chamados/$(ticketId)).data.designacao == schoolId;
+    }
+
+    function validLinks(data) {
+      let schoolId = data.schoolId;
+      let ticketIds = data.ticketIds;
+      let count = ticketIds.size();
+      return validId(schoolId)
+        && exists(/databases/$(database)/documents/escolas/$(schoolId))
+        && ticketIds is list && count <= 8
+        && ticketIds.toSet().size() == count
+        && (count <= 0 || ticketSchool(ticketIds[0], schoolId))
+        && (count <= 1 || ticketSchool(ticketIds[1], schoolId))
+        && (count <= 2 || ticketSchool(ticketIds[2], schoolId))
+        && (count <= 3 || ticketSchool(ticketIds[3], schoolId))
+        && (count <= 4 || ticketSchool(ticketIds[4], schoolId))
+        && (count <= 5 || ticketSchool(ticketIds[5], schoolId))
+        && (count <= 6 || ticketSchool(ticketIds[6], schoolId))
+        && (count <= 7 || ticketSchool(ticketIds[7], schoolId));
+    }
+
+    function validCivilDate(date) {
+      let parts = date.split('-');
+      let year = int(parts[0]);
+      let month = int(parts[1]);
+      let day = int(parts[2]);
+      let leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+      let days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      return day <= days[month - 1];
+    }
+
+    function validDate(data) {
+      return data.plannedDate == '' || (
+        data.plannedDate is string
+        && data.plannedDate.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        && data.plannedDate.matches(data.plannedMonth + '-[0-9]{2}')
+        && validCivilDate(data.plannedDate)
+      );
+    }
+
+    function validAttendance(data, attendanceId) {
+      return data.keys().size() == 15
+        && data.keys().hasOnly([
+          'id', 'revision', 'createdAt', 'updatedAt', 'schoolId', 'plannedMonth',
+          'plannedDate', 'serviceKind', 'cycle', 'visitId', 'ticketIds',
+          'responsibleLabel', 'sessionId', 'items', 'itemIds'
+        ])
+        && validId(attendanceId) && data.id == attendanceId
+        && data.revision is int && data.revision > 0 && data.revision <= 1000000
+        && data.createdAt is timestamp && data.updatedAt == request.time
+        && data.plannedMonth is string && data.plannedMonth.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')
+        && !data.plannedMonth.matches('^0000-.*')
+        && validDate(data)
+        && data.serviceKind in ['preventiva', 'corretiva', 'outra']
+        && text(data.cycle, 120)
+        && (data.visitId == '' || validId(data.visitId))
+        && text(data.responsibleLabel, 160)
+        && validId(data.sessionId)
+        && validLinks(data)
+        && validItemsHead(data);
+    }
+
+    function revisionMatchesAfter(data, attendanceId) {
+      return getAfter(/databases/$(database)/documents/atendimentos_economicos/$(attendanceId)/revisoes/$('v' + string(data.revision))).data == data;
+    }
+
+    match /escolas/{schoolId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /chamados/{ticketId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /atendimentos_economicos/{attendanceId} {
+      allow read: if true;
+      allow create, update: if validAttendance(request.resource.data, attendanceId)
+        && (request.method == 'create'
+          ? (request.resource.data.revision == 1 && request.resource.data.createdAt == request.time)
+          : (request.resource.data.id == resource.data.id
+            && request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.revision == resource.data.revision + 1))
+        && revisionMatchesAfter(request.resource.data, attendanceId);
+      allow delete: if false;
+
+      match /revisoes/{revisionId} {
+        allow read: if true;
+        allow create: if revisionId == 'v' + string(request.resource.data.revision)
+          && request.resource.data.updatedAt == request.time
+          && validItemsTail(request.resource.data)
+          && getAfter(/databases/$(database)/documents/atendimentos_economicos/$(attendanceId)).data == request.resource.data;
+        allow update, delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

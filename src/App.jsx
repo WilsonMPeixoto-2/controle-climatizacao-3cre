@@ -17,6 +17,7 @@ import {
   Search,
   FileText,
   Mail,
+  Wallet,
   Sun,
   Moon,
   Plus,
@@ -69,6 +70,11 @@ import {
 } from './lib/logic.js';
 import { createTicketSchema, editTicketSchema, firstValidationMessage } from './lib/validation.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import FinancialOverviewPage from './components/FinancialOverviewPage.jsx';
+import FinancialReferenceCard from './components/FinancialReferenceCard.jsx';
+import SchoolFinancialSummary from './components/SchoolFinancialSummary.jsx';
+import useAttendanceDevelopment from './hooks/useAttendanceDevelopment.js';
+import { parseCapacityBtu } from './domain/financialReference.js';
 // Carregado sob demanda: o mapa (Leaflet + GeoJSON) só baixa quando a aba é aberta
 const OperationalMap = lazy(() => import('./components/OperationalMap.jsx'));
 // Títulos por aba (React 19 hoista <title> para o <head>)
@@ -77,6 +83,7 @@ const TAB_TITLES = {
   tickets: 'Chamados',
   lookup: 'Consulta por Unidade',
   form: 'Registrar Chamado',
+  finance: 'Gestão Financeira',
   email: 'Modelos de E-mail',
   cloud: 'Base Online'
 };
@@ -256,7 +263,7 @@ const EmptyState = ({ iconType, title, description, style = {} }) => {
 const IconCloud = () => <Cloud size={18} strokeWidth={2} />;
 const IconInfo = (props) => <AlertTriangle {...props} size={18} strokeWidth={2} />;
 
-const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'email', 'cloud'];
+const VALID_TABS = ['dashboard', 'tickets', 'lookup', 'form', 'finance', 'email', 'cloud'];
 const VALID_THEMES = ['dark', 'light'];
 
 function rotuloNivel(nivel) {
@@ -278,6 +285,9 @@ function rotuloNivel(nivel) {
 
 export default function App() {
   const dossierRef = useRef(null);
+  const attendances = useAttendanceDevelopment();
+  const [attendanceContext, setAttendanceContext] = useState(null);
+  const consumeAttendanceContext = useCallback(() => setAttendanceContext(null), []);
   const [initialCloudConfig] = useState(() => readFirebaseConfig(import.meta.env));
   const firebaseConfigured = isFirebaseConfigured(initialCloudConfig);
 
@@ -447,6 +457,8 @@ export default function App() {
   const [dashboardMetricSelection, setDashboardMetricSelection] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const ticketDialogRef = useRef(null);
+  const [financeFilters, setFinanceFilters] = useState({ schoolId: '', month: '' });
   const [isSavingTicketPending, setIsSavingTicket] = useState(false);
   const [isSavingHistoryPending, setIsSavingHistory] = useState(false);
 
@@ -565,7 +577,7 @@ export default function App() {
     }
   }, [theme]);
 
-  // Fecha o modal de edição com Esc e trava o scroll do fundo enquanto aberto
+  // Fecha com Esc, contém/restaura o foco e trava o scroll do fundo enquanto aberto.
   // useEffectEvent (React 19.2): o listener lê isSavingTicketPending/isSavingHistoryPending atuais sem
   // re-anexar a cada salvamento — o efeito só re-roda quando o modal abre/fecha.
   const onEscapeCloseModal = useEffectEvent((e) => {
@@ -576,11 +588,33 @@ export default function App() {
   useEffect(() => {
     if (!showEditModal) return undefined;
     const prevOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement;
+    const dialog = ticketDialogRef.current;
+    dialog?.querySelector('.modal-close-btn')?.focus({ preventScroll: true });
+    const containFocus = (event) => {
+      if (event.key !== 'Tab' || !dialog) return;
+      const focusable = [...dialog.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, a[href], [tabindex]:not([tabindex="-1"])'
+      )].filter(element => element.getClientRects().length > 0);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first) return;
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
     document.addEventListener('keydown', onEscapeCloseModal);
+    document.addEventListener('keydown', containFocus);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onEscapeCloseModal);
+      document.removeEventListener('keydown', containFocus);
       document.body.style.overflow = prevOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
     };
   }, [showEditModal]);
 
@@ -891,6 +925,46 @@ export default function App() {
     setTicketAttachments(
       allAttachments.filter((attachment) => attachment.id_chamado === ticket.id_chamado)
     );
+  };
+
+  // Navegação contextual da conferência escolar: reutiliza as telas e dados existentes.
+  // Não edita status, não informa atendimento contratual nem cria atestação.
+  const openFinancialReviewSchool = (school) => {
+    setSelectedSchool(school);
+    setLookupSchoolQuery(school.unidade_escolar);
+    setShowLookupSuggestions(false);
+    setCurrentTab('lookup');
+    window.scrollTo(0, 0);
+  };
+
+  const openFinancialReviewRequests = (school) => {
+    setActiveListsView('all');
+    setFilterPriority('');
+    setFilterStatus('');
+    setTicketSearch(school.unidade_escolar);
+    setCurrentTab('tickets');
+    window.scrollTo(0, 0);
+  };
+
+  const openAttendanceEstimate = (context) => {
+    setAttendanceContext({ ...context, key: crypto.randomUUID() });
+    setFinanceFilters(previous => ({ ...previous, schoolId: String(context.schoolId || '') }));
+    setShowEditModal(false);
+    setCurrentTab('finance');
+  };
+
+  const estimateTicket = (ticket) => {
+    if (isSavingTicketPending || isSavingHistoryPending) return;
+    const school = schools.find(item => matchesSchool(ticket, item));
+    openAttendanceEstimate({
+      schoolId: String(school?.designacao || ''),
+      ticketId: school ? ticket.id_chamado : '',
+      serviceKind: ticket.tipo_demanda === 'Manutenção Preventiva' ? 'preventiva'
+        : ticket.tipo_demanda === 'Manutenção Corretiva' ? 'corretiva' : 'outra',
+      equipmentType: ticket.tipo_aparelho || '',
+      capacityBtu: parseCapacityBtu(ticket.btu_existente),
+      equipmentRef: ticket.local_demanda || ''
+    });
   };
 
   const goToCommunicationForTicket = (ticket, type) => {
@@ -1930,6 +2004,18 @@ export default function App() {
             </li>
             <li>
               <button
+                className={`sidebar-item ${currentTab === 'finance' ? 'active' : ''}`}
+                aria-current={currentTab === 'finance' ? 'page' : undefined}
+                onClick={() => setCurrentTab('finance')}
+                aria-label="Gestão Financeira"
+                title="Gestão Financeira"
+              >
+                <Wallet aria-hidden="true" />
+                <span>Gestão Financeira</span>
+              </button>
+            </li>
+            <li>
+              <button
                 className={`sidebar-item ${currentTab === 'email' ? 'active' : ''}`}
                 aria-current={currentTab === 'email' ? 'page' : undefined}
                 onClick={() => setCurrentTab('email')}
@@ -1976,7 +2062,7 @@ export default function App() {
       </aside>
 
       {/* Main Container */}
-      <main id="conteudo" className="main-content">
+      <main id="conteudo" className={`main-content ${currentTab === 'finance' ? 'main-content--finance' : ''}`}>
         {/* Top Header */}
         <header className="main-header">
           <div className="header-title">
@@ -2021,6 +2107,22 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        {currentTab === 'finance' && (
+          <FinancialOverviewPage
+            schools={schools}
+            tickets={tickets}
+            filters={financeFilters}
+            onFiltersChange={setFinanceFilters}
+            onOpenTicket={openTicketEdit}
+            onOpenSchool={openFinancialReviewSchool}
+            onOpenSchoolRequests={openFinancialReviewRequests}
+            attendances={attendances}
+            attendanceContext={attendanceContext}
+            onAttendanceContextConsumed={consumeAttendanceContext}
+            onStartAttendance={openAttendanceEstimate}
+          />
+        )}
 
         {/* Dashboard Tab */}
         {currentTab === 'dashboard' && (
@@ -4594,6 +4696,18 @@ export default function App() {
                         </div>
                       </div>
 
+                      <SchoolFinancialSummary
+                        school={selectedSchool}
+                        attendanceRecords={attendances.records}
+                        attendanceConnection={attendances.connection}
+                        onEstimate={() => openAttendanceEstimate({ schoolId: String(selectedSchool.designacao) })}
+                        onOpenAttendance={record => openAttendanceEstimate({ attendanceId: record.id, schoolId: record.schoolId })}
+                        onOpenFinance={() => {
+                          setFinanceFilters({ schoolId: String(selectedSchool.designacao), month: '' });
+                          setCurrentTab('finance');
+                        }}
+                      />
+
                       {/* Bloco de Chamados */}
                       <div className="dashboard-section dossier-section">
                         <div className="section-header">
@@ -5510,6 +5624,8 @@ export default function App() {
                   </div>
                 </div>
 
+                <FinancialReferenceCard ticket={newTicket} school={formSelectedSchool} compact />
+
                 {/* 3. SEÇÃO ADMINISTRATIVA */}
                 <div className="form-section-title">
                   <IconFileText />
@@ -5956,6 +6072,7 @@ export default function App() {
         >
           <div
             className="modal-container"
+            ref={ticketDialogRef}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -6009,8 +6126,9 @@ export default function App() {
             </div>
 
             <div className="modal-body">
+              <FinancialReferenceCard ticket={editingTicket} compact onEstimate={() => estimateTicket(editingTicket)} estimateDisabled={isSavingTicketPending || isSavingHistoryPending} />
               {/* Two column detail lookup layout */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
+              <div className="ticket-detail-grid">
                 {/* Left side: Editors */}
                 <div>
                   <h4
@@ -6189,7 +6307,6 @@ export default function App() {
                         <label
                           htmlFor="edit-ticket-validation"
                           className="sr-only"
-                          style={{ display: 'none' }}
                         >
                           Validação
                         </label>
@@ -6733,21 +6850,9 @@ export default function App() {
                 <span>Minutar E-mail</span>
               </button>
               {!persistence && (
-                <div
-                  style={{
-                    color: 'hsl(38, 92%, 50%)',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    textAlign: 'right',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1px',
-                    marginRight: '12px',
-                    alignItems: 'flex-end'
-                  }}
-                >
+                <div className="ticket-local-status">
                   <span>⚠ Edição bloqueada em modo local</span>
-                  <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>
+                  <span>
                     Conecte a base online para salvar.
                   </span>
                 </div>

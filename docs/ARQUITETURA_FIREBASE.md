@@ -132,6 +132,25 @@ A estratégia alvo inclui:
 - build Vite em CI;
 - validação de preview Vercel antes do merge.
 
+### 9.1. Etapa 1 financeira — desenvolvimento sem login (DP-004)
+
+O atendimento econômico usa uma fronteira própria (`attendancePersistence.js`), consumida pela interface através de um hook. O adaptador grava em `atendimentos_economicos/{id}` e cria simultaneamente o snapshot completo `revisoes/v{revision}`. Transações conferem a revisão esperada; ID e data de criação permanecem estáveis. Correções de escola revalidam seus vínculos e preservam a composição anterior no histórico. Valores usam inteiros de R$ 0,0001; ausência continua `null` e zero informado continua zero. Não há total financeiro presumido a partir de status de chamado.
+
+Nesta entrega, a conexão financeira aceita somente o emulador local do projeto **`demo-gop-clima-financeiro`**, separado do projeto operacional. A configuração está em `firebase.development.json` e `firestore.development.rules`; os arquivos de produção permanecem intactos. Nenhum login ou identidade autenticada é criado. Sessão e responsável informado são apenas informações de contexto.
+
+Para experimentar com os vínculos já existentes na aplicação, execute `npm run dev:finance` (Node 24, Java 21 e dependências instaladas) e abra `http://localhost:5175`. O comando inicia o emulador em `127.0.0.1:8082`, carrega apenas os identificadores de escolas/chamados do snapshot local e habilita `VITE_FINANCE_FIRESTORE_EMULATOR=127.0.0.1:8082`. Duas sessões de navegador compartilham os atendimentos por esse backend. Se a aplicação estiver configurada com outro cadastro operacional, seus identificadores também precisam existir no emulador de desenvolvimento. Sem a variável, a prévia funciona e o salvamento informa que a base está desconectada.
+
+As referências são informadas ou provisórias, com origem identificada e versão opcional. Esta entrega não contém tabela oficial de preços. A composição salva preserva os valores usados; alterar uma referência gera nova revisão. `sourceRef` identifica o preço e `coverageSourceRef` identifica separadamente a informação de cobertura. Somente cobertura incluída com essa referência e quantidade conhecida produz incremento adicional estimado zero; o preço nominal conhecido permanece registrado, ou sua ausência continua explícita. Completude aritmética não confirma cobertura. Previsão consolidada, apuração, atesto e faturamento continuam nas próximas etapas.
+
+Há um limite técnico de **quatro grupos e oito chamados por atendimento**, validado inclusive no pior cenário de criação/edição para respeitar os limites de expressões e leituras das Firestore Rules. O documento principal valida metadados, vínculos e primeiro grupo; o snapshot valida os demais grupos. A igualdade exigida nos dois sentidos com `getAfter` obriga a gravação atômica dos dois documentos, sem duplicar a validação. Crescimento desse contrato exige rever o modelo e repetir os testes de limites, sem retirar validações. Os demais cadastros são somente leitura nesse ambiente.
+
+Verificação reproduzível:
+
+- `npm run test:finance:backend`: duas sessões sem Auth, sincronização, revisões, concorrência e rejeição de escritas inválidas diretamente pelo SDK.
+- `npm run test:finance:e2e`: interface completa com Firestore do emulador, dois contextos de navegador, cadastros sintéticos, quatro casas decimais, edição, entradas contextuais, acessibilidade e capturas reais. Somente o seed dos vínculos usa contexto administrativo do emulador; as gravações financeiras passam pelas regras.
+
+Os testes reiniciam somente a base sintética isolada. O emulador desta configuração é temporário e perde os dados ao ser encerrado; os testes demonstram persistência e sincronização **no backend emulado**, inclusive após recarregar o navegador. Não constituem homologação de sincronização em um projeto cloud ou de uso institucional. Para preservar dados de exploração entre execuções do emulador, use os recursos `--import` e `--export-on-exit` da Firebase CLI em um diretório local ignorado (`.firebase-finance/`). A futura configuração institucional deverá implementar a preparação de acesso prevista na DP-004.
+
 ## 10. Legado Supabase
 
 A pasta `supabase/`, migrations e documentação histórica não será apagada no início da migração. Permanecerá disponível para rastreabilidade até o Firestore estar homologado.
