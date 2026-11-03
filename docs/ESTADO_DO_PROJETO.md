@@ -1,6 +1,8 @@
 # Estado do Projeto — Controle de Climatização (3ª CRE / GOP)
 
-> **Fonte de estado operacional. Atualizado em 16/08/2026.**
+> **AVISO DE HISTÓRICO (03/11/2026):** as seções abaixo documentam **somente a situação apurada em 16/08/2026**. Não são a situação vigente da `master` nem da Vercel. Para o estado atual, consulte [Entrega consolidada em 03/11/2026](etapa-2/implementacao/RELEASE_CONSOLIDADA_2026-11-03.md): PR #32 integrado à `master` (`16274ae5`); deploy explícito `dpl_CGtyz88nt38QkXP31M3D6SiPBZN7`, `READY`, site de homologação atualizado. Programação de visitas é rascunho local; persistência das estimativas funciona apenas no emulador isolado.
+>
+> **Registro histórico originalmente atualizado em 16/08/2026.**
 > O código-fonte executável continua sendo a fonte de verdade. Este documento registra o que foi efetivamente conferido no repositório, nos testes e na infraestrutura disponível.
 
 ## 1. Produto

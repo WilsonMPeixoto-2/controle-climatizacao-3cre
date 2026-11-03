@@ -1,5 +1,7 @@
 # Plano de evolução real — Etapa 2 (E1 a E5)
 
+> **Nota de situação (03/11/2026):** este roteiro foi escrito antes da entrega consolidada e mantém descrições de incrementos/limites daquele momento. A referência **atual** é [RELEASE_CONSOLIDADA_2026-11-03.md](../implementacao/RELEASE_CONSOLIDADA_2026-11-03.md): o PR #32 já foi integrado e publicado na homologação; atendimento e estimativa contextual existem, mas salvamento financeiro continua somente em emulador local. **Não reiniciar E1 nem tratar este arquivo como prova de que novos módulos, Firebase cloud financeiro ou faturamento estejam prontos.**
+
 **Estado:** execução inicial controlada em branch de trabalho; desenho e regras de produção ainda sujeitos a validação.  
 **Base:** [Concepção Funcional v1.0](../concepcao/documento-integral-v1.0/README.md), [Carta de Princípios](../concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md) e [seleção útil do Gemini](../referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md).  
 **Arquitetura operacional atual:** React/Vite, módulos em `src/domain/`, serviços, Firestore e testes Node.  

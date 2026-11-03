@@ -1,5 +1,7 @@
 # Prompt para o Codex — Inteligência financeira integrada, por etapas
 
+> **Histórico operacional (03/11/2026):** a Etapa 1 deste prompt **já foi implementada** e integrada à `master` no PR #32 (`16274ae5`). **Não execute novamente a instrução original de implementar apenas a Etapa 1.** Leia [registro da entrega](../implementacao/RELEASE_CONSOLIDADA_2026-11-03.md) e [AGENTS.md](../../../AGENTS.md) para identificar o primeiro incremento realmente pendente, mantendo a DP-004. Este prompt permanece como referência de intenção e aceites históricos.
+
 ## Instrução de execução
 
 Você está trabalhando no repositório `WilsonMPeixoto-2/controle-climatizacao-3cre`.

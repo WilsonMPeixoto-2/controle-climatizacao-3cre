@@ -8,7 +8,9 @@ O sistema substitui controles manuais por uma rotina única para registro de dem
 
 A aplicação foi migrada da persistência Supabase/PostgreSQL para **Firebase Cloud Firestore**, mantendo React/Vite no frontend e Vercel na hospedagem.
 
-A arquitetura Firebase está implementada e validada em Emulator Suite. A publicação definitiva em produção depende da criação/configuração do projeto Firebase real e das variáveis do Web App na Vercel. Até esse provisionamento, a `master` e o domínio de produção permanecem na versão anterior para evitar perda de persistência.
+**Atualização de 03/11/2026:** a evolução consolidada no PR [#32](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/32) foi integrada à `master` (commit `16274ae5`) e publicada no projeto Vercel de homologação Firebase, deployment `dpl_CGtyz88nt38QkXP31M3D6SiPBZN7`, estado `READY`, em https://climatizacao-firebase-homologacao.vercel.app/. Esta informação substitui o estado provisório de migração registrado em agosto/2026.
+
+A interface agora inclui **Gestão Financeira**, conferência de chamados por escola, planejamento local de visitas e prévia de estimativas econômicas. **A gravação de atendimentos financeiros ainda depende do emulador Firestore local de desenvolvimento e não está disponível pela internet.** Não existem, nesta entrega, consolidação financeira por competência, medição, faturamento, liquidação ou pagamentos registrados. Leia o [registro consolidado da entrega](docs/etapa-2/implementacao/RELEASE_CONSOLIDADA_2026-11-03.md) antes de planejar novos incrementos.
 
 ## Escopo
 
@@ -31,7 +33,8 @@ Ficam fora do escopo atual:
 - inventário completo do parque de ar-condicionado;
 - ordem de serviço técnica;
 - autenticação individual de usuários;
-- upload de anexos no Firebase Storage.
+- upload de anexos no Firebase Storage;
+- salvamento financeiro remoto compartilhado, consolidação financeira e rotinas de faturamento/medição (a desenvolver).
 
 A funcionalidade histórica de anexos permanece isolada como legado/futuro. Firebase Storage não integra esta fase porque o projeto deve permanecer no plano Spark sem meio de pagamento.
 

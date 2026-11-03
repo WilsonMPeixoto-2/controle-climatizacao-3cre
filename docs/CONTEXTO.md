@@ -1,5 +1,7 @@
 # Contexto do Projeto — Controle de Climatização (3ª CRE / GOP)
 
+**Atualização em 03/11/2026:** este documento preserva o contexto **histórico** e contém menções anteriores à migração Firebase e à evolução financeira. A situação atual está em [release consolidada](etapa-2/implementacao/RELEASE_CONSOLIDADA_2026-11-03.md) e as instruções operacionais para agentes em [`AGENTS.md`](../AGENTS.md). Não interpretar descrições antigas de Supabase, domínio ou funcionalidade como estado vigente.
+
 Documento de referência (consulta sob demanda). O resumo operacional e as regras que valem
 sempre estão no **`CLAUDE.md`** da raiz; este arquivo guarda o histórico, o "porquê" das
 decisões e os detalhes que não precisam ocupar contexto a cada sessão.

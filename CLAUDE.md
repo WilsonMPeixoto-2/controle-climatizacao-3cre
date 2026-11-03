@@ -1,5 +1,7 @@
 # Controle de Climatização — 3ª CRE / GOP
 
+> **Aviso de atualização (03/11/2026):** este texto reúne decisões e recortes de escopo **históricos**, sobretudo da versão exclusiva de chamados. O produto hoje também possui **planejamento e estimativas financeiras consultivas**; consultar [AGENTS.md](AGENTS.md) e [entrega consolidada de 03/11/2026](docs/etapa-2/implementacao/RELEASE_CONSOLIDADA_2026-11-03.md) antes de interpretar proibições antigas como bloqueio da Etapa 2. A aplicação usa Firebase/Firestore, não Supabase como backend ativo no código, e o deploy Git está deliberadamente desativado por política. A autenticação individual permanece adiada pela DP-004.
+
 Ferramenta de **registro e monitoramento** dos chamados de manutenção/instalação de
 ar‑condicionado das escolas da 3ª CRE, para uso do setor **GOP (Gerência de Operações)**.
 Hoje a GOP faz isso em planilhas básicas, preenchidas à mão; este site é a **mesma função,

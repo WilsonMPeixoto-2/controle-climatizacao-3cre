@@ -38,6 +38,15 @@
 - Site público continua no deployment operacional `dpl_4CwnzFynwX62T8AEEhJYMEMkvtkD`, commit `ff8a5eca`, com React 19.3.1 e Firebase 13.1.0.
 - A `master` recebeu o merge da migração Firebase e o prontuário escolar. Esse commit integrado **não deve ser descrito como publicado** enquanto não houver um deployment explícito `READY` e atualização confirmada do alias.
 
+## Atualização da publicação em 03/11/2026
+
+- PR [#32](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/32) integrado à `master` em `16274ae50631e4da5e5d429f833a6f670d18693b`.
+- Implantação **manual e explícita** no projeto correto `climatizacao-firebase-homologacao` (`prj_dAaYkrr2kp9F2RgvqS7L5j9ry1x2`): `dpl_CGtyz88nt38QkXP31M3D6SiPBZN7`, `production/READY` em 03/11/2026, com commit idêntico ao merge.
+- Domínio confirmado na Vercel: https://climatizacao-firebase-homologacao.vercel.app/. Não presumir que outros aliases antigos estejam atribuídos sem conferência específica.
+- O `vercel.json` manteve `git.deploymentEnabled: false`. Portanto, **a falta de deploy automático após o merge é o comportamento intencional desta política de economia de quota**, não evidência de falha GitHub–Vercel.
+- A entrega não habilitou backend financeiro remoto: apenas a interface financeira foi publicada; gravações e revisões dos atendimentos econômicos permanecem no emulador local durante desenvolvimento.
+- Ver [registro consolidado de release](etapa-2/implementacao/RELEASE_CONSOLIDADA_2026-11-03.md). O estado de 23/10 descrito acima é evidência histórica e não substitui esta atualização.
+
 ## Fontes oficiais
 - https://vercel.com/docs/limits
 - https://vercel.com/docs/project-configuration/git-configuration

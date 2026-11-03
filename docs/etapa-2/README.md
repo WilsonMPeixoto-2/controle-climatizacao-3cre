@@ -1,27 +1,26 @@
-# GOP Clima · Etapa 2 — Índice rápido
+# GOP Clima · Etapa 2 — Índice de estado e referências
 
-**Para executar uma tarefa no Codex, comece pelo [`AGENTS.md`](../../AGENTS.md).** Ele contém o roteiro de quatro passos e aponta para a skill visual **somente quando a tarefa envolve interface**. Este diretório é um acervo de referência, não uma fila de leitura obrigatória.
+**Atualizado em 03/11/2026.** A revisão consolidada [PR #32](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/32) foi integrada à `master` por squash (`16274ae5`) e publicada no site Firebase de homologação. Os PRs #24–#31 estão encerrados; não existe uma fila de PRs encadeados aguardando merge.
 
-## O que está em desenvolvimento (confirme o estado remoto)
+**[Leia primeiro o estado de release e os limites efetivamente entregues](./implementacao/RELEASE_CONSOLIDADA_2026-11-03.md).**
 
-| Entrega | PR | Resultado |
-|---|---|---|
-| Fundação de referência financeira E1 | [#24](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/24) | Cálculo de referência consultivo, sem atesto ou faturamento automático |
-| Integração visual F1–F4 | [#25](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/25) | Nova área financeira, contexto em chamados e consulta escolar |
-| Conferência operacional por escola | [#26](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/26) | Escolas com registros a conferir, dossiê e acesso aos chamados |
+## Situação por capacidade
 
-**São PRs empilhados, em rascunho e não publicados automaticamente.** O próximo trabalho deve verificar os testes, a interface renderizada e as regressões antes de abrir novas funcionalidades. **CI verde não substitui homologação visual.**
+| Capacidade | Situação em 03/11/2026 |
+|---|---|
+| Nova área Gestão Financeira, conferência escolar e gráfico de abertura de chamados | Publicada; indicadores **operacionais**, não gastos efetivos |
+| Programação mensal de visitas | Publicada como **rascunho local**, com importação/exportação; não sincronizada |
+| Composição e prévia das estimativas por atendimento | Publicada na interface; sem catálogo contratual definitivo |
+| Persistência, edição concorrente e histórico das estimativas | Testados no **emulador isolado**; salvamento financeiro remoto indisponível |
+| Consolidação mensal de despesas, medição, glosa, faturamento, liquidação e pagamento | A desenvolver |
+| Login e perfis institucionais | Adiados por [DP-004](./decisoes/DP-004_AUTENTICACAO_ADIADA_DURANTE_DESENVOLVIMENTO.md) até antes da entrega aos servidores |
 
-## Quando consultar qual referência
+## Fontes de consulta
 
-- **Decisão ou dúvida de produto:** [Carta de Princípios](./concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md) e [Concepção Funcional v1.0](./concepcao/documento-integral-v1.0/README.md).
-- **Flexibilidade, integração e dashboards:** [DP-001](./decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md), [DP-003](./decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md).
-- **Tarefa com alteração visual:** [skill GOP Clima Visual Quality](../../.agents/skills/gop-clima-visual-quality/SKILL.md) e, **somente se precisar aprofundar**, [protocolo de ferramentas](./qualidade-visual/PROTOCOLO_VISUAL_E_FERRAMENTAS.md).
-- **Planejar E3–E5:** [roteiro técnico por entregas](./planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md). **Não refazer E1/F1–F4 que já estão em PR.**
-- **Conferência escolar:** [escopo e fontes](./implementacao/CONFERENCIA_REGISTROS_ESCOLAS.md).
+- **Para Codex/agentes:** [AGENTS.md](../../AGENTS.md); siga sua hierarquia de leitura e a [skill visual](../../.agents/skills/gop-clima-visual-quality/SKILL.md) ao modificar interface.
+- **Produto:** [Carta de Princípios](./concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md), [concepção original](./concepcao/documento-integral-v1.0/README.md) e decisões [DP-001](./decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002](./decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md), [DP-003](./decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md), [DP-004](./decisoes/DP-004_AUTENTICACAO_ADIADA_DURANTE_DESENVOLVIMENTO.md).
+- **Arquitetura e regras:** [Firestore](../ARQUITETURA_FIREBASE.md) e [roteiro E1–E5](./planejamento/ROTEIRO_IMPLEMENTACAO_E1_E5.md), ambos com o recorte temporal claramente identificado.
+- **Conferência de escolas:** [critérios de classificação](./implementacao/CONFERENCIA_REGISTROS_ESCOLAS.md).
+- **Design:** [protocolo visual](./qualidade-visual/PROTOCOLO_VISUAL_E_FERRAMENTAS.md) e [capturas da Etapa 1](./evidencias/etapa-1/).
 
-## Histórico, não instrução ativa
-
-O [handoff inicial F1–F4](./planejamento/HANDOFF_CODEX_PRIMEIRA_IMPLEMENTACAO_VISUAL.md) e os arquivos de prototipação Gemini documentam decisões anteriores. **Não são um roteiro para reimplementar o que já foi construído.** O conjunto visual do Gemini foi reprovado, embora algumas ideias funcionais possam ser aproveitadas.
-
-**Princípio permanente:** o sistema deve reduzir o trabalho do servidor, não aumentar leitura, cadastros, travas ou documentação.
+Os handoffs iniciais, protótipos Gemini e notas dos PRs #24–#31 são **histórico de decisão**, não instruções para reimplementar tarefas concluídas. A experiência visual ainda depende de homologação humana, mesmo com CI aprovado.
