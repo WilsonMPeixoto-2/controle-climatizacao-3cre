@@ -255,7 +255,13 @@ for (const theme of ['light', 'dark']) {
       await finance(page);
       await page.getByLabel('Escola', { exact: true }).focus();
       await page.keyboard.press('Tab');
-      // A ação principal está antes dos gráficos; o mês de abertura é filtro secundário.
+      // A nova comparação de meses é navegável antes do formulário de programação;
+      // não se deve fixar a ordem antiga de foco após acrescentar controles legítimos.
+      await expect(page.getByRole('region', {
+        name: 'Histórico de corretivas de setembro e outubro'
+      }).getByRole('button', { name: /^Filtrar setembro de 2026/ })).toBeFocused();
+      // O mês da visita e a ação principal continuam alcançáveis pelo teclado.
+      await page.locator('#visit-board-month').focus();
       await expect(page.locator('#visit-board-month')).toBeFocused();
       await page.getByRole('button', { name: 'Programar visita', exact: true }).focus();
       await page.keyboard.press('Enter');
