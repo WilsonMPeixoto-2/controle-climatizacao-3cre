@@ -128,7 +128,7 @@ export default function MonthlyForecast({
                 '; pendentes ' + amount(item.pendingUnits4, item.overflowByNature?.pending || item.overflow)}
               onClick={() => chooseMonth(item.month)}
             >
-              <span className="forecast-month-count tabular">{item.recordCount || '·'} {item.recordCount === 1 ? 'registro' : 'registros'}</span>
+              <span className="forecast-month-count tabular">{item.recordCount}</span>
               <span className="forecast-bar-track">
                 <span className="forecast-bar is-additional" style={{ height: item.additionalUnits4 === null ? '0' : Math.max(item.additionalUnits4 > 0 ? 5 : 2, (item.additionalUnits4 / highest) * 100) + '%' }} />
                 <span className="forecast-bar is-pending" style={{ height: item.pendingUnits4 === null ? '0' : Math.max(item.pendingUnits4 > 0 ? 5 : 2, (item.pendingUnits4 / highest) * 100) + '%' }} />
