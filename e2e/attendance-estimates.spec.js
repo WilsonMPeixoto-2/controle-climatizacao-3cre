@@ -343,6 +343,96 @@ test('conflito entre sessões preserva a edição local e permite reabrir a revi
   }
 });
 
+test('previsão mensal sincroniza escolas e reprogramação entre sessões sem somar natureza nominal', async ({ page, browser, baseURL }, testInfo) => {
+  const otherContext = await browser.newContext({ baseURL });
+  try {
+    await openApp(page);
+    const forecast = page.getByRole('region', { name: 'Previsão mensal por competência' });
+    await expect(forecast).toBeVisible();
+    await expect(forecast).toContainText('Nenhuma estimativa nesta competência');
+
+    let form = await startEstimate(page);
+    await fillGroup(form, 1, {
+      description: 'Adicional sintético de novembro',
+      quantity: 2, price: '25,0000', source: 'Preço sintético E2',
+      coverage: 'adicional', coverageSource: 'Cobertura sintética informada'
+    });
+    await saveEstimate(page);
+    await expect(forecast).toContainText(money('50,0000'));
+    // Evidência visual real do componente preenchido, usando dados sintéticos do backend.
+    // Cada viewport preserva a mesma estimativa e o mesmo tema.
+    const originalViewport = page.viewportSize();
+    for (const viewport of [
+      { width: 320, height: 800 },
+      { width: 1440, height: 900 },
+      { width: 3840, height: 2160 }
+    ]) {
+      await page.setViewportSize(viewport);
+      // A ausência de overflow global não descarta corte interno de controles ou rótulos.
+      const forecastBox = await forecast.boundingBox();
+      const monthInput = await forecast.getByLabel('Competência', { exact: true }).boundingBox();
+      const resetButton = await forecast.getByRole('button', { name: 'Voltar ao mês mais recente' }).boundingBox();
+      expect(monthInput.width).toBeGreaterThanOrEqual(180);
+      expect(resetButton.x + resetButton.width).toBeLessThanOrEqual(forecastBox.x + forecastBox.width + 1);
+      await expect(forecast.locator('.forecast-month-count')).toHaveText(['0', '0', '0', '0', '0', '1']);
+      const path = testInfo.outputPath('previsao-mensal-' + viewport.width + '-claro.png');
+      await forecast.screenshot({ path, animations: 'disabled' });
+      await testInfo.attach('previsao-mensal-' + viewport.width + '-dados-sinteticos', { path, contentType: 'image/png' });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    }
+    await page.setViewportSize(originalViewport);
+
+    // O mesmo registro e os mesmos viewports devem preservar legibilidade no tema escuro.
+    await page.evaluate(() => localStorage.setItem('gop_theme', 'dark'));
+    await page.reload();
+    await expect(forecast).toContainText(money('50,0000'));
+    for (const viewport of [
+      { width: 320, height: 800 },
+      { width: 1440, height: 900 },
+      { width: 3840, height: 2160 }
+    ]) {
+      await page.setViewportSize(viewport);
+      const path = testInfo.outputPath('previsao-mensal-' + viewport.width + '-escuro.png');
+      await forecast.screenshot({ path, animations: 'disabled' });
+      await testInfo.attach('previsao-mensal-' + viewport.width + '-escuro-sintetico', { path, contentType: 'image/png' });
+      const controlsBox = await forecast.boundingBox();
+      const inputBox = await forecast.getByLabel('Competência', { exact: true }).boundingBox();
+      await expect(forecast.getByLabel('Competência', { exact: true })).toHaveCSS('color-scheme', 'dark');
+      const buttonBox = await forecast.getByRole('button', { name: 'Voltar ao mês mais recente' }).boundingBox();
+      expect(inputBox.width).toBeGreaterThanOrEqual(180);
+      expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(controlsBox.x + controlsBox.width + 1);
+    }
+    await page.setViewportSize(originalViewport);
+
+    const other = await otherContext.newPage();
+    await openApp(other);
+    const otherForecast = other.getByRole('region', { name: 'Previsão mensal por competência' });
+    await expect(otherForecast).toContainText(money('50,0000'));
+    await expect(otherForecast.getByRole('button', { name: /^Abrir composição de/ })).toHaveCount(1);
+
+    await forecast.getByRole('button', { name: /^Abrir composição de/ }).click();
+    form = editor(page);
+    await expect(form.getByRole('heading', { name: 'Editar estimativa de atendimento' })).toBeVisible();
+    await form.getByLabel('Mês previsto', { exact: true }).fill('2026-12');
+    await fillGroup(form, 1, { quantity: 3, source: 'Preço sintético E2 atualizado' });
+    await saveEstimate(page, 2);
+
+    await otherForecast.getByLabel('Competência', { exact: true }).fill('2026-11');
+    await expect(otherForecast).toContainText('Nenhuma estimativa nesta competência');
+    await otherForecast.getByLabel('Competência', { exact: true }).fill('2026-12');
+    await expect(otherForecast).toContainText(money('75,0000'));
+    await expect(otherForecast.getByRole('button', { name: /^Abrir composição de/ })).toHaveCount(1);
+
+    const backend = await backendSnapshot();
+    expect(backend).toHaveLength(1);
+    expect(backend[0].plannedMonth).toBe('2026-12');
+    expect(backend[0].revision).toBe(2);
+    expect(backend[0].revisions.map(item => item.plannedMonth)).toEqual(['2026-11', '2026-12']);
+  } finally {
+    await otherContext.close();
+  }
+});
+
 async function filledLayout(page) {
   let form = await startEstimate(page);
   await fillGroup(form, 1, { description: 'Serviço fictício com nome extenso para conferir a composição', quantity: 2, price: '123,4567', source: SOURCE_V1 });
