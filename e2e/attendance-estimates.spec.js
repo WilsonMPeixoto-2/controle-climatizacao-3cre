@@ -166,7 +166,7 @@ test('duas sessões sem login compartilham composições distintas e corrigem o 
   }
 });
 
-test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e natureza sem presumir faturamento', async ({ page }) => {
+test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e natureza sem presumir faturamento', async ({ page }, testInfo) => {
   await openApp(page);
   const original = await originalRegistries(page);
   let form = await startEstimate(page);
@@ -216,6 +216,9 @@ test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e 
   await expect(covered).toContainText('2 × R$ 12,0000 = R$ 24,0000');
   await expect(covered).toContainText('Acréscimo estimado: R$ 0,0000');
   await expect(covered).toContainText('Decisão de cobertura fictícia separada');
+  const compositionPath = testInfo.outputPath('attendance-economic-nature.png');
+  await covered.screenshot({ path: compositionPath, animations: 'disabled' });
+  await testInfo.attach('Preço nominal e acréscimo — dados fictícios', { path: compositionPath, contentType: 'image/png' });
   const data = await backendSnapshot();
   const absent = data.find(record => record.items[0].description.startsWith('Preço ausente'));
   const coveredData = data.find(record => record.items[0].description.startsWith('Zero informado'));
@@ -377,15 +380,15 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('desktop 1440px e monitor 3840px exibem registro e editor preenchidos nos dois temas', async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+for (const viewport of [{ width: 1440, height: 900 }, { width: 3840, height: 2160 }]) {
+test('desktop ' + viewport.width + 'px exibe registro e editor preenchidos nos dois temas', async ({ page }, testInfo) => {
+  await page.setViewportSize(viewport);
   await openApp(page, 'light');
   await filledLayout(page);
   await assertLayout(page);
-  await capture(page, testInfo, 'attendance-1440-light');
-  await captureContext(page, testInfo, 'attendance-1440-light');
+  await capture(page, testInfo, 'attendance-' + viewport.width + '-light');
+  await captureContext(page, testInfo, 'attendance-' + viewport.width + '-light');
   await page.evaluate(() => localStorage.setItem('gop_theme', 'dark'));
-  await page.setViewportSize({ width: 3840, height: 2160 });
   await page.reload();
   await expect(records(page)).toHaveCount(1);
   await estimates(page).getByRole('button', { name: 'Estimar atendimento', exact: true }).click();
@@ -393,6 +396,7 @@ test('desktop 1440px e monitor 3840px exibem registro e editor preenchidos nos d
   await form.getByLabel('Escola', { exact: true }).selectOption(SCHOOL_B.designacao);
   await fillGroup(form, 1, { description: 'Grupo fictício em monitor amplo', quantity: 3, price: '10,0000', source: 'Origem fictícia de teste em monitor amplo' });
   await assertLayout(page);
-  await capture(page, testInfo, 'attendance-3840-dark');
-  await captureContext(page, testInfo, 'attendance-3840-dark');
+  await capture(page, testInfo, 'attendance-' + viewport.width + '-dark');
+  await captureContext(page, testInfo, 'attendance-' + viewport.width + '-dark');
 });
+}

@@ -150,13 +150,15 @@ function EstimateValue({ calculation, className = '' }) {
   if (!calculation) return <div className={'attendance-value ' + className}><span>Estimativa</span><strong>Não calculada</strong></div>;
   const amount = calculation.complete ? calculation.totalUnits4 : calculation.knownSubtotalUnits4;
   const onlyIncrement = calculation.lines.every(line => line.amountNature === 'incremento_adicional');
+  const hasIncrement = calculation.lines.some(line => line.amountNature === 'incremento_adicional');
   return (
     <div className={'attendance-value ' + className}>
       <span>{calculation.complete ? onlyIncrement ? 'Incremento adicional estimado' : 'Estimativa de referência' : 'Estimativa parcial · parcela conhecida'}</span>
       <strong className="tabular">{amount === null ? 'Não informada' : formatMoneyUnits4(amount)}</strong>
       {!calculation.complete && <small>{calculation.missingCount} {calculation.missingCount === 1 ? 'grupo com informação pendente' : 'grupos com informações pendentes'}</small>}
       {calculation.coveragePendingCount > 0 && <small>Cobertura pendente em {calculation.coveragePendingCount} {calculation.coveragePendingCount === 1 ? 'grupo' : 'grupos'}</small>}
-      {onlyIncrement && calculation.nominalMissingCount > 0 && <small>Preço nominal não informado em {calculation.nominalMissingCount} {calculation.nominalMissingCount === 1 ? 'grupo' : 'grupos'}</small>}
+      {hasIncrement && !onlyIncrement && <small>Parcelas nominais e acréscimos conforme cobertura informada</small>}
+      {hasIncrement && calculation.nominalMissingCount > 0 && <small>Preço nominal não informado em {calculation.nominalMissingCount} {calculation.nominalMissingCount === 1 ? 'grupo' : 'grupos'}</small>}
     </div>
   );
 }
