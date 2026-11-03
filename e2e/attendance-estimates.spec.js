@@ -343,6 +343,52 @@ test('conflito entre sessões preserva a edição local e permite reabrir a revi
   }
 });
 
+test('previsão mensal sincroniza escolas e reprogramação entre sessões sem somar natureza nominal', async ({ page, browser, baseURL }) => {
+  const otherContext = await browser.newContext({ baseURL });
+  try {
+    await openApp(page);
+    const forecast = page.getByRole('region', { name: 'Previsão mensal por competência' });
+    await expect(forecast).toBeVisible();
+    await expect(forecast).toContainText('Nenhuma estimativa nesta competência');
+
+    let form = await startEstimate(page);
+    await fillGroup(form, 1, {
+      description: 'Adicional sintético de novembro',
+      quantity: 2, price: '25,0000', source: 'Preço sintético E2',
+      coverage: 'adicional', coverageSource: 'Cobertura sintética informada'
+    });
+    await saveEstimate(page);
+    await expect(forecast).toContainText(money('50,0000'));
+
+    const other = await otherContext.newPage();
+    await openApp(other);
+    const otherForecast = other.getByRole('region', { name: 'Previsão mensal por competência' });
+    await expect(otherForecast).toContainText(money('50,0000'));
+    await expect(otherForecast.getByRole('button', { name: /^Abrir composição de/ })).toHaveCount(1);
+
+    await forecast.getByRole('button', { name: /^Abrir composição de/ }).click();
+    form = editor(page);
+    await expect(form.getByRole('heading', { name: 'Editar estimativa de atendimento' })).toBeVisible();
+    await form.getByLabel('Mês previsto', { exact: true }).fill('2026-12');
+    await fillGroup(form, 1, { quantity: 3, source: 'Preço sintético E2 atualizado' });
+    await saveEstimate(page, 2);
+
+    await otherForecast.getByLabel('Competência', { exact: true }).fill('2026-11');
+    await expect(otherForecast).toContainText('Nenhuma estimativa nesta competência');
+    await otherForecast.getByLabel('Competência', { exact: true }).fill('2026-12');
+    await expect(otherForecast).toContainText(money('75,0000'));
+    await expect(otherForecast.getByRole('button', { name: /^Abrir composição de/ })).toHaveCount(1);
+
+    const backend = await backendSnapshot();
+    expect(backend).toHaveLength(1);
+    expect(backend[0].plannedMonth).toBe('2026-12');
+    expect(backend[0].revision).toBe(2);
+    expect(backend[0].revisions.map(item => item.plannedMonth)).toEqual(['2026-11', '2026-12']);
+  } finally {
+    await otherContext.close();
+  }
+});
+
 async function filledLayout(page) {
   let form = await startEstimate(page);
   await fillGroup(form, 1, { description: 'Serviço fictício com nome extenso para conferir a composição', quantity: 2, price: '123,4567', source: SOURCE_V1 });
