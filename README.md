@@ -10,13 +10,15 @@ A aplicação foi migrada da persistência Supabase/PostgreSQL para **Firebase C
 
 **Atualização de 03/11/2026:** a evolução consolidada no PR [#32](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/32) foi integrada à `master` (commit `16274ae5`) e publicada no projeto Vercel de homologação Firebase, deployment `dpl_CGtyz88nt38QkXP31M3D6SiPBZN7`, estado `READY`, em https://climatizacao-firebase-homologacao.vercel.app/. Esta informação substitui o estado provisório de migração registrado em agosto/2026.
 
-A interface agora inclui **Gestão Financeira**, conferência de chamados por escola, planejamento local de visitas e prévia de estimativas econômicas. **A gravação de atendimentos financeiros ainda depende do emulador Firestore local de desenvolvimento e não está disponível pela internet.** A **consolidação por competência** pode ser calculada em desenvolvimento a partir dos atendimentos econômicos; **a persistência financeira remota, medição, faturamento, liquidação e pagamentos continuam indisponíveis para uso institucional**. Leia o [registro consolidado da entrega](docs/etapa-2/implementacao/RELEASE_CONSOLIDADA_2026-11-03.md) antes de planejar novos incrementos.
+A interface agora inclui **Gestão Financeira**, conferência de chamados por escola, planejamento local de visitas e prévia de estimativas econômicas. **Correção da conexão financeira em andamento no PR #34:** a aplicação passa a reutilizar o Firestore operacional, sem criar outro projeto ou exigir login; o salvamento remoto só deve ser anunciado após publicar as regras atualizadas no Firebase e comprovar gravações reais. A **consolidação por competência** pode ser calculada em desenvolvimento a partir dos atendimentos econômicos; **a persistência financeira remota, medição, faturamento, liquidação e pagamentos continuam indisponíveis para uso institucional**. Leia o [registro consolidado da entrega](docs/etapa-2/implementacao/RELEASE_CONSOLIDADA_2026-11-03.md) antes de planejar novos incrementos.
 
 ## Etapa 2 — visualização e qualidade dos dados
 
-A Gestão Financeira incorpora **previsão mensal por escola/competência**, com valores nominais, acréscimos e cobertura pendente apresentados separadamente. Os atendimentos que alimentam a previsão continuam no **Firestore Emulator de desenvolvimento**, não no site público. A ausência de backend remoto é informada na interface, sem números inventados.
+A Gestão Financeira incorpora **previsão mensal por escola/competência**, com valores nominais, acréscimos e cobertura pendente apresentados separadamente. Os atendimentos que alimentam a previsão usarão o **Firestore operacional existente** após a implantação de `firestore.rules`; o emulador continuará exclusivo dos testes. A ausência de backend remoto é informada na interface, sem números inventados.
 
 A seção **Corretivas: setembro e outubro** reproduz um recorte histórico **somente de leitura** da planilha `SETEMBRO.xlsx` (85 linhas, 25 escolas, 8 coincidências que podem representar duplicidade, 6 designações recuperadas). Agrupa pela **data do registro**, não pela competência de medição ou mês de pagamento, permite filtrar mês e escola e mostra as linhas de origem. Não contém valores a faturar nem supõe atesto. Veja [proveniência e limitações do recorte histórico](docs/etapa-2/implementacao/IMPORTACAO_HISTORICA_SET_OUT_2026.md).
+
+**Implantação financeira:** veja [instruções específicas para ativação e teste remoto](docs/etapa-2/implementacao/INTEGRACAO_FINANCEIRO_FIRESTORE_EXISTENTE.md). Merge GitHub e Vercel READY não substituem a implantação das regras do Firestore.
 
 ## Escopo
 
@@ -40,7 +42,8 @@ Ficam fora do escopo atual:
 - ordem de serviço técnica;
 - autenticação individual de usuários;
 - upload de anexos no Firebase Storage;
-- salvamento financeiro remoto compartilhado e rotinas de faturamento/medição (a desenvolver).
+- ativação em nuvem da gravação financeira enquanto não forem implantadas as novas regras de Firestore;
+- rotinas de faturamento/medição (a desenvolver).
 
 A funcionalidade histórica de anexos permanece isolada como legado/futuro. Firebase Storage não integra esta fase porque o projeto deve permanecer no plano Spark sem meio de pagamento.
 
