@@ -213,12 +213,24 @@ for (const theme of ['light', 'dark']) {
       await page.keyboard.press('Enter');
       await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
       // O axe deve medir os tokens finais, não a opacidade intermediária de cardFadeUp.
+      // animation.finished pode rejeitar com AbortError se React remover/substituir
+      // um elemento durante a animação. Cancelamento legítimo não é falha visual.
+      // A espera final abaixo continua exigindo ausência de animações em execução.
       await page.locator('.finance-page').evaluate(async element => {
         await document.fonts.ready;
-        await Promise.all(element.getAnimations({ subtree: true })
-          .filter(animation => animation.effect.getTiming().iterations !== Infinity)
-          .map(animation => animation.finished));
+        const finite = element.getAnimations({ subtree: true })
+          .filter(animation => animation.effect?.getTiming().iterations !== Infinity);
+        const results = await Promise.allSettled(finite.map(animation => animation.finished));
+        const unexpected = results.find(result =>
+          result.status === 'rejected' && result.reason?.name !== 'AbortError'
+        );
+        if (unexpected) throw unexpected.reason;
       });
+      await expect.poll(async () => page.locator('.finance-page').evaluate(element =>
+        element.getAnimations({ subtree: true }).filter(animation =>
+          animation.playState === 'running' && animation.effect?.getTiming().iterations !== Infinity
+        ).length
+      ), { message: 'Aguardar conclusão real das animações antes da auditoria axe' }).toBe(0);
       const scan = await new AxeBuilder({ page }).include('.finance-page').withTags(['wcag2a', 'wcag2aa']).analyze();
       expect(scan.violations).toEqual([]);
       const capture = async name => {
