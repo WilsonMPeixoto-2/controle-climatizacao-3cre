@@ -80,6 +80,11 @@ test('base histórica setembro/outubro preserva a origem e mantém agregações 
   await expect(history.getByText('85', { exact: true })).toBeVisible();
   await expect(history.getByText('25', { exact: true })).toBeVisible();
   await expect(history.locator('.historic-note')).toContainText('SETEMBRO.xlsx');
+  await expect(history.locator('.historic-school')).toHaveCount(8);
+  await history.getByRole('button', { name: 'Mostrar todos os 28 agrupamentos' }).click();
+  await expect(history.locator('.historic-school')).toHaveCount(28);
+  await history.getByRole('button', { name: 'Mostrar apenas os prioritários' }).click();
+  await expect(history.locator('.historic-school')).toHaveCount(8);
 
   const october = history.getByRole('button', { name: /^Filtrar outubro de 2026/ });
   const september = history.getByRole('button', { name: /^Filtrar setembro de 2026/ });
