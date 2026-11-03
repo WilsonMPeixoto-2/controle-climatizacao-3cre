@@ -137,6 +137,7 @@ function summarizeMonth(month, records) {
     coveragePendingCount,
     incompleteRecordCount,
     invalidRecordCount,
+    overflowByNature: Object.fromEntries(Object.entries(totals).map(([nature, value]) => [nature, value > MAX_SAFE])),
     overflow: Object.values(totals).some(value => value > MAX_SAFE)
   };
 }
