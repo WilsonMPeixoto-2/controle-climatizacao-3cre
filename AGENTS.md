@@ -2,9 +2,15 @@
 
 **Este é o único ponto de entrada obrigatório.** Trabalhe sobre o código existente, não sobre protótipos. Na retomada financeira, cumpra a leitura obrigatória abaixo; nas demais tarefas, consulte documentos adicionais pertinentes. Não crie novos manuais nem reabra decisões já resolvidas.
 
+## DP-004 — sem login durante o desenvolvimento (DECISÃO VIGENTE)
+
+**Antes de qualquer implementação financeira, leia obrigatoriamente [DP-004 — Autenticação adiada durante o desenvolvimento](docs/etapa-2/decisoes/DP-004_AUTENTICACAO_ADIADA_DURANTE_DESENVOLVIMENTO.md).** Por decisão expressa do responsável pelo produto, o GOP Clima permanece acessível diretamente aos agentes e desenvolvedores, **sem login, cadastro de usuários ou autorização individual nesta fase**. **Não trate essa ausência como impedimento à Etapa 1 ou como prioridade de correção.** A autenticação e os perfis ficam para antes da entrega aos servidores.
+
+A Etapa 1 deve implementar cálculos e **persistência de desenvolvimento compartilhada**, com testes de duas sessões sem login, integridade e validações estruturais. **Não liberar bases sensíveis reais nem regras permissivas indiscriminadas em ambientes de produção**; usar projeto/emulador de desenvolvimento e dados adequados. Não afirme autoria individual autenticada quando não existir. A DP-004 prevalece quanto ao **cronograma de autenticação**, inclusive sobre menções anteriores a "edição autorizada" no prompt e no roteiro E1–E5. Outros requisitos de correção financeira, integridade e rastreabilidade continuam válidos.
+
 ## Retomada financeira da Etapa 2 — leitura obrigatória
 
-Para desenvolver ou retomar capacidades financeiras da Etapa 2, leia antes de implementar o [prompt de execução por etapas](docs/etapa-2/planejamento/PROMPT_CODEX_EXECUCAO_FINANCEIRA_POR_ETAPAS.md) e todos os documentos da sua seção **1. Leitura obrigatória**. A sequência inclui a Carta, as cinco partes da concepção, DP-001/002/003 e o roteiro E1–E5.
+Para desenvolver ou retomar capacidades financeiras da Etapa 2, leia antes de implementar o [prompt de execução por etapas](docs/etapa-2/planejamento/PROMPT_CODEX_EXECUCAO_FINANCEIRA_POR_ETAPAS.md) e todos os documentos da sua seção **1. Leitura obrigatória**. A sequência inclui a Carta, as cinco partes da concepção, DP-001/002/003, **DP-004** e o roteiro E1–E5.
 
 A leitura deve resultar em uma matriz curta **objetivo/seção → código atual → mudança → teste de aceite**. Não basta declarar que os documentos foram lidos. Faça a leitura integral na retomada e recupere trechos pertinentes quando necessário, sem repeti-la a cada ajuste.
 
@@ -17,11 +23,12 @@ O prompt distingue a etapa ativa das futuras: a primeira entrega conecta atendim
 3. **Quando houver UI, aplique a skill local** [`gop-clima-visual-quality`](.agents/skills/gop-clima-visual-quality/SKILL.md) **antes de alterar JSX/CSS**. Preserve design real (`src/index.css`, `src/styles/`), Outfit/Inter, Lucide, temas e navegação. O objetivo é **menos leitura, menos cliques e mais respostas/ações contextuais**, não mais cartões. Ferramentas externas são opcionais, conforme disponibilidade; não depender de TinyFish nem de serviços pagos.
 4. **Teste, olhe e entregue.** Rode `npm run lint`, `npm test`, `npm run build` e testes Firestore/Playwright pertinentes. **UI exige inspeção de telas reais** em desktop, monitor largo e mobile (tema claro/escuro), com navegação, foco, contraste e overflow verificados. Classifique falhas; não atualize snapshots cegamente. Informe PR, SHA, o que funciona, evidências visuais e pendências. **Não faça merge/deploy de produção sem aprovação.**
 
-## Três decisões que não podem ser contrariadas
+## Quatro decisões que não podem ser contrariadas
 
 - **DP-001 — Autonomia:** ferramentas apoiam e calculam; gestor/fiscal ajusta, decide e atesta nos instrumentos próprios. Sem obrigação administrativa criada pelo software.
 - **DP-002 — Continuidade:** interfaces e dados novos são extensão do GOP Clima existente, nunca uma aplicação paralela com outra identidade.
 - **DP-003 — Inteligência visual:** valor do dashboard = resposta útil + próxima ação + acesso aos registros. Não criar gráficos fictícios, texto excessivo ou formulários redundantes. O conjunto visual do Gemini foi reprovado; só conceitos pontuais podem inspirar.
+- **DP-004 — Autenticação adiada:** não criar login/perfis nesta fase nem bloquear E1 por essa ausência; validar persistência compartilhada no ambiente de desenvolvimento e implementar autenticação antes da entrega aos servidores.
 
 ## Consulta adicional por necessidade (além da leitura financeira obrigatória)
 
