@@ -4,7 +4,7 @@
 **Base:** [Concepção Funcional v1.0](../concepcao/documento-integral-v1.0/README.md), [Carta de Princípios](../concepcao/CARTA_DE_PRINCIPIOS_DO_PRODUTO_v1.0.md) e [seleção útil do Gemini](../referencias/gemini-prototipo-v1/AVALIACAO_E_SELECAO.md).  
 **Arquitetura operacional atual:** React/Vite, módulos em `src/domain/`, serviços, Firestore e testes Node.  
 **Princípio:** evoluir o site existente, não recriá-lo.
-**Diretrizes complementares consolidadas:** [DP-001 — flexibilidade de gestão](../decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002 — continuidade visual](../decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md) e [DP-003 — inteligência visual interativa](../decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md).
+**Diretrizes complementares consolidadas:** [DP-001 — flexibilidade de gestão](../decisoes/DP-001_FERRAMENTA_DE_GESTAO_NAO_REGULATORIA.md), [DP-002 — continuidade visual](../decisoes/DP-002_CONTINUIDADE_FUNCIONAL_INFORMACIONAL_VISUAL.md) e [DP-003 — inteligência visual interativa](../decisoes/DP-003_INTELIGENCIA_VISUAL_EXPLORACAO_INTERATIVA.md). **A [DP-004 — autenticação adiada durante desenvolvimento](../decisoes/DP-004_AUTENTICACAO_ADIADA_DURANTE_DESENVOLVIMENTO.md) complementa a ordem de execução e prevalece quanto ao momento de implementar login/perfis.**
 
 ## Recorte implementado nesta branch: E1 — fundação de referência
 
@@ -42,11 +42,13 @@
 
 ## E5 — registros financeiros com autorização real
 
+**Sequenciamento esclarecido pela DP-004:** a persistência de desenvolvimento compartilhada e os cálculos do incremento financeiro atual **não aguardam login**. Os requisitos de autenticação individual, perfis e autorização por usuário são **portão anterior à entrega institucional**, não condição para desenvolver, demonstrar e testar em projeto/emulador isolado. Esta seção descreve uma capacidade futura de operação, e não ordem para interromper a Etapa 1.
+
 1. Permitir registrar e corrigir resultados informados de apuração, NF, liquidação e pagamentos, inclusive parciais e múltiplos por competência, sem exigir coincidência obrigatória com uma estimativa.
 2. Preservar trilha autoral e fonte do registro sem reproduzir atos oficiais.
-3. Implementar controle de edição **no Firestore e no mecanismo de autenticação**, sem copiar o exemplo do Gemini e sem enfraquecer as regras atuais.
-4. Sem autorização efetiva, disponibilizar apenas leitura ou protótipo local: não publicar formulários de escrita financeira.
-5. Testar autenticação, regras Firebase (emulador), alterações, consistência, conciliação e regressão.
+3. **Antes da entrega institucional**, implementar controle de edição **no Firestore e no mecanismo de autenticação**, sem copiar o exemplo do Gemini e sem enfraquecer as regras atuais. Durante o desenvolvimento, preservar regras de validação e dados adequados num ambiente Firebase isolado, conforme DP-004.
+4. **Durante desenvolvimento**, são permitidos formulários de escrita e persistência compartilhada em **Firestore de desenvolvimento/emulador isolado, sem login**, com testes técnicos e sem exposição indiscriminada de dados sensíveis. **Na entrega aos servidores**, não disponibilizar formulários financeiros de escrita sem autorização individual efetiva.
+5. Testar agora regras Firebase de desenvolvimento (emulador), alterações, persistência entre sessões sem login, consistência, conciliação e regressão; **na fase de entrega institucional**, testar autenticação, perfis e regras definitivas de autorização.
 
 ## Portões obrigatórios antes de publicação
 
