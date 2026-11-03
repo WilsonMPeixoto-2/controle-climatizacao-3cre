@@ -343,7 +343,7 @@ test('conflito entre sessões preserva a edição local e permite reabrir a revi
   }
 });
 
-test('previsão mensal sincroniza escolas e reprogramação entre sessões sem somar natureza nominal', async ({ page, browser, baseURL }) => {
+test('previsão mensal sincroniza escolas e reprogramação entre sessões sem somar natureza nominal', async ({ page, browser, baseURL }, testInfo) => {
   const otherContext = await browser.newContext({ baseURL });
   try {
     await openApp(page);
@@ -359,6 +359,21 @@ test('previsão mensal sincroniza escolas e reprogramação entre sessões sem s
     });
     await saveEstimate(page);
     await expect(forecast).toContainText(money('50,0000'));
+    // Evidência visual real do componente preenchido, usando dados sintéticos do backend.
+    // Cada viewport preserva a mesma estimativa e o mesmo tema.
+    const originalViewport = page.viewportSize();
+    for (const viewport of [
+      { width: 320, height: 800 },
+      { width: 1440, height: 900 },
+      { width: 3840, height: 2160 }
+    ]) {
+      await page.setViewportSize(viewport);
+      const path = testInfo.outputPath('previsao-mensal-' + viewport.width + '-claro.png');
+      await forecast.screenshot({ path, animations: 'disabled' });
+      await testInfo.attach('previsao-mensal-' + viewport.width + '-dados-sinteticos', { path, contentType: 'image/png' });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    }
+    await page.setViewportSize(originalViewport);
 
     const other = await otherContext.newPage();
     await openApp(other);
