@@ -9,6 +9,7 @@ import { getOpeningTrend } from '../domain/operationalPulse.js';
 import { formatDateBrazilian } from '../lib/logic.js';
 import SchoolRecordReview from './SchoolRecordReview.jsx';
 import VisitPlanningBoard from './VisitPlanningBoard.jsx';
+import AttendanceEstimates from './AttendanceEstimates.jsx';
 
 const groups = [
   { title: 'Previsão', Icon: CalendarDays, text: 'Estimativas e programação.', scope: 'Por escola e período' },
@@ -18,7 +19,8 @@ const groups = [
 ];
 
 export default function FinancialOverviewPage({
-  schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests
+  schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests,
+  attendances, attendanceContext, onAttendanceContextConsumed, onStartAttendance
 }) {
   const reviewRef = useRef(null);
   const school = schools.find(item => String(item.designacao) === filters.schoolId) || null;
@@ -62,11 +64,29 @@ export default function FinancialOverviewPage({
       </div>
 
       <div className="finance-planning-layout">
-        <VisitPlanningBoard
-          schools={schools}
-          selectedSchoolId={filters.schoolId}
-          onOpenSchool={onOpenSchool}
-        />
+        <div className="finance-planning-primary">
+          <VisitPlanningBoard
+            schools={schools}
+            selectedSchoolId={filters.schoolId}
+            onOpenSchool={onOpenSchool}
+            onEstimate={visit => onStartAttendance({
+              schoolId: visit.schoolId, visitId: visit.id, plannedDate: visit.plannedDate,
+              cycle: visit.cycle, serviceKind: visit.kind, quantity: visit.equipmentCount
+            })}
+          />
+
+          <AttendanceEstimates
+            schools={schools}
+            tickets={tickets}
+            records={attendances.records}
+            selectedSchoolId={filters.schoolId}
+            connection={attendances.connection}
+            onSave={attendances.onSave}
+            loadRevisions={attendances.loadRevisions}
+            context={attendanceContext}
+            onContextConsumed={onAttendanceContextConsumed}
+          />
+        </div>
 
         <section className="finance-operations" aria-label="Consulta de chamados">
           <header className="finance-operations-heading">
@@ -192,7 +212,7 @@ export default function FinancialOverviewPage({
               <ChevronDown className="finance-availability-chevron" size={18} aria-hidden="true" />
             </summary>
             <div className="finance-availability-content">
-              <p className="finance-hint">Nesta versão você pode programar visitas e consultar chamados. O registro de valores será disponibilizado em outra entrega; nenhum valor é presumido.</p>
+              <p className="finance-hint">As estimativas por atendimento estão disponíveis na composição contextual. Previsão consolidada, apuração, faturamento e pagamentos ficam para as próximas etapas.</p>
               <div className="finance-metrics">
                 {groups.map(({ title, Icon, text, scope }) => (
                   <article className="finance-metric" key={title}>

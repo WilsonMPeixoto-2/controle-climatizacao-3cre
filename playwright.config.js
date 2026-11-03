@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: 'attendance-estimates.spec.js',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -29,7 +30,8 @@ export default defineConfig({
       VITE_SUPABASE_KEY: '',
       VITE_FIREBASE_API_KEY: '',
       VITE_FIREBASE_PROJECT_ID: '',
-      VITE_FIREBASE_APP_ID: ''
+      VITE_FIREBASE_APP_ID: '',
+      VITE_FINANCE_FIRESTORE_EMULATOR: ''
     }
   },
 });

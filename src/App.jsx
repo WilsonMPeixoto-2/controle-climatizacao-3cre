@@ -73,6 +73,8 @@ import ErrorBoundary from './components/ErrorBoundary.jsx';
 import FinancialOverviewPage from './components/FinancialOverviewPage.jsx';
 import FinancialReferenceCard from './components/FinancialReferenceCard.jsx';
 import SchoolFinancialSummary from './components/SchoolFinancialSummary.jsx';
+import useAttendanceDevelopment from './hooks/useAttendanceDevelopment.js';
+import { parseCapacityBtu } from './domain/financialReference.js';
 // Carregado sob demanda: o mapa (Leaflet + GeoJSON) só baixa quando a aba é aberta
 const OperationalMap = lazy(() => import('./components/OperationalMap.jsx'));
 // Títulos por aba (React 19 hoista <title> para o <head>)
@@ -283,6 +285,9 @@ function rotuloNivel(nivel) {
 
 export default function App() {
   const dossierRef = useRef(null);
+  const attendances = useAttendanceDevelopment();
+  const [attendanceContext, setAttendanceContext] = useState(null);
+  const consumeAttendanceContext = useCallback(() => setAttendanceContext(null), []);
   const [initialCloudConfig] = useState(() => readFirebaseConfig(import.meta.env));
   const firebaseConfigured = isFirebaseConfigured(initialCloudConfig);
 
@@ -939,6 +944,26 @@ export default function App() {
     setTicketSearch(school.unidade_escolar);
     setCurrentTab('tickets');
     window.scrollTo(0, 0);
+  };
+
+  const openAttendanceEstimate = (context) => {
+    setAttendanceContext({ ...context, key: crypto.randomUUID() });
+    setFinanceFilters(previous => ({ ...previous, schoolId: String(context.schoolId || '') }));
+    setShowEditModal(false);
+    setCurrentTab('finance');
+  };
+
+  const estimateTicket = (ticket) => {
+    const school = schools.find(item => matchesSchool(ticket, item));
+    openAttendanceEstimate({
+      schoolId: String(school?.designacao || ''),
+      ticketId: school ? ticket.id_chamado : '',
+      serviceKind: ticket.tipo_demanda === 'Manutenção Preventiva' ? 'preventiva'
+        : ticket.tipo_demanda === 'Manutenção Corretiva' ? 'corretiva' : 'outra',
+      equipmentType: ticket.tipo_aparelho || '',
+      capacityBtu: parseCapacityBtu(ticket.btu_existente),
+      equipmentRef: ticket.local_demanda || ''
+    });
   };
 
   const goToCommunicationForTicket = (ticket, type) => {
@@ -2091,6 +2116,10 @@ export default function App() {
             onOpenTicket={openTicketEdit}
             onOpenSchool={openFinancialReviewSchool}
             onOpenSchoolRequests={openFinancialReviewRequests}
+            attendances={attendances}
+            attendanceContext={attendanceContext}
+            onAttendanceContextConsumed={consumeAttendanceContext}
+            onStartAttendance={openAttendanceEstimate}
           />
         )}
 
@@ -4668,6 +4697,10 @@ export default function App() {
 
                       <SchoolFinancialSummary
                         school={selectedSchool}
+                        attendanceRecords={attendances.records}
+                        attendanceConnection={attendances.connection}
+                        onEstimate={() => openAttendanceEstimate({ schoolId: String(selectedSchool.designacao) })}
+                        onOpenAttendance={record => openAttendanceEstimate({ attendanceId: record.id, schoolId: record.schoolId })}
                         onOpenFinance={() => {
                           setFinanceFilters({ schoolId: String(selectedSchool.designacao), month: '' });
                           setCurrentTab('finance');
@@ -6092,7 +6125,7 @@ export default function App() {
             </div>
 
             <div className="modal-body">
-              <FinancialReferenceCard ticket={editingTicket} compact />
+              <FinancialReferenceCard ticket={editingTicket} compact onEstimate={() => estimateTicket(editingTicket)} />
               {/* Two column detail lookup layout */}
               <div className="ticket-detail-grid">
                 {/* Left side: Editors */}

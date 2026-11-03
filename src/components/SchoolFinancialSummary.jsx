@@ -3,8 +3,11 @@ import { CalendarClock, Wallet } from 'lucide-react';
 import { formatDateBrazilian } from '../lib/logic.js';
 import { readVisitDrafts, VISIT_DRAFT_KEY } from '../domain/schoolVisitPlan.js';
 import { VISIT_DRAFT_UPDATED_EVENT } from '../domain/visitDraftStorage.js';
+import { calculateAttendance, formatMoneyUnits4 } from '../domain/attendanceEstimate.js';
 
-export default function SchoolFinancialSummary({ school, onOpenFinance }) {
+export default function SchoolFinancialSummary({
+  school, onOpenFinance, attendanceRecords = [], attendanceConnection, onEstimate, onOpenAttendance
+}) {
   const [, refreshDraft] = useReducer(version => version + 1, 0);
   useEffect(() => {
     const onStorage = event => {
@@ -18,6 +21,7 @@ export default function SchoolFinancialSummary({ school, onOpenFinance }) {
     };
   }, []);
   let visits = [];
+  const estimates = attendanceRecords.filter(record => record.schoolId === String(school.designacao));
   let draftUnreadable = false;
   try {
     visits = readVisitDrafts(window.localStorage)
@@ -54,8 +58,29 @@ export default function SchoolFinancialSummary({ school, onOpenFinance }) {
         </div>
       )}
       {draftUnreadable && <p className="finance-hint">O rascunho local não pôde ser lido neste navegador.</p>}
-      <p><strong>Valores financeiros: não informados.</strong> Nenhum valor é presumido a partir dos registros de manutenção.</p>
-      <p className="finance-hint">Informações financeiras ainda não registradas para esta escola. O total de aparelhos do cadastro é agregado; não determina valor contratual.</p>
+      <section className="school-attendance-estimates" aria-label="Estimativas de atendimento da escola">
+        <div className="section-header">
+          <h4>Estimativas de atendimento</h4>
+          {onEstimate && <button type="button" className="btn btn-secondary btn-sm no-print" onClick={onEstimate}>Estimar atendimento</button>}
+        </div>
+        {estimates.length ? <ul className="finance-ticket-list">
+          {estimates.map(record => {
+            const estimate = calculateAttendance(record);
+            return <li key={record.id}>
+              <div>
+                <strong>{record.plannedMonth.slice(5)}/{record.plannedMonth.slice(0, 4)} · {estimate.complete
+                  ? formatMoneyUnits4(estimate.totalUnits4)
+                  : estimate.knownSubtotalUnits4 === null ? 'Referência não informada' : `${formatMoneyUnits4(estimate.knownSubtotalUnits4)} · parcial`}</strong>
+                <p className="finance-hint">{record.items.length} {record.items.length === 1 ? 'grupo' : 'grupos'} · {estimate.lines.every(line => line.amountNature === 'incremento_adicional') ? 'acréscimo estimado' : 'estimativa consultiva'} · revisão {record.revision}{estimate.coveragePendingCount > 0 ? ' · cobertura pendente' : ''}</p>
+              </div>
+              {onOpenAttendance && <button type="button" className="btn btn-secondary btn-sm no-print" onClick={() => onOpenAttendance(record)}>Abrir composição</button>}
+            </li>;
+          })}
+        </ul> : <p className="finance-hint">{attendanceConnection?.status === 'ready'
+          ? 'Nenhuma estimativa compartilhada para esta escola.' : 'As estimativas compartilhadas dependem da base de desenvolvimento conectada.'}</p>}
+      </section>
+      <p><strong>{estimates.length ? 'Apuração e pagamentos: não informados.' : 'Valores financeiros: não informados.'}</strong> Nenhum valor é presumido a partir dos registros de manutenção.</p>
+      <p className="finance-hint">{!estimates.length && 'Informações financeiras ainda não registradas para esta escola. '}O total de aparelhos do cadastro é agregado; não determina valor contratual.</p>
     </section>
   );
 }

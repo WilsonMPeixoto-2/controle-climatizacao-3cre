@@ -34,7 +34,7 @@ function loadInitial() {
   }
 }
 
-export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '' }) {
+export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '', onEstimate }) {
   const initial = useState(loadInitial)[0];
   const [rows, setRows] = useState(initial.rows);
   const [storageBlocked, setStorageBlocked] = useState(Boolean(initial.error));
@@ -395,6 +395,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
                   </small>
                 </div>
                 <div className="visit-board-row-actions">
+                  {onEstimate && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onEstimate(entry)} disabled={isSaving} aria-label={`Estimar atendimento da visita de ${school?.unidade_escolar || entry.schoolId}`}>Estimar atendimento</button>}
                   {school && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onOpenSchool(school)} aria-label={`Abrir dossiê de ${school.unidade_escolar}`}><MapPin size={15} aria-hidden="true" /> Escola</button>}
                   {!entry.reportedDate && <button type="button" className="btn btn-primary btn-sm" onClick={() => startEdit(entry, true)} disabled={isSaving} aria-label={`Informar execução da visita de ${school?.unidade_escolar || entry.schoolId}`}>Informar execução</button>}
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(entry)} disabled={isSaving} aria-label={`Editar visita de ${school?.unidade_escolar || entry.schoolId}`}><FilePenLine size={15} aria-hidden="true" /> Editar</button>

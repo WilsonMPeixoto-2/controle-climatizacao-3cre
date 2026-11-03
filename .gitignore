@@ -33,6 +33,9 @@ dist-ssr
 # Playwright
 test-results/
 playwright-report/
+test-results-attendance/
+playwright-report-attendance/
+.firebase-finance/
 recovered_steps.json
 
 # Supabase CLI temp files

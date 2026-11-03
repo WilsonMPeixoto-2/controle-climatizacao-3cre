@@ -6,7 +6,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'playwright-report', 'playwright-report-attendance', 'test-results', 'test-results-attendance']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
