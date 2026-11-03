@@ -12,6 +12,8 @@ on:
       - feat/etapa2-conferencia-escolas
       - feat/etapa2-experiencia-inteligente
       - feat/etapa2-programacao-por-escola
+      - feat/etapa2-acabamento-visual
+      - docs/etapa2-execucao-financeira
 
 permissions:
   contents: read
