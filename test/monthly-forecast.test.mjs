@@ -73,6 +73,8 @@ const record = (id, plannedMonth, items, schoolId = '03.12.001', revision = 1) =
   const result = buildMonthlyForecast(huge, { selectedMonth: '2026-11' });
   assert.equal(result.selected.additionalUnits4, null);
   assert.equal(result.selected.overflow, true);
+  assert.equal(result.selected.overflowByNature.additional, true);
+  assert.equal(result.selected.overflowByNature.pending, false);
 }
 
 {
