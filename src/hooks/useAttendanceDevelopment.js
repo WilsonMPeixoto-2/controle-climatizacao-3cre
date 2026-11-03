@@ -46,12 +46,12 @@ export default function useAttendanceDevelopment() {
   }, [setup]);
 
   const onSave = useCallback(async (content, options) => {
-    if (!setup.gateway) throw new Error('A base compartilhada de desenvolvimento não está conectada.');
+    if (!setup.gateway) throw new Error('O Firestore financeiro não está conectado.');
     return setup.gateway.saveAttendance({ ...content, sessionId }, options);
   }, [setup, sessionId]);
 
   const loadRevisions = useCallback(async id => {
-    if (!setup.gateway) throw new Error('A base compartilhada de desenvolvimento não está conectada.');
+    if (!setup.gateway) throw new Error('O Firestore financeiro não está conectado.');
     return setup.gateway.loadAttendanceRevisions(id);
   }, [setup]);
 
