@@ -382,6 +382,27 @@ test('previsão mensal sincroniza escolas e reprogramação entre sessões sem s
     }
     await page.setViewportSize(originalViewport);
 
+    // O mesmo registro e os mesmos viewports devem preservar legibilidade no tema escuro.
+    await page.evaluate(() => localStorage.setItem('gop_theme', 'dark'));
+    await page.reload();
+    await expect(forecast).toContainText(money('50,0000'));
+    for (const viewport of [
+      { width: 320, height: 800 },
+      { width: 1440, height: 900 },
+      { width: 3840, height: 2160 }
+    ]) {
+      await page.setViewportSize(viewport);
+      const path = testInfo.outputPath('previsao-mensal-' + viewport.width + '-escuro.png');
+      await forecast.screenshot({ path, animations: 'disabled' });
+      await testInfo.attach('previsao-mensal-' + viewport.width + '-escuro-sintetico', { path, contentType: 'image/png' });
+      const controlsBox = await forecast.boundingBox();
+      const inputBox = await forecast.getByLabel('Competência', { exact: true }).boundingBox();
+      const buttonBox = await forecast.getByRole('button', { name: 'Voltar ao mês mais recente' }).boundingBox();
+      expect(inputBox.width).toBeGreaterThanOrEqual(180);
+      expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(controlsBox.x + controlsBox.width + 1);
+    }
+    await page.setViewportSize(originalViewport);
+
     const other = await otherContext.newPage();
     await openApp(other);
     const otherForecast = other.getByRole('region', { name: 'Previsão mensal por competência' });
