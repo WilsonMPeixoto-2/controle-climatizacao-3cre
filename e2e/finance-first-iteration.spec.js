@@ -215,9 +215,16 @@ for (const theme of ['light', 'dark']) {
       // O axe deve medir os tokens finais, não a opacidade intermediária de cardFadeUp.
       await page.locator('.finance-page').evaluate(async element => {
         await document.fonts.ready;
-        await Promise.all(element.getAnimations({ subtree: true })
-          .filter(animation => animation.effect.getTiming().iterations !== Infinity)
-          .map(animation => animation.finished));
+        let running;
+        do {
+          running = element.getAnimations({ subtree: true }).filter(animation =>
+            animation.playState === 'running' && animation.effect.getTiming().iterations !== Infinity);
+          await Promise.all(running.map(animation => animation.finished.catch(error => {
+            // Foco/layout podem substituir uma transição. Aguarde a substituta
+            // antes de medir contraste; cancelamento não é erro da aplicação.
+            if (error.name !== 'AbortError') throw error;
+          })));
+        } while (running.length);
       });
       const scan = await new AxeBuilder({ page }).include('.finance-page').withTags(['wcag2a', 'wcag2aa']).analyze();
       expect(scan.violations).toEqual([]);

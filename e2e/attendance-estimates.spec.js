@@ -100,7 +100,7 @@ test.beforeEach(async () => {
   await seedAttendanceDevelopment({ synthetic: true, reset: true });
 });
 
-test('duas sessões sem login compartilham composições distintas e corrigem o mesmo atendimento com histórico', async ({ page, browser, baseURL }) => {
+test('duas sessões sem login compartilham composições distintas de duas escolas', async ({ page, browser, baseURL }) => {
   const otherContext = await browser.newContext({ baseURL });
   try {
     const other = await otherContext.newPage();
@@ -124,6 +124,27 @@ test('duas sessões sem login compartilham composições distintas e corrigem o 
     const initial = before.find(record => record.schoolId === SCHOOL_A.designacao);
     expect(initial.items.map(item => item.unitPriceUnits4)).toEqual([1234567, 100000]);
     expect(initial.revision).toBe(1);
+    expect(before).toHaveLength(2);
+    expect(await originalRegistries(page)).toEqual(original);
+    expect(await originalRegistries(other)).toEqual(original);
+  } finally {
+    await otherContext.close();
+  }
+});
+
+test('correção mantém o mesmo ID e atualiza o histórico já aberto em outra sessão', async ({ page, browser, baseURL }) => {
+  const otherContext = await browser.newContext({ baseURL });
+  try {
+    await openApp(page);
+    const original = await originalRegistries(page);
+    let form = await startEstimate(page);
+    await fillGroup(form, 1, { description: 'Grupo sintético revisado', quantity: 2, price: '123,4567', source: SOURCE_V1, version: 'fictícia-v1' });
+    await form.getByRole('button', { name: 'Adicionar grupo', exact: true }).click();
+    await fillGroup(form, 2, { quantity: 3, price: '10,0000', source: 'Referência fictícia A2' });
+    await saveEstimate(page);
+    const [initial] = await backendSnapshot();
+    const other = await otherContext.newPage();
+    await openApp(other);
 
     const observingHistory = schoolRecord(page, SCHOOL_A).locator('.attendance-history-content');
     await schoolRecord(page, SCHOOL_A).locator('.attendance-history > summary').click();
@@ -138,7 +159,7 @@ test('duas sessões sem login compartilham composições distintas e corrigem o 
     await expect(observingHistory.getByText(/^Versão 2 ·/)).toBeVisible();
     await expect(observingHistory.getByText(/^Versão 1 ·/)).toBeVisible();
     await other.reload();
-    await expect(records(other)).toHaveCount(2);
+    await expect(records(other)).toHaveCount(1);
     const updated = schoolRecord(other, SCHOOL_A);
     await updated.locator('.attendance-composition > summary').click();
     await expect(updated).toContainText('3 ×');
@@ -153,7 +174,7 @@ test('duas sessões sem login compartilham composições distintas e corrigem o 
     await expect(history).toContainText('fictícia-v1');
     await expect(history).toContainText('fictícia-v2');
     const after = await backendSnapshot();
-    expect(after).toHaveLength(2);
+    expect(after).toHaveLength(1);
     const corrected = after.find(record => record.schoolId === SCHOOL_A.designacao);
     expect(corrected.id).toBe(initial.id);
     expect(corrected.revision).toBe(2);
