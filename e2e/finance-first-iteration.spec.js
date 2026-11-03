@@ -77,7 +77,8 @@ test('financeiro usa recorte real, preserva ausências e retorna à ficha existe
   await finance(page);
   await expect(page).toHaveTitle(/Gestão Financeira/);
   await expect(nav(page, 'Gestão Financeira')).toHaveCount(1);
-  await expect(page.locator('.finance-missing')).toHaveText(Array(4).fill('Não informado'));
+  await expect(page.locator('.finance-missing')).toHaveText(Array(3).fill('Não informado'));
+  await expect(page.getByRole('region', { name: 'Previsão mensal por competência' })).toBeVisible();
   await expect(page.locator('.finance-page')).not.toContainText('R$');
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
   await page.getByLabel('Escola', { exact: true }).selectOption('900001');
