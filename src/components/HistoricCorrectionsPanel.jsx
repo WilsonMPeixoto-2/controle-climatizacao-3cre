@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, ClipboardCheck, FileSpreadsheet, Info, RotateCcw } from 'lucide-react';
+import { ArrowUpRight, FileSpreadsheet, Info, RotateCcw } from 'lucide-react';
 import { aggregateHistoricCorrections, HISTORIC_CORRECTIVE_SOURCE } from '../domain/historicCorrections.js';
 import '../styles/historic-corrections.css';
 
