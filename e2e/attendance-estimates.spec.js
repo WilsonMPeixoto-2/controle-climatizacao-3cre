@@ -408,6 +408,7 @@ test('duas abas explicam totais, preservam filtros e sincronizam a reprogramaç�
     await expect(bar).toHaveAttribute('aria-label', /738,5985.*236,8701/);
 
     for (const theme of ['light', 'dark']) {
+      await page.setViewportSize({ width: 320, height: 800 });
       await page.evaluate(value => localStorage.setItem('gop_theme', value), theme);
       await page.reload();
       await monthField(page).fill(MONTH);
@@ -416,7 +417,9 @@ test('duas abas explicam totais, preservam filtros e sincronizam a reprogramaç�
         { width: 320, height: 800 }, { width: 1440, height: 900 }, { width: 3840, height: 2160 }
       ]) {
         await page.setViewportSize(viewport);
-        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+          message: `Largura da página em ${viewport.width}px, tema ${theme}`
+        }).toBeLessThanOrEqual(viewport.width + 1);
         const path = testInfo.outputPath('previsao-' + viewport.width + '-' + theme + '.png');
         await page.locator('.finance-workspace').screenshot({ path, animations: 'disabled' });
         await testInfo.attach('Previsão com dados sintéticos', { path, contentType: 'image/png' });
