@@ -39,7 +39,7 @@ async function openConsultation(page, name) {
   const section = page.locator('.finance-related-section').filter({
     has: page.locator(':scope > summary').filter({ hasText: name })
   });
-  if (!(await section.getAttribute('open') === '')) await section.locator(':scope > summary').click();
+  if (await section.getAttribute('open') === null) await section.locator(':scope > summary').click();
 }
 
 async function finance(page, section = 'Programação de visitas') {
@@ -242,7 +242,7 @@ test('registro continua possível sem tipo conhecido, BTUs ou tabela de preços'
 
 test('ficha recebe e contém o foco, abre referência pelo teclado e devolve foco ao fechar', async ({ page }) => {
   await seed(page);
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   const origin = page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9001' });
   await origin.click();
   const dialog = page.getByRole('dialog');
@@ -268,14 +268,20 @@ for (const theme of ['light', 'dark']) {
       page.on('pageerror', error => errors.push(error.message));
       page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
       await seed(page, theme);
-      await finance(page);
-      await page.getByLabel('Escola', { exact: true }).focus();
+      await finance(page, null);
+      const overview = page.getByRole('tab', { name: 'Visão financeira', exact: true });
+      await overview.focus();
+      await page.keyboard.press('ArrowRight');
+      await expect(attendanceTab(page)).toBeFocused();
+      const historicToggle = page.locator('.finance-related-section > summary').filter({ hasText: 'Histórico de corretivas' });
+      await historicToggle.focus();
+      await page.keyboard.press('Enter');
       await page.keyboard.press('Tab');
-      // A nova comparação de meses é navegável antes do formulário de programação;
-      // não se deve fixar a ordem antiga de foco após acrescentar controles legítimos.
       await expect(page.getByRole('region', {
         name: 'Histórico de corretivas de setembro e outubro'
       }).getByRole('button', { name: /^Filtrar setembro de 2026/ })).toBeFocused();
+      await historicToggle.click();
+      await openConsultation(page, 'Programação de visitas');
       // O mês da visita e a ação principal continuam alcançáveis pelo teclado.
       await page.locator('#visit-board-month').focus();
       await expect(page.locator('#visit-board-month')).toBeFocused();
@@ -283,6 +289,7 @@ for (const theme of ['light', 'dark']) {
       await page.keyboard.press('Enter');
       await expect(page.getByRole('form', { name: 'Adicionar programação' })).toBeVisible();
       await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+      await openConsultation(page, 'Chamados e conferência por escola');
       await page.getByLabel('Mês de abertura dos chamados').fill('2030-01');
       await page.getByRole('button', { name: 'Limpar mês' }).focus();
       await page.keyboard.press('Enter');

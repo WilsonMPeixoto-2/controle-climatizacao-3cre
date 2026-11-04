@@ -9,7 +9,7 @@ import {
 } from '../domain/attendanceEstimate.js';
 import { currentForecastMonth } from '../domain/monthlyForecast.js';
 import { parseCapacityBtu } from '../domain/financialReference.js';
-import { matchesSchool } from '../lib/logic.js';
+import { matchesSchool, normalizeString } from '../lib/logic.js';
 import '../styles/attendance-estimates.css';
 
 const SERVICE_LABELS = { preventiva: 'Preventiva', corretiva: 'Corretiva', outra: 'Outra atividade' };
@@ -268,7 +268,7 @@ export default function AttendanceEstimates({
   const selectedSchool = schoolById.get(String(selectedSchoolId));
   const formSchool = form ? schoolById.get(form.schoolId) : null;
   const schoolTickets = formSchool ? tickets.filter(ticket => matchesSchool(ticket, formSchool)) : [];
-  const searchText = search.trim().toLocaleLowerCase('pt-BR');
+  const searchText = normalizeString(search);
   const visibleRows = rows.filter(row => {
     if (status === 'additional' && !(row.additionalUnits4 > 0 || row.overflowByNature?.additional)) return false;
     if (status === 'pending' && !(row.coveragePendingCount > 0)) return false;
@@ -276,7 +276,7 @@ export default function AttendanceEstimates({
     const { record } = row;
     return [record.schoolId, schoolById.get(String(record.schoolId))?.unidade_escolar,
       record.cycle, ...(Array.isArray(record.items) ? record.items.map(item => item?.description) : [])]
-      .some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(searchText));
+      .some(value => normalizeString(value).includes(searchText));
   }).toSorted((a, b) => String(b.record.updatedAtISO || b.record.updatedAt || '').localeCompare(String(a.record.updatedAtISO || a.record.updatedAt || '')));
   const scope = JSON.stringify([month, selectedSchoolId, status, searchText]);
   const pageCount = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
