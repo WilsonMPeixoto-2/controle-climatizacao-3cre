@@ -9,6 +9,8 @@ import {
 } from '../domain/attendanceEstimate.js';
 import { currentForecastMonth } from '../domain/monthlyForecast.js';
 import { parseCapacityBtu } from '../domain/financialReference.js';
+import { CRE03_CATALOG_ID, findCre03TrItem, applyCre03TrPriceToDraft, createValidatedCre03Catalog } from '../domain/cre03TrCatalog.js';
+import { CRE03_SIGNED_PRICE_SCHEDULE } from '../data/cre03SignedPriceSchedule.js';
 import { matchesSchool, normalizeString } from '../lib/logic.js';
 import '../styles/attendance-estimates.css';
 
@@ -41,13 +43,22 @@ function emptyItem(values = {}) {
   };
 }
 
+function withAutomaticTrPrices(form) {
+  return {
+    ...form,
+    items: form.items.map(item => applyCre03TrPriceToDraft(
+      item, form.serviceKind, CRE03_SIGNED_PRICE_SCHEDULE
+    ))
+  };
+}
+
 function newForm(schoolId = '', context = null, tickets = [], school = null) {
   const ticket = context?.ticketId
     ? tickets.find(item => String(item.id_chamado) === String(context.ticketId) && matchesSchool(item, school))
     : null;
   const demand = String(ticket?.tipo_demanda || '').toLocaleLowerCase('pt-BR');
   const plannedDate = context?.plannedDate || '';
-  return {
+  return withAutomaticTrPrices({
     schoolId, plannedMonth: plannedDate.slice(0, 7) || context?.plannedMonth || currentForecastMonth(), plannedDate,
     serviceKind: Object.hasOwn(SERVICE_LABELS, context?.serviceKind || '') ? context.serviceKind
       : demand.includes('corretiva') ? 'corretiva' : demand.includes('preventiva') ? 'preventiva' : ticket ? 'outra' : 'preventiva',
@@ -60,7 +71,7 @@ function newForm(schoolId = '', context = null, tickets = [], school = null) {
       capacityBtu: context?.capacityBtu ?? parseCapacityBtu(ticket?.btu_existente) ?? '',
       equipmentRef: context?.equipmentRef || ''
     })]
-  };
+  });
 }
 
 function recordForm(record) {
@@ -365,15 +376,35 @@ export default function AttendanceEstimates({
 
   function updateField(name, value) {
     if (savingRef.current) return;
-    setForm(previous => ({
-      ...previous, [name]: value,
-      ...(name === 'schoolId' ? { ticketIds: [], visitId: '' } : {})
-    }));
+    setForm(previous => {
+      const next = {
+        ...previous, [name]: value,
+        ...(name === 'schoolId' ? { ticketIds: [], visitId: '' } : {})
+      };
+      return name === 'serviceKind' ? withAutomaticTrPrices(next) : next;
+    });
   }
 
   function updateItem(id, name, value) {
     if (savingRef.current) return;
-    setForm(previous => ({ ...previous, items: previous.items.map(item => item.id === id ? { ...item, [name]: value } : item) }));
+    setForm(previous => ({
+      ...previous,
+      items: previous.items.map(item => {
+        if (item.id !== id) return item;
+        const updated = { ...item, [name]: value };
+        // Preço digitado pelo responsável deixa de ser tratado como preço automático.
+        if (name === 'priceText' && item.catalogId === CRE03_CATALOG_ID
+          && item.referenceNature === 'contratual_informada') {
+          return {
+            ...updated, unitPriceUnits4: null, sourceRef: '',
+            referenceNature: 'informada', catalogId: '', categoryCode: '', referenceVersion: ''
+          };
+        }
+        return name === 'equipmentType' || name === 'capacityBtu'
+          ? applyCre03TrPriceToDraft(updated, previous.serviceKind, CRE03_SIGNED_PRICE_SCHEDULE)
+          : updated;
+      })
+    }));
   }
 
   function addItem() {
@@ -478,7 +509,9 @@ export default function AttendanceEstimates({
           <div className="attendance-editor-heading">
             <div>
               <h4 ref={editorHeadingRef} id={editorTitleId} tabIndex={-1}>{editing ? 'Editar estimativa de atendimento' : 'Estimar atendimento'}</h4>
-              <p>Referência manual identificada. Não há catálogo oficial carregado.</p>
+              <p>{createValidatedCre03Catalog(CRE03_SIGNED_PRICE_SCHEDULE)
+                ? 'Valor de referência do TR preenchido automaticamente quando há faixa validada.'
+                : 'O TR identifica as faixas técnicas; preços unitários dependem da planilha contratual preenchida.'}</p>
             </div>
             <button type="button" className="attendance-icon-button" aria-label="Fechar edição da estimativa" onClick={closeEditor} disabled={isSaving}><X size={19} aria-hidden="true" /></button>
           </div>
@@ -547,6 +580,7 @@ export default function AttendanceEstimates({
               {form.items.map((item, index) => {
                 const itemId = name => fieldId(item.id + '-' + name);
                 const sourceRequired = item.priceText.trim() !== '';
+                const trItem = findCre03TrItem(item.equipmentType, item.capacityBtu);
                 return (
                   <fieldset className="attendance-group" key={item.id}>
                     <legend>Grupo {index + 1}</legend>
@@ -617,6 +651,12 @@ export default function AttendanceEstimates({
                           <input id={itemId('version')} className="form-control" value={item.referenceVersion} maxLength={120} placeholder="Edição ou data da fonte" onChange={event => updateItem(item.id, 'referenceVersion', event.target.value)} />
                         </div>
                         {item.catalogId && <p className="attendance-context-note">Catálogo registrado: {item.catalogId}{item.categoryCode ? ' · categoria ' + item.categoryCode : ''}.</p>}
+                        {trItem && <p className="attendance-context-note" role="status">
+                          Enquadramento do TR CRE03: item {trItem.number} · {trItem.type} · {Number(item.capacityBtu).toLocaleString('pt-BR')} BTU.
+                          {item.catalogId === CRE03_CATALOG_ID
+                            ? ' Preço unitário contratual referenciado automaticamente.'
+                            : ' Preço unitário pendente de planilha contratual validada.'}
+                        </p>}
                         <p className="attendance-context-note">O atendimento pode ser estimado sem cadastro individual dos aparelhos. Tipo e BTU não determinam cobrança.</p>
                       </div>
                     </details>
