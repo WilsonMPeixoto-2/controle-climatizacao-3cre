@@ -93,7 +93,7 @@ export function applyCre03TrPriceToDraft(item, serviceKind, schedule) {
 
   const capacity = parseCapacityBtu(base.capacityBtu);
   const reference = resolveAttendanceReference({
-    ...base, capacityBtu: capacity, unitPriceUnits4: null
+    ...base, capacityBtu: capacity, quantity: null, unitPriceUnits4: null
   }, catalog, serviceKind);
   if (reference.unitPriceUnits4 === null) return base;
   return {
