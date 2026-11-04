@@ -98,7 +98,7 @@ export function applyCre03TrPriceToDraft(item, serviceKind, schedule) {
   if (reference.unitPriceUnits4 === null) return base;
   return {
     ...base,
-    priceText: formatMoneyUnits4(reference.unitPriceUnits4).replace(/^R\\$\\s*/, ''),
+    priceText: formatMoneyUnits4(reference.unitPriceUnits4).replace(/^R\$\s*/, ''),
     unitPriceUnits4: reference.unitPriceUnits4,
     sourceRef: reference.sourceRef,
     referenceNature: reference.referenceNature,
