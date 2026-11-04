@@ -14,12 +14,34 @@ const MONTH = '2026-11';
 const money = value => new RegExp('R\\$\\s*' + value.replaceAll('.', '\\.').replaceAll(',', '\\,'));
 const estimates = page => page.getByRole('region', { name: 'Estimativas de atendimento', exact: true });
 const editor = page => page.getByRole('form', { name: /^(Estimar atendimento|Editar estimativa de atendimento)$/ });
-const records = page => estimates(page).getByRole('list', { name: /Atendimentos/ }).getByRole('listitem');
-const schoolRecord = (page, school) => records(page).filter({ has: page.getByRole('heading', { name: school.unidade_escolar, exact: true }) });
+const records = page => estimates(page).locator('tbody tr');
+const schoolRecord = (page, school) => records(page).filter({ has: page.getByRole('button', { name: 'Abrir atendimento de ' + school.unidade_escolar, exact: false }) });
+const monthField = page => page.getByLabel('Competência', { exact: true });
+const tab = (page, name) => page.getByRole('tab', { name, exact: true });
+
+async function showEstimates(page) {
+  await tab(page, 'Atendimentos').click();
+  await monthField(page).fill(MONTH);
+  await expect(estimates(page).getByRole('status').filter({ hasText: 'Firestore financeiro conectado' })).toBeVisible();
+}
+
+async function openRecord(page, row) {
+  await row.getByRole('button', { name: /^Abrir atendimento de/ }).click();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer).toBeVisible();
+  return drawer;
+}
+
+async function editRecord(page, row) {
+  const drawer = await openRecord(page, row);
+  await drawer.getByRole('button', { name: 'Editar atendimento', exact: true }).click();
+  return editor(page);
+}
+
 const group = (form, number = 1) => form.getByRole('group', { name: 'Grupo ' + number, exact: true });
 const nav = (page, name) => page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('button', { name, exact: true });
 
-async function openApp(page, theme = 'light') {
+async function openApp(page, theme = 'light', openEstimates = true) {
   await page.context().route('https://va.vercel-scripts.com/**', route => route.fulfill({ contentType: 'application/javascript', body: '' }));
   await page.context().route('https://tile.openstreetmap.org/**', route => route.fulfill({
     contentType: 'image/png',
@@ -35,11 +57,11 @@ async function openApp(page, theme = 'light') {
   }, { schools: attendanceSchools, tickets: attendanceTickets, theme });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Gestão Financeira', exact: true })).toBeVisible();
-  await expect(estimates(page).getByRole('status').filter({ hasText: 'Firestore financeiro conectado' })).toBeVisible();
+  if (openEstimates) await showEstimates(page);
 }
 
 async function startEstimate(page, school = SCHOOL_A) {
-  await estimates(page).getByRole('button', { name: 'Estimar atendimento', exact: true }).click();
+  await estimates(page).getByRole('button', { name: 'Nova estimativa', exact: true }).click();
   const form = editor(page);
   await form.getByLabel('Escola', { exact: true }).selectOption(school.designacao);
   await form.getByLabel('Mês previsto', { exact: true }).fill(MONTH);
@@ -118,6 +140,7 @@ test('duas sessões sem login compartilham composições distintas de duas escol
     await fillGroup(form, 1, { description: 'Grupo sintético B', quantity: 2, price: '77,7000', source: 'Orçamento fictício B', nature: 'informada' });
     await saveEstimate(other);
     await page.reload();
+    await showEstimates(page);
     await expect(records(page)).toHaveCount(2);
     await expect(schoolRecord(page, SCHOOL_B)).toContainText(money('155,4000'));
     const before = await backendSnapshot();
@@ -146,21 +169,23 @@ test('correção mantém o mesmo ID e atualiza o histórico já aberto em outra 
     const other = await otherContext.newPage();
     await openApp(other);
 
-    const observingHistory = schoolRecord(page, SCHOOL_A).locator('.attendance-history-content');
-    await schoolRecord(page, SCHOOL_A).locator('.attendance-history > summary').click();
+    const observingDrawer = await openRecord(page, schoolRecord(page, SCHOOL_A));
+    const observingHistory = observingDrawer.locator('.attendance-history-content');
+    await observingDrawer.locator('.attendance-history > summary').click();
     await expect(observingHistory.getByText(/^Versão 1 ·/)).toBeVisible();
     await expect(observingHistory.getByText(/^Versão 2 ·/)).toHaveCount(0);
 
-    await schoolRecord(other, SCHOOL_A).getByRole('button', { name: /^Abrir e editar atendimento de/ }).click();
+    await editRecord(other, schoolRecord(other, SCHOOL_A));
     form = editor(other);
     await fillGroup(form, 1, { quantity: 3, source: SOURCE_V2, version: 'fictícia-v2' });
     await saveEstimate(other, 2);
-    await expect(schoolRecord(page, SCHOOL_A)).toContainText(money('400,3701'));
+    await expect(observingDrawer).toContainText(money('400,3701'));
     await expect(observingHistory.getByText(/^Versão 2 ·/)).toBeVisible();
     await expect(observingHistory.getByText(/^Versão 1 ·/)).toBeVisible();
     await other.reload();
+    await showEstimates(other);
     await expect(records(other)).toHaveCount(1);
-    const updated = schoolRecord(other, SCHOOL_A);
+    const updated = await openRecord(other, schoolRecord(other, SCHOOL_A));
     await updated.locator('.attendance-composition > summary').click();
     await expect(updated).toContainText('3 ×');
     await expect(updated).toContainText(SOURCE_V2);
@@ -193,9 +218,11 @@ test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e 
   let form = await startEstimate(page);
   await fillGroup(form, 1, { description: 'Preço ausente — teste fictício', quantity: 2, price: '', nature: 'nao_informada' });
   await saveEstimate(page);
-  await expect(records(page).first()).toContainText('Estimativa parcial · parcela conhecida');
-  await expect(records(page).first()).toContainText('Não informada');
-  await expect(records(page).first()).not.toContainText(money('0,0000'));
+  const absentDrawer = await openRecord(page, records(page).first());
+  await expect(absentDrawer).toContainText('Estimativa parcial · parcela conhecida');
+  await expect(absentDrawer).toContainText('Não informada');
+  await expect(absentDrawer).not.toContainText(money('0,0000'));
+  await page.keyboard.press('Escape');
 
   form = await startEstimate(page);
   await fillGroup(form, 1, { description: 'Parcela conhecida fictícia', quantity: 2, price: '25,0000', source: 'Preço fictício parcial', nature: 'informada' });
@@ -204,7 +231,9 @@ test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e 
   await expect(form.getByRole('region', { name: 'Prévia da estimativa' })).toContainText(money('50,0000'));
   await expect(form.getByRole('region', { name: 'Prévia da estimativa' })).toContainText('1 grupo com informação pendente');
   await saveEstimate(page);
-  await expect(records(page).first()).toContainText('Estimativa parcial');
+  const partialDrawer = await openRecord(page, records(page).first());
+  await expect(partialDrawer).toContainText('Estimativa parcial');
+  await page.keyboard.press('Escape');
 
   form = await startEstimate(page);
   await form.getByLabel('Atividade', { exact: true }).selectOption('corretiva');
@@ -229,7 +258,7 @@ test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e 
   await form.getByRole('checkbox', { name: /GOP-AR-2026-9002/ }).check();
   await saveEstimate(page);
   await expect(records(page)).toHaveCount(3);
-  const covered = records(page).first();
+  const covered = await openRecord(page, records(page).first());
   await expect(covered).toContainText(money('0,0000'));
   await expect(covered).not.toContainText('Estimativa parcial');
   await covered.locator('.attendance-composition > summary').click();
@@ -248,6 +277,7 @@ test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e 
   expect(coveredData.items[2].sourceRef).toBe('Preço fictício nominal');
   expect(coveredData.items[2].coverageSourceRef).toBe('Decisão de cobertura fictícia separada');
   expect(coveredData.items.every(item => item.capacityBtu === null)).toBe(true);
+  await page.keyboard.press('Escape');
   const summary = await chooseSchool(page, SCHOOL_A);
   await expect(summary).toContainText('Apuração e pagamentos: não informados.');
   await expect(summary).toContainText('Nenhum valor é presumido a partir dos registros de manutenção.');
@@ -257,6 +287,7 @@ test('ausência, parcela conhecida, zero e corretiva incluída mantêm origem e 
 test('chamado e programação iniciam a estimativa contextual e mostram seus valores no dossiê sem alterar cadastros', async ({ page }) => {
   await openApp(page);
   const original = await originalRegistries(page);
+  await page.locator('.finance-related-section > summary').filter({ hasText: 'Chamados e conferência por escola' }).click();
   await page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9001', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.locator('.finance-reference > summary').click();
@@ -277,6 +308,7 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await saveEstimate(page);
 
   await page.locator('#finance-school').selectOption(SCHOOL_B.designacao);
+  await page.locator('.finance-related-section > summary').filter({ hasText: 'Programação de visitas' }).click();
   const board = page.getByRole('region', { name: 'Planejamento por escola', exact: true });
   await board.getByRole('button', { name: 'Programar visita', exact: true }).click();
   await expect(board.getByLabel('Unidade escolar', { exact: true })).toHaveValue(SCHOOL_B.designacao);
@@ -319,9 +351,9 @@ test('conflito entre sessões preserva a edição local e permite reabrir a revi
     await saveEstimate(page);
     const other = await otherContext.newPage();
     await openApp(other);
-    await schoolRecord(other, SCHOOL_A).getByRole('button', { name: /^Abrir e editar atendimento de/ }).click();
+    await editRecord(other, schoolRecord(other, SCHOOL_A));
     await fillGroup(editor(other), 1, { quantity: 9, source: 'Edição local fictícia ainda não salva' });
-    await schoolRecord(page, SCHOOL_A).getByRole('button', { name: /^Abrir e editar atendimento de/ }).click();
+    await editRecord(page, schoolRecord(page, SCHOOL_A));
     await fillGroup(editor(page), 1, { quantity: 4, source: SOURCE_V2 });
     await saveEstimate(page, 2);
     form = editor(other);
@@ -343,90 +375,93 @@ test('conflito entre sessões preserva a edição local e permite reabrir a revi
   }
 });
 
-test('previsão mensal sincroniza escolas e reprogramação entre sessões sem somar natureza nominal', async ({ page, browser, baseURL }, testInfo) => {
+test('duas abas explicam totais, preservam filtros e sincronizam a reprogramação', async ({ page, browser, baseURL }, testInfo) => {
   const otherContext = await browser.newContext({ baseURL });
   try {
-    await openApp(page);
+    await openApp(page, 'light', false);
     const forecast = page.getByRole('region', { name: 'Previsão mensal por competência' });
-    await expect(forecast).toBeVisible();
-    await expect(forecast).toContainText('Nenhuma estimativa nesta competência');
+    await expect(tab(page, 'Visão financeira')).toHaveAttribute('aria-selected', 'true');
+    await expect(forecast).toContainText('Nenhuma estimativa nas seis competências');
+    await expect(estimates(page)).toBeHidden();
+    await tab(page, 'Visão financeira').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(tab(page, 'Atendimentos')).toBeFocused();
+    await expect(forecast).toBeHidden();
 
-    let form = await startEstimate(page);
+    const form = await startEstimate(page);
     await fillGroup(form, 1, {
-      description: 'Adicional sintético de novembro',
-      quantity: 2, price: '25,0000', source: 'Preço sintético E2',
-      coverage: 'adicional', coverageSource: 'Cobertura sintética informada'
+      description: 'Grupo coberto HML-E2E-7F3C', quantity: 4, price: '125,4321',
+      source: 'Preço fictício', coverage: 'incluido', coverageSource: 'Cobertura fictícia'
+    });
+    await form.getByRole('button', { name: 'Adicionar grupo', exact: true }).click();
+    await fillGroup(form, 2, {
+      description: 'Grupo adicional HML-E2E-7F3C', quantity: 3, price: '78,9567',
+      source: 'Preço fictício', coverage: 'adicional', coverageSource: 'Cobertura fictícia'
     });
     await saveEstimate(page);
-    await expect(forecast).toContainText(money('50,0000'));
-    // Evidência visual real do componente preenchido, usando dados sintéticos do backend.
-    // Cada viewport preserva a mesma estimativa e o mesmo tema.
-    const originalViewport = page.viewportSize();
-    for (const viewport of [
-      { width: 320, height: 800 },
-      { width: 1440, height: 900 },
-      { width: 3840, height: 2160 }
-    ]) {
-      await page.setViewportSize(viewport);
-      // A ausência de overflow global não descarta corte interno de controles ou rótulos.
-      const forecastBox = await forecast.boundingBox();
-      const monthInput = await forecast.getByLabel('Competência', { exact: true }).boundingBox();
-      const resetButton = await forecast.getByRole('button', { name: 'Voltar ao mês mais recente' }).boundingBox();
-      expect(monthInput.width).toBeGreaterThanOrEqual(180);
-      expect(resetButton.x + resetButton.width).toBeLessThanOrEqual(forecastBox.x + forecastBox.width + 1);
-      await expect(forecast.locator('.forecast-month-count')).toHaveText(['0', '0', '0', '0', '0', '1']);
-      const path = testInfo.outputPath('previsao-mensal-' + viewport.width + '-claro.png');
-      await forecast.screenshot({ path, animations: 'disabled' });
-      await testInfo.attach('previsao-mensal-' + viewport.width + '-dados-sinteticos', { path, contentType: 'image/png' });
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-    }
-    await page.setViewportSize(originalViewport);
+    await tab(page, 'Visão financeira').click();
+    const nominal = forecast.getByRole('button', { name: /^Referência nominal/ });
+    const additional = forecast.getByRole('button', { name: /^Acréscimo informado/ });
+    await expect(nominal).toContainText(money('738,5985'));
+    await expect(additional).toContainText(money('236,8701'));
+    const bar = forecast.getByRole('button', { name: /^Ver atendimentos de novembro de 2026/ });
+    await expect(bar).toHaveAttribute('aria-label', /738,5985.*236,8701/);
 
-    // O mesmo registro e os mesmos viewports devem preservar legibilidade no tema escuro.
-    await page.evaluate(() => localStorage.setItem('gop_theme', 'dark'));
-    await page.reload();
-    await expect(forecast).toContainText(money('50,0000'));
-    for (const viewport of [
-      { width: 320, height: 800 },
-      { width: 1440, height: 900 },
-      { width: 3840, height: 2160 }
-    ]) {
-      await page.setViewportSize(viewport);
-      const path = testInfo.outputPath('previsao-mensal-' + viewport.width + '-escuro.png');
-      await forecast.screenshot({ path, animations: 'disabled' });
-      await testInfo.attach('previsao-mensal-' + viewport.width + '-escuro-sintetico', { path, contentType: 'image/png' });
-      const controlsBox = await forecast.boundingBox();
-      const inputBox = await forecast.getByLabel('Competência', { exact: true }).boundingBox();
-      await expect(forecast.getByLabel('Competência', { exact: true })).toHaveCSS('color-scheme', 'dark');
-      const buttonBox = await forecast.getByRole('button', { name: 'Voltar ao mês mais recente' }).boundingBox();
-      expect(inputBox.width).toBeGreaterThanOrEqual(180);
-      expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(controlsBox.x + controlsBox.width + 1);
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(value => localStorage.setItem('gop_theme', value), theme);
+      await page.reload();
+      await monthField(page).fill(MONTH);
+      await expect(nominal).toContainText(money('738,5985'));
+      for (const viewport of [
+        { width: 320, height: 800 }, { width: 1440, height: 900 }, { width: 3840, height: 2160 }
+      ]) {
+        await page.setViewportSize(viewport);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+        const path = testInfo.outputPath('previsao-' + viewport.width + '-' + theme + '.png');
+        await page.locator('.finance-workspace').screenshot({ path, animations: 'disabled' });
+        await testInfo.attach('Previsão com dados sintéticos', { path, contentType: 'image/png' });
+      }
     }
-    await page.setViewportSize(originalViewport);
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await bar.click();
+    await expect(monthField(page)).toHaveValue(MONTH);
+    await expect(tab(page, 'Atendimentos')).toHaveAttribute('aria-selected', 'true');
+    await expect(estimates(page).getByRole('heading', { name: 'Estimativas de atendimento' })).toBeFocused();
+    await estimates(page).getByRole('searchbox').fill('Sem correspondência');
+    await expect(records(page)).toHaveCount(0);
+    await tab(page, 'Visão financeira').click();
+    await forecast.getByRole('button', { name: new RegExp(SCHOOL_A.unidade_escolar) }).click();
+    await expect(page.locator('#finance-school')).toHaveValue(SCHOOL_A.designacao);
+    await expect(estimates(page).getByRole('button', { name: 'Com acréscimo', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    const row = schoolRecord(page, SCHOOL_A);
+    await expect(row).toContainText(money('738,5985'));
+    await expect(row).toContainText(money('236,8701'));
+    const drawer = await openRecord(page, row);
+    await drawer.locator('.attendance-composition > summary').click();
+    await expect(drawer).toContainText('4 × R$ 125,4321 = R$ 501,7284');
+    await expect(drawer).toContainText('3 × R$ 78,9567 = R$ 236,8701');
+    await drawer.locator('.attendance-history > summary').click();
+    await expect(drawer.getByText(/^Versão 1 ·/).last()).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(row.getByRole('button')).toBeFocused();
 
     const other = await otherContext.newPage();
-    await openApp(other);
+    await openApp(other, 'light', false);
+    await monthField(other).fill(MONTH);
     const otherForecast = other.getByRole('region', { name: 'Previsão mensal por competência' });
-    await expect(otherForecast).toContainText(money('50,0000'));
-    await expect(otherForecast.getByRole('button', { name: /^Abrir composição de/ })).toHaveCount(1);
-
-    await forecast.getByRole('button', { name: /^Abrir composição de/ }).click();
-    form = editor(page);
-    await expect(form.getByRole('heading', { name: 'Editar estimativa de atendimento' })).toBeVisible();
-    await form.getByLabel('Mês previsto', { exact: true }).fill('2026-12');
-    await fillGroup(form, 1, { quantity: 3, source: 'Preço sintético E2 atualizado' });
+    await expect(otherForecast).toContainText(money('738,5985'));
+    const edit = await editRecord(page, row);
+    await edit.getByLabel('Mês previsto', { exact: true }).fill('2026-12');
+    await fillGroup(edit, 2, { quantity: 4, source: 'Preço sintético atualizado' });
     await saveEstimate(page, 2);
-
-    await otherForecast.getByLabel('Competência', { exact: true }).fill('2026-11');
-    await expect(otherForecast).toContainText('Nenhuma estimativa nesta competência');
-    await otherForecast.getByLabel('Competência', { exact: true }).fill('2026-12');
-    await expect(otherForecast).toContainText(money('75,0000'));
-    await expect(otherForecast.getByRole('button', { name: /^Abrir composição de/ })).toHaveCount(1);
-
+    await expect(monthField(page)).toHaveValue('2026-12');
+    await expect(otherForecast).toContainText('0 atendimentos · 0 escolas');
+    await monthField(other).fill('2026-12');
+    await expect(otherForecast).toContainText(money('817,5552'));
+    await expect(otherForecast).toContainText(money('315,8268'));
     const backend = await backendSnapshot();
     expect(backend).toHaveLength(1);
-    expect(backend[0].plannedMonth).toBe('2026-12');
-    expect(backend[0].revision).toBe(2);
     expect(backend[0].revisions.map(item => item.plannedMonth)).toEqual(['2026-11', '2026-12']);
   } finally {
     await otherContext.close();
@@ -437,7 +472,7 @@ async function filledLayout(page) {
   let form = await startEstimate(page);
   await fillGroup(form, 1, { description: 'Serviço fictício com nome extenso para conferir a composição', quantity: 2, price: '123,4567', source: SOURCE_V1 });
   await saveEstimate(page);
-  const start = estimates(page).getByRole('button', { name: 'Estimar atendimento', exact: true });
+  const start = estimates(page).getByRole('button', { name: 'Nova estimativa', exact: true });
   await start.focus();
   await page.keyboard.press('Enter');
   form = editor(page);
@@ -485,7 +520,7 @@ for (const theme of ['light', 'dark']) {
     expect(scan.violations).toEqual([]);
     await capture(page, testInfo, 'attendance-320-' + theme);
     await editor(page).getByRole('button', { name: 'Cancelar', exact: true }).click();
-    await expect(estimates(page).getByRole('button', { name: 'Estimar atendimento', exact: true })).toBeFocused();
+    await expect(estimates(page).getByRole('button', { name: 'Nova estimativa', exact: true })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(editor(page)).toBeVisible();
   });
@@ -501,8 +536,9 @@ test('desktop ' + viewport.width + 'px exibe registro e editor preenchidos nos d
   await captureContext(page, testInfo, 'attendance-' + viewport.width + '-light');
   await page.evaluate(() => localStorage.setItem('gop_theme', 'dark'));
   await page.reload();
+  await showEstimates(page);
   await expect(records(page)).toHaveCount(1);
-  await estimates(page).getByRole('button', { name: 'Estimar atendimento', exact: true }).click();
+  await estimates(page).getByRole('button', { name: 'Nova estimativa', exact: true }).click();
   const form = editor(page);
   await form.getByLabel('Escola', { exact: true }).selectOption(SCHOOL_B.designacao);
   await fillGroup(form, 1, { description: 'Grupo fictício em monitor amplo', quantity: 3, price: '10,0000', source: 'Origem fictícia de teste em monitor amplo' });

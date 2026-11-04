@@ -1,12 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import {
-  Calculator, CheckCheck, ChevronDown, FilePenLine, History, Info,
+  ArrowUpRight, Calculator, CheckCheck, ChevronDown, FilePenLine, History, Info,
   Plus, Save, Trash2, X
 } from 'lucide-react';
 import {
   MAX_ATTENDANCE_ITEMS, MAX_TICKET_LINKS, calculateAttendance,
   formatMoneyUnits4, normalizeAttendance, parseMoneyUnits4
 } from '../domain/attendanceEstimate.js';
+import { currentForecastMonth } from '../domain/monthlyForecast.js';
 import { parseCapacityBtu } from '../domain/financialReference.js';
 import { matchesSchool } from '../lib/logic.js';
 import '../styles/attendance-estimates.css';
@@ -24,10 +25,12 @@ const COVERAGE_LABELS = {
   adicional: 'Adicional informado'
 };
 
-function currentMonth() {
-  const now = new Date();
-  return String(now.getFullYear()) + '-' + String(now.getMonth() + 1).padStart(2, '0');
-}
+const PAGE_SIZE = 12;
+const attendanceStatuses = [
+  { value: 'all', label: 'Todos' },
+  { value: 'additional', label: 'Com acréscimo' },
+  { value: 'pending', label: 'Cobertura a confirmar' }
+];
 
 function emptyItem(values = {}) {
   return {
@@ -45,7 +48,7 @@ function newForm(schoolId = '', context = null, tickets = [], school = null) {
   const demand = String(ticket?.tipo_demanda || '').toLocaleLowerCase('pt-BR');
   const plannedDate = context?.plannedDate || '';
   return {
-    schoolId, plannedMonth: plannedDate.slice(0, 7) || currentMonth(), plannedDate,
+    schoolId, plannedMonth: plannedDate.slice(0, 7) || context?.plannedMonth || currentForecastMonth(), plannedDate,
     serviceKind: Object.hasOwn(SERVICE_LABELS, context?.serviceKind || '') ? context.serviceKind
       : demand.includes('corretiva') ? 'corretiva' : demand.includes('preventiva') ? 'preventiva' : ticket ? 'outra' : 'preventiva',
     cycle: context?.cycle || '', visitId: context?.visitId || '',
@@ -136,14 +139,9 @@ function dateTimeText(value) {
   });
 }
 
-function referenceSummary(items) {
-  const natures = [...new Set(items.map(item => item.unitPriceUnits4 === null
-    ? 'Preço nominal não informado' : NATURE_LABELS[item.referenceNature] || NATURE_LABELS.nao_informada))];
-  const sources = [...new Set(items.map(item => item.sourceRef?.trim()).filter(Boolean))];
-  return {
-    nature: natures.join(' · '),
-    source: sources.length ? sources[0] + (sources.length > 1 ? ' · mais ' + (sources.length - 1) + ' origem(ns) na composição' : '') : 'Origem ainda não informada'
-  };
+function tableAmount(value, overflow) {
+  if (overflow) return 'Limite excedido';
+  return value === null ? 'Não informado' : formatMoneyUnits4(value);
 }
 
 function EstimateValue({ calculation, className = '' }) {
@@ -242,9 +240,10 @@ function AttendanceHistory({ record, loadRevisions }) {
 }
 
 export default function AttendanceEstimates({
-  schools = [], tickets = [], records = [], selectedSchoolId = '',
+  schools = [], tickets = [], records = [], rows, selectedSchoolId = '', month,
+  status, onStatusChange, search, onSearchChange, headingRef,
   connection = { status: 'unconfigured' }, onSave, loadRevisions,
-  context = null, onContextConsumed
+  context = null, onContextConsumed, onSaved
 }) {
   const instanceId = useId();
   const titleId = instanceId + '-title';
@@ -254,6 +253,10 @@ export default function AttendanceEstimates({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [pagination, setPagination] = useState(null);
+  const [detailId, setDetailId] = useState(null);
+  const drawerRef = useRef(null);
+  const detailTriggerRef = useRef(null);
   const savingRef = useRef(false);
   const creationIdRef = useRef(null);
   const consumedContextRef = useRef(null);
@@ -265,9 +268,23 @@ export default function AttendanceEstimates({
   const selectedSchool = schoolById.get(String(selectedSchoolId));
   const formSchool = form ? schoolById.get(form.schoolId) : null;
   const schoolTickets = formSchool ? tickets.filter(ticket => matchesSchool(ticket, formSchool)) : [];
-  const visibleRecords = records
-    .filter(record => !selectedSchoolId || record.schoolId === String(selectedSchoolId))
-    .toSorted((a, b) => String(b.updatedAtISO || b.updatedAt || b.plannedMonth).localeCompare(String(a.updatedAtISO || a.updatedAt || a.plannedMonth)));
+  const searchText = search.trim().toLocaleLowerCase('pt-BR');
+  const visibleRows = rows.filter(row => {
+    if (status === 'additional' && !(row.additionalUnits4 > 0 || row.overflowByNature?.additional)) return false;
+    if (status === 'pending' && !(row.coveragePendingCount > 0)) return false;
+    if (!searchText) return true;
+    const { record } = row;
+    return [record.schoolId, schoolById.get(String(record.schoolId))?.unidade_escolar,
+      record.cycle, ...(Array.isArray(record.items) ? record.items.map(item => item?.description) : [])]
+      .some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(searchText));
+  }).toSorted((a, b) => String(b.record.updatedAtISO || b.record.updatedAt || '').localeCompare(String(a.record.updatedAtISO || a.record.updatedAt || '')));
+  const scope = JSON.stringify([month, selectedSchoolId, status, searchText]);
+  const pageCount = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
+  const page = pagination?.scope === scope ? Math.min(pagination.page, pageCount) : 1;
+  const pageRows = visibleRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const detailRecord = records.find(record => record.id === detailId);
+  const detailSchool = detailRecord ? schoolById.get(String(detailRecord.schoolId)) : null;
+  const detailCalculation = detailRecord ? calculationOf(detailRecord) : null;
   const preview = form ? formCalculation(form) : null;
   const latestEditingRecord = editing ? records.find(record => record.id === editing.id) : null;
   const hasNewRevision = Boolean(latestEditingRecord && latestEditingRecord.revision !== editing.revision);
@@ -278,6 +295,12 @@ export default function AttendanceEstimates({
     editorHeadingRef.current?.focus();
   });
   const focusFeedback = () => requestAnimationFrame(() => feedbackRef.current?.focus());
+
+  useEffect(() => {
+    const drawer = drawerRef.current;
+    if (detailRecord && !drawer.open) drawer.showModal();
+    if (!detailRecord && drawer.open) drawer.close();
+  }, [detailRecord]);
 
   useEffect(() => {
     if (!context?.key || consumedContextRef.current === context.key || isSaving) return;
@@ -309,16 +332,16 @@ export default function AttendanceEstimates({
     if (savingRef.current) return;
     returnFocusRef.current = event?.currentTarget || newButtonRef.current;
     creationIdRef.current = crypto.randomUUID();
-    setForm(newForm(selectedSchool ? String(selectedSchool.designacao) : ''));
+    setForm(newForm(selectedSchool ? String(selectedSchool.designacao) : '', { plannedMonth: month }));
     setEditing(null);
     setError('');
     setNotice('');
     focusEditor();
   }
 
-  function startEdit(record, event) {
+  function startEdit(record, trigger) {
     if (savingRef.current) return;
-    returnFocusRef.current = event?.currentTarget || newButtonRef.current;
+    returnFocusRef.current = trigger || newButtonRef.current;
     creationIdRef.current = null;
     setForm(recordForm(record));
     setEditing({ id: record.id, revision: record.revision });
@@ -416,6 +439,8 @@ export default function AttendanceEstimates({
       setForm(null);
       setEditing(null);
       setNotice('Atendimento salvo no Firestore compartilhado · versão ' + saved.revision + '.');
+      setPagination(null);
+      onSaved?.(content);
       focusFeedback();
     } catch (reason) {
       setError(reason.message || 'Não foi possível salvar. Sua edição foi preservada para tentar novamente.');
@@ -430,12 +455,11 @@ export default function AttendanceEstimates({
     <section className="attendance-estimates" aria-labelledby={titleId} aria-busy={isSaving}>
       <header className="attendance-header">
         <div>
-          <span className="section-eyebrow"><Calculator size={16} aria-hidden="true" /> Referência econômica do atendimento</span>
-          <h3 id={titleId}>Estimativas de atendimento</h3>
-          <p>{selectedSchool ? selectedSchool.unidade_escolar : 'Planeje o atendimento e identifique de onde veio cada valor.'}</p>
+          <h3 ref={headingRef} tabIndex={-1} id={titleId}>Estimativas de atendimento</h3>
+          <p>{monthText(month)} · {selectedSchool ? selectedSchool.unidade_escolar : 'Todas as escolas'}</p>
         </div>
         <button ref={newButtonRef} type="button" className="btn btn-primary" onClick={startNew} disabled={isSaving}>
-          <Plus size={17} aria-hidden="true" /> Estimar atendimento
+          <Plus size={17} aria-hidden="true" /> Nova estimativa
         </button>
       </header>
 
@@ -625,45 +649,118 @@ export default function AttendanceEstimates({
         </form>
       )}
 
-      {visibleRecords.length ? (
-        <div className="attendance-records" role="list" aria-label={selectedSchool ? 'Atendimentos de ' + selectedSchool.unidade_escolar : 'Atendimentos com estimativa'}>
-          {visibleRecords.map(record => {
-            const school = schoolById.get(record.schoolId);
-            const calculation = calculationOf(record);
-            const reference = referenceSummary(record.items);
-            return (
-              <article className="attendance-record" key={record.id} role="listitem">
-                <div className="attendance-record-heading">
-                  <div className="attendance-record-main">
-                    <span className="attendance-record-period">{monthText(record.plannedMonth)} · {SERVICE_LABELS[record.serviceKind] || 'Outra atividade'}</span>
-                    <h4>{school?.unidade_escolar || 'Escola ' + record.schoolId}</h4>
-                    <p>{record.schoolId}{record.cycle ? ' · ' + record.cycle : ''}{record.plannedDate ? ' · prevista para ' + record.plannedDate.split('-').reverse().join('/') : ''}</p>
-                    <span className="attendance-record-nature">{reference.nature}</span>
-                    <p className="attendance-record-source">Origem: {reference.source}</p>
-                  </div>
-                  <EstimateValue calculation={calculation.result} />
-                  <button type="button" className="btn btn-secondary" disabled={isSaving} onClick={event => startEdit(record, event)} aria-label={'Abrir e editar atendimento de ' + (school?.unidade_escolar || record.schoolId) + ', ' + monthText(record.plannedMonth)}>
-                    <FilePenLine size={16} aria-hidden="true" /> Abrir / editar
-                  </button>
-                </div>
-                {calculation.error && <p className="attendance-hint" role="status">Confira este registro antes de utilizar a estimativa: {calculation.error}</p>}
-                <Composition content={record} calculation={calculation.result} />
-                <div className="attendance-record-meta">
-                  <span>Versão {record.revision} · {dateTimeText(record.updatedAtISO || record.updatedAt)}</span>
-                  <span>{record.ticketIds?.length ? record.ticketIds.length + ' chamado(s) vinculado(s)' : 'Atendimento sem chamado vinculado'}{record.visitId ? ' · com programação vinculada' : ''}</span>
-                </div>
-                {loadRevisions && <AttendanceHistory record={record} loadRevisions={loadRevisions} />}
-              </article>
-            );
-          })}
-        </div>
-      ) : !form && (
-        <div className="attendance-empty">
-          <Calculator size={24} aria-hidden="true" />
-          <div><strong>Nenhuma estimativa de atendimento{selectedSchool ? ' para esta escola' : ''}.</strong><p>Use “Estimar atendimento” para informar uma referência.</p></div>
-        </div>
+      {ready && (
+        <>
+          <div className="attendance-table-tools">
+            <input className="form-control" type="search" aria-label="Buscar atendimentos"
+              placeholder="Buscar escola ou serviço…" value={search} onChange={event => onSearchChange(event.target.value)} />
+            <div className="attendance-filter-options" role="group" aria-label="Filtrar por cobertura">
+              {attendanceStatuses.map(({ value, label }) => (
+                <button type="button" className="btn btn-secondary btn-sm" key={value}
+                  aria-pressed={status === value} onClick={() => onStatusChange(value)}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          {pageRows.length ? (
+            <div className="attendance-table-scroll" role="region" aria-label="Tabela de estimativas" tabIndex={0}>
+              <table className="attendance-table" aria-label="Atendimentos da competência">
+                <thead>
+                  <tr>
+                    <th scope="col">Escola</th>
+                    <th scope="col">Atividade</th>
+                    <th scope="col" className="attendance-money">Referência nominal</th>
+                    <th scope="col" className="attendance-money">Acréscimo</th>
+                    <th scope="col">Cobertura</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRows.map((row, index) => {
+                    const { record } = row;
+                    const schoolName = schoolById.get(String(record.schoolId))?.unidade_escolar || record.schoolId || 'Escola não identificada';
+                    const coverageLabel = row.invalid ? 'Conferir registro' : row.coveragePendingCount > 0
+                      ? 'A confirmar' : 'Informada';
+                    return (
+                      <tr key={record.id || 'sem-id-' + index}>
+                        <th scope="row">
+                          <button type="button" className="attendance-row-link" disabled={isSaving || row.invalid}
+                            aria-label={'Abrir atendimento de ' + schoolName + ', ' + monthText(record.plannedMonth) + ', ' +
+                              (SERVICE_LABELS[record.serviceKind] || 'Outra atividade') + (record.cycle ? ', ' + record.cycle : '')}
+                            onClick={event => {
+                              detailTriggerRef.current = event.currentTarget;
+                              setDetailId(record.id);
+                            }}>
+                            <span>{schoolName}<small>{record.schoolId}{record.cycle ? ' · ' + record.cycle : ''}</small></span>
+                            <ArrowUpRight size={16} aria-hidden="true" />
+                          </button>
+                          {row.invalid && <small>{row.error}</small>}
+                        </th>
+                        <td>{SERVICE_LABELS[record.serviceKind] || 'Outra atividade'}</td>
+                        <td className="attendance-money tabular">
+                          {tableAmount(row.nominalUnits4, row.overflowByNature?.nominal)}
+                          {row.nominalUnits4 !== null && row.missingNominalCount > 0 && <small>Parcial</small>}
+                        </td>
+                        <td className="attendance-money tabular">
+                          {tableAmount(row.additionalUnits4, row.overflowByNature?.additional)}
+                          {row.additionalUnits4 !== null && row.incomplete && <small>Parcial</small>}
+                        </td>
+                        <td><span className={'attendance-coverage' + (row.invalid || row.coveragePendingCount > 0 ? ' is-pending' : '')}>{coverageLabel}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="attendance-empty">
+              <Calculator size={22} aria-hidden="true" />
+              <strong>{searchText || status !== 'all' ? 'Nenhum atendimento com estes filtros.' : 'Nenhuma estimativa nesta competência.'}</strong>
+            </div>
+          )}
+          <footer className="attendance-list-footer">
+            <span role="status">{visibleRows.length} {visibleRows.length === 1 ? 'atendimento' : 'atendimentos'}</span>
+            {pageCount > 1 && <div role="group" aria-label="Paginação dos atendimentos">
+              <button type="button" className="btn btn-secondary btn-sm" disabled={page === 1}
+                onClick={() => setPagination({ scope, page: page - 1 })}>Anterior</button>
+              <span>Página {page} de {pageCount}</span>
+              <button type="button" className="btn btn-secondary btn-sm" disabled={page === pageCount}
+                onClick={() => setPagination({ scope, page: page + 1 })}>Próxima</button>
+            </div>}
+          </footer>
+        </>
       )}
-      <footer className="attendance-footer">Valores de referência para planejamento. Não somados a notas fiscais, pagamentos ou outros grupos financeiros.</footer>
+
+      <dialog className="attendance-drawer" ref={drawerRef} aria-labelledby={fieldId('details-title')}
+        onClose={() => setDetailId(null)}>
+        {detailRecord && (
+          <article className="attendance-record" key={detailRecord.id}>
+            <header className="attendance-drawer-header">
+              <div>
+                <span className="attendance-record-period">{monthText(detailRecord.plannedMonth)} · {SERVICE_LABELS[detailRecord.serviceKind] || 'Outra atividade'}</span>
+                <h4 id={fieldId('details-title')}>{detailSchool?.unidade_escolar || 'Escola ' + detailRecord.schoolId}</h4>
+                <p>{detailRecord.schoolId}{detailRecord.cycle ? ' · ' + detailRecord.cycle : ''}{detailRecord.plannedDate ? ' · prevista para ' + detailRecord.plannedDate.split('-').reverse().join('/') : ''}</p>
+              </div>
+              <button type="button" className="btn btn-secondary btn-sm attendance-drawer-close"
+                aria-label="Fechar detalhes" onClick={() => drawerRef.current.close()}><X size={20} aria-hidden="true" /></button>
+            </header>
+            <div className="attendance-drawer-overview">
+              <EstimateValue calculation={detailCalculation.result} />
+              <button type="button" className="btn btn-primary btn-sm" disabled={isSaving}
+                onClick={() => {
+                  drawerRef.current.close();
+                  startEdit(detailRecord, detailTriggerRef.current);
+                }}><FilePenLine size={16} aria-hidden="true" /> Editar atendimento</button>
+            </div>
+            {detailCalculation.error && <p className="attendance-hint" role="status">{detailCalculation.error}</p>}
+            <Composition content={detailRecord} calculation={detailCalculation.result} />
+            <div className="attendance-record-meta">
+              <span>Versão {detailRecord.revision} · {dateTimeText(detailRecord.updatedAtISO || detailRecord.updatedAt)}</span>
+              <span>{detailRecord.ticketIds?.length ? detailRecord.ticketIds.length + ' chamado(s) vinculado(s)' : 'Sem chamado vinculado'}{detailRecord.visitId ? ' · com programação vinculada' : ''}</span>
+            </div>
+            {loadRevisions && <AttendanceHistory record={detailRecord} loadRevisions={loadRevisions} />}
+          </article>
+        )}
+      </dialog>
     </section>
   );
 }
