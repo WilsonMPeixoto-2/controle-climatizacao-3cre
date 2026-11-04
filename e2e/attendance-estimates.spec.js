@@ -301,6 +301,8 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await expect(group(form).getByLabel(/^Preço unitário/)).toHaveValue('');
   await group(form).locator('summary').click();
   await expect(group(form).getByLabel(/^Capacidade/)).toHaveValue('12000');
+  await expect(form.getByText(/Enquadramento do TR CRE03: item 32/)).toBeVisible();
+  await expect(form.getByText(/Preço unitário pendente de planilha contratual validada/)).toBeVisible();
   await expect(group(form).getByLabel(/^Capacidade/)).not.toHaveValue('18000');
   await form.locator('.attendance-extra > summary').click();
   await expect(form.getByRole('checkbox', { name: /GOP-AR-2026-9001/ })).toBeChecked();
