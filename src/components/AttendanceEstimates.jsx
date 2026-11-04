@@ -652,7 +652,7 @@ export default function AttendanceEstimates({
                         </div>
                         {item.catalogId && <p className="attendance-context-note">Catálogo registrado: {item.catalogId}{item.categoryCode ? ' · categoria ' + item.categoryCode : ''}.</p>}
                         {trItem && <p className="attendance-context-note" role="status">
-                          Enquadramento do TR CRE03: item {trItem.number} · {trItem.type} · {Number(item.capacityBtu).toLocaleString('pt-BR')} BTU.
+                          Enquadramento do TR CRE03: item {trItem.number} · {trItem.type} · {parseCapacityBtu(item.capacityBtu)?.toLocaleString('pt-BR')} BTU.
                           {item.catalogId === CRE03_CATALOG_ID
                             ? ' Preço unitário contratual referenciado automaticamente.'
                             : ' Preço unitário pendente de planilha contratual validada.'}
