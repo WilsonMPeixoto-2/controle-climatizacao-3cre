@@ -50,7 +50,7 @@ assert.equal(priced.unitPriceUnits4, 1234500);
 assert.equal(priced.priceText, '123,4500');
 const saved = normalizeAttendance({
   schoolId: '03.12.001', plannedMonth: '2026-11', serviceKind: 'preventiva',
-  ticketIds: ['GOP-AR-2026-0001'], items: [{ ...priced, quantity: 2 }]
+  ticketIds: ['GOP-AR-2026-0001'], items: [{ ...priced, capacityBtu: 12000, quantity: 2 }]
 });
 assert.deepEqual(saved.ticketIds, ['GOP-AR-2026-0001']);
 assert.equal(saved.items[0].categoryCode, 'CRE03-32');
