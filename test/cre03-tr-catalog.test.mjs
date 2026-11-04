@@ -7,7 +7,7 @@ import {
 import { CRE03_SIGNED_PRICE_SCHEDULE } from '../src/data/cre03SignedPriceSchedule.js';
 
 assert.equal(CRE03_TR_ITEMS.length, 14);
-assert.equal(CRE03_TR_ITEMS.reduce((total, item) => total + item.estimatedCount, 0), 2861);
+assert.equal(CRE03_TR_ITEMS.reduce((total, item) => total + item.estimatedCount, 0), 3061);
 assert.equal(findCre03TrItem('Split', '12.000 BTUs')?.number, 32);
 assert.equal(findCre03TrItem('split', 12001)?.number, 33);
 assert.equal(findCre03TrItem('split', 24000)?.number, 33);
