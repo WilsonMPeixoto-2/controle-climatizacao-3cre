@@ -75,8 +75,14 @@ export function createValidatedCre03Catalog(schedule) {
  * Nunca aplica valores ausentes e nunca decide cobertura de corretivas.
  */
 export function applyCre03TrPriceToDraft(item, serviceKind, schedule) {
-  if (!item || !['preventiva', 'corretiva'].includes(serviceKind)) return item;
+  if (!item) return item;
   const wasAutomatic = item.catalogId === CRE03_CATALOG_ID && item.referenceNature === 'contratual_informada';
+  if (!['preventiva', 'corretiva'].includes(serviceKind)) {
+    return wasAutomatic ? {
+      ...item, priceText: '', unitPriceUnits4: null, sourceRef: '',
+      referenceNature: 'provisoria', referenceVersion: '', catalogId: '', categoryCode: ''
+    } : item;
+  }
   const hasOwnPrice = String(item.priceText ?? '').trim() !== '' || item.unitPriceUnits4 !== null
     && item.unitPriceUnits4 !== undefined;
   if (hasOwnPrice && !wasAutomatic) return item;
