@@ -52,3 +52,17 @@
 - https://vercel.com/docs/project-configuration/git-configuration
 - https://vercel.com/docs/project-configuration/git-settings
 - https://vercel.com/docs/project-configuration/project-settings
+
+
+## Atualização de referência em 04/11/2026 — recuperação do projeto original
+
+> **Nota temporal:** as relações de projetos, aliases e prioridades descritas nas seções anteriores documentam o contexto de outubro e 03/11. Esta seção registra o evento posterior; **sempre confirmar novamente o estado atual na Vercel antes de decidir**.
+
+- Projeto original reabilitado: `controle-climatizacao-3cre` (`prj_hhbw3ATBi6VOKLFnuHYoVwiwCFbw`), apontando ao commit `2a3ce097386db19c6779d9596affc572866ac3fd`.
+- Causa do bloqueio `Resource provisioning failed` apurada na Vercel: integração de Storage Supabase legada suspensa (`store_c7xuboFdk7syqNN0`, `icfg_9o0c1iOohLBagZF5MTgo6pyS`), associada a todos os ambientes. A conexão foi desvinculada **somente do projeto Vercel**, preservando o recurso Supabase original.
+- Deployment `dpl_2QiCi9uDRvQu8Bqvx7t3SvouVYxB` foi confirmado `READY` no **projeto original**; `controle-climatizacao-3cre.vercel.app` e o alias secundário da equipe foram confirmados no mesmo deployment.
+- O serviço Firestore operacional permanece `gestao-da-climatizacao-3-cre`; o status Vercel não equivale a prova de todas as transações de negócio.
+- A política `git.deploymentEnabled: false` permanece deliberada para controle da quota Hobby. Não convertê-la em `true` automaticamente, porque outros projetos Vercel seguem conectados ao mesmo GitHub.
+- A existência de projetos paralelos/homologação é **contexto histórico**, não autorização para deslocar o domínio ou criar uma nova produção. Mudanças futuras devem ter como alvo o ID original, com critérios de homologação e rollback existentes.
+
+Ver referência detalhada em [incidente de provisionamento e protocolo de validação](engineering/INCIDENTES_E_VERIFICACAO_2026_11.md).
