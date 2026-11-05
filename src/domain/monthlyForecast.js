@@ -96,7 +96,7 @@ function summarizeMonth(month, records) {
         totals[nature] += byNature[nature];
         known[nature] += recordKnown[nature];
       }
-      const rowOverflow = Object.keys(byNature).some(nature => byNature[nature] > MAX_SAFE);
+      const overflowByNature = Object.fromEntries(Object.entries(byNature).map(([nature, value]) => [nature, value > MAX_SAFE]));
       rows.push({
         record: item,
         invalid: false,
@@ -107,7 +107,8 @@ function summarizeMonth(month, records) {
         includedNominalUnits4: safeAmount(byNature.included, recordKnown.included),
         missingNominalCount: result.nominalMissingCount,
         coveragePendingCount: result.coveragePendingCount,
-        overflow: rowOverflow
+        overflowByNature,
+        overflow: Object.values(overflowByNature).some(Boolean)
       });
     } catch (error) {
       invalidRecordCount++;
@@ -142,6 +143,25 @@ function summarizeMonth(month, records) {
   };
 }
 
+export function buildSchoolForecast(summary) {
+  const grouped = new Map();
+  for (const { record } of summary.records) {
+    if (!record.schoolId) continue;
+    const id = String(record.schoolId);
+    if (!grouped.has(id)) grouped.set(id, []);
+    grouped.get(id).push(record);
+  }
+  return [...grouped].map(([schoolId, records]) => ({
+    ...summarizeMonth(summary.month, records), schoolId
+  }));
+}
+
+export function currentForecastMonth() {
+  const now = new Date();
+  return String(now.getFullYear()).padStart(4, '0') + '-' +
+    String(now.getMonth() + 1).padStart(2, '0');
+}
+
 /**
  * A entrada são snapshots correntes do backend de desenvolvimento, sem
  * depender de hora de pagamento ou do status do chamado. As seis colunas
@@ -156,9 +176,7 @@ export function buildMonthlyForecast(records, {
   const latest = currentRecords(records);
   const visible = latest.filter(item => !schoolId || String(item?.schoolId) === String(schoolId));
   const recordedMonths = [...new Set(visible.map(item => item?.plannedMonth).filter(monthIsValid))].sort();
-  const now = new Date();
-  const present = String(now.getFullYear()).padStart(4, '0') + '-' +
-    String(now.getMonth() + 1).padStart(2, '0');
+  const present = currentForecastMonth();
   const anchor = monthIsValid(anchorMonth) ? anchorMonth
     : monthIsValid(selectedMonth) ? selectedMonth
       : recordedMonths.at(-1) || present;

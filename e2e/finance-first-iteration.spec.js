@@ -33,9 +33,19 @@ async function seed(page, theme = 'light', data = { schools, tickets }) {
   await page.goto('/');
 }
 const nav = (page, name) => page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('button', { name, exact: true });
-async function finance(page) {
+const attendanceTab = page => page.getByRole('tab', { name: 'Atendimentos', exact: true });
+async function openConsultation(page, name) {
+  await attendanceTab(page).click();
+  const section = page.locator('.finance-related-section').filter({
+    has: page.locator(':scope > summary').filter({ hasText: name })
+  });
+  if (await section.getAttribute('open') === null) await section.locator(':scope > summary').click();
+}
+
+async function finance(page, section = 'Programação de visitas') {
   await nav(page, 'Gestão Financeira').click();
   await expect(page.getByRole('heading', { name: 'Gestão Financeira', exact: true })).toBeVisible();
+  if (section) await openConsultation(page, section);
 }
 async function chooseSchool(page) {
   await nav(page, 'Consulta por Escola').click();
@@ -73,7 +83,7 @@ test('sair do painel durante o zoom do mapa não deixa callbacks em uma tela rem
 
 test('base histórica setembro/outubro preserva a origem e mantém agregações visuais acessíveis', async ({ page }, testInfo) => {
   await seed(page);
-  await finance(page);
+  await finance(page, 'Histórico de corretivas');
   const history = page.getByRole('region', { name: 'Histórico de corretivas de setembro e outubro' });
   await expect(history).toBeVisible();
   await expect(history.getByRole('group', { name: 'Selecionar mês dos registros históricos' })).toBeVisible();
@@ -115,7 +125,7 @@ test('base histórica setembro/outubro preserva a origem e mantém agregações 
   }
   await page.evaluate(() => localStorage.setItem('gop_theme', 'dark'));
   await page.reload();
-  await finance(page);
+  await finance(page, 'Histórico de corretivas');
   const dark = page.getByRole('region', { name: 'Histórico de corretivas de setembro e outubro' });
   for (const viewport of [
     { width: 320, height: 800 }, { width: 1440, height: 900 }, { width: 3840, height: 2160 }
@@ -131,11 +141,11 @@ test('base histórica setembro/outubro preserva a origem e mantém agregações 
 test('financeiro usa recorte real, preserva ausências e retorna à ficha existente', async ({ page }) => {
   await seed(page);
   const original = await page.evaluate(() => localStorage.getItem('gop_tickets'));
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   await expect(page).toHaveTitle(/Gestão Financeira/);
   await expect(nav(page, 'Gestão Financeira')).toHaveCount(1);
   await expect(page.locator('.finance-missing')).toHaveText(Array(3).fill('Não informado'));
-  await expect(page.getByRole('region', { name: 'Previsão mensal por competência' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Previsão mensal por competência' })).toBeHidden();
   await expect(page.locator('.finance-page')).not.toContainText('R$');
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
   await page.getByLabel('Escola', { exact: true }).selectOption('900001');
@@ -159,7 +169,7 @@ test('financeiro usa recorte real, preserva ausências e retorna à ficha existe
   await page.getByLabel('Mês de abertura').fill('2030-01');
   await expect(page.getByText('Nenhuma solicitação neste recorte.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Limpar mês' }).click();
-  await page.getByRole('button', { name: 'Limpar escola' }).click();
+  await page.getByRole('button', { name: 'Limpar filtros' }).click();
   await expect(page.getByLabel('Escola', { exact: true })).toHaveValue('');
   await expect(page.getByLabel('Mês de abertura')).toHaveValue('');
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
@@ -170,7 +180,7 @@ test('financeiro usa recorte real, preserva ausências e retorna à ficha existe
 
 test('tendência de abertura usa registros reais e permite filtrar', async ({ page }) => {
   await seed(page);
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   const trend = page.getByRole('group', { name: 'Evolução mensal interativa' });
   await expect(trend).toBeVisible();
   const september = trend.getByRole('button', { name: /em set de 2026/ });
@@ -200,6 +210,7 @@ test('mantém navegação histórica e contexto escolar sem inventário financei
   await expect(summary).toContainText('Informações financeiras ainda não registradas');
   await expect(summary).not.toContainText('R$');
   await summary.getByRole('button', { name: 'Consultar Gestão Financeira' }).click();
+  await openConsultation(page, 'Chamados e conferência por escola');
   await expect(page.getByLabel('Escola', { exact: true })).toHaveValue('900001');
   await expect(page.getByLabel('3 solicitações no recorte')).toBeVisible();
   await page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9002' }).click();
@@ -231,7 +242,7 @@ test('registro continua possível sem tipo conhecido, BTUs ou tabela de preços'
 
 test('ficha recebe e contém o foco, abre referência pelo teclado e devolve foco ao fechar', async ({ page }) => {
   await seed(page);
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   const origin = page.getByRole('button', { name: 'Abrir ficha GOP-AR-2026-9001' });
   await origin.click();
   const dialog = page.getByRole('dialog');
@@ -257,14 +268,20 @@ for (const theme of ['light', 'dark']) {
       page.on('pageerror', error => errors.push(error.message));
       page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
       await seed(page, theme);
-      await finance(page);
-      await page.getByLabel('Escola', { exact: true }).focus();
+      await finance(page, null);
+      const overview = page.getByRole('tab', { name: 'Visão financeira', exact: true });
+      await overview.focus();
+      await page.keyboard.press('ArrowRight');
+      await expect(attendanceTab(page)).toBeFocused();
+      const historicToggle = page.locator('.finance-related-section > summary').filter({ hasText: 'Histórico de corretivas' });
+      await historicToggle.focus();
+      await page.keyboard.press('Enter');
       await page.keyboard.press('Tab');
-      // A nova comparação de meses é navegável antes do formulário de programação;
-      // não se deve fixar a ordem antiga de foco após acrescentar controles legítimos.
       await expect(page.getByRole('region', {
         name: 'Histórico de corretivas de setembro e outubro'
       }).getByRole('button', { name: /^Filtrar setembro de 2026/ })).toBeFocused();
+      await historicToggle.click();
+      await openConsultation(page, 'Programação de visitas');
       // O mês da visita e a ação principal continuam alcançáveis pelo teclado.
       await page.locator('#visit-board-month').focus();
       await expect(page.locator('#visit-board-month')).toBeFocused();
@@ -272,6 +289,7 @@ for (const theme of ['light', 'dark']) {
       await page.keyboard.press('Enter');
       await expect(page.getByRole('form', { name: 'Adicionar programação' })).toBeVisible();
       await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+      await openConsultation(page, 'Chamados e conferência por escola');
       await page.getByLabel('Mês de abertura dos chamados').fill('2030-01');
       await page.getByRole('button', { name: 'Limpar mês' }).focus();
       await page.keyboard.press('Enter');
@@ -339,7 +357,7 @@ for (const theme of ['light', 'dark']) {
 test('conferência escolar diferencia ausência de registros e permite abrir dossiê e chamados reais', async ({ page }) => {
   await seed(page);
   const previousTickets = await page.evaluate(() => localStorage.getItem('gop_tickets'));
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   const review = page.getByRole('region', { name: 'Conferência por escola' });
   await expect(review).toBeVisible();
   await expect(review.getByRole('button', { name: 'A conferir' })).toBeVisible();
@@ -356,7 +374,7 @@ test('conferência escolar diferencia ausência de registros e permite abrir dos
   await expect(page.getByPlaceholder('Nome ou designação...')).toHaveValue('Unidade de teste visual B');
 
   // Retorno preserva filtros anteriores; a navegação para a lista usa a busca original.
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   await expect(page.getByLabel('Mês de abertura')).toHaveValue('2026-09');
   await review.getByRole('button', { name: /A conferir/ }).click();
   await expect(review).toContainText('Unidade de teste visual A');
@@ -382,7 +400,7 @@ test('conferência explora categorias, busca, expansão e registros sem vínculo
   };
   await seed(page, 'light', data);
   const previous = await page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')]);
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   const review = page.getByRole('region', { name: 'Conferência por escola' });
   await expect(review).toContainText('1 chamado não pôde ser associado');
   await expect(review.locator('.school-review-item')).toHaveCount(8);
@@ -451,6 +469,7 @@ test('E3: programação local por escola permite salvar, reprogramar e informar 
   await expect(schoolSummary).toContainText('1 visita programada');
   await expect(schoolSummary).toContainText('Rascunho somente neste dispositivo');
   await schoolSummary.getByRole('button', { name: 'Consultar Gestão Financeira' }).click();
+  await openConsultation(page, 'Programação de visitas');
   await expect(board).toContainText('Execução informada em 06/11/2026');
 
   await board.locator('#visit-board-month').fill('2026-10');
@@ -458,6 +477,7 @@ test('E3: programação local por escola permite salvar, reprogramar e informar 
   await board.locator('#visit-board-month').fill('2026-11');
   await board.getByRole('button', { name: 'Baixar cópia de segurança' }).click();
   await page.reload();
+  await openConsultation(page, 'Programação de visitas');
   await expect(board.locator('.visit-board-summary > div:nth-child(2) strong')).toHaveText('1');
   expect(await page.evaluate(() => localStorage.getItem('gop_tickets'))).toBe(beforeTickets);
 });
@@ -583,7 +603,7 @@ test('E3: cópia de segurança válida pode ser restaurada com consentimento; fo
 
 test('E3: gráfico destaca exclusivamente a soma das barras e identifica registros sem data', async ({ page }) => {
   await seed(page);
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   const chart = page.locator('.finance-trend');
   await expect(chart.locator('.finance-trend-total')).toContainText('3');
   await expect(chart.locator('.finance-trend-caption')).toContainText('1 sem data, fora do gráfico');
@@ -616,7 +636,8 @@ test('E3: execução informada diretamente pela visita e contada no mês real', 
 
 test('E3: escola e mês de abertura pertencem a filtros independentes', async ({ page }) => {
   await seed(page);
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
+  await openConsultation(page, 'Programação de visitas');
   const board = page.getByRole('region', { name: 'Planejamento por escola' });
   await board.locator('#visit-board-month').fill('2026-10');
   await page.getByLabel('Mês de abertura dos chamados').fill('2026-09');
@@ -878,7 +899,7 @@ test('nomes longos de escolas mantêm leitura confortável em notebook', async (
   const longName = 'Escola Municipal de Demonstração Professora Maria da Conceição de Albuquerque';
   const data = { schools: [{ ...schools[0], unidade_escolar: longName }], tickets: [{ ...tickets[0], unidade_escolar: longName }] };
   await seed(page, 'light', data);
-  await finance(page);
+  await finance(page, 'Chamados e conferência por escola');
   const name = page.locator('.school-review-details').getByText(longName, { exact: true });
   const bounds = await name.boundingBox();
   expect(bounds.height).toBeLessThan(150);

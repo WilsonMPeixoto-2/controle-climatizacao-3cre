@@ -1,195 +1,148 @@
-import { useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, CalendarDays, Info, RotateCcw } from 'lucide-react';
-import { buildMonthlyForecast } from '../domain/monthlyForecast.js';
+import { useMemo, useState } from 'react';
+import { ArrowUpRight, BarChart3, Info } from 'lucide-react';
+import { buildSchoolForecast } from '../domain/monthlyForecast.js';
 import { formatMoneyUnits4 } from '../domain/attendanceEstimate.js';
 import '../styles/monthly-forecast.css';
 
-function labelMonth(month, { long = false } = {}) {
-  const [year, number] = month.split('-').map(Number);
-  return new Intl.DateTimeFormat('pt-BR', {
-    month: long ? 'long' : 'short', year: long ? 'numeric' : '2-digit', timeZone: 'UTC'
-  }).format(new Date(Date.UTC(year, number - 1, 15)));
+const monthFormat = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+function monthLabel(month) {
+  return monthFormat.format(new Date(month + '-15T00:00:00Z'));
 }
 
-function amount(value, overflow = false) {
+function amount(value, overflow) {
   if (overflow) return 'Limite de precisão excedido';
   return value === null ? 'Não informado' : formatMoneyUnits4(value);
 }
 
-export default function MonthlyForecast({
-  records = [], schools = [], selectedSchoolId = '', connection, onOpenAttendance
-}) {
-  const [month, setMonth] = useState('');
-  const detailsRef = useRef(null);
-  const ready = connection?.status === 'ready';
-  const forecast = useMemo(() => buildMonthlyForecast(ready ? records : [], {
-    schoolId: selectedSchoolId, selectedMonth: month
-  }), [records, ready, selectedSchoolId, month]);
-  const selected = forecast.selected;
-  const highest = Math.max(1, ...forecast.months.flatMap(item => [
-    item.additionalUnits4 || 0, item.pendingUnits4 || 0
-  ]));
-  const schoolsById = new Map(schools.map(item => [String(item.designacao), item]));
-  const totalRecords = forecast.months.reduce((count, item) => count + item.recordCount, 0);
+function periodValue(period, nature) {
+  return amount(period[nature + 'Units4'], period.overflowByNature[nature]);
+}
 
-  // Sem conexão Firestore, não apresentar valores financeiros fictícios/vazios.
-  // A visão completa só é exibida depois do primeiro snapshot real.
-  if (!ready) {
-    return (
-      <section className="monthly-forecast surface-card" aria-label="Previsão mensal por competência">
-        <header className="forecast-header">
-          <div className="forecast-heading">
-            <span className="section-eyebrow"><CalendarDays size={16} aria-hidden="true" /> Previsão de referências</span>
-            <h3>Previsão mensal por competência</h3>
-            <p>Composições e valores previstos, com acesso ao atendimento de origem.</p>
-          </div>
-        </header>
-        <p className="forecast-unavailable" role="status">
-          <Info size={18} aria-hidden="true" />
-          {connection?.status === 'connecting'
-            ? 'Conectando ao Firestore financeiro…'
-            : 'Conexão financeira indisponível. Nenhum valor foi presumido; confira a configuração do Firestore.'}
-        </p>
-      </section>
-    );
-  }
-
-  function chooseMonth(value) {
-    setMonth(value);
-    requestAnimationFrame(() => detailsRef.current?.scrollIntoView({ block: 'nearest' }));
-  }
+export default function MonthlyForecast({ forecast, schools, connection, onExplore }) {
+  const [ranking, setRanking] = useState('additional');
+  const { selected, months, invalidMonthRecordCount } = forecast;
+  const schoolsById = new Map(schools.map(school => [String(school.designacao), school.unidade_escolar]));
+  const schoolTotals = useMemo(() => buildSchoolForecast(selected), [selected]);
+  const ranked = schoolTotals
+    .filter(school => school[ranking + 'Units4'] > 0 ||
+      (ranking === 'pending' && school.coveragePendingCount > 0) || school.overflowByNature[ranking])
+    .sort((a, b) => Number(b.overflowByNature[ranking]) - Number(a.overflowByNature[ranking]) ||
+      (b[ranking + 'Units4'] ?? -1) - (a[ranking + 'Units4'] ?? -1) ||
+      a.schoolId.localeCompare(b.schoolId));
+  const peak = Math.max(1, ...months.flatMap(item => [item.nominalUnits4 ?? 0, item.additionalUnits4 ?? 0]));
+  const rankingPeak = Math.max(1, ...ranked.map(school => school[ranking + 'Units4'] ?? 0));
+  const visibleSeries = months.some(item => item.recordCount > 0);
 
   return (
-    <section className="monthly-forecast surface-card" aria-label="Previsão mensal por competência">
+    <section className="monthly-forecast surface-card" aria-labelledby="forecast-title">
       <header className="forecast-header">
         <div className="forecast-heading">
-          <span className="section-eyebrow"><CalendarDays size={16} aria-hidden="true" /> Previsão de referências</span>
-          <h3>Previsão mensal por competência</h3>
-          <p>Consulte valores informados e abra os atendimentos que sustentam cada mês.</p>
+          <h3 id="forecast-title">Previsão mensal por competência</h3>
+          <p>{monthLabel(selected.month)} · {selected.recordCount} {selected.recordCount === 1 ? 'atendimento' : 'atendimentos'} · {selected.schoolCount} {selected.schoolCount === 1 ? 'escola' : 'escolas'}</p>
         </div>
-        <div className="forecast-month-control">
-          <label htmlFor="forecast-month">Competência</label>
-          <div className="forecast-month-controls">
-            <input id="forecast-month" className="form-control" type="month" value={month || forecast.selectedMonth} onChange={event => setMonth(event.target.value)} />
-            <button type="button" className="btn btn-secondary btn-sm" disabled={!month}
-              onClick={() => setMonth('')} aria-label="Voltar ao mês mais recente">
-              <RotateCcw size={15} aria-hidden="true" /> <span>Mais recente</span>
-            </button>
-          </div>
-        </div>
+        {connection?.status === 'ready' && <button className="btn btn-secondary btn-sm" type="button"
+          onClick={() => onExplore({ month: selected.month })}>
+          Ver atendimentos <ArrowUpRight size={16} aria-hidden="true" />
+        </button>}
       </header>
 
-      {!ready && (
-        <p className="forecast-connection" role="status">
-          <Info size={16} aria-hidden="true" />
-          A previsão depende do Firestore financeiro. Sem conexão, nenhum valor é presumido.
+      {connection?.status !== 'ready' ? (
+        <p className="forecast-unavailable" role="status">
+          <Info size={18} aria-hidden="true" />
+          {connection?.status === 'connecting' ? 'Conectando ao Firestore financeiro…' : 'Conexão financeira indisponível.'}
         </p>
-      )}
-
-      <div className="forecast-totals" aria-label={'Síntese de ' + labelMonth(selected.month, { long: true })}>
-        <div>
-          <span>Acréscimos informados</span>
-          <strong className="tabular">{amount(selected.additionalUnits4, selected.overflowByNature.additional)}</strong>
-          <small>Cobertura adicional com referência identificada</small>
-        </div>
-        <div>
-          <span>Referência nominal</span>
-          <strong className="tabular">{amount(selected.nominalUnits4, selected.overflowByNature.nominal)}</strong>
-          <small>Inclui preços nominais de serviços cobertos</small>
-        </div>
-        <div>
-          <span>Cobertura a confirmar</span>
-          <strong className="tabular">{amount(selected.pendingUnits4, selected.overflowByNature.pending)}</strong>
-          <small>Referências ainda sem enquadramento confirmado</small>
-        </div>
-      </div>
-
-      <div className="forecast-trend">
-        <div className="forecast-trend-heading">
-          <div>
-            <h4>Evolução dos atendimentos</h4>
-            <p>Duas séries separadas: acréscimo informado e referência pendente. Não são valores de pagamento.</p>
-          </div>
-          <div className="forecast-legend" aria-label="Legenda das barras">
-            <span><i className="forecast-dot is-additional" /> Acréscimo</span>
-            <span><i className="forecast-dot is-pending" /> A confirmar</span>
-          </div>
-        </div>
-
-        <div className="forecast-months" role="group" aria-label="Competências da previsão interativa">
-          {forecast.months.map(item => (
-            <button
-              type="button"
-              className={'forecast-month' + (selected.month === item.month ? ' is-selected' : '')}
-              key={item.month}
-              aria-pressed={selected.month === item.month}
-              aria-label={'Selecionar ' + labelMonth(item.month, { long: true }) + ': ' + item.recordCount +
-                ' atendimentos; acréscimos ' + amount(item.additionalUnits4, item.overflowByNature?.additional || item.overflow) +
-                '; pendentes ' + amount(item.pendingUnits4, item.overflowByNature?.pending || item.overflow)}
-              onClick={() => chooseMonth(item.month)}
-            >
-              <span className="forecast-month-count tabular">{item.recordCount}</span>
-              <span className="forecast-bar-track">
-                <span className="forecast-bar is-additional" style={{ height: item.additionalUnits4 === null ? '0' : Math.max(item.additionalUnits4 > 0 ? 5 : 2, (item.additionalUnits4 / highest) * 100) + '%' }} />
-                <span className="forecast-bar is-pending" style={{ height: item.pendingUnits4 === null ? '0' : Math.max(item.pendingUnits4 > 0 ? 5 : 2, (item.pendingUnits4 / highest) * 100) + '%' }} />
-              </span>
-              <span className="forecast-month-label">{labelMonth(item.month)}</span>
+      ) : (
+        <>
+          <div className="forecast-totals" aria-label={'Síntese de ' + monthLabel(selected.month)}>
+            <button type="button" onClick={() => onExplore({ month: selected.month })}>
+              <span>Referência nominal <ArrowUpRight size={15} aria-hidden="true" /></span>
+              <strong className="tabular">{periodValue(selected, 'nominal')}</strong>
+              <small>Inclui serviços cobertos e adicionais</small>
             </button>
-          ))}
-        </div>
-        {totalRecords === 0 && (
-          <p className="forecast-empty-trend">Nenhuma estimativa registrada nas seis competências exibidas.</p>
-        )}
-      </div>
-
-      <div className="forecast-drill" ref={detailsRef}>
-        <div className="forecast-drill-heading">
-          <div>
-            <h4>Composições de {labelMonth(selected.month, { long: true })}</h4>
-            <p>{selected.recordCount} {selected.recordCount === 1 ? 'atendimento' : 'atendimentos'} · {selected.schoolCount} {selected.schoolCount === 1 ? 'escola' : 'escolas'}</p>
+            <button type="button" onClick={() => onExplore({ month: selected.month, status: 'additional' })}>
+              <span>Acréscimo informado <ArrowUpRight size={15} aria-hidden="true" /></span>
+              <strong className="tabular">{periodValue(selected, 'additional')}</strong>
+              <small>Com referência de cobertura</small>
+            </button>
+            <button type="button" onClick={() => onExplore({ month: selected.month, status: 'pending' })}>
+              <span>Cobertura a confirmar <ArrowUpRight size={15} aria-hidden="true" /></span>
+              <strong className="tabular">{periodValue(selected, 'pending')}</strong>
+              <small>{selected.coveragePendingCount} {selected.coveragePendingCount === 1 ? 'grupo para conferir' : 'grupos para conferir'}</small>
+            </button>
           </div>
-          {(selected.incompleteRecordCount > 0 || selected.invalidRecordCount > 0 || selected.overflow) &&
-            <span className="forecast-pending-note">{selected.incompleteRecordCount} com informação a conferir</span>}
-        </div>
-        {selected.recordCount ? (
-          <ul className="forecast-records">
-            {selected.records.map((item, index) => {
-              const school = schoolsById.get(String(item.record.schoolId));
-              return (
-                <li key={item.record.id || 'invalid-' + index}>
-                  <div>
-                    <strong>{school?.unidade_escolar || item.record.schoolId || 'Escola não identificada'}</strong>
-                    <span>{item.invalid ? 'Composição inválida · requer revisão' :
-                      item.incomplete ? 'Referências ou cobertura pendentes' : 'Composição informada'}
-                      {' · '}Versão {item.record.revision || 1}
-                    </span>
-                    <small>Acréscimo: {amount(item.additionalUnits4, item.overflowByNature?.additional || item.overflow)}
-                      {' · '}Referência nominal: {amount(item.nominalUnits4, item.overflow)}
-                    </small>
-                    {item.error && <small role="status">{item.error}</small>}
-                  </div>
-                  <button type="button" className="btn btn-secondary btn-sm"
-                    disabled={item.invalid || typeof onOpenAttendance !== 'function'}
-                    onClick={() => onOpenAttendance(item.record)}
-                    aria-label={'Abrir composição de ' + (school?.unidade_escolar || item.record.schoolId) + ', ' + labelMonth(item.record.plannedMonth, { long: true })}>
-                    Abrir composição <ArrowUpRight size={16} aria-hidden="true" />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="forecast-empty-month">Nenhuma estimativa nesta competência. Selecione outro mês ou registre um atendimento.</p>
-        )}
-        {selected.invalidRecordCount > 0 && <p className="forecast-warning" role="status">{selected.invalidRecordCount} registro(s) inválido(s) excluído(s) dos valores; conferir a origem.</p>}
-        {selected.overflow && <p className="forecast-warning" role="status">A soma ultrapassou o limite seguro de precisão; os valores não foram apresentados como totais.</p>}
-        {forecast.invalidMonthRecordCount > 0 && <p className="forecast-warning" role="status">Existem atendimentos com competência inválida fora da série mensal.</p>}
-      </div>
 
-      <footer className="forecast-footer">
-        Valores de planejamento, não constituem medição, atesto, NF, liquidação ou pagamento.
-        Os totais nominais incluem parcelas adicionais e cobertas e não devem ser somados aos acréscimos.
-      </footer>
+          <div className="forecast-charts">
+            <section className="forecast-trend" aria-labelledby="forecast-trend-title">
+              <div className="forecast-chart-heading">
+                <h4 id="forecast-trend-title"><BarChart3 size={18} aria-hidden="true" /> Evolução mensal</h4>
+                <div className="forecast-legend" aria-label="Legenda das barras">
+                  <span><i className="forecast-dot is-nominal" /> Referência nominal</span>
+                  <span><i className="forecast-dot is-additional" /> Acréscimo</span>
+                </div>
+              </div>
+              <div className="forecast-months" role="group" aria-label="Competências da previsão interativa">
+                {months.map(item => {
+                  const description = monthLabel(item.month) + ' · ' + item.recordCount +
+                    ' atendimento(s) · Referência nominal: ' + periodValue(item, 'nominal') +
+                    ' · Acréscimo: ' + periodValue(item, 'additional');
+                  return (
+                    <button type="button" className="forecast-month" key={item.month}
+                      aria-current={selected.month === item.month ? 'date' : undefined}
+                      aria-label={'Ver atendimentos de ' + description} title={description}
+                      onClick={() => onExplore({ month: item.month })}>
+                      <span className="forecast-bar-track" aria-hidden="true">
+                        {['nominal', 'additional'].map(nature => {
+                          const value = item[nature + 'Units4'];
+                          return <span key={nature} className={'forecast-bar is-' + nature}
+                            style={{ height: value === null ? 0 : value === 0 ? '2px' : (value / peak) * 100 + '%' }} />;
+                        })}
+                      </span>
+                      <span className="forecast-month-label">{item.month.slice(5)}/{item.month.slice(2, 4)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {!visibleSeries && <p className="forecast-empty">Nenhuma estimativa nas seis competências exibidas.</p>}
+            </section>
+
+            <section className="forecast-ranking" aria-labelledby="forecast-ranking-title">
+              <div className="forecast-chart-heading">
+                <h4 id="forecast-ranking-title">Por escola</h4>
+                <select className="form-control" aria-label="Indicador por escola" value={ranking} onChange={event => setRanking(event.target.value)}>
+                  <option value="additional">Acréscimo</option>
+                  <option value="pending">Cobertura a confirmar</option>
+                </select>
+              </div>
+              {ranked.length ? (
+                <ul className="forecast-school-list">
+                  {ranked.slice(0, 5).map(school => (
+                    <li key={school.schoolId}>
+                      <button type="button" onClick={() => onExplore({ month: selected.month, schoolId: school.schoolId, status: ranking })}>
+                        <span>{schoolsById.get(school.schoolId) || 'Escola ' + school.schoolId}</span>
+                        <strong className="tabular">{periodValue(school, ranking)}</strong>
+                        <span className="forecast-school-track" aria-hidden="true">
+                          <span className={'forecast-school-bar is-' + ranking}
+                            style={{ width: ((school[ranking + 'Units4'] ?? 0) / rankingPeak) * 100 + '%' }} />
+                        </span>
+                        {ranking === 'pending' && <small>{school.coveragePendingCount} {school.coveragePendingCount === 1 ? 'grupo' : 'grupos'}</small>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="forecast-empty">{ranking === 'additional' ? 'Nenhuma escola com acréscimo positivo neste recorte.' : 'Nenhuma escola com cobertura a confirmar neste recorte.'}</p>}
+              {ranked.length > 5 && <p className="forecast-empty">5 de {ranked.length} escolas exibidas.</p>}
+            </section>
+          </div>
+
+          <footer className="forecast-footer">
+            {selected.incompleteRecordCount > 0 && <p>{selected.incompleteRecordCount} {selected.incompleteRecordCount === 1 ? 'atendimento com informação a conferir.' : 'atendimentos com informações a conferir.'}</p>}
+            {selected.overflow && <p>Uma ou mais somas excederam o limite seguro de precisão.</p>}
+            {invalidMonthRecordCount > 0 && <p>{invalidMonthRecordCount} atendimento(s) com competência inválida fora da série.</p>}
+            <p>Valores de planejamento. Acréscimos já integram a referência nominal. Estes valores não representam pagamento.</p>
+          </footer>
+        </>
+      )}
     </section>
   );
 }

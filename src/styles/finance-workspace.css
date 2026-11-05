@@ -1,0 +1,100 @@
+.finance-workspace > * + * { margin-top: 16px; }
+.finance-workspace > .finance-heading { margin-bottom: 2px; }
+.finance-workspace [role="tabpanel"][hidden] { display: none; }
+.finance-tab-list { display: flex; gap: 8px; border-bottom: 1px solid var(--hairline); }
+.finance-tab-list button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 9px 17px; border: 0; border-bottom: 3px solid transparent;
+  background: transparent; color: var(--text-muted); cursor: pointer; font: 650 15px var(--font-text);
+}
+.finance-tab-list button[aria-selected="true"] {
+  border-color: var(--primary); color: var(--text-main);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+.finance-scope {
+  display: grid; grid-template-columns: minmax(155px, 190px) minmax(220px, 1fr) auto;
+  align-items: end; gap: 14px; padding: 14px 18px;
+}
+.finance-scope .form-group { min-width: 0; margin: 0; }
+.finance-scope input[type="month"] { width: 100%; min-width: 0; }
+.dark-theme .finance-scope input[type="month"] { color-scheme: dark; }
+.finance-scope-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.finance-scope-actions .btn { min-height: 40px; }
+.finance-related { display: grid; gap: 9px; margin-top: 16px; }
+.finance-related-section { padding: 0; min-width: 0; }
+.finance-related-section > summary {
+  min-height: 48px; display: flex; align-items: center; gap: 9px; padding: 9px 16px;
+  cursor: pointer; list-style: none; color: var(--text-main); font-weight: 650;
+}
+.finance-related-section > summary::-webkit-details-marker { display: none; }
+.finance-related-section > summary > svg { flex: none; }
+.finance-related-section > summary > svg:last-child { margin-left: auto; }
+.finance-related-section[open] > summary > svg:last-child { transform: rotate(180deg); }
+.finance-related-section > summary small { color: var(--text-muted); font-size: 12px; font-weight: 500; }
+.finance-related-section[open] > summary { border-bottom: 1px solid var(--hairline); }
+.finance-ticket-consultation { padding: 16px; display: grid; gap: 20px; }
+.finance-ticket-consultation .finance-workbench { margin: 0; }
+
+.attendance-table-tools {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between;
+  align-items: center; padding: 13px 20px; border-bottom: 1px solid var(--hairline);
+}
+.attendance-table-tools input { width: min(100%, 320px); min-width: 0; }
+.attendance-filter-options, .attendance-list-footer > div { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.attendance-filter-options button[aria-pressed="true"] {
+  border-color: var(--primary); color: var(--text-main);
+  background: color-mix(in srgb, var(--primary) 13%, var(--surface));
+}
+.attendance-table-scroll { overflow: auto; }
+.attendance-table-scroll:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.attendance-table { border-collapse: collapse; width: 100%; min-width: 610px; text-align: left; }
+.attendance-table :is(th, td) { padding: 10px 14px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
+.attendance-table :is(th, td):first-child { padding-left: 20px; }
+.attendance-table :is(th, td):last-child { padding-right: 20px; }
+.attendance-table thead th { color: var(--text-muted); background: var(--surface-2); font-size: 13px; }
+.attendance-table tbody :is(th, td) { font-size: 14px; }
+.attendance-table tbody tr:hover { background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
+.attendance-table .attendance-money { text-align: right; white-space: nowrap; }
+.attendance-table small { display: block; font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.attendance-row-link {
+  display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 4px 0;
+  color: var(--text-main); cursor: pointer; text-align: left; font: 650 14px/1.35 var(--font-text);
+}
+.attendance-row-link:hover { text-decoration: underline; }
+.attendance-row-link svg { flex: none; }
+.attendance-row-link:disabled { cursor: default; }
+.attendance-coverage {
+  display: inline-block; border: 1px solid var(--hairline); border-radius: 6px; padding: 3px 7px;
+  color: var(--text-main); font-size: 12px; white-space: nowrap;
+}
+.attendance-coverage.is-pending { background: var(--color-amber-tint); }
+.attendance-list-footer {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 10px 20px; color: var(--text-muted); font-size: 13px;
+}
+.attendance-drawer {
+  position: fixed; inset: 0 0 0 auto; margin: 0; width: min(100%, 610px); max-width: 100%;
+  height: 100dvh; max-height: none; overflow: auto; overscroll-behavior: contain;
+  padding: 18px; border: 0; border-left: 1px solid var(--hairline); background: var(--surface);
+  color: var(--text-main); box-shadow: var(--shadow-lg);
+}
+.attendance-drawer::backdrop { background: rgb(12 21 32 / 52%); }
+.attendance-drawer .attendance-record { min-width: 0; padding: 0; border: 0; background: transparent; }
+.attendance-drawer-header, .attendance-drawer-overview { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.attendance-drawer-header h4 { margin: 6px 0; font: 650 24px/1.25 var(--font-display); overflow-wrap: anywhere; }
+.attendance-drawer-header p { color: var(--text-muted); font-size: 13px; }
+.attendance-drawer-close { flex: none; }
+.attendance-drawer-overview { align-items: center; flex-wrap: wrap; padding: 12px 0; }
+
+@media (max-width: 1020px) {
+  .finance-scope { grid-template-columns: minmax(0, 170px) minmax(0, 1fr); }
+  .finance-scope-actions { grid-column: 1 / -1; }
+  .finance-scope-actions:empty { display: none; }
+}
+@media (max-width: 540px) {
+  .finance-tab-list button { flex: 1; padding-inline: 6px; font-size: 14px; }
+  .finance-scope { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 9px; }
+  .finance-related-section > summary { flex-wrap: wrap; font-size: 14px; }
+  .attendance-table-tools, .attendance-list-footer { padding-inline: 12px; }
+  .finance-ticket-consultation { padding: 10px; }
+}

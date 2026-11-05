@@ -1,10 +1,11 @@
-import { useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
-  ArrowRight, ChevronDown, ClipboardList, FolderOpen,
+  ArrowRight, BarChart3, CalendarDays, ChevronDown, ClipboardList, FolderOpen,
   Landmark, Receipt, RotateCcw, Wallet, Activity, CheckCircle2
 } from 'lucide-react';
 import { getOperationalSlice, ticketOpeningDate } from '../domain/financialPresentation.js';
 import { getSchoolRecordReview } from '../domain/schoolRecordReview.js';
+import { buildMonthlyForecast, currentForecastMonth } from '../domain/monthlyForecast.js';
 import { getOpeningTrend } from '../domain/operationalPulse.js';
 import { formatDateBrazilian } from '../lib/logic.js';
 import SchoolRecordReview from './SchoolRecordReview.jsx';
@@ -12,6 +13,7 @@ import VisitPlanningBoard from './VisitPlanningBoard.jsx';
 import AttendanceEstimates from './AttendanceEstimates.jsx';
 import MonthlyForecast from './MonthlyForecast.jsx';
 import HistoricCorrectionsPanel from './HistoricCorrectionsPanel.jsx';
+import '../styles/finance-workspace.css';
 
 const groups = [
   { title: 'Apuração informada', Icon: ClipboardList, text: 'Valores apurados pelo responsável.', scope: 'Independente do status dos chamados' },
@@ -19,9 +21,8 @@ const groups = [
   { title: 'Limites e empenhos', Icon: Landmark, text: 'Referências contratuais e empenhos.', scope: 'Âmbito global · não filtrado por escola ou mês' }
 ];
 
-export default function FinancialOverviewPage({
-  schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests,
-  attendances, attendanceContext, onAttendanceContextConsumed, onStartAttendance
+function FinanceTicketConsultation({
+  schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests
 }) {
   const reviewRef = useRef(null);
   const school = schools.find(item => String(item.designacao) === filters.schoolId) || null;
@@ -36,73 +37,11 @@ export default function FinancialOverviewPage({
     .sort((a, b) => (ticketOpeningDate(b) || '').localeCompare(ticketOpeningDate(a) || ''))
     .slice(0, 5);
   const monthLabel = filters.month ? `${filters.month.slice(5)}/${filters.month.slice(0, 4)}` : 'Todos os períodos';
-  const clearSchool = () => onFiltersChange({ ...filters, schoolId: '' });
   const clearTicketMonth = () => onFiltersChange({ ...filters, month: '' });
   const jumpToReview = () => reviewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
-    <section className="finance-page" aria-labelledby="finance-title">
-      <div className="finance-commandbar">
-        <header className="finance-heading">
-          <div>
-            <span className="section-eyebrow"><Wallet aria-hidden="true" /> Gestão integrada</span>
-            <h2 className="section-title" id="finance-title">Gestão Financeira</h2>
-            <p className="section-subtitle">Programe visitas, acompanhe a execução informada e consulte os chamados de cada escola.</p>
-          </div>
-        </header>
-
-        <div className="surface-card finance-filters finance-school-filter" aria-label="Escola para programação e consulta">
-          <div className="form-group">
-            <label htmlFor="finance-school">Escola</label>
-            <select id="finance-school" className="form-control" value={filters.schoolId} onChange={event => onFiltersChange({ ...filters, schoolId: event.target.value })}>
-              <option value="">Todas as escolas</option>
-              {schools.map(item => <option key={item.designacao} value={String(item.designacao)}>{item.designacao} · {item.unidade_escolar}</option>)}
-            </select>
-          </div>
-          <button type="button" className="btn btn-secondary" onClick={clearSchool} disabled={!filters.schoolId}><RotateCcw size={16} aria-hidden="true" />Limpar escola</button>
-        </div>
-
-      </div>
-
-      <div className="finance-planning-layout">
-        <div className="finance-planning-primary">
-          <MonthlyForecast
-            records={attendances.records}
-            schools={schools}
-            selectedSchoolId={filters.schoolId}
-            connection={attendances.connection}
-            onOpenAttendance={record => onStartAttendance({
-              schoolId: record.schoolId, attendanceId: record.id
-            })}
-          />
-          <HistoricCorrectionsPanel
-            schools={schools}
-            selectedSchoolId={filters.schoolId}
-            onOpenSchool={onOpenSchool}
-          />
-          <VisitPlanningBoard
-            schools={schools}
-            selectedSchoolId={filters.schoolId}
-            onOpenSchool={onOpenSchool}
-            onEstimate={visit => onStartAttendance({
-              schoolId: visit.schoolId, visitId: visit.id, plannedDate: visit.plannedDate,
-              cycle: visit.cycle, serviceKind: visit.kind, quantity: visit.equipmentCount
-            })}
-          />
-
-          <AttendanceEstimates
-            schools={schools}
-            tickets={tickets}
-            records={attendances.records}
-            selectedSchoolId={filters.schoolId}
-            connection={attendances.connection}
-            onSave={attendances.onSave}
-            loadRevisions={attendances.loadRevisions}
-            context={attendanceContext}
-            onContextConsumed={onAttendanceContextConsumed}
-          />
-        </div>
-
+    <div className='finance-ticket-consultation'>
         <section className="finance-operations" aria-label="Consulta de chamados">
           <header className="finance-operations-heading">
             <h3>Chamados e solicitações</h3>
@@ -172,10 +111,7 @@ export default function FinancialOverviewPage({
               <p className="finance-trend-caption">{school ? school.unidade_escolar : 'Todas as escolas'} · Seis meses de abertura{undatedAcrossSchool ? ` · ${undatedAcrossSchool} sem data, fora do gráfico` : ''}</p>
             </div>
           </section>
-
         </section>
-      </div>
-
       <div className="finance-workbench">
         <div className="finance-workbench-primary" ref={reviewRef}>
           <SchoolRecordReview
@@ -227,7 +163,7 @@ export default function FinancialOverviewPage({
               <ChevronDown className="finance-availability-chevron" size={18} aria-hidden="true" />
             </summary>
             <div className="finance-availability-content">
-              <p className="finance-hint">A previsão de referências econômicas por competência está disponível acima. Apuração, faturamento e pagamentos ficam para etapas posteriores.</p>
+              <p className="finance-hint">Consulte as estimativas na aba Visão financeira.</p>
               <div className="finance-metrics">
                 {groups.map(({ title, Icon, text, scope }) => (
                   <article className="finance-metric" key={title}>
@@ -239,6 +175,146 @@ export default function FinancialOverviewPage({
                 ))}
               </div>
             </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const tabs = [
+  { id: 'overview', label: 'Visão financeira', Icon: BarChart3 },
+  { id: 'attendances', label: 'Atendimentos', Icon: ClipboardList }
+];
+
+export default function FinancialOverviewPage({
+  schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests,
+  attendances, attendanceContext, onAttendanceContextConsumed, onStartAttendance
+}) {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [month, setMonth] = useState(currentForecastMonth);
+  const [status, setStatus] = useState('all');
+  const [search, setSearch] = useState('');
+  const tabRefs = useRef({});
+  const resultsRef = useRef(null);
+  const currentTab = attendanceContext ? 'attendances' : activeTab;
+  const ready = attendances.connection?.status === 'ready';
+  const forecast = useMemo(() => buildMonthlyForecast(ready ? attendances.records : [], {
+    schoolId: filters.schoolId, selectedMonth: month || currentForecastMonth()
+  }), [attendances.records, filters.schoolId, month, ready]);
+  const latestMonth = forecast.recordedMonths.at(-1);
+
+  function explore({ month: period, schoolId, status: nextStatus = 'all' }) {
+    setMonth(period);
+    setStatus(nextStatus);
+    setSearch('');
+    if (schoolId !== undefined) onFiltersChange({ ...filters, schoolId });
+    setActiveTab('attendances');
+    requestAnimationFrame(() => resultsRef.current?.focus());
+  }
+
+  function selectTabByKey(event, index) {
+    const target = {
+      ArrowRight: (index + 1) % tabs.length,
+      ArrowLeft: (index + tabs.length - 1) % tabs.length,
+      Home: 0,
+      End: tabs.length - 1
+    }[event.key];
+    if (target === undefined) return;
+    event.preventDefault();
+    setActiveTab(tabs[target].id);
+    tabRefs.current[tabs[target].id]?.focus();
+  }
+
+  function consumeContext() {
+    const record = attendances.records.find(item => item.id === attendanceContext?.attendanceId);
+    const contextMonth = record?.plannedMonth || attendanceContext?.plannedDate?.slice(0, 7);
+    if (contextMonth) setMonth(contextMonth);
+    setActiveTab('attendances');
+    setStatus('all');
+    setSearch('');
+    onAttendanceContextConsumed();
+  }
+
+  return (
+    <section className="finance-page finance-workspace" aria-labelledby="finance-title">
+      <header className="finance-heading">
+        <h2 className="section-title" id="finance-title">Gestão Financeira</h2>
+      </header>
+      <div className="finance-tab-list" role="tablist" aria-label="Gestão Financeira">
+        {tabs.map(({ id, label, Icon }, index) => (
+          <button key={id} id={'finance-tab-' + id} role="tab" type="button"
+            ref={element => { tabRefs.current[id] = element; }}
+            aria-controls={'finance-panel-' + id} aria-selected={currentTab === id}
+            tabIndex={currentTab === id ? 0 : -1} onClick={() => setActiveTab(id)}
+            onKeyDown={event => selectTabByKey(event, index)}>
+            <Icon size={18} aria-hidden="true" /> {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="surface-card finance-scope" aria-label="Filtros das estimativas financeiras">
+        <div className="form-group">
+          <label htmlFor="forecast-month">Competência</label>
+          <input id="forecast-month" className="form-control" type="month" value={month}
+            onChange={event => setMonth(event.target.value)} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="finance-school">Escola</label>
+          <select id="finance-school" className="form-control" value={filters.schoolId}
+            onChange={event => onFiltersChange({ ...filters, schoolId: event.target.value })}>
+            <option value="">Todas as escolas</option>
+            {schools.map(school => <option key={school.designacao} value={String(school.designacao)}>{school.designacao} · {school.unidade_escolar}</option>)}
+          </select>
+        </div>
+        <div className="finance-scope-actions">
+          {latestMonth && latestMonth !== month && <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMonth(latestMonth)}>Última com registros</button>}
+          {(filters.schoolId || month !== currentForecastMonth()) && <button type="button" className="btn btn-secondary btn-sm"
+            onClick={() => {
+              setMonth(currentForecastMonth());
+              setStatus('all');
+              setSearch('');
+              onFiltersChange({ ...filters, schoolId: '' });
+            }}><RotateCcw size={15} aria-hidden="true" /> Limpar filtros</button>}
+        </div>
+      </div>
+
+      <div id="finance-panel-overview" role="tabpanel" aria-labelledby="finance-tab-overview" hidden={currentTab !== 'overview'}>
+        <MonthlyForecast forecast={forecast} schools={schools} connection={attendances.connection} onExplore={explore} />
+      </div>
+
+      <div id="finance-panel-attendances" role="tabpanel" aria-labelledby="finance-tab-attendances" hidden={currentTab !== 'attendances'}>
+        <AttendanceEstimates schools={schools} tickets={tickets} records={attendances.records}
+          rows={forecast.selected.records} selectedSchoolId={filters.schoolId} month={forecast.selectedMonth}
+          status={status} onStatusChange={setStatus} search={search} onSearchChange={setSearch} headingRef={resultsRef}
+          connection={attendances.connection} onSave={attendances.onSave} loadRevisions={attendances.loadRevisions}
+          context={attendanceContext} onContextConsumed={consumeContext}
+          onSaved={content => {
+            setMonth(content.plannedMonth);
+            setStatus('all');
+            setSearch('');
+            if (filters.schoolId && filters.schoolId !== content.schoolId) {
+              onFiltersChange({ ...filters, schoolId: content.schoolId });
+            }
+          }} />
+
+        <div className="finance-related" aria-label="Consultas complementares">
+          <details className="surface-card finance-related-section">
+            <summary><CalendarDays size={18} aria-hidden="true" /> Programação de visitas <small>Rascunho neste navegador</small><ChevronDown size={16} aria-hidden="true" /></summary>
+            <VisitPlanningBoard schools={schools} selectedSchoolId={filters.schoolId} onOpenSchool={onOpenSchool}
+              onEstimate={visit => onStartAttendance({
+                schoolId: visit.schoolId, visitId: visit.id, plannedDate: visit.plannedDate,
+                cycle: visit.cycle, serviceKind: visit.kind, quantity: visit.equipmentCount
+              })} />
+          </details>
+          <details className="surface-card finance-related-section">
+            <summary><FolderOpen size={18} aria-hidden="true" /> Histórico de corretivas <ChevronDown size={16} aria-hidden="true" /></summary>
+            <HistoricCorrectionsPanel schools={schools} selectedSchoolId={filters.schoolId} onOpenSchool={onOpenSchool} />
+          </details>
+          <details className="surface-card finance-related-section">
+            <summary><ClipboardList size={18} aria-hidden="true" /> Chamados e conferência por escola <ChevronDown size={16} aria-hidden="true" /></summary>
+            <FinanceTicketConsultation schools={schools} tickets={tickets} filters={filters} onFiltersChange={onFiltersChange}
+              onOpenTicket={onOpenTicket} onOpenSchool={onOpenSchool} onOpenSchoolRequests={onOpenSchoolRequests} />
           </details>
         </div>
       </div>
