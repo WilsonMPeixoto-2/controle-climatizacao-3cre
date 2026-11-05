@@ -1,0 +1,44 @@
+name: P0 - Cloud synthetic price verification
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/p0-cloud-verification.yml'
+      - 'scripts/verify-p0-cloud.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p0-cloud-gop-clima
+  cancel-in-progress: false
+
+jobs:
+  p0-cloud:
+    # Somente o PR interno do incremento autorizado; nunca PRs externos.
+    if: github.head_ref == 'feat/gop-p0-p1-cloud-visits-20261105' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v6
+      - name: Node 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Chromium para teste sintético remoto
+        run: npx playwright install --with-deps chromium
+      - name: P0 - comprovante Firestore real e neutralização
+        run: node scripts/verify-p0-cloud.mjs
+      - name: Preservar apenas evidência sintética
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0-cloud-gop-clima
+          path: test-results/p0-cloud/p0-proof.json
+          if-no-files-found: ignore
+          retention-days: 14
