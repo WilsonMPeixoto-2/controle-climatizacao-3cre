@@ -657,3 +657,47 @@ test('P1: visitas compartilhadas entre sessões, reprogramação, conflito e arq
     await otherContext.close();
   }
 });
+
+
+test('P1: rascunho local exige importação expressa e nunca substitui a programação remota', async ({ page, browser, baseURL }) => {
+  await openApp(page);
+  const local = {
+    id: 'visita-legada-local-1', schoolId: SCHOOL_B.designacao,
+    plannedDate: '2026-11-22', kind: 'preventiva', cycle: 'Ciclo antigo local',
+    equipmentCount: 4, note: 'Preservar origem local',
+    reportedDate: '', reportReference: '',
+    createdAt: '2026-11-01T12:00:00.000Z',
+    updatedAt: '2026-11-01T12:00:00.000Z', history: []
+  };
+  const originalLocal = JSON.stringify([local]);
+  await page.evaluate(text => localStorage.setItem('gop_clima_programacao_rascunho_v1', text), originalLocal);
+  await page.reload();
+  const board = page.getByRole('region', { name: 'Planejamento por escola', exact: true });
+  await page.locator('.finance-related-section > summary').filter({ hasText: 'Programação de visitas' }).click();
+  await expect(board).toContainText('Firestore compartilhado');
+  await board.locator('#visit-board-month').fill('2026-11');
+  await expect(board.locator('.visit-board-row')).toHaveCount(0); // Não confundir local com cloud.
+  await expect(board.getByRole('button', { name: 'Importar 1 rascunho(s) locais' })).toBeVisible();
+  page.once('dialog', dialog => dialog.accept());
+  await board.getByRole('button', { name: 'Importar 1 rascunho(s) locais' }).click();
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
+  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(originalLocal);
+  await board.getByRole('button', { name: 'Importar 1 rascunho(s) locais' }).click();
+  await expect(board.getByRole('status').filter({ hasText: 'Nenhuma visita nova para importar' })).toBeVisible();
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
+
+  const secondContext = await browser.newContext({ baseURL });
+  try {
+    const second = await secondContext.newPage();
+    await openApp(second);
+    const otherBoard = second.getByRole('region', { name: 'Planejamento por escola', exact: true });
+    await second.locator('.finance-related-section > summary').filter({ hasText: 'Programação de visitas' }).click();
+    await expect(otherBoard).toContainText('Firestore compartilhado');
+    await otherBoard.locator('#visit-board-month').fill('2026-11');
+    await expect(otherBoard).toContainText('Ciclo antigo local');
+    await expect(otherBoard.locator('.visit-board-row')).toHaveCount(1);
+    expect(await second.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
+  } finally {
+    await secondContext.close();
+  }
+});
