@@ -510,10 +510,10 @@ export default function AttendanceEstimates({
             <div>
               <h4 ref={editorHeadingRef} id={editorTitleId} tabIndex={-1}>{editing ? 'Editar estimativa de atendimento' : 'Estimar atendimento'}</h4>
               <p>{createValidatedCre03Catalog(CRE03_SIGNED_PRICE_SCHEDULE)?.status === 'working'
-                ? 'Preços da memória de cálculo V8.7.2 aplicados automaticamente como referência em conferência. Não são medição nem faturamento.'
+                ? 'Tabela de preços da memória de cálculo V8.7.2 carregada. Os valores unitários são aplicados automaticamente por tipo e capacidade do aparelho.'
                 : createValidatedCre03Catalog(CRE03_SIGNED_PRICE_SCHEDULE)?.status === 'validated'
                   ? 'Preço contratual conferido aplicado automaticamente à faixa técnica correspondente.'
-                  : 'Faixas técnicas do TR disponíveis; preço unitário ainda não identificado.'}</p>
+                  : 'As faixas técnicas estão disponíveis, mas não há preço cadastrado para esta categoria.'}</p>
             </div>
             <button type="button" className="attendance-icon-button" aria-label="Fechar edição da estimativa" onClick={closeEditor} disabled={isSaving}><X size={19} aria-hidden="true" /></button>
           </div>
@@ -658,7 +658,7 @@ export default function AttendanceEstimates({
                           {item.catalogId === CRE03_CATALOG_ID
                             ? item.referenceNature === 'contratual_informada'
                               ? ' Preço contratual confirmado aplicado automaticamente.'
-                              : ' Referência econômica da memória de cálculo aplicada automaticamente, sujeita à conferência contratual.'
+                              : ' Preço unitário da memória de cálculo aplicado automaticamente.'
                             : ' Sem referência econômica aplicada para esta faixa.'}
                         </p>}
                         <p className="attendance-context-note">O atendimento pode ser estimado sem cadastro individual dos aparelhos. Tipo e BTU não determinam cobrança.</p>
