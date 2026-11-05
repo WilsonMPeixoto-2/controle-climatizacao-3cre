@@ -298,7 +298,11 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await expect(form.getByLabel('Escola', { exact: true })).toHaveValue(SCHOOL_A.designacao);
   await expect(form.getByLabel('Atividade', { exact: true })).toHaveValue('corretiva');
   await expect(group(form).getByLabel('Quantidade', { exact: true })).toHaveValue('');
-  await expect(group(form).getByLabel(/^Preço unitário/)).toHaveValue('');
+  // O chamado traz tipo e capacidade: o preço de memória de cálculo deve ser aplicado
+  // automaticamente como referência PROVISÓRIA (não como valor faturável).
+  await expect(group(form).getByLabel(/^Preço unitário/)).toHaveValue('239,7350');
+  await expect(group(form).getByLabel(/^Origem do preço/)).toHaveValue(/CATEGORIAS!F6:F16/);
+  await expect(form).toContainText('referência em conferência');
   await group(form).locator('summary').click();
   await expect(group(form).getByLabel(/^Capacidade/)).toHaveValue('12000');
   await expect(form.getByText(/Enquadramento do TR CRE03: item 32/)).toBeVisible();
