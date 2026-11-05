@@ -1,5 +1,8 @@
 # Correção de arquitetura — gravação financeira no Firebase existente
 
+> **Atualização de contexto — 04/11/2026.** Este documento registra a integração real do Firestore existente e seus testes cloud **antes** da publicação dos preços P01–P11. O site original foi publicado em `dpl_FTPryGYDv7H6peCR6f3GJia1YFFw` com ambas as áreas conectadas; o formulário de preço foi testado na interface **sem nova gravação remota após o deploy**. O teste de escrita remota com **preços recuperados da memória** deve ser executado no próximo gate P0, seguindo [roteiro atual](../planejamento/PLANO_CONCLUSAO_FUNCIONAL_2026_11.md). Não confundir os testes remotos do PR #34 com comprovação de todos os fluxos financeiros futuros. [Release vigente](RELEASE_PRODUCAO_2026-11-04.md).
+
+
 **Data:** 03/11/2026 · **Revisão:** PR #34 · **Situação:** regras publicadas manualmente pelo responsável e acesso financeiro comprovado no Firestore cloud; publicação do frontend e aceite no domínio público em conclusão.
 
 ## Decisão expressa do responsável pelo produto

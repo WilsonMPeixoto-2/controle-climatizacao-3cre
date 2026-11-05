@@ -1,5 +1,8 @@
 # GOP Clima 3ª CRE · Entrega consolidada de 03/11/2026
 
+> **REGISTRO HISTÓRICO — 03/11/2026.** A homologação no projeto `climatizacao-firebase-homologacao` e as ressalvas de emulador descrevem **a entrega da época**. O estado vigente após os PRs #35 e #36, com Firestore operacional/cloud, 11 preços unitários, duas abas e produção no Vercel original, é [release de 04/11/2026](RELEASE_PRODUCAO_2026-11-04.md). Não reutilize os itens antigos “pendente” como se ainda estivessem não implementados.
+
+
 **Estado comprovado:** PR [#32](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/pull/32) integrado à `master` por squash no commit [`16274ae5`](https://github.com/WilsonMPeixoto-2/controle-climatizacao-3cre/commit/16274ae50631e4da5e5d429f833a6f670d18693b). Os PRs #24–#31 foram encerrados como substituídos pela entrega consolidada. Nenhum PR está aberto imediatamente após a integração.
 
 **Ambiente web:** projeto Vercel `climatizacao-firebase-homologacao` (`prj_dAaYkrr2kp9F2RgvqS7L5j9ry1x2`); implantação explícita `dpl_CGtyz88nt38QkXP31M3D6SiPBZN7`, `production`, `READY`, associada ao commit `16274ae5`. Domínio configurado e confirmado: https://climatizacao-firebase-homologacao.vercel.app/. **A verificação técnica do deploy não equivale a uma homologação visual humana do domínio.**

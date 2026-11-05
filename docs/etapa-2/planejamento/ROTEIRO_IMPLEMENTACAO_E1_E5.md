@@ -1,5 +1,8 @@
 # Plano de evolução real — Etapa 2 (E1 a E5)
 
+> **NOVA REFERÊNCIA OPERACIONAL — 04/11/2026:** o roteiro E1–E5 abaixo é **planejamento histórico**. A parte de chamados, estimativas, previsão, duas abas e precificação P01–P11 já está publicada com os PRs #35/#36 no projeto Vercel original. A execução vigente passa a ser o [plano de conclusão funcional P0–P6](PLANO_CONCLUSAO_FUNCIONAL_2026_11.md), a partir do [estado real de produção](../implementacao/RELEASE_PRODUCAO_2026-11-04.md). Preserve as diferenças entre planejamento, execução/medição e faturamento e a DP-004; **não reexecute E1** ou condicione a aplicação dos 11 preços de trabalho a nova planilha.
+
+
 > **Nota de situação (03/11/2026):** este roteiro foi escrito antes da entrega consolidada e mantém descrições de incrementos/limites daquele momento. A referência **atual** é [RELEASE_CONSOLIDADA_2026-11-03.md](../implementacao/RELEASE_CONSOLIDADA_2026-11-03.md): o PR #32 já foi integrado e publicado na homologação; atendimento e estimativa contextual existem, mas salvamento financeiro continua somente em emulador local. **Não reiniciar E1 nem tratar este arquivo como prova de que novos módulos, Firebase cloud financeiro ou faturamento estejam prontos.**
 
 **Estado:** execução inicial controlada em branch de trabalho; desenho e regras de produção ainda sujeitos a validação.  
