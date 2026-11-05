@@ -452,6 +452,14 @@ test('duas abas explicam totais, preservam filtros e sincronizam a reprogramaç�
     await expect(records(page)).toHaveCount(0);
     await profile.getByRole('button', { name: /Todos os atendimentos/ }).click();
     await expect(records(page)).toHaveCount(1);
+    for (const viewport of [{ width: 320, height: 800 }, { width: 1440, height: 900 }, { width: 3840, height: 2160 }]) {
+      await page.setViewportSize(viewport);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+      const path = testInfo.outputPath('perfil-atendimentos-' + viewport.width + '.png');
+      await profile.screenshot({ path, animations: 'disabled' });
+      await testInfo.attach('Perfil de atendimentos ' + viewport.width + 'px', { path, contentType: 'image/png' });
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
     await estimates(page).getByRole('searchbox').fill('Sem correspondência');
     await expect(records(page)).toHaveCount(0);
     await tab(page, 'Visão financeira').click();
