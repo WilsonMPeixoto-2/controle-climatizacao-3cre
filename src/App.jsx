@@ -74,6 +74,7 @@ import FinancialOverviewPage from './components/FinancialOverviewPage.jsx';
 import FinancialReferenceCard from './components/FinancialReferenceCard.jsx';
 import SchoolFinancialSummary from './components/SchoolFinancialSummary.jsx';
 import useAttendanceDevelopment from './hooks/useAttendanceDevelopment.js';
+import useVisitPlanningShared from './hooks/useVisitPlanningShared.js';
 import { parseCapacityBtu } from './domain/financialReference.js';
 // Carregado sob demanda: o mapa (Leaflet + GeoJSON) só baixa quando a aba é aberta
 const OperationalMap = lazy(() => import('./components/OperationalMap.jsx'));
@@ -286,6 +287,7 @@ function rotuloNivel(nivel) {
 export default function App() {
   const dossierRef = useRef(null);
   const attendances = useAttendanceDevelopment();
+  const visitPlanning = useVisitPlanningShared();
   const [attendanceContext, setAttendanceContext] = useState(null);
   const consumeAttendanceContext = useCallback(() => setAttendanceContext(null), []);
   const [initialCloudConfig] = useState(() => readFirebaseConfig(import.meta.env));
@@ -2118,6 +2120,7 @@ export default function App() {
             onOpenSchool={openFinancialReviewSchool}
             onOpenSchoolRequests={openFinancialReviewRequests}
             attendances={attendances}
+            visitPlanning={visitPlanning}
             attendanceContext={attendanceContext}
             onAttendanceContextConsumed={consumeAttendanceContext}
             onStartAttendance={openAttendanceEstimate}
@@ -4700,6 +4703,7 @@ export default function App() {
                         school={selectedSchool}
                         attendanceRecords={attendances.records}
                         attendanceConnection={attendances.connection}
+                        visitPlanning={visitPlanning}
                         onEstimate={() => openAttendanceEstimate({ schoolId: String(selectedSchool.designacao) })}
                         onOpenAttendance={record => openAttendanceEstimate({ attendanceId: record.id, schoolId: record.schoolId })}
                         onOpenFinance={() => {
