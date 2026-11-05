@@ -265,14 +265,17 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       const timestamp = new Date().toISOString();
       const edited = editingId ? activeRows.find(row => row.id === editingId) : null;
       if (editingId && !edited) throw new Error('Esta visita mudou ou foi arquivada em outra sessão.');
+      if (cloudConfigured && !cloudReady) throw new Error('Firestore indisponível. A edição não foi gravada.');
+      // A revisão usada é a que o usuário abriu, NUNCA a versão recém-recebida
+      // pelo listener. Caso contrário, uma edição antiga sobrescreveria outra sessão.
       const candidate = editingId
-        ? updateVisitDraft(edited, form, { now: timestamp })
+        ? updateVisitDraft(cloudConfigured ? form : edited, form, { now: timestamp })
         : createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp });
       const next = editingId
         ? rows.map(row => row.id === editingId ? candidate : row)
         : [...rows, candidate];
       const didSave = cloudConfigured
-        ? (await shared.onSave(candidate, { expectedRevision: edited?.revision || 0 }), true)
+        ? (await shared.onSave(candidate, { expectedRevision: editingId ? form.revision : 0 }), true)
         : await commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída na programação local.');
       if (didSave) {
         if (cloudConfigured) {
@@ -385,7 +388,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         {' '}Os rascunhos locais continuam preservados.
       </p>}
       {notice && <p className="visit-board-notice" role="status">{notice}</p>}
-      {isSaving && !form && <p className="visit-board-notice" role="status">Salvando alterações neste dispositivo…</p>}
+      {isSaving && !form && <p className="visit-board-notice" role="status">{cloudConfigured ? 'Sincronizando programação compartilhada…' : 'Salvando alterações neste dispositivo…'}</p>}
       {error && <p className="field-error visit-board-error" role="alert">{error}</p>}
       {!cloudConfigured && stale && <button type="button" className="btn btn-secondary visit-board-refresh" onClick={reloadLocal} disabled={isSaving}>Recarregar programação local</button>}
 
