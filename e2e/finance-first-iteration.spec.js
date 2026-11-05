@@ -904,3 +904,37 @@ test('nomes longos de escolas mantêm leitura confortável em notebook', async (
   const bounds = await name.boundingBox();
   expect(bounds.height).toBeLessThan(150);
 });
+
+
+test('ponte financeira mostra os chamados existentes e o plano V4 sem fabricar faturamento', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await seed(page);
+  await finance(page, null);
+  const bridge = page.getByRole('region', { name: 'Planejamento e demandas existentes' });
+  await expect(bridge).toBeVisible();
+  await expect(bridge).toContainText('R$ 512.700,35');
+  await expect(bridge).toContainText('134');
+  await expect(bridge).toContainText('3.080');
+  await expect(bridge).toContainText('4 chamados');
+  await expect(bridge).toContainText('R$ 15.156,5975');
+  await expect(bridge).toContainText('não é valor medido, autorizado ou pagável');
+  await expect(bridge.getByRole('button', { name: 'Abrir estimativa contextual do chamado GOP-AR-2026-9001' })).toBeVisible();
+  await expect(bridge).toContainText('R$ 239,7350');
+  await bridge.getByRole('button', { name: 'Consultar todos os 4 chamados' }).click().catch(() => {});
+  await page.locator('#finance-school').selectOption('900001');
+  await expect(bridge).toContainText('3 chamados');
+  await expect(bridge).toContainText('Sem escola no plano');
+  // Os números da planilha não são misturados com a previsão de atendimentos.
+  await expect(page.getByRole('region', { name: /Previsão mensal por competência/ })).toBeVisible();
+  await page.locator('#finance-school').selectOption('');
+
+  for (const width of [320, 390, 1440, 3840]) {
+    await page.setViewportSize({ width, height: width < 500 ? 850 : 1000 });
+    await expect(bridge).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, 'A página não deve ultrapassar o viewport de ' + width + 'px').toBeLessThanOrEqual(1);
+    const p = testInfo.outputPath('ponte-financeira-' + width + '.png');
+    await bridge.screenshot({ path: p, animations: 'disabled' });
+    await testInfo.attach('Ponte financeira ' + width + 'px', { path: p, contentType: 'image/png' });
+  }
+});
