@@ -1,5 +1,8 @@
 # Arquitetura Firebase Spark
 
+> **Arquitetura operacional vigente em 04/11/2026:** a migração de Supabase para Firebase **já foi concluída para o sistema ativo**; o banco cloud `gestao-da-climatizacao-3-cre` alimenta os chamados e as estimativas financeiras `atendimentos_economicos` (com revisões). A publicação está no Vercel original `prj_hhbw3ATBi6VOKLFnuHYoVwiwCFbw`, deployment `dpl_FTPryGYDv7H6peCR6f3GJia1YFFw`. A programação de visitas ainda reside em localStorage. As seções abaixo registram **decisões históricas da migração**; verbos no futuro não representam bloqueios atuais. Para dados, roadmap e limites atuais, veja [estado vigente](etapa-2/implementacao/RELEASE_PRODUCAO_2026-11-04.md) e [conclusão funcional](etapa-2/planejamento/PLANO_CONCLUSAO_FUNCIONAL_2026_11.md).
+
+
 ## 1. Objetivo
 
 Este documento registra a arquitetura-alvo do Controle de Climatização da GOP/3ª CRE para a substituição da persistência Supabase/PostgreSQL por Cloud Firestore, preservando a hospedagem Vercel e o funcionamento sem autenticação individual.
