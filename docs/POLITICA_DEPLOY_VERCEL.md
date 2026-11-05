@@ -1,5 +1,8 @@
 # Política de implantação econômica | CLIMATIZAÇÃO (3ª CRE)
 
+> **SITUAÇÃO VIGENTE — 04/11/2026 (Brasília):** o projeto original **`controle-climatizacao-3cre`** (`prj_hhbw3ATBi6VOKLFnuHYoVwiwCFbw`) está recuperado e é o **destino efetivo da produção**. PRs #35 e #36 foram integrados; deployment `dpl_FTPryGYDv7H6peCR6f3GJia1YFFw`, commit `897ff5c`, `READY`, alias [oficial](https://controle-climatizacao-3cre.vercel.app/) e secundário verificados. O fluxo que aponta `climatizacao-firebase-homologacao` como produção oficial nos registros de outubro é **histórico** e não deve orientar o próximo deploy. `vercel.json` mantém `git.deploymentEnabled: false`: publicar de modo **explícito uma única vez** no projeto original, conferir SHA e alias, sem criar projeto paralelo. A recuperação do bloqueio pré-build pela investigação **Gemini Antigravity** está documentada [aqui](engineering/INCIDENTES_E_VERIFICACAO_2026_11.md). [Release atual](etapa-2/implementacao/RELEASE_PRODUCAO_2026-11-04.md).
+
+
 **Data:** 23/10/2026  
 **Objetivo:** impedir o consumo da quota Hobby da Vercel por deploys automáticos e duplicados durante o desenvolvimento.
 
