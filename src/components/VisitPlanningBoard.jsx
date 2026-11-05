@@ -10,7 +10,6 @@ import {
   VISIT_DRAFT_KEY, VISIT_RECOVERY_KEY, MAX_VISIT_BACKUP_BYTES, parseStoredVisitDrafts
 } from '../domain/schoolVisitPlan.js';
 import { persistVisitDraft, loadVisitSnapshot, readVisitRecovery, VISIT_DRAFT_UPDATED_EVENT } from '../domain/visitDraftStorage.js';
-import useVisitPlanningShared from '../hooks/useVisitPlanningShared.js';
 
 const monthNow = () => {
   const date = new Date();
@@ -35,10 +34,10 @@ function loadInitial() {
   }
 }
 
-export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '', onEstimate }) {
+export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '', onEstimate, visitPlanning }) {
   const initial = useState(loadInitial)[0];
   const [rows, setRows] = useState(initial.rows);
-  const shared = useVisitPlanningShared();
+  const shared = visitPlanning;
   const cloudConfigured = shared.connection.status !== 'unconfigured';
   const cloudReady = shared.connection.status === 'ready';
   // Os registros remotos são autoridade no modo compartilhado. Rascunhos
