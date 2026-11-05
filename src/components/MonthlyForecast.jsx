@@ -21,7 +21,7 @@ function periodValue(period, nature) {
 }
 
 export default function MonthlyForecast({ forecast, schools, connection, onExplore }) {
-  const [ranking, setRanking] = useState('nominal');
+  const [ranking, setRanking] = useState('additional');
   const { selected, months, invalidMonthRecordCount } = forecast;
   const schoolsById = new Map(schools.map(school => [String(school.designacao), school.unidade_escolar]));
   const schoolTotals = useMemo(() => buildSchoolForecast(selected), [selected]);
