@@ -70,7 +70,7 @@ export default function MonthlyForecast({ forecast, schools, connection, onExplo
             </button>
             <button type="button" className="forecast-kpi is-pending" onClick={() => onExplore({ month: selected.month, status: 'pending' })}>
               <span>Cobertura a confirmar <ArrowUpRight size={15} aria-hidden="true" /></span>
-              <strong className="tabular">{periodValue(selected, 'pending')}</strong>
+              <strong className="tabular">{composition ? amount(composition.segments[2].units4, false) : periodValue(selected, 'pending')}</strong>
               <small>{selected.coveragePendingCount} {selected.coveragePendingCount === 1 ? 'grupo para conferir' : 'grupos para conferir'}</small>
             </button>
           </div>
@@ -165,8 +165,8 @@ export default function MonthlyForecast({ forecast, schools, connection, onExplo
                     ))}
                   </svg>
                   <div className="forecast-donut-center" aria-hidden="true">
-                    <strong className="tabular">{composition.segments.length}</strong>
-                    <span>classes de cobertura</span>
+                    <strong className="tabular">{composition.segments.filter(part => part.units4 > 0).length}</strong>
+                    <span>parcelas</span>
                   </div>
                 </div>
                 <div className="forecast-composition-breakdown">
