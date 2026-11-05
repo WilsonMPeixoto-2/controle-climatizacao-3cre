@@ -394,7 +394,7 @@ export default function AttendanceEstimates({
         const updated = { ...item, [name]: value };
         // Preço digitado pelo responsável deixa de ser tratado como preço automático.
         if (name === 'priceText' && item.catalogId === CRE03_CATALOG_ID
-          && item.referenceNature === 'contratual_informada') {
+          && ['contratual_informada', 'provisoria'].includes(item.referenceNature)) {
           return {
             ...updated, unitPriceUnits4: null, sourceRef: '',
             referenceNature: 'informada', catalogId: '', categoryCode: '', referenceVersion: ''
@@ -509,9 +509,11 @@ export default function AttendanceEstimates({
           <div className="attendance-editor-heading">
             <div>
               <h4 ref={editorHeadingRef} id={editorTitleId} tabIndex={-1}>{editing ? 'Editar estimativa de atendimento' : 'Estimar atendimento'}</h4>
-              <p>{createValidatedCre03Catalog(CRE03_SIGNED_PRICE_SCHEDULE)
-                ? 'Valor de referência do TR preenchido automaticamente quando há faixa validada.'
-                : 'O TR identifica as faixas técnicas; preços unitários dependem da planilha contratual preenchida.'}</p>
+              <p>{createValidatedCre03Catalog(CRE03_SIGNED_PRICE_SCHEDULE)?.status === 'working'
+                ? 'Preços da memória de cálculo V8.7.2 aplicados automaticamente como referência em conferência. Não são medição nem faturamento.'
+                : createValidatedCre03Catalog(CRE03_SIGNED_PRICE_SCHEDULE)?.status === 'validated'
+                  ? 'Preço contratual conferido aplicado automaticamente à faixa técnica correspondente.'
+                  : 'Faixas técnicas do TR disponíveis; preço unitário ainda não identificado.'}</p>
             </div>
             <button type="button" className="attendance-icon-button" aria-label="Fechar edição da estimativa" onClick={closeEditor} disabled={isSaving}><X size={19} aria-hidden="true" /></button>
           </div>
@@ -654,8 +656,10 @@ export default function AttendanceEstimates({
                         {trItem && <p className="attendance-context-note" role="status">
                           Enquadramento do TR CRE03: item {trItem.number} · {trItem.type} · {parseCapacityBtu(item.capacityBtu)?.toLocaleString('pt-BR')} BTU.
                           {item.catalogId === CRE03_CATALOG_ID
-                            ? ' Preço unitário contratual referenciado automaticamente.'
-                            : ' Preço unitário pendente de planilha contratual validada.'}
+                            ? item.referenceNature === 'contratual_informada'
+                              ? ' Preço contratual confirmado aplicado automaticamente.'
+                              : ' Referência econômica da memória de cálculo aplicada automaticamente, sujeita à conferência contratual.'
+                            : ' Sem referência econômica aplicada para esta faixa.'}
                         </p>}
                         <p className="attendance-context-note">O atendimento pode ser estimado sem cadastro individual dos aparelhos. Tipo e BTU não determinam cobrança.</p>
                       </div>
