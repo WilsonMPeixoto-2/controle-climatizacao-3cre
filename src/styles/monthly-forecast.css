@@ -76,3 +76,201 @@
   .forecast-totals small { grid-column: 1 / -1; }
   .forecast-totals svg { display: none; }
 }
+
+
+/* Painel analítico v2: mantém os tokens e a identidade original GOP Clima. */
+.monthly-forecast {
+  overflow: hidden;
+  background: var(--surface-2);
+  box-shadow: 0 16px 48px color-mix(in srgb, var(--text-main) 5%, transparent);
+  border-radius: 20px;
+}
+.forecast-header {
+  position: relative;
+  gap: 18px;
+  padding: clamp(18px, 2.5vw, 32px);
+  background:
+    radial-gradient(circle at 96% 6%, color-mix(in srgb, var(--primary) 13%, transparent), transparent 42%),
+    linear-gradient(135deg, var(--surface-2), color-mix(in srgb, var(--primary) 3%, var(--surface-2)));
+}
+.forecast-kicker {
+  display: block;
+  font: 750 11px/1.3 var(--font-text);
+  color: var(--primary-active, var(--primary));
+  letter-spacing: .095em;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+.forecast-heading h3 { font-size: clamp(23px, 1.75vw, 33px); letter-spacing: -.025em; }
+.forecast-heading p { line-height: 1.55; }
+.forecast-totals { gap: 1px; background: var(--hairline); }
+.forecast-totals > button {
+  position: relative;
+  min-height: 128px;
+  gap: 11px;
+  padding: clamp(16px, 2vw, 26px);
+  background: var(--surface-2);
+  transition: background var(--dur-fast, 150ms) ease, box-shadow var(--dur-fast, 150ms) ease;
+}
+.forecast-totals > button + button { border-left: 0; }
+.forecast-totals > button::before {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  content: ""; background: var(--primary);
+}
+.forecast-totals > button.is-additional::before { background: var(--secondary); }
+.forecast-totals > button.is-pending::before { background: var(--color-orange); }
+.forecast-totals > button:hover { background: color-mix(in srgb, var(--primary) 7%, var(--surface-2)); }
+.forecast-totals > button > span { color: var(--text-muted); font-weight: 650; }
+.forecast-totals strong {
+  font: 650 clamp(21px, 2.05vw, 33px)/1.14 var(--font-display);
+  letter-spacing: -.025em;
+}
+.forecast-totals small { font-size: 12px; line-height: 1.5; }
+.forecast-charts { background: var(--surface-2); grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+.forecast-trend, .forecast-ranking { padding: clamp(16px, 2.15vw, 27px); }
+.forecast-chart-heading h4 { font-size: clamp(17px, 1.25vw, 20px); letter-spacing: -.015em; }
+.forecast-chart-heading { gap: 12px; }
+.forecast-dot { width: 10px; height: 10px; border-radius: 3px; }
+.forecast-months { gap: clamp(4px, .65vw, 11px); margin-top: 16px; }
+.forecast-month {
+  padding: 9px 5px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: background var(--dur-fast, 150ms) ease, border-color var(--dur-fast, 150ms) ease;
+}
+.forecast-month[aria-current="date"] {
+  border-color: color-mix(in srgb, var(--primary) 37%, var(--hairline));
+  box-shadow: inset 0 -2px var(--primary);
+}
+.forecast-bar-track {
+  height: clamp(138px, 12vw, 206px);
+  gap: 5px;
+  background: repeating-linear-gradient(to top, transparent 0 calc(25% - 1px), color-mix(in srgb, var(--text-muted) 10%, transparent) calc(25% - 1px) 25%);
+}
+.forecast-bar {
+  min-width: 7px;
+  max-width: 44%;
+  width: clamp(12px, 1.45vw, 22px);
+  border-radius: 6px 6px 0 0;
+}
+.forecast-bar.is-nominal {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 70%, white), var(--primary));
+}
+.forecast-bar.is-additional {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--secondary) 66%, white), var(--secondary));
+}
+.forecast-month-label { font-size: clamp(11px, .85vw, 13px); }
+.forecast-school-list button {
+  padding: 11px 8px;
+  gap: 7px 12px;
+  border-radius: 8px;
+  transition: background var(--dur-fast, 150ms) ease;
+}
+.forecast-school-list button > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.forecast-school-list strong { font: 700 13px/1.4 var(--font-text); }
+.forecast-school-track { height: 8px; border-radius: 20px; }
+.forecast-school-bar.is-nominal { background: var(--primary); }
+.forecast-school-bar.is-additional { background: var(--secondary); }
+.forecast-school-bar.is-pending { background: var(--color-orange); }
+
+/* A composição é uma partição do valor nominal. Acréscimos NÃO se somam novamente. */
+.forecast-composition {
+  display: grid;
+  grid-template-columns: minmax(210px, .8fr) minmax(0, 2fr);
+  align-items: center;
+  gap: clamp(18px, 2vw, 36px);
+  border-top: 1px solid var(--hairline);
+  padding: clamp(20px, 2.4vw, 30px);
+  background:
+    radial-gradient(circle at 8% 100%, color-mix(in srgb, var(--secondary) 7%, transparent), transparent 42%),
+    var(--surface-2);
+}
+.forecast-composition-intro h4 {
+  display: flex; align-items: start; gap: 10px;
+  font: 650 clamp(18px, 1.4vw, 23px)/1.28 var(--font-display);
+  letter-spacing: -.02em;
+}
+.forecast-composition-intro h4 svg { flex: none; color: var(--primary); }
+.forecast-composition-intro > p {
+  margin-top: 11px; font: 400 13px/1.65 var(--font-text); color: var(--text-muted);
+}
+.forecast-composition-content {
+  min-width: 0; display: grid; grid-template-columns: 155px minmax(0, 1fr);
+  align-items: center; gap: 18px;
+}
+.forecast-donut { position: relative; width: 155px; height: 155px; max-width: 100%; aspect-ratio: 1; }
+.forecast-donut > svg { display: block; width: 100%; height: 100%; }
+.forecast-donut-track { stroke: color-mix(in srgb, var(--text-muted) 14%, var(--surface-2)); }
+.forecast-donut-arc { stroke-linecap: butt; }
+.forecast-donut-arc.is-included { stroke: var(--primary); }
+.forecast-donut-arc.is-additional { stroke: var(--secondary); }
+.forecast-donut-arc.is-pending { stroke: var(--color-orange); }
+.forecast-donut-center {
+  position: absolute; inset: 29%; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center; pointer-events: none;
+}
+.forecast-donut-center strong { font: 700 30px/1 var(--font-display); }
+.forecast-donut-center span { max-width: 75px; font: 500 10px/1.2 var(--font-text); color: var(--text-muted); }
+.forecast-composition-breakdown {
+  min-width: 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.forecast-composition-item {
+  min-width: 0; display: flex; flex-direction: column;
+  gap: 8px; border-radius: 12px;
+  padding: 13px 11px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+}
+.forecast-composition-name { display: flex; align-items: start; gap: 6px; color: var(--text-muted); font: 650 12px/1.35 var(--font-text); }
+.forecast-composition-name i { flex: none; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-top: 3px; background: var(--primary); }
+.forecast-composition-item.is-additional .forecast-composition-name i { background: var(--secondary); }
+.forecast-composition-item.is-pending .forecast-composition-name i { background: var(--color-orange); }
+.forecast-composition-item > strong {
+  font: 650 clamp(15px, 1vw, 19px)/1.3 var(--font-display);
+  overflow-wrap: anywhere;
+}
+.forecast-composition-percent { font: 650 11px/1.3 var(--font-text); color: var(--text-muted); }
+.forecast-composition-explore {
+  display: inline-flex; align-items: center; gap: 4px; align-self: start;
+  margin-top: auto; padding: 4px 0; border: 0; background: transparent;
+  color: var(--primary-active, var(--primary)); cursor: pointer;
+  font: 650 12px/1.4 var(--font-text);
+}
+.forecast-composition-explore:hover { text-decoration: underline; }
+.forecast-composition-explore:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.forecast-composition-unavailable {
+  display: flex; align-items: center; gap: 10px; min-height: 80px;
+  color: var(--text-muted); font-size: 14px; line-height: 1.55;
+  border: 1px dashed var(--hairline); border-radius: 12px; padding: 15px;
+}
+.forecast-composition-unavailable > svg { flex: none; }
+.forecast-footer { display: grid; gap: 3px; background: color-mix(in srgb, var(--primary) 2%, var(--surface-2)); }
+@media (max-width: 1180px) {
+  .forecast-composition { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 850px) {
+  .forecast-charts { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 610px) {
+  .forecast-composition-content { grid-template-columns: 120px minmax(0, 1fr); }
+  .forecast-donut { width: 120px; height: 120px; }
+  .forecast-composition-breakdown { grid-template-columns: minmax(0, 1fr); }
+  .forecast-composition-item { gap: 5px; padding: 10px 12px; }
+}
+@media (max-width: 540px) {
+  .forecast-header { padding: 17px 15px; }
+  .forecast-totals > button { min-height: 0; }
+  .forecast-totals strong { font-size: clamp(18px, 5vw, 23px); }
+  .forecast-composition { padding: 17px 13px; }
+  .forecast-months { margin-top: 11px; }
+  .forecast-bar-track { height: 124px; }
+}
+@media (max-width: 380px) {
+  .forecast-composition-content { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .forecast-composition-breakdown { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .forecast-month, .forecast-totals > button, .forecast-school-list button { transition: none; }
+}
