@@ -621,7 +621,7 @@ test('P1: visitas compartilhadas entre sessões, reprogramação, conflito e arq
     await expect(first.getByRole('alert')).toContainText('outra sessão');
     await expect(first.getByRole('form', { name: 'Editar programação' })).toBeVisible();
     await first.getByRole('button', { name: 'Cancelar', exact: true }).click();
-    await expect(first).toContainText('18/11/2026');
+    await expect(first.locator('.visit-board-date strong')).toHaveText('18');
     await expect(first).toContainText('Reprogramada 1x');
 
     const app = initializeApp({
