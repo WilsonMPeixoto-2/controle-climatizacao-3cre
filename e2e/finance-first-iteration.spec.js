@@ -920,7 +920,6 @@ test('ponte financeira mostra os chamados existentes e o plano V4 sem fabricar f
   await expect(bridge).toContainText('não é valor medido, autorizado ou pagável');
   await expect(bridge.getByRole('button', { name: 'Abrir estimativa contextual do chamado GOP-AR-2026-9001' })).toBeVisible();
   await expect(bridge).toContainText('R$ 239,7350');
-  await bridge.getByRole('button', { name: 'Consultar todos os 4 chamados' }).click().catch(() => {});
   await page.locator('#finance-school').selectOption('900001');
   await expect(bridge).toContainText('3 chamados');
   await expect(bridge).toContainText('Sem escola no plano');
