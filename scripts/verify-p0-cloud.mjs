@@ -65,7 +65,14 @@ const pages = await Promise.all(contexts.map(async ctx => {
 const [pageA, pageB] = pages;
 const region = page => page.getByRole('region', { name: 'Estimativas de atendimento', exact: true });
 const editor = page => page.getByRole('form', { name: /^(Estimar atendimento|Editar estimativa de atendimento)$/ });
-const card = page => region(page).locator('.attendance-record').filter({ hasText: marker });
+const row = page => region(page).locator('tbody tr').filter({ hasText: marker });
+async function openEditor(page) {
+  await row(page).getByRole('button', { name: /^Abrir atendimento de/ }).click();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole('button', { name: 'Editar atendimento', exact: true }).click();
+  await expect(editor(page)).toBeVisible();
+}
 const group = form => form.getByRole('group', { name: 'Grupo 1', exact: true });
 let state = { url: baseURL, marker, originalRecords: original[2].length, verified: [], at: new Date().toISOString() };
 async function remote() {
@@ -93,7 +100,7 @@ async function save(page, expectedRevision) {
 try {
   let revision = existing[0]?.revision || 0;
   if (!existing.length) {
-    await region(pageA).getByRole('button', { name: 'Estimar atendimento', exact: true }).click();
+    await region(pageA).getByRole('button', { name: 'Nova estimativa', exact: true }).click();
     const form = editor(pageA);
     await form.getByLabel('Escola', { exact: true }).selectOption(String(school.designacao));
     await form.getByLabel('Mês previsto', { exact: true }).fill('2099-12');
@@ -122,19 +129,19 @@ try {
   if (current.items[0].lineTotalUnits4 !== 4794700) {
     // Em nova execução do teste, a versão anterior pode estar neutralizada.
     // Restaurar temporariamente 2 unidades por edição, nunca criar novo ID.
-    await expect(card(pageA)).toBeVisible({ timeout: 30000 });
-    await card(pageA).getByRole('button', { name: /^Abrir e editar atendimento/ }).click();
+    await expect(row(pageA)).toBeVisible({ timeout: 30000 });
+    await openEditor(pageA);
     await group(editor(pageA)).getByLabel('Quantidade', { exact: true }).fill('2');
     await save(pageA, ++revision);
     current = await remote();
   }
   assert.equal(current.items[0].unitPriceUnits4, 2397350);
   assert.equal(current.items[0].lineTotalUnits4, 4794700);
-  await expect(card(pageB)).toContainText('479,4700', { timeout: 30000 });
+  await expect(row(pageB)).toContainText('479,4700', { timeout: 30000 });
   state.verified.push('Preco automatico e quantidade 2 gravados no Firebase REAL e visiveis em segunda sessao');
 
   // Editar na segunda sessão, preservar o ID, conferir histórico remoto.
-  await card(pageB).getByRole('button', { name: /^Abrir e editar atendimento/ }).click();
+  await openEditor(pageB);
   await group(editor(pageB)).getByLabel('Quantidade', { exact: true }).fill('3');
   await save(pageB, ++revision);
   current = await remote();
@@ -147,7 +154,7 @@ try {
   state.verified.push('Edicao em segunda sessao preservou ID e historico imutavel');
 
   // O último estado do registro permanece NEUTRO, sem contribuir com previsão.
-  await card(pageB).getByRole('button', { name: /^Abrir e editar atendimento/ }).click();
+  await openEditor(pageB);
   await group(editor(pageB)).getByLabel('Quantidade', { exact: true }).fill('0');
   await save(pageB, ++revision);
   current = await remote();
@@ -161,5 +168,26 @@ try {
   await writeFile(output + '/p0-proof.json', JSON.stringify(state, null, 2));
   console.log('P0 CLOUD PASS ' + JSON.stringify({ id: current.id, revision, finalValueUnits4: 0, checks: state.verified }));
 } finally {
-  await browser.close();
+  // Melhor esforço de neutralização mesmo quando uma asserção intermediária falha.
+  // Não elimina o histórico imutável nem toca em outros registros.
+  try {
+    const candidates = (await documents('atendimentos_economicos')).filter(item => item.cycle === marker);
+    if (candidates.length === 1 && candidates[0].items?.[0]?.lineTotalUnits4 > 0) {
+      await pageB.reload();
+      await expect(pageB.getByText('Firestore financeiro conectado', { exact: true })).toBeVisible({ timeout: 45000 });
+      await pageB.getByRole('tab', { name: 'Atendimentos', exact: true }).click();
+      await pageB.getByLabel('Competência', { exact: true }).fill('2099-12');
+      await openEditor(pageB);
+      await group(editor(pageB)).getByLabel('Quantidade', { exact: true }).fill('0');
+      await save(pageB, candidates[0].revision + 1);
+      assert.equal((await remote()).items[0].lineTotalUnits4, 0);
+      console.log('P0: registro sintético neutralizado na rotina de recuperação.');
+    }
+  } catch (cleanupError) {
+    console.error('ALERTA: conferir manualmente o atendimento com marcador "' + marker +
+      '" no período 2099-12. A neutralização falhou: ' + cleanupError.message);
+    throw cleanupError;
+  } finally {
+    await browser.close();
+  }
 }
