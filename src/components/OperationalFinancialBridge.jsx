@@ -40,7 +40,7 @@ export default function OperationalFinancialBridge({
           <strong className="finance-evidence-money tabular">{planned.schools ? money(planned.budgetUnits4) : 'Sem escola no plano'}</strong>
           <div className="finance-evidence-numbers">
             <span><b className="tabular">{planned.schools}</b> escolas</span>
-            <span><b className="tabular">{planned.equipmentCount}</b> aparelhos previstos</span>
+            <span><b className="tabular">{planned.equipmentCount.toLocaleString('pt-BR')}</b> aparelhos previstos</span>
             <span><b className="tabular">{planned.withIndividualEquipment}</b> escola(s) com aparelhos individualizados</span>
           </div>
           <div className="finance-evidence-bars" role="img"
