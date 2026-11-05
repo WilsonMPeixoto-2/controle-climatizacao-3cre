@@ -13,6 +13,7 @@ import VisitPlanningBoard from './VisitPlanningBoard.jsx';
 import AttendanceEstimates from './AttendanceEstimates.jsx';
 import MonthlyForecast from './MonthlyForecast.jsx';
 import HistoricCorrectionsPanel from './HistoricCorrectionsPanel.jsx';
+import OperationalFinancialBridge from './OperationalFinancialBridge.jsx';
 import '../styles/finance-workspace.css';
 
 const groups = [
@@ -280,6 +281,9 @@ export default function FinancialOverviewPage({
       </div>
 
       <div id="finance-panel-overview" role="tabpanel" aria-labelledby="finance-tab-overview" hidden={currentTab !== 'overview'}>
+        <OperationalFinancialBridge tickets={tickets} attendances={attendances.records}
+          selectedSchoolId={filters.schoolId} onOpenTicket={onOpenTicket}
+          onStartAttendance={onStartAttendance} />
         <MonthlyForecast forecast={forecast} schools={schools} connection={attendances.connection} onExplore={explore} />
       </div>
 
