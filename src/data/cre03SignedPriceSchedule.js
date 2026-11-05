@@ -1,5 +1,5 @@
 /**
- * REFERÊNCIA DE PREÇOS — CRE03 / contrato 59/2026 — EM CONFERÊNCIA.
+ * TABELA OPERACIONAL DE PREÇOS — CRE03 / contrato 59/2026.
  *
  * Base recuperada da planilha CLIMATIZACAO_V8_7_2_Painel_Lateral.xlsx,
  * aba CATEGORIAS, coluna F (UNIT_CALC), células F6:F16.
@@ -11,10 +11,10 @@
  *   QTD_TR × UNIT_CALC × 4 = R$ 2.035.894,2700,
  * exatamente o teto de 4 ciclos informado na mesma planilha.
  *
- * Os valores do TR anexo enviado estavam em branco. A proposta adjudicada
- * assinada e a memória ORIGINAL não foram localizadas nesta inspeção.
- * Assim, `status: working` proíbe interpretar as referências como preços
- * definitivamente homologados ou como crédito a faturar.
+ * Esta tabela deve ser UTILIZADA no cálculo automático de orçamentos e estimativas
+ * da gestão financeira, por decisão expressa do responsável pelo projeto.
+ * `status: working` identifica proveniência da memória recuperada, NÃO impede
+ * o cálculo. Pagamento/atesto dependem dos procedimentos próprios de fiscalização.
  *
  * Unidades monetárias são inteiros de R$ 0,0001 (quatro casas).
  * Os itens 37, 38 e 42 têm QTD_TR zero e não constam da memória P01-P11:
