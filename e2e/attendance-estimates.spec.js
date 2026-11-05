@@ -410,6 +410,12 @@ test('duas abas explicam totais, preservam filtros e sincronizam a reprogramaç�
     const additional = forecast.getByRole('button', { name: /^Acréscimo informado/ });
     await expect(nominal).toContainText(money('738,5985'));
     await expect(additional).toContainText(money('236,8701'));
+    const coverageMix = forecast.getByRole('region', { name: 'Composição da referência nominal' });
+    await expect(coverageMix).toContainText(money('501,7284'));
+    await expect(coverageMix).toContainText(money('236,8701'));
+    await expect(coverageMix).toContainText('68% da referência');
+    await expect(coverageMix).toContainText('32% da referência');
+    await expect(coverageMix.getByRole('button', { name: 'Ver atendimentos' })).toHaveCount(2);
     const bar = forecast.getByRole('button', { name: /^Ver atendimentos de novembro de 2026/ });
     await expect(bar).toHaveAttribute('aria-label', /738,5985.*236,8701/);
 
