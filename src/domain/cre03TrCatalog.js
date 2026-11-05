@@ -3,8 +3,9 @@
  * A cópia disponibilizada do TR não contém os preços adjudicados:
  * o campo de valor unitário está em branco. Nunca converter ausência em zero.
  *
- * Esta tabela é somente de enquadramento. A referência monetária só é
- * aplicada depois de carregar fonte/versionamento da planilha válida.
+ * As faixas técnicas são do TR; os 11 preços de trabalho vêm da memória
+ * Excel V8.7.2 (UNIT_CALC). Enquanto não houver conferência da proposta
+ * assinada, a referência deve ficar como provisória, com fonte e versão.
  * Enquadramento ou orçamento nominal NÃO constituem medição nem faturamento.
  */
 import { normalizeEquipmentType, parseCapacityBtu } from './financialReference.js';
@@ -41,13 +42,14 @@ export function findCre03TrItem(type, capacityBtu) {
 }
 
 /**
- * A fonte adjudicada é guardada em um único módulo, não reintroduzida em cada
- * atendimento. Permite preenchimento parcial por item, sempre com fonte/versão
- * e números positivos de quatro casas; rejeita valores sem lastro.
+ * O módulo centralizado aceita fontes com status 'working' (referência em
+ * conferência) ou 'validated' (documento contratual conferido). Os preços
+ * utilizam inteiros de 4 casas e cada snapshot conserva fonte e versão.
  */
 export function createValidatedCre03Catalog(schedule) {
   if (!schedule || typeof schedule.sourceRef !== 'string' || !schedule.sourceRef.trim()
     || typeof schedule.version !== 'string' || !schedule.version.trim()) return null;
+  if (!['working', 'validated'].includes(schedule.status)) return null;
   const prices = schedule.pricesByItem;
   if (!prices || typeof prices !== 'object' || Array.isArray(prices)) return null;
   const known = new Set(CRE03_TR_ITEMS.map(item => String(item.number)));
@@ -58,7 +60,7 @@ export function createValidatedCre03Catalog(schedule) {
   }
   return {
     id: CRE03_CATALOG_ID,
-    status: 'validated',
+    status: schedule.status,
     sourceRef: schedule.sourceRef.trim(),
     version: schedule.version.trim(),
     serviceKinds: ['preventiva', 'corretiva'],
@@ -76,7 +78,8 @@ export function createValidatedCre03Catalog(schedule) {
  */
 export function applyCre03TrPriceToDraft(item, serviceKind, schedule) {
   if (!item) return item;
-  const wasAutomatic = item.catalogId === CRE03_CATALOG_ID && item.referenceNature === 'contratual_informada';
+  const wasAutomatic = item.catalogId === CRE03_CATALOG_ID
+    && ['contratual_informada', 'provisoria'].includes(item.referenceNature);
   if (!['preventiva', 'corretiva'].includes(serviceKind)) {
     return wasAutomatic ? {
       ...item, priceText: '', unitPriceUnits4: null, sourceRef: '',
