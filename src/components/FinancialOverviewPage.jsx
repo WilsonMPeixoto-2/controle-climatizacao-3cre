@@ -189,7 +189,7 @@ const tabs = [
 
 export default function FinancialOverviewPage({
   schools, tickets, filters, onFiltersChange, onOpenTicket, onOpenSchool, onOpenSchoolRequests,
-  attendances, attendanceContext, onAttendanceContextConsumed, onStartAttendance
+  attendances, visitPlanning, attendanceContext, onAttendanceContextConsumed, onStartAttendance
 }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [month, setMonth] = useState(currentForecastMonth);
@@ -301,7 +301,7 @@ export default function FinancialOverviewPage({
         <div className="finance-related" aria-label="Consultas complementares">
           <details className="surface-card finance-related-section">
             <summary><CalendarDays size={18} aria-hidden="true" /> Programação de visitas <small>Calendário e planejamento</small><ChevronDown size={16} aria-hidden="true" /></summary>
-            <VisitPlanningBoard schools={schools} selectedSchoolId={filters.schoolId} onOpenSchool={onOpenSchool}
+            <VisitPlanningBoard schools={schools} selectedSchoolId={filters.schoolId} onOpenSchool={onOpenSchool} visitPlanning={visitPlanning}
               onEstimate={visit => onStartAttendance({
                 schoolId: visit.schoolId, visitId: visit.id, plannedDate: visit.plannedDate,
                 cycle: visit.cycle, serviceKind: visit.kind, quantity: visit.equipmentCount
