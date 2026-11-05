@@ -204,7 +204,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     for (const row of newRows) {
       try { await shared.onSave(row, { expectedRevision: 0 }); created += 1; }
       catch (reason) {
-        throw new Error(created + ' visita(s) importada(s) antes da interrupção: ' + reason.message);
+        throw new Error(created + ' visita(s) importada(s) antes da interrupção: ' + reason.message, { cause: reason });
       }
     }
     setNotice(created + ' visita(s) importada(s) no Firestore. Rascunhos locais preservados.');
