@@ -8,6 +8,7 @@ import {
   formatMoneyUnits4, normalizeAttendance, parseMoneyUnits4
 } from '../domain/attendanceEstimate.js';
 import { currentForecastMonth } from '../domain/monthlyForecast.js';
+import { buildServiceProfile } from '../domain/financialVisualInsights.js';
 import { parseCapacityBtu } from '../domain/financialReference.js';
 import { CRE03_CATALOG_ID, findCre03TrItem, applyCre03TrPriceToDraft, createValidatedCre03Catalog } from '../domain/cre03TrCatalog.js';
 import { CRE03_SIGNED_PRICE_SCHEDULE } from '../data/cre03SignedPriceSchedule.js';
@@ -265,6 +266,7 @@ export default function AttendanceEstimates({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [pagination, setPagination] = useState(null);
+  const [kindFilter, setKindFilter] = useState('all');
   const [detailId, setDetailId] = useState(null);
   const drawerRef = useRef(null);
   const detailTriggerRef = useRef(null);
@@ -280,7 +282,7 @@ export default function AttendanceEstimates({
   const formSchool = form ? schoolById.get(form.schoolId) : null;
   const schoolTickets = formSchool ? tickets.filter(ticket => matchesSchool(ticket, formSchool)) : [];
   const searchText = normalizeString(search);
-  const visibleRows = rows.filter(row => {
+  const baseRows = rows.filter(row => {
     if (status === 'additional' && !(row.additionalUnits4 > 0 || row.overflowByNature?.additional)) return false;
     if (status === 'pending' && !(row.coveragePendingCount > 0)) return false;
     if (!searchText) return true;
@@ -289,7 +291,14 @@ export default function AttendanceEstimates({
       record.cycle, ...(Array.isArray(record.items) ? record.items.map(item => item?.description) : [])]
       .some(value => normalizeString(value).includes(searchText));
   }).toSorted((a, b) => String(b.record.updatedAtISO || b.record.updatedAt || '').localeCompare(String(a.record.updatedAtISO || a.record.updatedAt || '')));
-  const scope = JSON.stringify([month, selectedSchoolId, status, searchText]);
+  const profile = buildServiceProfile(baseRows);
+  const visibleRows = kindFilter === 'all'
+    ? baseRows
+    : baseRows.filter(row => {
+      const kind = row.record?.serviceKind;
+      return kindFilter === 'outra' ? kind !== 'preventiva' && kind !== 'corretiva' : kind === kindFilter;
+    });
+  const scope = JSON.stringify([month, selectedSchoolId, status, searchText, kindFilter]);
   const pageCount = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
   const page = pagination?.scope === scope ? Math.min(pagination.page, pageCount) : 1;
   const pageRows = visibleRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -693,6 +702,53 @@ export default function AttendanceEstimates({
         </form>
       )}
 
+      {ready && !form && (
+        <section className="attendance-insights" aria-label="Perfil visual dos atendimentos">
+          <div className="attendance-insights-heading">
+            <div>
+              <span className="attendance-insights-kicker">Leitura por atividade</span>
+              <h4>Perfil dos atendimentos</h4>
+              <p>Registros da competência e dos filtros atuais. Selecione uma atividade para conferir os lançamentos.</p>
+            </div>
+            <span className="attendance-insights-period">{monthText(month)}</span>
+          </div>
+          <div className="attendance-insights-layout">
+            <div className="attendance-insights-bars" role="group" aria-label="Filtrar atendimentos por tipo de atividade">
+              <button type="button" className={'attendance-insight-filter' + (kindFilter === 'all' ? ' is-selected' : '')}
+                aria-pressed={kindFilter === 'all'} onClick={() => setKindFilter('all')}>
+                <span>Todos os atendimentos</span><strong className="tabular">{profile.total}</strong>
+              </button>
+              {profile.groups.map(item => (
+                <button type="button" key={item.key}
+                  className={'attendance-insight-filter is-' + item.key + (kindFilter === item.key ? ' is-selected' : '')}
+                  aria-pressed={kindFilter === item.key} onClick={() => setKindFilter(item.key)}>
+                  <span>{item.label}</span>
+                  <strong className="tabular">{item.count} <small>· {item.percent}%</small></strong>
+                  <span className="attendance-insight-track" aria-hidden="true">
+                    <span style={{ width: item.percent + '%' }} />
+                  </span>
+                </button>
+              ))}
+              {!profile.total && <p className="attendance-insights-empty">Sem atendimentos nesse recorte. O gráfico será preenchido conforme os registros.</p>}
+            </div>
+            <div className="attendance-insights-numbers">
+              <div>
+                <span>Atendimentos no recorte</span>
+                <strong className="tabular">{profile.total}</strong>
+              </div>
+              <div>
+                <span>Com chamado vinculado</span>
+                <strong className="tabular">{profile.linked}</strong>
+              </div>
+              <div>
+                <span>Informações a conferir</span>
+                <strong className="tabular">{profile.incomplete}</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {ready && (
         <>
           <div className="attendance-table-tools">
@@ -758,7 +814,7 @@ export default function AttendanceEstimates({
           ) : (
             <div className="attendance-empty">
               <Calculator size={22} aria-hidden="true" />
-              <strong>{searchText || status !== 'all' ? 'Nenhum atendimento com estes filtros.' : 'Nenhuma estimativa nesta competência.'}</strong>
+              <strong>{searchText || status !== 'all' || kindFilter !== 'all' ? 'Nenhum atendimento com estes filtros.' : 'Nenhuma estimativa nesta competência.'}</strong>
             </div>
           )}
           <footer className="attendance-list-footer">

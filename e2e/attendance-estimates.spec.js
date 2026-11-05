@@ -410,6 +410,14 @@ test('duas abas explicam totais, preservam filtros e sincronizam a reprogramaç�
     const additional = forecast.getByRole('button', { name: /^Acréscimo informado/ });
     await expect(nominal).toContainText(money('738,5985'));
     await expect(additional).toContainText(money('236,8701'));
+    const coverageMix = forecast.getByRole('region', { name: 'Composição da referência nominal' });
+    await expect(coverageMix).toContainText(money('501,7284'));
+    await expect(coverageMix).toContainText(money('236,8701'));
+    await expect(coverageMix).toContainText('68% da referência');
+    await expect(coverageMix).toContainText('32% da referência');
+    await expect(forecast.getByRole('button', { name: /^Cobertura a confirmar/ })).toContainText(money('0,0000'));
+    await expect(coverageMix.locator('.forecast-donut-center')).toContainText('2');
+    await expect(coverageMix.getByRole('button', { name: 'Ver atendimentos' })).toHaveCount(2);
     const bar = forecast.getByRole('button', { name: /^Ver atendimentos de novembro de 2026/ });
     await expect(bar).toHaveAttribute('aria-label', /738,5985.*236,8701/);
 
@@ -437,6 +445,23 @@ test('duas abas explicam totais, preservam filtros e sincronizam a reprogramaç�
     await expect(monthField(page)).toHaveValue(MONTH);
     await expect(tab(page, 'Atendimentos')).toHaveAttribute('aria-selected', 'true');
     await expect(estimates(page).getByRole('heading', { name: 'Estimativas de atendimento' })).toBeFocused();
+    const profile = estimates(page).getByRole('region', { name: 'Perfil visual dos atendimentos' });
+    const preventivas = profile.getByRole('button', { name: /Preventivas/ });
+    const corretivas = profile.getByRole('button', { name: /Corretivas/ });
+    await preventivas.click();
+    await expect(records(page)).toHaveCount(1);
+    await corretivas.click();
+    await expect(records(page)).toHaveCount(0);
+    await profile.getByRole('button', { name: /Todos os atendimentos/ }).click();
+    await expect(records(page)).toHaveCount(1);
+    for (const viewport of [{ width: 320, height: 800 }, { width: 1440, height: 900 }, { width: 3840, height: 2160 }]) {
+      await page.setViewportSize(viewport);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+      const path = testInfo.outputPath('perfil-atendimentos-' + viewport.width + '.png');
+      await profile.screenshot({ path, animations: 'disabled' });
+      await testInfo.attach('Perfil de atendimentos ' + viewport.width + 'px', { path, contentType: 'image/png' });
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
     await estimates(page).getByRole('searchbox').fill('Sem correspondência');
     await expect(records(page)).toHaveCount(0);
     await tab(page, 'Visão financeira').click();
