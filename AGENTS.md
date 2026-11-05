@@ -1,5 +1,7 @@
 # GOP Clima 3ª CRE — Roteiro para Codex e demais agentes
 
+> **Referência de depuração e entrega comprovada (04/11/2026):** para falhas de build/deploy, integrações Vercel, problemas de browser, persistência remota, dependências ou downloads, consultar [skill portátil](.agents/skills/diagnostico-entrega-verificada/SKILL.md) e [registro de evidências](docs/engineering/INCIDENTES_E_VERIFICACAO_2026_11.md). Estes textos são **suplementares** e não alteram a precedência, a governança, os gates, as decisões e os critérios de autorização definidos neste AGENTS.md.
+
 **Este é o único ponto de entrada obrigatório.** Trabalhe sobre o código existente, não sobre protótipos. Na retomada financeira, cumpra a leitura obrigatória abaixo; nas demais tarefas, consulte documentos adicionais pertinentes. Não crie novos manuais nem reabra decisões já resolvidas.
 
 ## DP-004 — sem login durante o desenvolvimento (DECISÃO VIGENTE)
