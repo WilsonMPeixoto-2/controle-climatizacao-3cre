@@ -65,7 +65,7 @@ export default function SchoolFinancialSummary({
         </div>
       )}
       {cloudConfigured && !cloudReady && <p className="finance-hint">Programação compartilhada aguardando conexão; os dados locais não serão usados como se fossem dados de outras sessões.</p>}
-      {draftUnreadable && <p className="finance-hint">O rascunho local não pôde ser lido neste navegador.</p>
+      {draftUnreadable && <p className="finance-hint">O rascunho local não pôde ser lido neste navegador.</p>}
       <section className="school-attendance-estimates" aria-label="Estimativas de atendimento da escola">
         <div className="section-header">
           <h4>Estimativas de atendimento</h4>
