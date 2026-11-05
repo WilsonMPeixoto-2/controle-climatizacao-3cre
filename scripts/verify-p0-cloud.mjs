@@ -57,8 +57,8 @@ const pages = await Promise.all(contexts.map(async ctx => {
   });
   const page = await ctx.newPage();
   await page.goto(baseURL);
-  await expect(page.getByText('Firestore financeiro conectado', { exact: true })).toBeVisible({ timeout: 45000 });
   await page.getByRole('tab', { name: 'Atendimentos', exact: true }).click();
+  await expect(page.getByText('Firestore financeiro conectado', { exact: true })).toBeVisible({ timeout: 45000 });
   await page.getByLabel('Competência', { exact: true }).fill('2099-12');
   return page;
 }));
@@ -174,8 +174,8 @@ try {
     const candidates = (await documents('atendimentos_economicos')).filter(item => item.cycle === marker);
     if (candidates.length === 1 && candidates[0].items?.[0]?.lineTotalUnits4 > 0) {
       await pageB.reload();
-      await expect(pageB.getByText('Firestore financeiro conectado', { exact: true })).toBeVisible({ timeout: 45000 });
       await pageB.getByRole('tab', { name: 'Atendimentos', exact: true }).click();
+      await expect(pageB.getByText('Firestore financeiro conectado', { exact: true })).toBeVisible({ timeout: 45000 });
       await pageB.getByLabel('Competência', { exact: true }).fill('2099-12');
       await openEditor(pageB);
       await group(editor(pageB)).getByLabel('Quantidade', { exact: true }).fill('0');
