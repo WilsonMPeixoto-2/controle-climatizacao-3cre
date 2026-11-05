@@ -443,6 +443,15 @@ test('duas abas explicam totais, preservam filtros e sincronizam a reprogramaç�
     await expect(monthField(page)).toHaveValue(MONTH);
     await expect(tab(page, 'Atendimentos')).toHaveAttribute('aria-selected', 'true');
     await expect(estimates(page).getByRole('heading', { name: 'Estimativas de atendimento' })).toBeFocused();
+    const profile = estimates(page).getByRole('region', { name: 'Perfil visual dos atendimentos' });
+    const preventivas = profile.getByRole('button', { name: /Preventivas/ });
+    const corretivas = profile.getByRole('button', { name: /Corretivas/ });
+    await preventivas.click();
+    await expect(records(page)).toHaveCount(1);
+    await corretivas.click();
+    await expect(records(page)).toHaveCount(0);
+    await profile.getByRole('button', { name: /Todos os atendimentos/ }).click();
+    await expect(records(page)).toHaveCount(1);
     await estimates(page).getByRole('searchbox').fill('Sem correspondência');
     await expect(records(page)).toHaveCount(0);
     await tab(page, 'Visão financeira').click();
