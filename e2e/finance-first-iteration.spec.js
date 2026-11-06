@@ -146,7 +146,7 @@ test('financeiro usa recorte real, preserva ausências e retorna à ficha existe
   await expect(nav(page, 'Gestão Financeira')).toHaveCount(1);
   await expect(page.locator('.finance-missing')).toHaveText(Array(3).fill('Não informado'));
   await expect(page.getByRole('region', { name: 'Previsão mensal por competência' })).toBeHidden();
-  await expect(page.locator('.finance-availability')).not.toContainText('R
+  await expect(page.locator('.finance-availability')).toContainText('Não informado');
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
   await page.getByLabel('Escola', { exact: true }).selectOption('900001');
   await page.getByLabel('Mês de abertura').fill('2026-10');
@@ -192,7 +192,7 @@ test('tendência de abertura usa registros reais e permite filtrar', async ({ pa
   await september.click();
   await expect(page.getByLabel('Mês de abertura')).toHaveValue('');
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
-  await expect(page.locator('.finance-page')).not.toContainText('R$');
+  await expect(page.locator('.finance-missing')).toHaveText(Array(3).fill('Não informado'));
 });
 
 test('mantém navegação histórica e contexto escolar sem inventário financeiro', async ({ page }) => {
@@ -983,7 +983,7 @@ test('tendência de abertura usa registros reais e permite filtrar', async ({ pa
   await september.click();
   await expect(page.getByLabel('Mês de abertura')).toHaveValue('');
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
-  await expect(page.locator('.finance-availability')).not.toContainText('R
+  await expect(page.locator('.finance-availability')).toContainText('Não informado');
 });
 
 test('mantém navegação histórica e contexto escolar sem inventário financeiro', async ({ page }) => {
