@@ -59,6 +59,8 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     setMonth(nextMonth);
   };
   const [editingId, setEditingId] = useState(null);
+  // Snapshot aberto pelo usuário: não atualizar a base durante edições ou snapshots remotos.
+  const editingOriginalRef = useRef(null);
   const [form, setForm] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const overview = summarizeVisits(activeRows, month, schools, { schoolId: selectedSchoolId });
@@ -117,6 +119,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
   function startNew() {
     if (savingRef.current || (cloudConfigured && !cloudReady)) return;
+    editingOriginalRef.current = null;
     setEditingId(null);
     setForm(emptyForm(selectedSchoolId));
     setShowDetails(false);
@@ -125,6 +128,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
   function startEdit(entry, showReport = false) {
     if (savingRef.current || (cloudConfigured && !cloudReady)) return;
+    editingOriginalRef.current = entry;
     setEditingId(entry.id);
     setForm({ ...entry, equipmentCount: entry.equipmentCount ?? '' });
     setShowDetails(showReport || Boolean(entry.reportedDate || entry.cycle || entry.note));
@@ -136,6 +140,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
   function stopEdit() {
     if (savingRef.current) return;
+    editingOriginalRef.current = null;
     setForm(null); setEditingId(null); setError('');
   }
 
@@ -268,7 +273,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       // A revisão usada é a que o usuário abriu, NUNCA a versão recém-recebida
       // pelo listener. Caso contrário, uma edição antiga sobrescreveria outra sessão.
       const candidate = editingId
-        ? updateVisitDraft(cloudConfigured ? form : edited, form, { now: timestamp })
+        ? updateVisitDraft(cloudConfigured ? editingOriginalRef.current : edited, form, { now: timestamp })
         : createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp });
       const next = editingId
         ? rows.map(row => row.id === editingId ? candidate : row)
