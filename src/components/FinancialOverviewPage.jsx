@@ -297,7 +297,7 @@ export default function FinancialOverviewPage({
         </span>
       </label>}
       <div id="finance-panel-overview" role="tabpanel" aria-labelledby="finance-tab-overview" hidden={currentTab !== 'overview'}>
-        <OperationalFinancialBridge tickets={tickets} attendances={effectiveRecords}
+        <OperationalFinancialBridge schools={schools} tickets={tickets} attendances={effectiveRecords}
           selectedSchoolId={filters.schoolId} onOpenTicket={onOpenTicket}
           onStartAttendance={onStartAttendance} />
         <MonthlyForecast forecast={forecast} schools={schools} connection={attendances.connection} onExplore={explore} />
