@@ -34,9 +34,15 @@ function loadInitial() {
   }
 }
 
-export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '', onEstimate }) {
+export default function VisitPlanningBoard({ schools, onOpenSchool, selectedSchoolId = '', onEstimate, visitPlanning }) {
   const initial = useState(loadInitial)[0];
   const [rows, setRows] = useState(initial.rows);
+  const shared = visitPlanning;
+  const cloudConfigured = shared.connection.status !== 'unconfigured';
+  const cloudReady = shared.connection.status === 'ready';
+  // Os registros remotos são autoridade no modo compartilhado. Rascunhos
+  // anteriores continuam intactos até importação explícita, nunca automática.
+  const activeRows = cloudConfigured ? (cloudReady ? shared.records : []) : rows;
   const [storageBlocked, setStorageBlocked] = useState(Boolean(initial.error));
   const [hasRecovery, setHasRecovery] = useState(initial.hasRecovery);
   const [stale, setStale] = useState(false);
@@ -53,9 +59,11 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     setMonth(nextMonth);
   };
   const [editingId, setEditingId] = useState(null);
+  // Snapshot aberto pelo usuário: não atualizar a base durante edições ou snapshots remotos.
+  const editingOriginalRef = useRef(null);
   const [form, setForm] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-  const overview = summarizeVisits(rows, month, schools, { schoolId: selectedSchoolId });
+  const overview = summarizeVisits(activeRows, month, schools, { schoolId: selectedSchoolId });
   const schoolById = new Map(schools.map(item => [String(item.designacao), item]));
   const selectedSchool = schoolById.get(String(selectedSchoolId));
   const ordered = [...overview.active].sort((a, b) => a.plannedDate.localeCompare(b.plannedDate) || a.schoolId.localeCompare(b.schoolId));
@@ -110,7 +118,8 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     setIsSaving(false);
   }
   function startNew() {
-    if (savingRef.current) return;
+    if (savingRef.current || (cloudConfigured && !cloudReady)) return;
+    editingOriginalRef.current = null;
     setEditingId(null);
     setForm(emptyForm(selectedSchoolId));
     setShowDetails(false);
@@ -118,7 +127,8 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     setNotice('');
   }
   function startEdit(entry, showReport = false) {
-    if (savingRef.current) return;
+    if (savingRef.current || (cloudConfigured && !cloudReady)) return;
+    editingOriginalRef.current = entry;
     setEditingId(entry.id);
     setForm({ ...entry, equipmentCount: entry.equipmentCount ?? '' });
     setShowDetails(showReport || Boolean(entry.reportedDate || entry.cycle || entry.note));
@@ -130,10 +140,12 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
   }
   function stopEdit() {
     if (savingRef.current) return;
+    editingOriginalRef.current = null;
     setForm(null); setEditingId(null); setError('');
   }
 
   async function commit(nextRows, message, { allowRecovery = false, saveRecovery = false } = {}) {
+    if (cloudConfigured) throw new Error('Gravação local indisponível no modo compartilhado.');
     if (storageBlocked && !allowRecovery) {
       setError('O rascunho está ilegível. Restaure uma cópia antes de modificar os registros.');
       return false;
@@ -182,6 +194,38 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     }
   }
 
+  async function importIntoCloud(imported) {
+    if (!cloudReady) throw new Error('Aguarde a conexão com o Firestore antes de importar.');
+    const existing = new Set(shared.records.map(row => row.id));
+    const newRows = imported.filter(row => !existing.has(row.id));
+    if (!newRows.length) {
+      setNotice('Nenhuma visita nova para importar. Os registros compartilhados foram preservados.');
+      return;
+    }
+    if (newRows.length > 150) throw new Error('Importação limitada a 150 visitas por operação. Divida a cópia antes de continuar.');
+    if (!window.confirm('Importar ' + newRows.length + ' visita(s) no Firestore compartilhado? ' +
+      'Os registros existentes não serão substituídos e a origem local continuará intacta.')) return;
+    let created = 0;
+    for (const row of newRows) {
+      try { await shared.onSave(row, { expectedRevision: 0 }); created += 1; }
+      catch (reason) {
+        throw new Error(created + ' visita(s) importada(s) antes da interrupção: ' + reason.message, { cause: reason });
+      }
+    }
+    setNotice(created + ' visita(s) importada(s) no Firestore. Rascunhos locais preservados.');
+    setError('');
+  }
+
+  async function importExistingLocal() {
+    if (!cloudReady || !beginSaving()) return;
+    try {
+      if (storageBlocked) throw new Error('Rascunho local ilegível. Preserve a cópia antes de importar.');
+      await importIntoCloud(rows);
+    } catch (reason) {
+      setError(reason.message || 'Não foi possível importar os rascunhos locais.');
+    } finally { finishSaving(); }
+  }
+
   async function restoreBackup(event) {
     const input = event.currentTarget;
     const file = input.files?.[0];
@@ -193,6 +237,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       // Manter a seleção até concluir a leitura evita perder a referência ao File.
       const content = await file.text();
       const imported = parseVisitBackup(content);
+      if (cloudConfigured) { await importIntoCloud(imported); return; }
       if (!window.confirm(`A cópia contém ${imported.length} visitas. Substituir as ${rows.length} visitas locais (incluindo escolas fora do filtro)? A versão anterior ficará disponível para recuperação neste navegador.`)) return;
       if (await commit(imported, 'Cópia restaurada. A versão anterior pode ser recuperada.', { allowRecovery: true, saveRecovery: true })) {
         if (imported.length && monthInteractionRef.current === monthInteractionAtSubmission) setMonth(monthOf(imported[0].plannedDate));
@@ -222,10 +267,25 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
     const monthInteractionAtSubmission = monthInteractionRef.current;
     try {
       const timestamp = new Date().toISOString();
+      const edited = editingId ? activeRows.find(row => row.id === editingId) : null;
+      if (editingId && !edited) throw new Error('Esta visita mudou ou foi arquivada em outra sessão.');
+      if (cloudConfigured && !cloudReady) throw new Error('Firestore indisponível. A edição não foi gravada.');
+      // A revisão usada é a que o usuário abriu, NUNCA a versão recém-recebida
+      // pelo listener. Caso contrário, uma edição antiga sobrescreveria outra sessão.
+      const candidate = editingId
+        ? updateVisitDraft(cloudConfigured ? editingOriginalRef.current : edited, form, { now: timestamp })
+        : createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp });
       const next = editingId
-        ? rows.map(row => row.id === editingId ? updateVisitDraft(row, form, { now: timestamp }) : row)
-        : [...rows, createVisitDraft(form, { id: crypto.randomUUID(), now: timestamp })];
-      if (await commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída na programação local.')) {
+        ? rows.map(row => row.id === editingId ? candidate : row)
+        : [...rows, candidate];
+      const didSave = cloudConfigured
+        ? (await shared.onSave(candidate, { expectedRevision: editingId ? form.revision : 0 }), true)
+        : await commit(next, editingId ? 'Programação atualizada neste dispositivo.' : 'Visita incluída na programação local.');
+      if (didSave) {
+        if (cloudConfigured) {
+          setError('');
+          setNotice(editingId ? 'Visita atualizada na programação compartilhada.' : 'Visita incluída no Firestore compartilhado.');
+        }
         // A navegação escolhida enquanto o Web Lock estava pendente tem prioridade.
         if (monthInteractionRef.current === monthInteractionAtSubmission) {
           setMonth(monthOf(form.plannedDate));
@@ -242,18 +302,29 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
 
   async function remove(entry) {
     if (savingRef.current) return;
-    if (!window.confirm('Excluir esta visita apenas do rascunho deste dispositivo?')) return;
+    if (!window.confirm(cloudConfigured
+      ? 'Arquivar esta visita na programação compartilhada? O histórico será preservado.'
+      : 'Excluir esta visita apenas do rascunho deste dispositivo?')) return;
     if (!beginSaving()) return;
     try {
-      const saved = await commit(rows.filter(row => row.id !== entry.id), 'Visita excluída do rascunho local.');
-      if (saved && editingId === entry.id) { setForm(null); setEditingId(null); }
+      if (cloudConfigured) {
+        if (!cloudReady) throw new Error('Firestore não conectado. Aguarde a sincronização.');
+        await shared.onArchive(entry.id, { expectedRevision: entry.revision });
+        setNotice('Visita arquivada na programação compartilhada. Histórico preservado.');
+      } else {
+        if (!await commit(rows.filter(row => row.id !== entry.id), 'Visita excluída do rascunho local.')) return;
+      }
+      if (editingId === entry.id) { setForm(null); setEditingId(null); }
+      setError('');
+    } catch (reason) {
+      setError(reason.message || 'Não foi possível arquivar esta visita.');
     } finally { finishSaving(); }
   }
 
   function exportDraft() {
     if (savingRef.current) return;
     try {
-      const blob = new Blob([createVisitBackup(rows)], { type: 'application/json' });
+      const blob = new Blob([createVisitBackup(activeRows)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
@@ -261,7 +332,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
       anchor.click();
       URL.revokeObjectURL(url);
       setError('');
-      setNotice('Cópia de toda a programação local baixada, inclusive das escolas ocultas pelo filtro.');
+      setNotice(cloudConfigured ? 'Cópia da programação compartilhada baixada.' : 'Cópia de toda a programação local baixada, inclusive das escolas ocultas pelo filtro.');
     } catch (reason) {
       setError(reason.message || 'Não foi possível gerar a cópia.');
     }
@@ -297,25 +368,33 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
             <span>Mês da programação</span>
             <input id="visit-board-month" type="month" value={month} onChange={event => changeMonth(event.target.value)} />
           </label>
-          <button className="btn btn-primary" type="button" onClick={startNew} disabled={storageBlocked || isSaving}>
+          <button className="btn btn-primary" type="button" onClick={startNew} disabled={isSaving || (cloudConfigured ? !cloudReady : storageBlocked)}>
             <CalendarPlus size={17} aria-hidden="true" /> Programar visita
           </button>
         </div>
       </header>
 
-      <div className="visit-board-summary" aria-label="Resumo da programação local">
+      <div className="visit-board-summary" aria-label={cloudConfigured ? "Resumo da programação compartilhada" : "Resumo da programação local"}>
         <div><strong className="tabular">{overview.visits}</strong><span>visitas</span></div>
         <div><strong className="tabular">{overview.schools}</strong><span>escolas</span></div>
         <div><strong className="tabular">{overview.executedInMonth.length}</strong><span>execuções informadas no mês</span></div>
         <div className="visit-board-storage"><Info size={17} aria-hidden="true" />
-          <span><strong>Rascunho local</strong> · disponível apenas neste navegador, sem sincronização.</span>
+          <span>{cloudConfigured
+            ? <><strong>{cloudReady ? 'Firestore compartilhado' : 'Conexão pendente'}</strong> · {cloudReady ? 'visitas sincronizadas entre sessões.' : 'sem gravação até restabelecer a conexão.'}</>
+            : <><strong>Rascunho local</strong> · disponível apenas neste navegador, sem sincronização.</>}</span>
         </div>
       </div>
 
+      {cloudConfigured && !cloudReady && <p className="field-error visit-board-error" role="alert">
+        {shared.connection.status === 'error'
+          ? 'Programação compartilhada indisponível: ' + shared.connection.error
+          : 'Conectando à programação compartilhada do Firestore…'}
+        {' '}Os rascunhos locais continuam preservados.
+      </p>}
       {notice && <p className="visit-board-notice" role="status">{notice}</p>}
-      {isSaving && !form && <p className="visit-board-notice" role="status">Salvando alterações neste dispositivo…</p>}
+      {isSaving && !form && <p className="visit-board-notice" role="status">{cloudConfigured ? 'Sincronizando programação compartilhada…' : 'Salvando alterações neste dispositivo…'}</p>}
       {error && <p className="field-error visit-board-error" role="alert">{error}</p>}
-      {stale && <button type="button" className="btn btn-secondary visit-board-refresh" onClick={reloadLocal} disabled={isSaving}>Recarregar programação local</button>}
+      {!cloudConfigured && stale && <button type="button" className="btn btn-secondary visit-board-refresh" onClick={reloadLocal} disabled={isSaving}>Recarregar programação local</button>}
 
       {form && (
         <form className="visit-board-editor" onSubmit={submit} aria-label={editingId ? 'Editar programação' : 'Adicionar programação'}>
@@ -366,7 +445,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
                 <label htmlFor="visit-note">Observações</label>
                 <textarea id="visit-note" className="form-control" rows={2} maxLength={500} value={form.note} onChange={event => setForm({ ...form, note: event.target.value })} />
               </div>
-              <p className="finance-hint visit-board-note">A data de execução é apenas uma informação lançada no rascunho; não constitui atesto ou medição.</p>
+              <p className="finance-hint visit-board-note">A data de execução é apenas uma informação consultiva; não constitui atesto ou medição.</p>
             </div>
           </details>
           </fieldset>
@@ -399,7 +478,7 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
                   {school && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onOpenSchool(school)} aria-label={`Abrir dossiê de ${school.unidade_escolar}`}><MapPin size={15} aria-hidden="true" /> Escola</button>}
                   {!entry.reportedDate && <button type="button" className="btn btn-primary btn-sm" onClick={() => startEdit(entry, true)} disabled={isSaving} aria-label={`Informar execução da visita de ${school?.unidade_escolar || entry.schoolId}`}>Informar execução</button>}
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(entry)} disabled={isSaving} aria-label={`Editar visita de ${school?.unidade_escolar || entry.schoolId}`}><FilePenLine size={15} aria-hidden="true" /> Editar</button>
-                  <button type="button" className="visit-board-delete" onClick={() => remove(entry)} disabled={isSaving} aria-label={`Excluir rascunho da visita de ${school?.unidade_escolar || entry.schoolId}`} title="Excluir rascunho"><Trash2 size={17} /></button>
+                  <button type="button" className="visit-board-delete" onClick={() => remove(entry)} disabled={isSaving} aria-label={`Excluir rascunho da visita de ${school?.unidade_escolar || entry.schoolId}`} title={cloudConfigured ? "Arquivar visita mantendo histórico" : "Excluir rascunho"}><Trash2 size={17} /></button>
                 </div>
               </article>
             );
@@ -433,9 +512,10 @@ export default function VisitPlanningBoard({ schools, onOpenSchool, selectedScho
         <span><CheckCheck size={15} aria-hidden="true" /> {overview.inReview.length} {overview.inReview.length === 1 ? 'visita' : 'visitas'} sem execução informada</span>
         <div className="visit-board-backups">
           <input ref={importInputRef} type="file" accept=".json,application/json" className="visit-board-file-input" aria-label="Escolher cópia de segurança da programação" onChange={restoreBackup} disabled={isSaving} />
-          <button type="button" className="visit-board-export" onClick={() => importInputRef.current?.click()} disabled={isSaving}><Upload size={15} aria-hidden="true" /> Restaurar cópia</button>
-          <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!rows.length || isSaving}><Download size={15} aria-hidden="true" /> Baixar cópia de segurança</button>
-          {hasRecovery && <button type="button" className="visit-board-export" onClick={recoverPrevious} disabled={isSaving}><RotateCcw size={15} aria-hidden="true" /> Recuperar versão anterior</button>}
+          {cloudConfigured && rows.length > 0 && <button type="button" className="visit-board-export" onClick={importExistingLocal} disabled={isSaving || !cloudReady}><Upload size={15} aria-hidden="true" /> Importar {rows.length} rascunho(s) locais</button>}
+          <button type="button" className="visit-board-export" onClick={() => importInputRef.current?.click()} disabled={isSaving || (cloudConfigured && !cloudReady)}><Upload size={15} aria-hidden="true" /> {cloudConfigured ? 'Importar cópia' : 'Restaurar cópia'}</button>
+          <button type="button" className="visit-board-export" onClick={exportDraft} disabled={!activeRows.length || isSaving}><Download size={15} aria-hidden="true" /> Baixar cópia de segurança</button>
+          {!cloudConfigured && hasRecovery && <button type="button" className="visit-board-export" onClick={recoverPrevious} disabled={isSaving}><RotateCcw size={15} aria-hidden="true" /> Recuperar versão anterior</button>}
         </div>
       </footer>
     </section>

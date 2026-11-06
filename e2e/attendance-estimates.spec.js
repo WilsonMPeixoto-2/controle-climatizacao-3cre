@@ -107,6 +107,22 @@ async function backendSnapshot() {
   }
 }
 
+async function cloudVisitSnapshot() {
+  // Confere a fonte remota do emulador, sem confundir com o rascunho local.
+  const app = initializeApp({
+    projectId: 'demo-gop-clima-financeiro',
+    apiKey: 'demo-finance-development-key', appId: 'demo-finance-development-app'
+  }, 'visits-snapshot-' + crypto.randomUUID());
+  try {
+    const db = getFirestore(app);
+    connectFirestoreEmulator(db, '127.0.0.1', 8082);
+    const snapshot = await getDocs(collection(db, 'programacao_visitas'));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } finally {
+    await deleteApp(app);
+  }
+}
+
 async function originalRegistries(page) {
   return page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')]);
 }
@@ -325,7 +341,9 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await board.getByLabel('Ciclo ou referência', { exact: true }).fill('Ciclo fictício de teste');
   await board.getByRole('button', { name: 'Adicionar visita', exact: true }).click();
   await expect(board.locator('.visit-board-row')).toHaveCount(1);
-  const visit = await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'));
+  const visit = (await cloudVisitSnapshot()).find(row => row.schoolId === SCHOOL_B.designacao);
+  expect(visit).toBeDefined();
+  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
   await board.getByRole('button', { name: 'Estimar atendimento da visita de ' + SCHOOL_B.unidade_escolar, exact: true }).click();
   form = editor(page);
   await expect(form.getByLabel('Mês previsto', { exact: true })).toHaveValue(MONTH);
@@ -334,7 +352,7 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await expect(group(form).getByLabel(/^Capacidade/)).toHaveValue('');
   await fillGroup(form, 1, { description: 'Preventiva fictícia programada B', price: '5,4321', source: 'Referência fictícia da visita B' });
   await saveEstimate(page);
-  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(visit);
+  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
   await board.getByRole('button', { name: 'Abrir dossiê de ' + SCHOOL_B.unidade_escolar, exact: true }).click();
   let summary = page.getByRole('region', { name: 'Contexto financeiro da escola', exact: true });
   await expect(summary).toContainText(money('10,8642'));
@@ -344,7 +362,7 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await expect(summary).not.toContainText(money('10,8642'));
   const data = await backendSnapshot();
   expect(data.find(record => record.schoolId === SCHOOL_A.designacao).ticketIds).toEqual(['GOP-AR-2026-9001']);
-  expect(data.find(record => record.schoolId === SCHOOL_B.designacao).visitId).toBe(JSON.parse(visit)[0].id);
+  expect(data.find(record => record.schoolId === SCHOOL_B.designacao).visitId).toBe(visit.id);
   expect(await originalRegistries(page)).toEqual(original);
 });
 
@@ -581,3 +599,124 @@ test('desktop ' + viewport.width + 'px exibe registro e editor preenchidos nos d
   await captureContext(page, testInfo, 'attendance-' + viewport.width + '-dark');
 });
 }
+
+
+test('P1: visitas compartilhadas entre sessões, reprogramação, conflito e arquivamento sem perda do local', async ({ page, browser, baseURL }) => {
+  const otherContext = await browser.newContext({ baseURL });
+  try {
+    const other = await otherContext.newPage();
+    await Promise.all([openApp(page), openApp(other)]);
+    const openBoard = async current => {
+      await current.locator('.finance-related-section > summary')
+        .filter({ hasText: 'Programação de visitas' }).click();
+      const board = current.getByRole('region', { name: 'Planejamento por escola', exact: true });
+      await expect(board).toContainText('Firestore compartilhado');
+      await board.locator('#visit-board-month').fill('2026-11');
+      return board;
+    };
+    const [first, second] = await Promise.all([openBoard(page), openBoard(other)]);
+    const original = await originalRegistries(page);
+    await first.getByRole('button', { name: 'Programar visita', exact: true }).click();
+    await first.getByLabel('Unidade escolar', { exact: true }).selectOption(SCHOOL_A.designacao);
+    await first.getByLabel('Data prevista', { exact: true }).fill('2026-11-16');
+    await first.locator('.visit-board-extra > summary').click();
+    await first.getByLabel('Equipamentos previstos', { exact: true }).fill('2');
+    await first.getByLabel('Ciclo ou referência', { exact: true }).fill('Ciclo sintético P1');
+    await first.getByRole('button', { name: 'Adicionar visita', exact: true }).click();
+    await expect(first).toContainText('Visita incluída no Firestore compartilhado');
+    await expect(second.getByText(SCHOOL_A.unidade_escolar, { exact: true })).toBeVisible();
+    await expect(second.locator('.visit-board-row')).toHaveCount(1);
+    const savedFirst = await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'));
+    expect(savedFirst).toBe(null);
+
+    await first.getByRole('button', { name: 'Editar visita de ' + SCHOOL_A.unidade_escolar }).click();
+    await second.getByRole('button', { name: 'Editar visita de ' + SCHOOL_A.unidade_escolar }).click();
+    await second.getByLabel('Data prevista', { exact: true }).fill('2026-11-18');
+    await second.getByRole('button', { name: 'Salvar alterações' }).click();
+    await expect(second).toContainText('Visita atualizada na programação compartilhada.');
+    await first.getByLabel('Data prevista', { exact: true }).fill('2026-11-20');
+    await first.getByRole('button', { name: 'Salvar alterações' }).click();
+    await expect(first.getByRole('alert')).toContainText('outra sessão');
+    await expect(first.getByRole('form', { name: 'Editar programação' })).toBeVisible();
+    await first.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    await expect(first.locator('.visit-board-date strong')).toHaveText('18');
+    // A revisão é verificada abaixo diretamente na coleção e no histórico remoto.
+
+    const app = initializeApp({
+      projectId: 'demo-gop-clima-financeiro',
+      apiKey: 'demo-finance-development-key', appId: 'demo-finance-development-app'
+    }, 'visits-e2e-' + crypto.randomUUID());
+    let visitId;
+    try {
+      const db = getFirestore(app);
+      connectFirestoreEmulator(db, '127.0.0.1', 8082);
+      const docs = await getDocs(collection(db, 'programacao_visitas'));
+      expect(docs.docs).toHaveLength(1);
+      const visit = docs.docs[0].data();
+      visitId = visit.id;
+      expect(visit).toMatchObject({
+        schoolId: SCHOOL_A.designacao, plannedDate: '2026-11-18',
+        plannedMonth: '2026-11', revision: 2, equipmentCount: 2
+      });
+      expect(visit.history).toHaveLength(1);
+      const revisions = await getDocs(collection(db, 'programacao_visitas', visitId, 'revisoes'));
+      expect(revisions.docs).toHaveLength(2);
+    } finally {
+      await deleteApp(app);
+    }
+
+    page.once('dialog', dialog => dialog.accept());
+    await first.getByRole('button', { name: 'Excluir rascunho da visita de ' + SCHOOL_A.unidade_escolar }).click();
+    await expect(second.locator('.visit-board-row')).toHaveCount(0);
+    await expect(first).toContainText('Visita arquivada na programação compartilhada');
+    expect(await originalRegistries(page)).toEqual(original);
+    expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
+  } finally {
+    await otherContext.close();
+  }
+});
+
+
+test('P1: rascunho local exige importação expressa e nunca substitui a programação remota', async ({ page, browser, baseURL }) => {
+  await openApp(page);
+  const local = {
+    id: 'visita-legada-local-1', schoolId: SCHOOL_B.designacao,
+    plannedDate: '2026-11-22', kind: 'preventiva', cycle: 'Ciclo antigo local',
+    equipmentCount: 4, note: 'Preservar origem local',
+    reportedDate: '', reportReference: '',
+    createdAt: '2026-11-01T12:00:00.000Z',
+    updatedAt: '2026-11-01T12:00:00.000Z', history: []
+  };
+  const originalLocal = JSON.stringify([local]);
+  await page.evaluate(text => localStorage.setItem('gop_clima_programacao_rascunho_v1', text), originalLocal);
+  await page.reload();
+  await showEstimates(page);
+  const board = page.getByRole('region', { name: 'Planejamento por escola', exact: true });
+  await page.locator('.finance-related-section > summary').filter({ hasText: 'Programação de visitas' }).click();
+  await expect(board).toContainText('Firestore compartilhado');
+  await board.locator('#visit-board-month').fill('2026-11');
+  await expect(board.locator('.visit-board-row')).toHaveCount(0); // Não confundir local com cloud.
+  await expect(board.getByRole('button', { name: 'Importar 1 rascunho(s) locais' })).toBeVisible();
+  page.once('dialog', dialog => dialog.accept());
+  await board.getByRole('button', { name: 'Importar 1 rascunho(s) locais' }).click();
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
+  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(originalLocal);
+  await board.getByRole('button', { name: 'Importar 1 rascunho(s) locais' }).click();
+  await expect(board.getByRole('status').filter({ hasText: 'Nenhuma visita nova para importar' })).toBeVisible();
+  await expect(board.locator('.visit-board-row')).toHaveCount(1);
+
+  const secondContext = await browser.newContext({ baseURL });
+  try {
+    const second = await secondContext.newPage();
+    await openApp(second);
+    const otherBoard = second.getByRole('region', { name: 'Planejamento por escola', exact: true });
+    await second.locator('.finance-related-section > summary').filter({ hasText: 'Programação de visitas' }).click();
+    await expect(otherBoard).toContainText('Firestore compartilhado');
+    await otherBoard.locator('#visit-board-month').fill('2026-11');
+    await expect(otherBoard).toContainText('Ciclo antigo local');
+    await expect(otherBoard.locator('.visit-board-row')).toHaveCount(1);
+    expect(await second.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
+  } finally {
+    await secondContext.close();
+  }
+});

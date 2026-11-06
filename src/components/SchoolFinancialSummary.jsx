@@ -6,7 +6,7 @@ import { VISIT_DRAFT_UPDATED_EVENT } from '../domain/visitDraftStorage.js';
 import { calculateAttendance, formatMoneyUnits4 } from '../domain/attendanceEstimate.js';
 
 export default function SchoolFinancialSummary({
-  school, onOpenFinance, attendanceRecords = [], attendanceConnection, onEstimate, onOpenAttendance
+  school, onOpenFinance, attendanceRecords = [], attendanceConnection, visitPlanning, onEstimate, onOpenAttendance
 }) {
   const [, refreshDraft] = useReducer(version => version + 1, 0);
   useEffect(() => {
@@ -22,13 +22,20 @@ export default function SchoolFinancialSummary({
   }, []);
   let visits = [];
   const estimates = attendanceRecords.filter(record => record.schoolId === String(school.designacao));
+  const cloudConfigured = visitPlanning?.connection.status !== 'unconfigured';
+  const cloudReady = visitPlanning?.connection.status === 'ready';
   let draftUnreadable = false;
-  try {
-    visits = readVisitDrafts(window.localStorage)
-      .filter(item => item.schoolId === String(school.designacao))
-      .sort((a, b) => b.plannedDate.localeCompare(a.plannedDate));
-  } catch {
-    draftUnreadable = true;
+  if (cloudConfigured) {
+    visits = cloudReady ? visitPlanning.records.filter(item => item.schoolId === String(school.designacao)) : [];
+    visits = [...visits].sort((a, b) => b.plannedDate.localeCompare(a.plannedDate));
+  } else {
+    try {
+      visits = readVisitDrafts(window.localStorage)
+        .filter(item => item.schoolId === String(school.designacao))
+        .sort((a, b) => b.plannedDate.localeCompare(a.plannedDate));
+    } catch {
+      draftUnreadable = true;
+    }
   }
   return (
     <section className="surface-card finance-school-summary" aria-label="Contexto financeiro da escola">
@@ -40,11 +47,11 @@ export default function SchoolFinancialSummary({
         <button type="button" className="btn btn-secondary btn-sm no-print" onClick={onOpenFinance}>Consultar Gestão Financeira</button>
       </div>
       {visits.length > 0 && (
-        <div className="finance-school-program-mini" aria-label="Programação deste navegador">
+        <div className="finance-school-program-mini" aria-label={cloudConfigured ? "Programação compartilhada da escola" : "Programação deste navegador"}>
           <div className="finance-school-program-title">
             <CalendarClock size={18} aria-hidden="true" />
             <strong>{visits.length} {visits.length === 1 ? 'visita programada' : 'visitas programadas'}</strong>
-            <span>Rascunho somente neste dispositivo</span>
+            <span>{cloudConfigured ? "Programação compartilhada · Firestore" : "Rascunho somente neste dispositivo"}</span>
           </div>
           <ul>
             {visits.slice(0, 3).map(visit => (
@@ -57,6 +64,7 @@ export default function SchoolFinancialSummary({
           {visits.length > 3 && <p className="finance-hint">Outras {visits.length - 3} visitas disponíveis na Gestão Financeira.</p>}
         </div>
       )}
+      {cloudConfigured && !cloudReady && <p className="finance-hint">Programação compartilhada aguardando conexão; os dados locais não serão usados como se fossem dados de outras sessões.</p>}
       {draftUnreadable && <p className="finance-hint">O rascunho local não pôde ser lido neste navegador.</p>}
       <section className="school-attendance-estimates" aria-label="Estimativas de atendimento da escola">
         <div className="section-header">
