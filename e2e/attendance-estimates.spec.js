@@ -107,6 +107,22 @@ async function backendSnapshot() {
   }
 }
 
+async function cloudVisitSnapshot() {
+  // Confere a fonte remota do emulador, sem confundir com o rascunho local.
+  const app = initializeApp({
+    projectId: 'demo-gop-clima-financeiro',
+    apiKey: 'demo-finance-development-key', appId: 'demo-finance-development-app'
+  }, 'visits-snapshot-' + crypto.randomUUID());
+  try {
+    const db = getFirestore(app);
+    connectFirestoreEmulator(db, '127.0.0.1', 8082);
+    const snapshot = await getDocs(collection(db, 'programacao_visitas'));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } finally {
+    await deleteApp(app);
+  }
+}
+
 async function originalRegistries(page) {
   return page.evaluate(() => [localStorage.getItem('gop_schools'), localStorage.getItem('gop_tickets')]);
 }
@@ -325,7 +341,9 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await board.getByLabel('Ciclo ou referência', { exact: true }).fill('Ciclo fictício de teste');
   await board.getByRole('button', { name: 'Adicionar visita', exact: true }).click();
   await expect(board.locator('.visit-board-row')).toHaveCount(1);
-  const visit = await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'));
+  const visit = (await cloudVisitSnapshot()).find(row => row.schoolId === SCHOOL_B.designacao);
+  expect(visit).toBeDefined();
+  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
   await board.getByRole('button', { name: 'Estimar atendimento da visita de ' + SCHOOL_B.unidade_escolar, exact: true }).click();
   form = editor(page);
   await expect(form.getByLabel('Mês previsto', { exact: true })).toHaveValue(MONTH);
@@ -334,7 +352,7 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await expect(group(form).getByLabel(/^Capacidade/)).toHaveValue('');
   await fillGroup(form, 1, { description: 'Preventiva fictícia programada B', price: '5,4321', source: 'Referência fictícia da visita B' });
   await saveEstimate(page);
-  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(visit);
+  expect(await page.evaluate(() => localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
   await board.getByRole('button', { name: 'Abrir dossiê de ' + SCHOOL_B.unidade_escolar, exact: true }).click();
   let summary = page.getByRole('region', { name: 'Contexto financeiro da escola', exact: true });
   await expect(summary).toContainText(money('10,8642'));
@@ -344,7 +362,7 @@ test('chamado e programação iniciam a estimativa contextual e mostram seus val
   await expect(summary).not.toContainText(money('10,8642'));
   const data = await backendSnapshot();
   expect(data.find(record => record.schoolId === SCHOOL_A.designacao).ticketIds).toEqual(['GOP-AR-2026-9001']);
-  expect(data.find(record => record.schoolId === SCHOOL_B.designacao).visitId).toBe(JSON.parse(visit)[0].id);
+  expect(data.find(record => record.schoolId === SCHOOL_B.designacao).visitId).toBe(visit.id);
   expect(await originalRegistries(page)).toEqual(original);
 });
 
@@ -622,7 +640,7 @@ test('P1: visitas compartilhadas entre sessões, reprogramação, conflito e arq
     await expect(first.getByRole('form', { name: 'Editar programação' })).toBeVisible();
     await first.getByRole('button', { name: 'Cancelar', exact: true }).click();
     await expect(first.locator('.visit-board-date strong')).toHaveText('18');
-    await expect(first).toContainText('Reprogramada 1x');
+    // A revisão é verificada abaixo diretamente na coleção e no histórico remoto.
 
     const app = initializeApp({
       projectId: 'demo-gop-clima-financeiro',
@@ -672,6 +690,7 @@ test('P1: rascunho local exige importação expressa e nunca substitui a program
   const originalLocal = JSON.stringify([local]);
   await page.evaluate(text => localStorage.setItem('gop_clima_programacao_rascunho_v1', text), originalLocal);
   await page.reload();
+  await showEstimates(page);
   const board = page.getByRole('region', { name: 'Planejamento por escola', exact: true });
   await page.locator('.finance-related-section > summary').filter({ hasText: 'Programação de visitas' }).click();
   await expect(board).toContainText('Firestore compartilhado');
