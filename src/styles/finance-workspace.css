@@ -193,3 +193,14 @@
 @media (prefers-reduced-motion: reduce) {
   .attendance-insight-filter { transition: none; }
 }
+
+/* A homologação P0 é preservada no banco, porém não representa gasto real. */
+.finance-homologation-toggle {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0;
+  margin-top: 8px; padding: 8px 12px; border: 1px solid var(--hairline);
+  border-radius: 9px; color: var(--text-muted); background: var(--surface-2);
+  font: 550 12px/1.5 var(--font-text); cursor: pointer;
+}
+.finance-homologation-toggle input { flex: none; width: 17px; height: 17px; accent-color: var(--primary); }
+.finance-homologation-toggle span { min-width: 0; overflow-wrap: anywhere; }
+.finance-homologation-toggle:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }

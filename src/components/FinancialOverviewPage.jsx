@@ -13,6 +13,8 @@ import VisitPlanningBoard from './VisitPlanningBoard.jsx';
 import AttendanceEstimates from './AttendanceEstimates.jsx';
 import MonthlyForecast from './MonthlyForecast.jsx';
 import HistoricCorrectionsPanel from './HistoricCorrectionsPanel.jsx';
+import OperationalFinancialBridge from './OperationalFinancialBridge.jsx';
+import { partitionFinancialRecords } from '../domain/financeRecordScope.js';
 import '../styles/finance-workspace.css';
 
 const groups = [
@@ -195,13 +197,21 @@ export default function FinancialOverviewPage({
   const [month, setMonth] = useState(currentForecastMonth);
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
+  const [showHomologation, setShowHomologation] = useState(false);
   const tabRefs = useRef({});
   const resultsRef = useRef(null);
   const currentTab = attendanceContext ? 'attendances' : activeTab;
   const ready = attendances.connection?.status === 'ready';
-  const forecast = useMemo(() => buildMonthlyForecast(ready ? attendances.records : [], {
+  const partitions = useMemo(
+    () => partitionFinancialRecords(attendances.records),
+    [attendances.records]
+  );
+  const effectiveRecords = showHomologation
+    ? attendances.records
+    : partitions.operational;
+  const forecast = useMemo(() => buildMonthlyForecast(ready ? effectiveRecords : [], {
     schoolId: filters.schoolId, selectedMonth: month || currentForecastMonth()
-  }), [attendances.records, filters.schoolId, month, ready]);
+  }), [effectiveRecords, filters.schoolId, month, ready]);
   const latestMonth = forecast.recordedMonths.at(-1);
 
   function explore({ month: period, schoolId, status: nextStatus = 'all' }) {
@@ -279,12 +289,22 @@ export default function FinancialOverviewPage({
         </div>
       </div>
 
+      {partitions.homologation.length > 0 && <label className="finance-homologation-toggle">
+        <input type="checkbox" checked={showHomologation}
+          onChange={event => setShowHomologation(event.target.checked)} />
+        <span>{partitions.homologation.length} {partitions.homologation.length === 1 ? 'registro sintético de homologação' : 'registros sintéticos de homologação'}
+          {showHomologation ? ' incluído nos filtros (somente conferência)' : ' preservado no Firestore e excluído dos indicadores'}
+        </span>
+      </label>}
       <div id="finance-panel-overview" role="tabpanel" aria-labelledby="finance-tab-overview" hidden={currentTab !== 'overview'}>
+        <OperationalFinancialBridge tickets={tickets} attendances={effectiveRecords}
+          selectedSchoolId={filters.schoolId} onOpenTicket={onOpenTicket}
+          onStartAttendance={onStartAttendance} />
         <MonthlyForecast forecast={forecast} schools={schools} connection={attendances.connection} onExplore={explore} />
       </div>
 
       <div id="finance-panel-attendances" role="tabpanel" aria-labelledby="finance-tab-attendances" hidden={currentTab !== 'attendances'}>
-        <AttendanceEstimates schools={schools} tickets={tickets} records={attendances.records}
+        <AttendanceEstimates schools={schools} tickets={tickets} records={effectiveRecords}
           rows={forecast.selected.records} selectedSchoolId={filters.schoolId} month={forecast.selectedMonth}
           status={status} onStatusChange={setStatus} search={search} onSearchChange={setSearch} headingRef={resultsRef}
           connection={attendances.connection} onSave={attendances.onSave} loadRevisions={attendances.loadRevisions}

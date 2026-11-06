@@ -146,7 +146,7 @@ test('financeiro usa recorte real, preserva ausências e retorna à ficha existe
   await expect(nav(page, 'Gestão Financeira')).toHaveCount(1);
   await expect(page.locator('.finance-missing')).toHaveText(Array(3).fill('Não informado'));
   await expect(page.getByRole('region', { name: 'Previsão mensal por competência' })).toBeHidden();
-  await expect(page.locator('.finance-page')).not.toContainText('R$');
+  await expect(page.locator('.finance-missing')).toHaveText(Array(3).fill('Não informado'));
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
   await page.getByLabel('Escola', { exact: true }).selectOption('900001');
   await page.getByLabel('Mês de abertura').fill('2026-10');
@@ -192,7 +192,7 @@ test('tendência de abertura usa registros reais e permite filtrar', async ({ pa
   await september.click();
   await expect(page.getByLabel('Mês de abertura')).toHaveValue('');
   await expect(page.getByLabel('4 solicitações no recorte')).toBeVisible();
-  await expect(page.locator('.finance-page')).not.toContainText('R$');
+  await expect(page.locator('.finance-missing')).toHaveText(Array(3).fill('Não informado'));
 });
 
 test('mantém navegação histórica e contexto escolar sem inventário financeiro', async ({ page }) => {
@@ -903,4 +903,36 @@ test('nomes longos de escolas mantêm leitura confortável em notebook', async (
   const name = page.locator('.school-review-details').getByText(longName, { exact: true });
   const bounds = await name.boundingBox();
   expect(bounds.height).toBeLessThan(150);
+});
+
+test('ponte financeira mostra os chamados existentes e o plano V4 sem fabricar faturamento', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await seed(page);
+  await finance(page, null);
+  const bridge = page.getByRole('region', { name: 'Planejamento e demandas existentes' });
+  await expect(bridge).toBeVisible();
+  await expect(bridge).toContainText('R$ 512.700,35');
+  await expect(bridge).toContainText('134');
+  await expect(bridge).toContainText('3.080');
+  await expect(bridge).toContainText('4 chamados');
+  await expect(bridge).toContainText('R$ 15.156,5975');
+  await expect(bridge).toContainText('não é valor medido, autorizado ou pagável');
+  await expect(bridge.getByRole('button', { name: 'Abrir estimativa contextual do chamado GOP-AR-2026-9001' })).toBeVisible();
+  await expect(bridge).toContainText('R$ 239,7350');
+  await page.locator('#finance-school').selectOption('900001');
+  await expect(bridge).toContainText('3 chamados');
+  await expect(bridge).toContainText('Sem escola no plano');
+  // Os números da planilha não são misturados com a previsão de atendimentos.
+  await expect(page.getByRole('region', { name: /Previsão mensal por competência/ })).toBeVisible();
+  await page.locator('#finance-school').selectOption('');
+
+  for (const width of [320, 390, 1440, 3840]) {
+    await page.setViewportSize({ width, height: width < 500 ? 850 : 1000 });
+    await expect(bridge).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, 'A página não deve ultrapassar o viewport de ' + width + 'px').toBeLessThanOrEqual(1);
+    const p = testInfo.outputPath('ponte-financeira-' + width + '.png');
+    await bridge.screenshot({ path: p, animations: 'disabled' });
+    await testInfo.attach('Ponte financeira ' + width + 'px', { path: p, contentType: 'image/png' });
+  }
 });
