@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ArrowUpRight, BarChart3, Calculator, ClipboardList, FileSpreadsheet, Info, Wrench } from 'lucide-react';
+import { ArrowUpRight, BarChart3, Calculator, ClipboardList, FileSpreadsheet, Info, Pencil, Wrench } from 'lucide-react';
 import { buildOperationalFinancialBridge } from '../domain/operationalFinancialBridge.js';
-import { aggregatePlanningBaseline, CRE03_PLANNING_SOURCE } from '../data/cre03PlanningBaseline.js';
+import { CRE03_PLANNING_SOURCE } from '../data/cre03PlanningBaseline.js';
+import { aggregateAdjustedPlanning } from '../domain/adjustablePlanning.js';
+import PlanningAdjustmentsEditor from './PlanningAdjustmentsEditor.jsx';
+import usePlanningAdjustments from '../hooks/usePlanningAdjustments.js';
 import { HISTORIC_CORRECTIVE_PROFILE } from '../data/historicCorrectivePriceProfile.js';
 import { aggregateHistoricCorrections } from '../domain/historicCorrections.js';
 import { formatMoneyUnits4 } from '../domain/attendanceEstimate.js';
@@ -12,12 +15,14 @@ const money = value => new Intl.NumberFormat('pt-BR', {
 }).format(value / 10000);
 
 export default function OperationalFinancialBridge({
-  tickets, attendances, selectedSchoolId = '', onOpenTicket, onStartAttendance
+  tickets, attendances, schools = [], selectedSchoolId = '', onOpenTicket, onStartAttendance
 }) {
   const [showAll, setShowAll] = useState(false);
+  const [showPlanner, setShowPlanner] = useState(false);
+  const adjustments = usePlanningAdjustments();
   const linked = useMemo(() => buildOperationalFinancialBridge(tickets, attendances, selectedSchoolId),
     [tickets, attendances, selectedSchoolId]);
-  const planned = useMemo(() => aggregatePlanningBaseline(selectedSchoolId), [selectedSchoolId]);
+  const planned = useMemo(() => aggregateAdjustedPlanning(adjustments.records, selectedSchoolId), [adjustments.records, selectedSchoolId]);
   const historic = useMemo(() => aggregateHistoricCorrections({ schoolId: selectedSchoolId }), [selectedSchoolId]);
   const maxBudget = Math.max(1, ...planned.byMonth.map(row => row.budgetUnits4));
   const visibleTickets = showAll ? linked.tickets : linked.tickets.slice(0, 5);
@@ -36,12 +41,18 @@ export default function OperationalFinancialBridge({
           <header>
             <span className="finance-evidence-kicker"><Calculator size={15} aria-hidden="true" /> Referência de planejamento</span>
             <h4 id="finance-evidence-plan-title">Preventivas · primeiro ciclo</h4>
+            <button type="button" className="btn btn-secondary btn-sm" aria-expanded={showPlanner}
+              onClick={() => setShowPlanner(value => !value)}>
+              <Pencil size={14} aria-hidden="true" /> {showPlanner ? 'Fechar ajustes' : 'Ajustar planejamento'}
+            </button>
           </header>
-          <strong className="finance-evidence-money tabular">{planned.schools ? money(planned.budgetUnits4) : 'Sem escola no plano'}</strong>
+          <strong className="finance-evidence-money tabular">{planned.schools ? money(planned.budgetUnits4) : 'Sem escola no plano'}{planned.unknownBudgetCount > 0 && <small> · parcial</small>}</strong>
           <div className="finance-evidence-numbers">
             <span><b className="tabular">{planned.schools}</b> escolas</span>
             <span><b className="tabular">{planned.equipmentCount.toLocaleString('pt-BR')}</b> aparelhos previstos</span>
             <span><b className="tabular">{planned.withIndividualEquipment}</b> escola(s) com aparelhos individualizados</span>
+            {planned.adjustedCount > 0 && <span><b className="tabular">{planned.adjustedCount}</b> ajuste(s) realizado(s)</span>}
+            {planned.unknownBudgetCount > 0 && <span><b className="tabular">{planned.unknownBudgetCount}</b> orçamento(s) a informar</span>}
           </div>
           <div className="finance-evidence-bars" role="img"
             aria-label={'Distribuição do orçamento preventivo por mês relativo do primeiro ciclo: ' +
@@ -104,6 +115,9 @@ export default function OperationalFinancialBridge({
           </button>}
         </article>
       </div>
+      {showPlanner && <PlanningAdjustmentsEditor
+        adjustments={adjustments.records} selectedSchoolId={selectedSchoolId}
+        connection={adjustments.connection} onSave={adjustments.onSave} schools={schools} />}
       <div className="finance-evidence-history">
         <div>
           <span className="finance-evidence-kicker"><Wrench size={15} aria-hidden="true" /> Registro histórico de corretivas · setembro e outubro de 2026</span>
