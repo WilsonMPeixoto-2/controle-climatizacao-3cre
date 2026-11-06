@@ -42,6 +42,34 @@ const original = await Promise.all(['escolas', 'chamados', 'atendimentos_economi
 const otherHashes = original.map((rows, index) => digest(index === 2 ? rows.filter(row => row.cycle !== marker) : rows));
 const existing = original[2].filter(row => row.cycle === marker);
 assert.ok(existing.length <= 1, 'Não criar um segundo registro sintético com o mesmo rótulo.');
+
+// A prova P0 original gravou e releu em duas sessões antes da neutralização.
+// Revalidar o histórico remotamente sem repetir mutações em toda nova CI.
+if (existing.length === 1 && existing[0].items?.[0]?.lineTotalUnits4 === 0) {
+  const current = existing[0];
+  const history = await documents('atendimentos_economicos/' + current.id + '/revisoes');
+  assert.equal(current.items[0].unitPriceUnits4, 2397350);
+  assert.equal(current.items[0].categoryCode, 'CRE03-32');
+  assert.match(current.items[0].sourceRef, /CATEGORIAS!F6:F16/);
+  assert.ok(current.items[0].referenceVersion);
+  assert.equal(history.length, current.revision);
+  assert.ok(history.some(row => row.items?.[0]?.lineTotalUnits4 === 4794700));
+  assert.ok(history.some(row => row.items?.[0]?.lineTotalUnits4 === 7192050));
+  const state = {
+    url: baseURL, marker, id: current.id, finalRevision: current.revision,
+    finalValueUnits4: 0, mode: 'revalidacao_remota_somente_leitura',
+    originalRecords: original[2].length, at: new Date().toISOString(),
+    verified: [
+      'ID unico e composicao precificada preservados no Firestore real',
+      'Historico anterior mantem valores 479,4700 e 719,2050',
+      'Valor de teste continua neutralizado; esta execucao nao gravou dados',
+      'Duas sessoes foram comprovadas na execucao original, nao neste modo'
+    ]
+  };
+  await writeFile(output + '/p0-proof.json', JSON.stringify(state, null, 2));
+  console.log('P0 CLOUD PASS (READ ONLY) ' + JSON.stringify(state));
+  process.exit(0);
+}
 const matchingTicket = original[1].find(ticket => /split/i.test(String(ticket.tipo_aparelho))
   && /(?:^|\D)12\.?000(?:\D|$)/.test(String(ticket.btu_existente || ticket.btu_pretendido)));
 const school = original[0].find(row => String(row.designacao) === matchingTicket?.designacao)
@@ -59,6 +87,10 @@ const pages = await Promise.all(contexts.map(async ctx => {
   await page.goto(baseURL);
   await page.getByRole('tab', { name: 'Atendimentos', exact: true }).click();
   await expect(page.getByText('Firestore financeiro conectado', { exact: true })).toBeVisible({ timeout: 45000 });
+  // O PR #40 oculta a prova sintética para não contaminar indicadores.
+  if (existing.length) {
+    await page.locator('.finance-homologation-toggle input[type="checkbox"]').check();
+  }
   await page.getByLabel('Competência', { exact: true }).fill('2099-12');
   return page;
 }));
@@ -176,6 +208,7 @@ try {
       await pageB.reload();
       await pageB.getByRole('tab', { name: 'Atendimentos', exact: true }).click();
       await expect(pageB.getByText('Firestore financeiro conectado', { exact: true })).toBeVisible({ timeout: 45000 });
+      await pageB.locator('.finance-homologation-toggle input[type="checkbox"]').check();
       await pageB.getByLabel('Competência', { exact: true }).fill('2099-12');
       await openEditor(pageB);
       await group(editor(pageB)).getByLabel('Quantidade', { exact: true }).fill('0');
