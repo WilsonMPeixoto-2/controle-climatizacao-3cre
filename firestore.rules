@@ -444,6 +444,57 @@ service cloud.firestore {
       }
     }
 
+
+    // Ajustes de planejamento são apoio operacional editável. A base V4 não muda,
+    // nem passam a existir atos de medição/atesto pelo ajuste de quantidades.
+    function validPlanningAdjustment(data, schoolId) {
+      return data.keys().size() == 11
+        && data.keys().hasOnly([
+          'id','schoolId','month','equipmentCount','budgetUnits4',
+          'schoolLabel','archived','revision','sessionId','createdAt','updatedAt'
+        ])
+        && schoolId.matches('^[0-9]{6}
+      allow read, write: if false;
+    }
+  }
+}
+)
+        && data.id == schoolId && data.schoolId == schoolId
+        && data.month is int && data.month >= 1 && data.month <= 6
+        && data.equipmentCount is int && data.equipmentCount >= 0 && data.equipmentCount <= 100000
+        && (data.budgetUnits4 == null || (
+          data.budgetUnits4 is int && data.budgetUnits4 >= 0 && data.budgetUnits4 <= 1000000000000
+        ))
+        && data.schoolLabel is string && data.schoolLabel.size() <= 160
+        && data.archived is bool
+        && data.revision is int && data.revision >= 1 && data.revision <= 1000000
+        && validId(data.sessionId)
+        && data.createdAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function planningRevisionAfter(data, schoolId) {
+      return getAfter(/databases/$(database)/documents/ajustes_planejamento/$(schoolId)/revisoes/$('v' + string(data.revision))).data == data;
+    }
+
+    match /ajustes_planejamento/{schoolId} {
+      allow read: if true;
+      allow create, update: if validPlanningAdjustment(request.resource.data,schoolId)
+        && (request.method == 'create'
+          ? (request.resource.data.revision == 1 && request.resource.data.createdAt == request.time)
+          : (request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.revision == resource.data.revision + 1))
+        && planningRevisionAfter(request.resource.data,schoolId);
+      allow delete: if false;
+      match /revisoes/{revisionId} {
+        allow read: if true;
+        allow create: if revisionId == 'v' + string(request.resource.data.revision)
+          && validPlanningAdjustment(request.resource.data,schoolId)
+          && getAfter(/databases/$(database)/documents/ajustes_planejamento/$(schoolId)).data == request.resource.data;
+        allow update, delete: if false;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
