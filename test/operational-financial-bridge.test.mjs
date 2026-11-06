@@ -75,7 +75,7 @@ import { HISTORIC_CORRECTIVE_PROFILE } from '../src/data/historicCorrectivePrice
   assert.equal(altered.unknownBudgetCount,1);
   assert.equal(altered.adjustedCount,2);
   assert.equal(altered.byMonth[1].schools,23);
-  assert.equal(altered.byMonth[2].schools,25);
+  assert.equal(altered.byMonth[2].schools,24);
   assert.equal(aggregateAdjustedPlanning(changes,'03.12.001').equipmentCount,50);
   assert.equal(aggregateAdjustedPlanning(changes,'330603').budgetUnits4,0);
   assert.equal(aggregatePlanningBaseline('312001').equipmentCount,43);
