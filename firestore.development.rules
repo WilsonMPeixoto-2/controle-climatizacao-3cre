@@ -258,20 +258,14 @@ service cloud.firestore {
     }
 
 
-    // Ajustes de planejamento são apoio operacional editável. A base V4 não muda,
-    // nem passam a existir atos de medição/atesto pelo ajuste de quantidades.
+    // Ajustes de planejamento editáveis, sem modificar dados do cadastro operacional.
     function validPlanningAdjustment(data, schoolId) {
       return data.keys().size() == 11
         && data.keys().hasOnly([
           'id','schoolId','month','equipmentCount','budgetUnits4',
           'schoolLabel','archived','revision','sessionId','createdAt','updatedAt'
         ])
-        && schoolId.matches('^[0-9]{6}
-      allow read, write: if false;
-    }
-  }
-}
-)
+        && schoolId.matches('^[0-9]{6}$')
         && data.id == schoolId && data.schoolId == schoolId
         && data.month is int && data.month >= 1 && data.month <= 6
         && data.equipmentCount is int && data.equipmentCount >= 0 && data.equipmentCount <= 100000
