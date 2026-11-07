@@ -1,0 +1,79 @@
+name: Deploy Firestore rules (production)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'firestore.rules'
+      - '.github/workflows/firebase-rules-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gop-clima-firestore-rules-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-firestore-rules:
+    name: Publicar somente regras no Firebase existente
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout revisado da master
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Validar alvo e coleções antes da publicação
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const config=JSON.parse(fs.readFileSync('.firebaserc','utf8'));
+          const rules=fs.readFileSync('firestore.rules','utf8');
+          if(config.projects?.default !== 'gestao-da-climatizacao-3-cre') throw new Error('Projeto Firebase inesperado');
+          for(const name of ['programacao_visitas','atendimentos_economicos','ajustes_planejamento','chamados','escolas']){
+            if(!rules.includes('match /'+name+'/{')) throw new Error('Coleção obrigatória não encontrada: '+name);
+          }
+          console.log('Alvo Firebase e cinco coleções verificados; nenhuma regra foi alterada nesta etapa.');
+          NODE
+
+      - name: Selecionar credencial administrativa já autorizada
+        shell: bash
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_SERVICE_ACCOUNT_PROJECT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GESTAO_DA_CLIMATIZACAO_3_CRE }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${FIREBASE_SERVICE_ACCOUNT_JSON:-}" || -n "${FIREBASE_SERVICE_ACCOUNT_PROJECT:-}" ]]; then
+            umask 077
+            printf '%s' "${FIREBASE_SERVICE_ACCOUNT_JSON:-${FIREBASE_SERVICE_ACCOUNT_PROJECT}}" > "$RUNNER_TEMP/gop-clima-firebase-credentials.json"
+            echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/gop-clima-firebase-credentials.json" >> "$GITHUB_ENV"
+            echo "Autenticação por conta de serviço do projeto configurada."
+          elif [[ -n "${FIREBASE_TOKEN:-}" ]]; then
+            echo "Autenticação Firebase CLI existente configurada."
+          else
+            echo "::error::Nenhuma credencial administrativa Firebase configurada neste repositório. Configure FIREBASE_SERVICE_ACCOUNT_JSON (preferencial) ou FIREBASE_TOKEN nas secrets do repositório. Nenhuma alteração foi feita."
+            exit 1
+          fi
+
+      - name: Publicar apenas firestore.rules no projeto existente
+        shell: bash
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.26.0 deploy --only firestore:rules --project gestao-da-climatizacao-3-cre --non-interactive
+
+      - name: Registrar commit da publicação
+        if: success()
+        run: echo "Regras publicadas para commit ${GITHUB_SHA} no projeto gestao-da-climatizacao-3-cre."
