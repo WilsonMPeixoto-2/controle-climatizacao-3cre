@@ -720,3 +720,61 @@ test('P1: rascunho local exige importação expressa e nunca substitui a program
     await secondContext.close();
   }
 });
+
+
+test('P2: ajuste escolar é compartilhado, recalcula o painel e pode ser restaurado', async ({page,browser,baseURL}) => {
+  const another=await browser.newContext({baseURL});
+  try {
+    const second=await another.newPage();
+    await Promise.all([openApp(page,'light',false),openApp(second,'light',false)]);
+    const openPanel=async p=>{
+      await p.getByRole('button',{name:'Ajustar planejamento',exact:true}).click();
+      const panel=p.getByRole('region',{name:'Ajustar planejamento por escola',exact:true});
+      await expect(panel.getByText('Planejamento ajustável',{exact:true})).toBeVisible();
+      await expect(panel.getByRole('button',{name:'Incluir escola'})).toBeEnabled();
+      return panel;
+    };
+    const firstPanel=await openPanel(page);
+    const secondPanel=await openPanel(second);
+    await firstPanel.getByPlaceholder('Nome ou código da escola').fill('312001');
+    await firstPanel.getByRole('button',{name:'Editar planejamento da escola 312001'}).click();
+    const form=firstPanel.getByRole('form',{name:'Editar planejamento da escola'});
+    await form.getByLabel('Equipamentos previstos').fill('50');
+    await form.getByLabel('Mês relativo do ciclo').selectOption('2');
+    await form.getByRole('button',{name:'Salvar ajustes'}).click();
+    await expect(firstPanel.getByText('Planejamento ajustado e salvo no Firestore.')).toBeVisible();
+    await secondPanel.getByPlaceholder('Nome ou código da escola').fill('312001');
+    await expect(secondPanel.locator('.planning-editor-row')).toContainText('50 aparelhos');
+    await expect(secondPanel.locator('.planning-editor-row')).toContainText('Mês 2');
+    await expect(secondPanel.locator('.planning-editor-row')).toContainText('Ajustado pelo usuário');
+    const remoteApp=initializeApp({
+      projectId:'demo-gop-clima-financeiro',
+      apiKey:'demo-finance-development-key',
+      appId:'demo-finance-development-app'
+    },'adjustment-check-'+crypto.randomUUID());
+    try {
+      const db=getFirestore(remoteApp);
+      connectFirestoreEmulator(db,'127.0.0.1',8082);
+      const snapshot=await getDocs(collection(db,'ajustes_planejamento'));
+      expect(snapshot.docs).toHaveLength(1);
+      expect(snapshot.docs[0].data()).toMatchObject({schoolId:'312001',equipmentCount:50,month:2,revision:1,archived:false});
+    } finally {await deleteApp(remoteApp);}
+    second.once('dialog',dialog=>dialog.accept());
+    await secondPanel.getByRole('button',{name:'Restaurar referência da escola 312001'}).click();
+    await expect(firstPanel.locator('.planning-editor-row')).toContainText('43 aparelhos');
+    await expect(firstPanel.locator('.planning-editor-row')).toContainText('Mês 3');
+    await expect(firstPanel.locator('.planning-editor-row')).not.toContainText('Ajustado pelo usuário');
+    await firstPanel.getByRole('button',{name:'Incluir escola'}).click();
+    const newForm=firstPanel.getByRole('form',{name:'Incluir escola no planejamento'});
+    await newForm.getByLabel('Código da escola').fill('330603');
+    await newForm.getByLabel('Nome de identificação (opcional)').fill('Escola adicional de teste');
+    await newForm.getByLabel('Equipamentos previstos').fill('17');
+    await newForm.getByLabel('Mês relativo do ciclo').selectOption('3');
+    await newForm.getByRole('button',{name:'Salvar ajustes'}).click();
+    await expect(firstPanel.getByText('Planejamento ajustado e salvo no Firestore.')).toBeVisible();
+    await secondPanel.getByPlaceholder('Nome ou código da escola').fill('330603');
+    await expect(secondPanel.locator('.planning-editor-row')).toContainText('17 aparelhos');
+    await expect(secondPanel.locator('.planning-editor-row')).toContainText('A informar');
+    expect(await page.evaluate(()=>localStorage.getItem('gop_clima_programacao_rascunho_v1'))).toBe(null);
+  } finally {await another.close();}
+});
