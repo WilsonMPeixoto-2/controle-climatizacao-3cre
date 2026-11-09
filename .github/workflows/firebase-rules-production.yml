@@ -6,6 +6,8 @@ on:
     paths:
       - 'firestore.rules'
       - '.github/workflows/firebase-rules-production.yml'
+      - 'scripts/deploy-firestore-rules-rest.mjs'
+      - 'scripts/firebase-rules-rest-core.mjs'
   workflow_dispatch:
 
 permissions:
@@ -66,13 +68,17 @@ jobs:
             exit 1
           fi
 
-      - name: Publicar apenas firestore.rules no projeto existente
+      - name: Conferir release atual pela API oficial Firebase Rules
         shell: bash
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           set -euo pipefail
-          npx --yes firebase-tools@15.26.0 deploy --only firestore:rules --project gestao-da-climatizacao-3-cre --non-interactive
+          node scripts/deploy-firestore-rules-rest.mjs --inspect
+
+      - name: Publicar e verificar apenas as regras Firestore
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/deploy-firestore-rules-rest.mjs --publish
 
       - name: Registrar commit da publicação
         if: success()
