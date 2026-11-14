@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { getTicketReferenceContext, getOperationalSlice } from '../src/domain/financialPresentation.js';
 import { REFERENCE_STATUS } from '../src/domain/financialReference.js';
+import { visitConnectionLabel } from '../src/domain/visitConnectionSummary.js';
 
 // Somente fixtures fictícias; nenhum catálogo ou preço entra na apresentação.
 const maintenance = Object.freeze({ tipo_demanda: 'Manutenção Corretiva', tipo_aparelho: 'Split', btu_existente: '12000', btu_pretendido: '18000' });
@@ -37,4 +38,10 @@ assert.equal(getOperationalSlice(tickets, { school }).tickets.length, 5);
 assert.equal(getOperationalSlice(tickets, { month: '2026-03' }).tickets.length, 3);
 assert.equal(getOperationalSlice(tickets, { month: '2030-01' }).tickets.length, 0);
 assert.equal(getOperationalSlice([], {}).tickets.length, 0);
-console.log('F1–F3 | apresentação: ausência, origem de BTU, demanda, filtros, datas e imutabilidade passaram.');
+
+assert.equal(visitConnectionLabel({status:'ready'}),'Programação compartilhada · Firestore');
+assert.equal(visitConnectionLabel({status:'connecting'}),'Conectando ao Firestore');
+assert.equal(visitConnectionLabel({status:'error'}),'Conexão indisponível');
+assert.equal(visitConnectionLabel({status:'unconfigured'}),'Rascunho neste navegador');
+assert.equal(visitConnectionLabel(undefined),'Rascunho neste navegador');
+console.log('F1–F3 | apresentação e situação da programação: ausência, origem de BTU, filtros, datas e status passaram.');

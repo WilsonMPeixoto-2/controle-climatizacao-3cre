@@ -15,6 +15,7 @@ import MonthlyForecast from './MonthlyForecast.jsx';
 import HistoricCorrectionsPanel from './HistoricCorrectionsPanel.jsx';
 import OperationalFinancialBridge from './OperationalFinancialBridge.jsx';
 import { partitionFinancialRecords } from '../domain/financeRecordScope.js';
+import { visitConnectionLabel } from '../domain/visitConnectionSummary.js';
 import '../styles/finance-workspace.css';
 
 const groups = [
@@ -320,7 +321,7 @@ export default function FinancialOverviewPage({
 
         <div className="finance-related" aria-label="Consultas complementares">
           <details className="surface-card finance-related-section">
-            <summary><CalendarDays size={18} aria-hidden="true" /> Programação de visitas <small>Calendário e planejamento</small><ChevronDown size={16} aria-hidden="true" /></summary>
+            <summary><CalendarDays size={18} aria-hidden="true" /> Programação de visitas <small aria-live="polite">{visitConnectionLabel(visitPlanning?.connection)}</small><ChevronDown size={16} aria-hidden="true" /></summary>
             <VisitPlanningBoard schools={schools} selectedSchoolId={filters.schoolId} onOpenSchool={onOpenSchool} visitPlanning={visitPlanning}
               onEstimate={visit => onStartAttendance({
                 schoolId: visit.schoolId, visitId: visit.id, plannedDate: visit.plannedDate,
