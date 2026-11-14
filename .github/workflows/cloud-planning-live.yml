@@ -1,0 +1,57 @@
+name: Cloud planning smoke (site real)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/cloud-planning-live.yml'
+      - 'e2e/cloud-planning-live.spec.js'
+      - 'playwright.cloud.config.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gop-clima-cloud-planning-smoke
+  cancel-in-progress: false
+
+jobs:
+  verify-live-planning:
+    name: Testar planejamento compartilhado no domínio oficial
+    if: github.repository == 'WilsonMPeixoto-2/controle-climatizacao-3cre'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Usar somente a revisão consolidada
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verificar domínio principal
+        run: |
+          set -euo pipefail
+          status=$(curl --location --silent --output /dev/null --write-out "%{http_code}" --max-time 30 https://controle-climatizacao-3cre.vercel.app/)
+          test "$status" = "200" || { echo "::error::Site de produção retornou $status"; exit 1; }
+      - name: Gravar, sincronizar e arquivar teste sintético (sem credencial administrativa)
+        env:
+          CI: 'true'
+        run: npx playwright test --config playwright.cloud.config.js
+      - name: Guardar evidências e falhas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gop-cloud-planning-live
+          path: |
+            test-results-cloud/
+            playwright-report-cloud/
+          if-no-files-found: ignore
+          retention-days: 10
