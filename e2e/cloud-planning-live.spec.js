@@ -20,6 +20,7 @@ test('Cloud: planejamento em duas sessões e restauração da referência', asyn
   const pageB = await b.newPage();
   let created = false;
   let archived = false;
+  let cleanupFailure = null;
 
   async function openFinance(page) {
     await page.addInitScript(() => sessionStorage.setItem('gop_current_tab','finance'));
@@ -104,11 +105,12 @@ test('Cloud: planejamento em duas sessões e restauração da referência', asyn
         archived=true;
       } catch(cleanupError){
         console.error('FALHA DE LIMPEZA: registro sintético '+schoolId+' precisa ser arquivado. '+String(cleanupError));
-        throw cleanupError;
+        cleanupFailure = cleanupError;
       }
     }
     await Promise.allSettled([a.close(),b.close()]);
   }
+  if (cleanupFailure) throw cleanupFailure;
   expect(archived).toBe(true);
   console.log('CLOUD GOP CLIMA PASS: duas sessões, persistência após recarga e arquivamento de registro sintético '+schoolId);
 });
